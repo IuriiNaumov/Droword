@@ -10,6 +10,8 @@ struct HomeView: View {
     @State private var activeTabPulse: Tab? = nil
     @State private var showAddWordView = false
 
+    @EnvironmentObject private var store: WordsStore
+
     enum Tab: String, CaseIterable, Identifiable {
         case home, trophy, search
         var id: String { rawValue }
@@ -23,15 +25,13 @@ struct HomeView: View {
         }
     }
 
-    let words: [WordCard] = [
-        WordCard(category: "Social", title: "Sabroso", type: "noun", translation: "Вкусный", color: Color(hexRGB: 0xE6D3F1)),
-        WordCard(category: "Chat", title: "Chido", type: "noun", translation: "Круто", color: Color(hexRGB: 0xCDE4F3)),
-        WordCard(category: "Movies", title: "Bonito", type: "adjective", translation: "Красивый", color: Color(hexRGB: 0xD9E764))
-    ]
 
-    private var filteredWords: [WordCard] {
-        guard let tag = selectedTag else { return words }
-        return words.filter { $0.category == tag }
+    private var filteredWords: [StoredWord] {
+        guard let tag = selectedTag?.trimmingCharacters(in: .whitespacesAndNewlines), !tag.isEmpty else {
+            return store.words
+        }
+        let normalizedTag = tag.lowercased()
+        return store.words.filter { ($0.tag ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedTag }
     }
 
     private var isCompact: Bool { hSize == .compact }
@@ -72,109 +72,85 @@ struct HomeView: View {
                 .padding(.bottom, 4)
 
             ScrollView(showsIndicators: false) {
-                LazyVStack(spacing: 16) {
-                    ForEach(filteredWords) { word in
-                        WordCardView(
-                            word: word.title,
-                            translation: word.translation,
-                            type: word.type,
-                            category: word.category,
-                            categoryColor: word.color
-                        )
+                if filteredWords.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 34, weight: .semibold))
+                            .foregroundColor(.secondary)
+                        Text(selectedTag == nil ? "No words yet" : "No words for this tag")
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                    .padding(.horizontal, horizontalPadding)
+                } else {
+                    LazyVStack(spacing: 16) {
+                        ForEach(filteredWords) { word in
+                            WordCardView(
+                                word: word.word,
+                                translation: word.translation,
+                                type: word.type,
+                                example: word.example,
+                                comment: word.comment,
+                                tag: word.tag,
+                                onDelete: {
+                                    if let index = store.words.firstIndex(where: { $0.id == word.id }) {
+                                        let toRemove = store.words[index]
+                                        store.remove(toRemove)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, horizontalPadding)
                 }
-                .padding(.horizontal, horizontalPadding)
             }
 
 
+        }
+        .onAppear {
+            print("[HomeView] words count:", store.words.count)
+            for w in store.words { print("[HomeView] word:", w.word, "tag:", w.tag ?? "nil") }
         }
         .safeAreaInset(edge: .bottom) {
-            tabBar
+            LiquidGlassTabBar(
+                selectedTab: $selectedTab,
+                showAddWordView: $showAddWordView,
+                activeTabPulse: $activeTabPulse,
+                isCompact: isCompact
+            )
         }
         .fullScreenCover(isPresented: $showAddWordView) {
-            AddWordView()
+            AddWordView().environmentObject(store)
         }
     }
 
-    private var tabBar: some View {
-        ZStack {
-            HStack {
-                Spacer(minLength: 0)
-                HStack(spacing: isCompact ? 12 : 16) {
-                    ForEach(Tab.allCases) { tab in
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.18)) {
-                                activeTabPulse = tab
-                                selectedTab = tab
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                activeTabPulse = nil
-                            }
-                        } label: {
-                            let systemName = iconName(for: tab)
-                            Image(systemName: systemName)
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(selectedTab == tab ? .primary : .secondary)
-                                .frame(width: 48, height: 48)
-                                .background(
-                                    Circle()
-                                        .fill(selectedTab == tab ? Color.primary.opacity(0.08) : .clear)
-                                )
-                                .scaleEffect(activeTabPulse == tab ? 1.15 : 1.0)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 28)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 50)
-                        .fill(Color(.systemGray6))
-                )
-                Spacer(minLength: 100)
-            }
 
-            HStack {
-                Spacer()
-                Button(action: {
-                    showAddWordView = true
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 62, height: 62)
-                        .background(
-                            RoundedRectangle(cornerRadius: 54)
-                                .fill(Color("MainBlack"))
-                        )
-                }
-            }
-            .padding(.trailing, 18)
-        }
-        .padding(.vertical, 10)
-    }
-
-    // MARK: - Helper
     private func iconName(for tab: Tab) -> String {
         switch tab {
         case .search:
-            return tab.systemImage // всегда без fill
+            return tab.systemImage 
         default:
             return selectedTab == tab ? tab.systemImage + ".fill" : tab.systemImage
         }
     }
 }
 
-// MARK: - WordCard Struct
 struct WordCard: Identifiable {
     let id = UUID()
-    let category: String
-    let title: String
-    let type: String?
+    let word: String
     let translation: String?
-    let color: Color
+    let comment: String?
+    let category: String
 }
 
 #Preview {
-    HomeView()
+    let store = WordsStore()
+    if store.words.isEmpty {
+        store.add(StoredWord(word: "apple", type: "noun", translation: "яблоко",example: "яблоко", comment: "fruit", tag: "food"))
+        store.add(StoredWord(word: "run", type: "verb", translation: "бежать", example: "яблоко", comment: nil, tag: "verbs"))
+    }
+    return HomeView()
+        .environmentObject(store)
 }

@@ -1,186 +1,164 @@
 import SwiftUI
-import AVFoundation
 
 struct WordCardView: View {
     let word: String
     let translation: String?
     let type: String?
-    let category: String?
-    let categoryColor: Color?
-    
-    @State private var audioPlayer: AVAudioPlayer?
-    @State private var isPlaying = false
-    @State private var pulse = false
-    
-    private let elevenLabsURL = URL(string: "https://api.elevenlabs.io/v1/text-to-speech/MDLAMJ0jxkpYkjXbmG4t")!
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            
-            if let category = category,
-               let categoryColor = categoryColor {
-                Text(category)
-                    .font(.custom("Poppins-Medium", size: 14))
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 4)
-                    .background(categoryColor)
-                    .clipShape(Capsule())
-            }
-            
-            HStack(alignment: .center) {
-                Text(word)
-                    .font(.custom("Poppins-Bold", size: 22)).padding([.top, .bottom], 4)
-                    .foregroundColor(.black)
+    let example: String?
+    let comment: String?
+    let tag: String?
+    let onDelete: () -> Void
 
-                
+    @State private var isExpanded = true
+    @State private var isPlaying = false
+
+    private var backgroundColor: Color {
+        switch tag {
+        case "Social": return Color(red: 0.95, green: 0.80, blue: 1.00)
+        case "Chat": return Color(red: 0.80, green: 0.90, blue: 1.00)
+        case "Apps": return Color(red: 0.85, green: 1.00, blue: 0.85)
+        case "Street": return Color(red: 1.00, green: 0.90, blue: 0.75)
+        case "Travel": return Color(red: 1.00, green: 0.95, blue: 0.75)
+        case "Movies": return Color(red: 1.00, green: 0.80, blue: 0.80)
+        case "Work": return Color(red: 0.88, green: 0.88, blue: 0.95)
+        default: return Color(.systemGray6)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if isExpanded {
+                if let tag = tag {
+                    Text(tag)
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(Capsule())
+                }
+
+                HStack(alignment: .center, spacing: 8) {
+                    Text(word)
+                        .font(.custom("Poppins-Bold", size: 22))
+                        .foregroundColor(.black)
+                    Spacer()
+                    Button(action: {
+                        Task {
+                            isPlaying = true
+                            await AudioManager.shared.play(word: word)
+                            try? await Task.sleep(nanoseconds: 1_000_000_000)
+                            withAnimation { isPlaying = false }
+                        }
+                    }) {
+                        SoundWavesView(isPlaying: isPlaying)
+                            .frame(width: 24, height: 24)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 8)
+                }
+
                 if let type = type {
                     Text(type)
                         .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(.gray)
                 }
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.1)) {
-                        isPlaying = true
-                    }
-                    DispatchQueue.global(qos: .userInitiated).async {
-                        playElevenLabsVoice()
-                    }
-                }) {
-                    SoundWavesView(isAnimating: isPlaying)
-                        .frame(width: 32, height: 26)
-                        .contentShape(Rectangle())
-                        .scaleEffect(isPlaying ? 1.1 : 1.0)
-                        .animation(.easeInOut(duration: 0.15), value: isPlaying)
-                }
-                .buttonStyle(.plain)
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
+
                 if let translation = translation {
                     Text(translation)
                         .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(.black.opacity(0.9))
                 }
+
+                if let example = example {
+                    Text(makeHighlightedExample(comment: example, word: word))
+                        .font(.custom("Poppins-Regular", size: 16))
+                        .foregroundColor(.black.opacity(0.9))
+                }
+
+                if let comment = comment, !comment.isEmpty {
+                    Text(comment)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.gray)
+                        .padding(.top, 4)
+                }
+
+                HStack {
+                    Spacer()
+                    Button(action: { onDelete() }) {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.red)
+                            .padding(.trailing, 4)
+                            .padding(.top, 8)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(alignment: .center, spacing: 8) {
+                        Text(word)
+                            .font(.custom("Poppins-Bold", size: 22))
+                            .foregroundColor(.black)
+                        Spacer()
+                        Button(action: {
+                            Task {
+                                isPlaying = true
+                                await AudioManager.shared.play(word: word)
+                                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                                withAnimation { isPlaying = false }
+                            }
+                        }) {
+                            SoundWavesView(isPlaying: isPlaying)
+                                .frame(width: 24, height: 24)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 8)
+                    }
+
+                    if let translation = translation {
+                        Text(translation)
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(.black.opacity(0.9))
+                            .multilineTextAlignment(.leading)
+                    }
+
+                    HStack {
+                        Spacer()
+                        Button(action: { onDelete() }) {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.red)
+                                .padding(.trailing, 4)
+                                .padding(.top, 8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemGray6))
+        .background(backgroundColor)
         .cornerRadius(16)
+        .scaleEffect(isExpanded ? 1.02 : 0.98)
+        .shadow(color: .black.opacity(isExpanded ? 0.15 : 0.05),
+                radius: isExpanded ? 12 : 4,
+                x: 0, y: isExpanded ? 6 : 2)
+        .animation(.interpolatingSpring(stiffness: 100, damping: 12), value: isExpanded)
+        .onTapGesture {
+            withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
+                isExpanded.toggle()
+            }
+        }
+        .padding(.top, 12) // отступ сверху для списка слов
     }
-    
-    private func playElevenLabsVoice() {
-        var request = URLRequest(url: elevenLabsURL)
-        request.httpMethod = "POST"
-        request.addValue("sk_74ad1c950a9558250e576c5051863efb40250ec61111ae65", forHTTPHeaderField: "xi-api-key")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("audio/mpeg", forHTTPHeaderField: "Accept")
 
-        let body: [String: Any] = [
-            "text": word,
-            "voice_settings": [
-                "stability": 0.4,
-                "similarity_boost": 0.9
-            ],
-            "model_id": "eleven_multilingual_v2",
-            "output_format": "mp3_44100_128"
-        ]
-        
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Ошибка запроса:", error)
-                return
-            }
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("Нет ответа от сервера")
-                return
-            }
-
-            print("HTTP статус:", httpResponse.statusCode)
-            guard httpResponse.statusCode == 200 else {
-                if let data = data, let text = String(data: data, encoding: .utf8) {
-                    print("Ответ:", text)
-                }
-                return
-            }
-
-            guard let data = data else {
-                print("Нет данных от ElevenLabs")
-                return
-            }
-
-            DispatchQueue.main.async {
-                do {
-                    self.audioPlayer = try AVAudioPlayer(data: data)
-                    self.audioPlayer?.prepareToPlay()
-                    self.audioPlayer?.play()
-                    self.isPlaying = true
-                    self.pulse = true
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + (self.audioPlayer?.duration ?? 1)) {
-                        self.isPlaying = false
-                        self.pulse = false
-                    }
-                } catch {
-                    print("Ошибка воспроизведения аудио:", error)
-                }
-            }
-        }.resume()
-    }
-    
-    struct SoundWavesView: View {
-        @State private var barHeights: [CGFloat] = [8, 12, 8]
-        let isAnimating: Bool
-        
-        let barWidth: CGFloat = 4
-        let maxHeight: CGFloat = 20
-        let minHeight: CGFloat = 6
-        
-        var body: some View {
-            HStack(spacing: 4) {
-                ForEach(0..<3) { index in
-                    Rectangle()
-                        .fill(Color.black)
-                        .frame(width: barWidth, height: barHeights[index])
-                        .cornerRadius(2)
-                }
-            }
-            .onAppear {
-                if isAnimating {
-                    startAnimation()
-                }
-            }
-            .onChange(of: isAnimating) { animating in
-                if animating {
-                    startAnimation()
-                } else {
-                    resetBars()
-                }
-            }
+    private func makeHighlightedExample(comment: String, word: String) -> AttributedString {
+        var attributedString = AttributedString(comment)
+        if let range = attributedString.range(of: word, options: .caseInsensitive) {
+            attributedString[range].foregroundColor = .orange
+            attributedString[range].font = .custom("Poppins-Bold", size: 16)
         }
-        
-        private func startAnimation() {
-            withAnimation(Animation.easeInOut(duration: 0.3).repeatForever(autoreverses: true)) {
-                barHeights = barHeights.map { _ in CGFloat.random(in: minHeight...maxHeight) }
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                if isAnimating {
-                    startAnimation()
-                }
-            }
-        }
-        
-        private func resetBars() {
-            withAnimation {
-                barHeights = [8, 12, 8]
-            }
-        }
+        return attributedString
     }
 }
 
@@ -189,16 +167,20 @@ struct WordCardView: View {
         WordCardView(
             word: "Sabroso",
             translation: "Вкусный",
-            type: "noun",
-            category: "Slang",
-            categoryColor: Color(hex: 0xE6D3F1)
+            type: "adjective",
+            example: "Este plato es muy sabroso y delicioso.",
+            comment: "Мое любимое слово!",
+            tag: "Social",
+            onDelete: {}
         )
         WordCardView(
             word: "Chido",
             translation: "Круто",
-            type: nil,
-            category: nil,
-            categoryColor: nil
+            type: "adjective",
+            example: "La fiesta estuvo chido y divertida.",
+            comment: nil,
+            tag: "Slang",
+            onDelete: {}
         )
     }
     .padding()
