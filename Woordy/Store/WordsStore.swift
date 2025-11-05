@@ -1,17 +1,24 @@
-import SwiftUI
+import Foundation
 import Combine
-
 
 struct StoredWord: Identifiable, Codable, Equatable {
     let id: UUID
     var word: String
     var type: String
     var translation: String?
-    var example: String
+    var example: String?
     var comment: String?
     var tag: String?
 
-    init(id: UUID = UUID(), word: String,  type: String,  translation: String, example:String,  comment: String? = nil, tag: String? = nil) {
+    init(
+        id: UUID = UUID(),
+        word: String,
+        type: String,
+        translation: String?,
+        example: String?,
+        comment: String? = nil,
+        tag: String? = nil
+    ) {
         self.id = id
         self.word = word
         self.type = type
@@ -24,17 +31,17 @@ struct StoredWord: Identifiable, Codable, Equatable {
 
 final class WordsStore: ObservableObject {
     @Published private(set) var words: [StoredWord] = [] {
-        didSet { save() }
+        didSet { saveAsync() }
     }
 
     private let storageKey = "WordsStore.words"
 
-    init() {
-        load()
-    }
+    init() { loadAsync() }
 
     func add(_ word: StoredWord) {
-        words.append(word)
+        DispatchQueue.main.async {
+            self.words.append(word)
+        }
     }
 
     func remove(_ word: StoredWord) {
@@ -45,24 +52,23 @@ final class WordsStore: ObservableObject {
         words.removeAll()
     }
 
-    private func load() {
-        guard let data = UserDefaults.standard.data(forKey: storageKey) else { return }
-        do {
-            let decoded = try JSONDecoder().decode([StoredWord].self, from: data)
-            self.words = decoded
-        } catch {
-            self.words = []
+    private func loadAsync() {
+        DispatchQueue.global(qos: .background).async {
+            guard let data = UserDefaults.standard.data(forKey: self.storageKey) else { return }
+            if let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
+                DispatchQueue.main.async {
+                    self.words = decoded
+                }
+            }
         }
     }
-    
 
-    private func save() {
-        do {
-            let data = try JSONEncoder().encode(words)
-            UserDefaults.standard.set(data, forKey: storageKey)
-        } catch {
-            // ignore errors for now
+    private func saveAsync() {
+        let copy = words
+        DispatchQueue.global(qos: .background).async {
+            if let data = try? JSONEncoder().encode(copy) {
+                UserDefaults.standard.set(data, forKey: self.storageKey)
+            }
         }
     }
 }
-

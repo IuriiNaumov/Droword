@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct FormTextField: View {
     let title: String
@@ -9,16 +10,19 @@ struct FormTextField: View {
 
     @FocusState private var isFocused: Bool
 
+    private let labelFont = Font.custom("Poppins-Regular", size: 18)
+    private let counterFont = Font.custom("Poppins-Regular", size: 13)
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.custom("Poppins-Regular", size: 18))
+                .font(labelFont)
                 .foregroundColor(.gray)
 
             ZStack(alignment: .trailing) {
                 TextField("", text: $text)
                     .focused($isFocused)
-                    .onChange(of: text) { newValue in
+                    .onReceive(Just(text)) { newValue in
                         if let limit = maxLength, newValue.count > limit {
                             text = String(newValue.prefix(limit))
                         }
@@ -29,12 +33,13 @@ struct FormTextField: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isFocused ? focusedColor : .clear, lineWidth: 1.5)
+                            .strokeBorder(isFocused ? focusedColor : .clear, lineWidth: 1.5)
+                            .animation(.easeInOut(duration: 0.2), value: isFocused)
                     )
 
                 if showCounter, let limit = maxLength {
                     Text("\(text.count)/\(limit)")
-                        .font(.custom("Poppins-Regular", size: 13))
+                        .font(counterFont)
                         .foregroundColor(.gray)
                         .padding(.trailing, 14)
                 }

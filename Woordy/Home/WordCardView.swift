@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct WordCardView: View {
+struct WordCardView: View, Equatable {
     let word: String
     let translation: String?
     let type: String?
@@ -9,8 +9,19 @@ struct WordCardView: View {
     let tag: String?
     let onDelete: () -> Void
 
+    // Для Equatable
+    static func == (lhs: WordCardView, rhs: WordCardView) -> Bool {
+        lhs.word == rhs.word &&
+        lhs.translation == rhs.translation &&
+        lhs.type == rhs.type &&
+        lhs.example == rhs.example &&
+        lhs.comment == rhs.comment &&
+        lhs.tag == rhs.tag
+    }
+
     @State private var isExpanded = true
     @State private var isPlaying = false
+    @State private var highlightedExample: AttributedString = ""
 
     private var backgroundColor: Color {
         switch tag {
@@ -42,14 +53,7 @@ struct WordCardView: View {
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.black)
                     Spacer()
-                    Button(action: {
-                        Task {
-                            isPlaying = true
-                            await AudioManager.shared.play(word: word)
-                            try? await Task.sleep(nanoseconds: 1_000_000_000)
-                            withAnimation { isPlaying = false }
-                        }
-                    }) {
+                    Button(action: playAudio) {
                         SoundWavesView(isPlaying: isPlaying)
                             .frame(width: 24, height: 24)
                     }
@@ -69,8 +73,8 @@ struct WordCardView: View {
                         .foregroundColor(.black.opacity(0.9))
                 }
 
-                if let example = example {
-                    Text(makeHighlightedExample(comment: example, word: word))
+                if let _ = example {
+                    Text(highlightedExample)
                         .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(.black.opacity(0.9))
                 }
@@ -84,10 +88,10 @@ struct WordCardView: View {
 
                 HStack {
                     Spacer()
-                    Button(action: { onDelete() }) {
+                    Button(action: onDelete) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
-                            .padding(.trailing, 4)
+                            .padding(.trailing, 2)
                             .padding(.top, 8)
                     }
                     .buttonStyle(.plain)
@@ -100,14 +104,7 @@ struct WordCardView: View {
                             .font(.custom("Poppins-Bold", size: 22))
                             .foregroundColor(.black)
                         Spacer()
-                        Button(action: {
-                            Task {
-                                isPlaying = true
-                                await AudioManager.shared.play(word: word)
-                                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                                withAnimation { isPlaying = false }
-                            }
-                        }) {
+                        Button(action: playAudio) {
                             SoundWavesView(isPlaying: isPlaying)
                                 .frame(width: 24, height: 24)
                         }
@@ -124,10 +121,10 @@ struct WordCardView: View {
 
                     HStack {
                         Spacer()
-                        Button(action: { onDelete() }) {
+                        Button(action: onDelete) {
                             Image(systemName: "trash.fill")
                                 .foregroundColor(.red)
-                                .padding(.trailing, 4)
+                                .padding(.trailing, 2)
                                 .padding(.top, 8)
                         }
                         .buttonStyle(.plain)
@@ -149,10 +146,33 @@ struct WordCardView: View {
                 isExpanded.toggle()
             }
         }
-        .padding(.top, 12) // отступ сверху для списка слов
+        .padding(.top, 12)
+        .onAppear {
+            if let example = example {
+                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
+            } else {
+                highlightedExample = ""
+            }
+        }
+        .onChange(of: example) { newValue in
+            if let example = newValue {
+                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
+            } else {
+                highlightedExample = ""
+            }
+        }
     }
 
-    private func makeHighlightedExample(comment: String, word: String) -> AttributedString {
+    private func playAudio() {
+        Task {
+            isPlaying = true
+            await AudioManager.shared.play(word: word)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            withAnimation { isPlaying = false }
+        }
+    }
+
+    private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
         var attributedString = AttributedString(comment)
         if let range = attributedString.range(of: word, options: .caseInsensitive) {
             attributedString[range].foregroundColor = .orange

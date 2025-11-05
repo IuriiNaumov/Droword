@@ -1,10 +1,21 @@
 import Foundation
-import Foundation
 
 struct GPTTranslationResult: Codable {
     let translation: String
     let example: String
     let type: String
+}
+
+struct OpenAIResponse: Codable {
+    struct Choice: Codable { let message: Message }
+    struct Message: Codable { let content: String }
+    let choices: [Choice]?
+    let error: APIError?
+}
+
+struct APIError: Codable {
+    let message: String
+    let type: String?
 }
 
 func translateWithGPT(
@@ -42,23 +53,41 @@ func translateWithGPT(
 
     request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-    let (data, _) = try await URLSession.shared.data(for: request)
-    let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+    let (data, response) = try await URLSession.shared.data(for: request)
 
-    guard let content = decoded.choices.first?.message.content else {
-        throw NSError(domain: "ChatGPT", code: -1, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
+
+    if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+        let raw = String(data: data, encoding: .utf8) ?? "No body"
+        print("🚫 HTTP error \(http.statusCode):\n\(raw)")
+        throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: raw])
     }
 
-    let cleaned = sanitizeJSON(content)
 
+    let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+
+
+    if let err = decoded.error {
+        print("🚫 API error:", err.message)
+        throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: err.message])
+    }
+
+    guard let message = decoded.choices?.first?.message.content else {
+        let text = String(data: data, encoding: .utf8) ?? "Empty"
+        print("⚠️ Unexpected response:", text)
+        throw NSError(domain: "OpenAI", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content or invalid structure"])
+    }
+
+    let cleaned = sanitizeJSON(message)
     guard let jsonData = cleaned.data(using: .utf8) else {
-        throw NSError(domain: "ChatGPT", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
+        throw NSError(domain: "ChatGPT", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
     }
 
     do {
         let result = try JSONDecoder().decode(GPTTranslationResult.self, from: jsonData)
         return result
     } catch {
+        print("❌ JSON decode error:", error)
+        print("🧾 Raw content:", cleaned)
         throw error
     }
 }
@@ -69,10 +98,4 @@ private func sanitizeJSON(_ text: String) -> String {
         return String(text[start...end])
     }
     return text
-}
-
-struct OpenAIResponse: Codable {
-    struct Choice: Codable { let message: Message }
-    struct Message: Codable { let content: String }
-    let choices: [Choice]
 }

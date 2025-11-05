@@ -5,7 +5,6 @@ struct TagsView: View {
     var showTitle: Bool = true
     var compact: Bool = false
 
-    // Единый список тегов и цветов
     static let allTags: [(name: String, color: Color)] = [
         ("Social", Color(hexRGB: 0xF2D0F9)),
         ("Chat", Color(hexRGB: 0xB3D9ED)),
@@ -19,7 +18,7 @@ struct TagsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 6 : 10) {
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: compact ? 10 : 14) {
+                HStack(spacing: compact ? 6 : 14) {
                     ForEach(Self.allTags, id: \.name) { tag in
                         Button {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -29,8 +28,8 @@ struct TagsView: View {
                             Text(tag.name)
                                 .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
                                 .foregroundColor(.black)
-                                .padding(.horizontal, compact ? 14 : 18)
-                                .padding(.vertical, compact ? 6 : 10)
+                                .padding(.horizontal, 40)
+                                .padding(.vertical, 10)
                                 .background(tag.color.opacity(selectedTag == tag.name ? 1.0 : 0.7))
                                 .cornerRadius(compact ? 14 : 18)
                                 .overlay(

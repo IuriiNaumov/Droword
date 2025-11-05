@@ -1,8 +1,9 @@
 import SwiftUI
 
-struct ActionButton: View {
+struct AddWordButton: View {
     let title: String
     let color: Color
+    let isDisabled: Bool
     let action: () async throws -> Void
     var onSuccess: (() -> Void)? = nil
     var onError: ((Error) -> Void)? = nil
@@ -13,7 +14,7 @@ struct ActionButton: View {
     var body: some View {
         VStack(spacing: 6) {
             Button {
-                if !isLoading {
+                if !isLoading && !isDisabled {
                     Task { await performAction() }
                 }
             } label: {
@@ -31,9 +32,9 @@ struct ActionButton: View {
                             .foregroundColor(.white)
                     }
                 }
+                .opacity(isDisabled ? 0.5 : 1)
             }
-            .disabled(isLoading)
-            .opacity(isLoading ? 0.7 : 1)
+            .disabled(isDisabled || isLoading)
             .animation(.easeInOut(duration: 0.25), value: isLoading)
 
             if let message = errorMessage {
