@@ -8,6 +8,7 @@ struct HomeView: View {
 
     @State private var showAddWordView = false
     @State private var selectedTab: Tab = .home
+    @State private var lastGoldenTrigger = 0
 
     enum Tab: String, CaseIterable, Identifiable {
         case home, add, list
@@ -50,15 +51,14 @@ struct HomeView: View {
                     .tabItem { icon(for: .list) }
                     .tag(Tab.list)
 
-                // "Пустая" вкладка Add, чтобы ловить нажатие
                 Color.clear
                     .tabItem { icon(for: .add) }
                     .tag(Tab.add)
             }
-            .tint(Color("MainBlack"))
+            .tint(.mainBlack)
+            .background(Color.appBackground.ignoresSafeArea())
             .onChange(of: selectedTab) { _, newValue in
                 if newValue == .add {
-                    // при нажатии на плюс открываем AddWordView
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                         showAddWordView = true
                     }
@@ -71,6 +71,14 @@ struct HomeView: View {
             }
             .environmentObject(golden)
         }
+        .onChange(of: store.words.count) { _, newValue in
+            if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
+                Task {
+                    await golden.fetchSuggestions(basedOn: store.words)
+                }
+                lastGoldenTrigger = newValue
+            }
+        }
     }
 
     private var mainContent: some View {
@@ -78,7 +86,6 @@ struct HomeView: View {
             VStack(spacing: 32) {
                 ProfileHeaderView()
                 StatsView()
-
                 GoldenWordsView()
                     .environmentObject(golden)
                     .padding(.horizontal, horizontalPadding)
@@ -86,8 +93,8 @@ struct HomeView: View {
                 if !recentWords.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recently added")
-                            .font(.custom("Poppins-Bold", size: 22))
-                            .foregroundColor(Color("MainBlack"))
+                            .font(.custom("Poppins-Bold", size: 24))
+                            .foregroundColor(Color(.mainBlack))
                             .padding(.horizontal, horizontalPadding)
 
                         ForEach(recentWords) { word in

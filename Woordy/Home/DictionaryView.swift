@@ -16,20 +16,13 @@ struct DictionaryView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Dictionary")
-                    .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(Color("MainBlack"))
+                    .font(.custom("Poppins-Bold", size: 34))
+                    .foregroundColor(.mainBlack)
                     .padding(.top, 8)
                     .padding(.horizontal, horizontalPadding)
 
                 TagsView(selectedTag: $selectedTag)
                     .padding(.horizontal, horizontalPadding)
-
-                if selectedTag == nil {
-                    Text("You have \(filteredWords.count) words")
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(Color("MainGrey"))
-                        .padding(.horizontal, horizontalPadding)
-                }
 
                 LazyVStack(spacing: 8) {
                     if isLoading {
@@ -37,7 +30,7 @@ struct DictionaryView: View {
                     } else if filteredWords.isEmpty {
                         Text("No words yet 😌")
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(Color("MainGrey"))
+                            .foregroundColor(.mainGrey)
                             .padding(.top, 40)
                     } else {
                         ForEach(filteredWords) { word in

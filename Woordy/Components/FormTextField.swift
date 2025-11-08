@@ -4,7 +4,7 @@ import Combine
 struct FormTextField: View {
     let title: String
     @Binding var text: String
-    var focusedColor: Color = Color("MainBlack")
+    var focusedColor: Color = Color(.mainBlack)
     var maxLength: Int? = nil
     var showCounter: Bool = false
 
@@ -23,15 +23,13 @@ struct FormTextField: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 19)
-                .background(Color(hexRGB: 0xF8F8F8))
-                .cornerRadius(12)
+                .background(Color.cardBackground)
+                .foregroundColor(.mainBlack)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(isFocused ? focusedColor : .clear, lineWidth: 1.5)
-                        .animation(.easeInOut(duration: 0.2), value: isFocused)
+                        .strokeBorder(isFocused ? Color.mainBlack : .divider, lineWidth: 1.5)
                 )
-                .font(.custom("Poppins-Regular", size: 16))
-                .foregroundColor(Color("MainBlack"))
+                .cornerRadius(12)
 
             if showCounter, let limit = maxLength {
                 Text("\(text.count)/\(limit)")

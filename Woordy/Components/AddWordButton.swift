@@ -10,9 +10,6 @@ struct AddWordButton: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    private let mainColor = Color("MainBlack")
-    private let darkerColor = Color(hexRGB: 0x7ACFA3)
-
     var body: some View {
         VStack(spacing: 8) {
             Button {
@@ -21,15 +18,8 @@ struct AddWordButton: View {
                 }
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 50, style: .continuous)
-                        .fill(isDisabled ? mainColor.opacity(0.5) : mainColor)
-                        .frame(height: 58)
-                        .shadow(color: mainColor.opacity(0.45), radius: 8, y: 4)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 50, style: .continuous)
-                                .stroke(mainColor.opacity(0.7), lineWidth: 1.5)
-                        )
-
+                    RoundedRectangle(cornerRadius: 50)
+                        .fill(isDisabled ? .gray : Color(.addButton))
                     if isLoading {
                         Loader()
                     } else {
@@ -49,7 +39,7 @@ struct AddWordButton: View {
             if let message = errorMessage {
                 Text(message)
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(Color("MainGrey"))
+                    .foregroundColor(Color(.mainGrey))
                     .multilineTextAlignment(.center)
                     .transition(.opacity)
             }
@@ -79,7 +69,7 @@ struct AddWordButton: View {
 }
 
 #Preview {
-    VStack(spacing: 24) {
+    VStack(spacing: 580) {
         AddWordButton(
             title: "Add Word",
             isDisabled: false

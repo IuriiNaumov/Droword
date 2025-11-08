@@ -32,14 +32,7 @@ struct StatsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Your stats")
                 .font(.custom("Poppins-Bold", size: 24))
-                .foregroundColor(Color("MainBlack"))
-
-            if let firstDate = firstWordDate {
-                Text("Tracking since \(dateFormatter.string(from: firstDate))")
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(Color("MainGrey"))
-                    .padding(.top, -8)
-            }
+                .foregroundColor(Color(.mainBlack))
 
             HStack(spacing: 20) {
                 StatCardView(title: "Total", value: "\(totalWordsEver)")
@@ -50,10 +43,10 @@ struct StatsView: View {
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.settingsBackground)
         )
+        .foregroundColor(.mainBlack)
         .padding(.horizontal)
     }
 }

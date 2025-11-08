@@ -14,17 +14,29 @@
 		DEF07A052EB71CD40091D68C /* Exceptions for "Woordy" folder in "Woordy" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Helpers/Color.swift,
 				Info.plist,
 			);
 			target = DEF079DC2EB6F9FC0091D68C /* Woordy */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		DEBE0C702EBF04BF00390C11 /* Exceptions for "Woordy" folder in "Copy Bundle Resources" phase from "Woordy" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = DEF079DB2EB6F9FC0091D68C /* Resources */;
+			membershipExceptions = (
+				Helpers/Color.swift,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DEF079DF2EB6F9FC0091D68C /* Woordy */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				DEF07A052EB71CD40091D68C /* Exceptions for "Woordy" folder in "Woordy" target */,
+				DEBE0C702EBF04BF00390C11 /* Exceptions for "Woordy" folder in "Copy Bundle Resources" phase from "Woordy" target */,
 			);
 			path = Woordy;
 			sourceTree = "<group>";

@@ -23,27 +23,29 @@ struct WordCardView: View, Equatable {
     @State private var isPlaying = false
     @State private var highlightedExample: AttributedString = ""
 
-    private let duolingoGold = Color(hexRGB: 0xFFC107)
-    private let duolingoDarkGold = Color(hexRGB: 0xE59E00)
+    private static let gold = Color(hexRGB: 0xFFC107)
+    private static let darkGold = Color(hexRGB: 0xE0A600)
+    private static let deepTextGold = Color(hexRGB: 0x7B4B00)
+    private static let midTextGold = Color(hexRGB: 0x966000)
 
     private var isGolden: Bool { tag == "Golden" }
 
     private var backgroundColor: Color {
         switch tag {
-        case "Social": return Color(hexRGB: 0xFFDFA4)
-        case "Chat":   return Color(hexRGB: 0xB9E3FF)
-        case "Apps":   return Color(hexRGB: 0xC6F6D5)
-        case "Street": return Color(hexRGB: 0xFFC6C9)
-        case "Movies": return Color(hexRGB: 0xE4D2FF)
-        case "Travel": return Color(hexRGB: 0xFFF1B2)
-        case "Work":   return Color(hexRGB: 0xBDF4F2)
-        case "Golden": return duolingoGold
-        default:       return Color(hexRGB: 0xF6F6F6)
+        case "Social": return Color(.accentYellow)
+        case "Chat":   return Color(.accentBlue)
+        case "Apps":   return Color(.accentGreen)
+        case "Street": return Color(.accentPink)
+        case "Movies": return Color(.accentPurple)
+        case "Travel": return Color(.accentYellow)
+        case "Work":   return Color(.accentMint)
+        case "Golden": return Color(.accentGold)
+        default:       return Color(.defaultCard)
         }
     }
 
     private var textColor: Color {
-        isGolden ? .white : Color("MainBlack")
+        Color(.black)
     }
 
     var body: some View {
@@ -54,19 +56,21 @@ struct WordCardView: View, Equatable {
                         .font(.custom("Poppins-Medium", size: 14))
                         .padding(.horizontal, 28)
                         .padding(.vertical, 4)
-                        .background(isGolden ? Color.white.opacity(0.25) : Color("MainGrey").opacity(0.2))
+                        .background(isGolden ? Color.white.opacity(0.35) : Color(.mainGrey).opacity(0.2))
                         .clipShape(Capsule())
-                        .foregroundColor(isGolden ? .white : Color("MainBlack"))
+                        .foregroundColor(.black)
                 }
 
                 HStack(alignment: .center, spacing: 8) {
                     Text(word)
                         .font(.custom("Poppins-Bold", size: 24))
                         .foregroundColor(textColor)
+
                     Spacer()
                     Button(action: playAudio) {
                         SoundWavesView(isPlaying: isPlaying)
                             .frame(width: 24, height: 24)
+                            .tint(.black)
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 8)
@@ -75,7 +79,7 @@ struct WordCardView: View, Equatable {
                 if let type = type {
                     Text(type)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(isGolden ? .white.opacity(0.9) : Color("MainGrey"))
+                        .foregroundColor(isGolden ? Self.midTextGold.opacity(0.8) : Color(.mainGrey))
                 }
 
                 if let translation = translation {
@@ -93,7 +97,7 @@ struct WordCardView: View, Equatable {
                 if let comment = comment, !comment.isEmpty {
                     Text(comment)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(isGolden ? .white.opacity(0.85) : Color("MainGrey"))
+                        .foregroundColor(isGolden ? Self.midTextGold.opacity(0.9) : Color(.mainGrey))
                         .padding(.top, 4)
                 }
 
@@ -101,7 +105,7 @@ struct WordCardView: View, Equatable {
                     Spacer()
                     Button(action: onDelete) {
                         Image(systemName: "trash.fill")
-                            .foregroundColor(isGolden ? .white.opacity(0.9) : .red)
+                            .foregroundColor(.red)
                             .padding(.trailing, 2)
                             .padding(.top, 8)
                     }
@@ -118,6 +122,7 @@ struct WordCardView: View, Equatable {
                         Button(action: playAudio) {
                             SoundWavesView(isPlaying: isPlaying)
                                 .frame(width: 24, height: 24)
+                                .tint(.black)
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 8)
@@ -134,7 +139,7 @@ struct WordCardView: View, Equatable {
                         Spacer()
                         Button(action: onDelete) {
                             Image(systemName: "trash.fill")
-                                .foregroundColor(isGolden ? .white.opacity(0.9) : .red)
+                                .foregroundColor(.red)
                                 .padding(.trailing, 2)
                                 .padding(.top, 8)
                         }
@@ -148,11 +153,6 @@ struct WordCardView: View, Equatable {
         .background(backgroundColor)
         .cornerRadius(16)
         .scaleEffect(isExpanded ? 1.02 : 0.98)
-        .shadow(
-            color: isGolden ? duolingoDarkGold.opacity(0.5) : Color("MainBlack").opacity(isExpanded ? 0.15 : 0.05),
-            radius: isGolden ? 14 : (isExpanded ? 12 : 4),
-            x: 0, y: isGolden ? 6 : (isExpanded ? 6 : 2)
-        )
         .animation(.interpolatingSpring(stiffness: 100, damping: 12), value: isExpanded)
         .onTapGesture {
             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
@@ -188,12 +188,13 @@ struct WordCardView: View, Equatable {
     private static func makeHighlightedExample(comment: String, word: String, isGolden: Bool) -> AttributedString {
         var attributedString = AttributedString(comment)
         if let range = attributedString.range(of: word, options: .caseInsensitive) {
-            attributedString[range].foregroundColor = isGolden ? .white : .orange
+            attributedString[range].foregroundColor = isGolden ? .accentColor : .orange
             attributedString[range].font = .custom("Poppins-Bold", size: 16)
         }
         return attributedString
     }
 }
+
 #Preview {
     VStack(spacing: 20) {
         WordCardView(

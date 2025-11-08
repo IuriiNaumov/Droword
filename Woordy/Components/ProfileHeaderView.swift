@@ -2,43 +2,47 @@ import SwiftUI
 
 struct ProfileHeaderView: View {
     @EnvironmentObject private var store: WordsStore
+    @State private var showSettings = false
+    @State private var avatarImage: UIImage?
+    @State private var displayProgress: Double = 0.0
 
-    private let maxLevel = 50
     private let xpPerWord = 10
+    private let maxLevel = 50
 
     private var totalWords: Int { store.totalWordsAdded }
     private var totalXP: Int { totalWords * xpPerWord }
 
     private var level: Int {
         var currentLevel = 1
-        var requiredWords = 0
+        var wordsAccumulated = 0
         while currentLevel < maxLevel {
-            let wordsForNext = 3 + (currentLevel - 1) * 2
-            requiredWords += wordsForNext
-            if totalWords < requiredWords { break }
+            let wordsNeeded = 3 + (currentLevel - 1) * 2
+            if totalWords < wordsAccumulated + wordsNeeded { break }
+            wordsAccumulated += wordsNeeded
             currentLevel += 1
         }
-        return min(currentLevel, maxLevel)
+        return currentLevel
     }
 
-    private var wordsForNextLevel: Int { 3 + (level - 1) * 2 }
+    private var wordsForCurrentLevel: Int {
+        3 + (level - 1) * 2
+    }
 
-    private var totalWordsForNextLevel: Int {
-        var total = 0
-        for i in 1..<level { total += 3 + (i - 1) * 2 }
-        total += wordsForNextLevel
-        return total
+    private var wordsBeforeCurrentLevel: Int {
+        (1..<level).reduce(0) { $0 + (3 + ($1 - 1) * 2) }
+    }
+
+    private var wordsProgressInLevel: Int {
+        max(0, totalWords - wordsBeforeCurrentLevel)
+    }
+
+    private var progressRatio: Double {
+        guard wordsForCurrentLevel > 0 else { return 0 }
+        return min(Double(wordsProgressInLevel) / Double(wordsForCurrentLevel), 1.0)
     }
 
     private var wordsToNextLevel: Int {
-        max(0, totalWordsForNextLevel - totalWords)
-    }
-
-    @State private var displayProgress: Double = 0.0
-    private var realProgress: Double {
-        let previousTotal = (1..<level).reduce(0) { $0 + (3 + ($1 - 1) * 2) }
-        let currentProgress = totalWords - previousTotal
-        return min(1.0, Double(currentProgress) / Double(wordsForNextLevel))
+        max(0, wordsForCurrentLevel - wordsProgressInLevel)
     }
 
     private var levelColor: Color {
@@ -53,11 +57,6 @@ struct ProfileHeaderView: View {
         }
     }
 
-    private var darkerLevelText: Color {
-        darkerShade(of: levelColor, by: 0.35)
-    }
-
-    private let progressColor = Color(hexRGB: 0xA8E6CF)
     private let goldText = Color(hexRGB: 0xB88A00)
     private let goldBackground = Color(hexRGB: 0xFFF1B2)
 
@@ -65,25 +64,36 @@ struct ProfileHeaderView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 16) {
                 ZStack {
-                    Circle()
-                        .fill(levelColor.opacity(0.25))
-                        .frame(width: 72, height: 72)
-                        .shadow(color: Color("MainBlack").opacity(0.05), radius: 3, x: 0, y: 2)
-
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 34, weight: .semibold))
-                        .foregroundColor(Color("MainBlack"))
+                    if let avatarImage {
+                        Image(uiImage: avatarImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 72, height: 72)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(levelColor, lineWidth: 3))
+                    } else {
+                        Circle()
+                            .fill(levelColor.opacity(0.25))
+                            .frame(width: 72, height: 72)
+                            .overlay(
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 34, weight: .semibold))
+                                    .foregroundColor(Color(.mainBlack))
+                            )
+                    }
                 }
+                .contentShape(Circle())
+                .onTapGesture { showSettings = true }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Yura")
                         .font(.custom("Poppins-Bold", size: 22))
-                        .foregroundColor(Color("MainBlack"))
+                        .foregroundColor(Color(.mainBlack))
 
                     HStack(spacing: 10) {
                         Label("Lv \(level)", systemImage: "star.fill")
                             .font(.custom("Poppins-Bold", size: 13))
-                            .foregroundColor(darkerLevelText)
+                            .foregroundColor(Color(darkerShade(of: levelColor, by: 0.35)))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 4)
                             .background(Capsule().fill(levelColor))
@@ -103,51 +113,51 @@ struct ProfileHeaderView: View {
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(Color("MainGrey").opacity(0.15))
-                        .frame(width: 248, height: 16)
+                        .frame(height: 16)
 
                     Capsule()
-                        .fill(progressColor)
+                        .fill(Color.progressBar)
                         .frame(width: CGFloat(displayProgress) * 240, height: 16)
                         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: displayProgress)
                 }
 
                 Text("\(totalXP) XP – \(wordsToNextLevel * xpPerWord) XP to level up")
-                    .font(.custom("Poppins-Regular", size: 13))
-                    .foregroundColor(Color("MainGrey"))
+                    .font(.custom("Poppins-Regular", size: 12))
+                    .foregroundColor(.mainGrey)
+                    .padding(.horizontal, 4)
             }
-            .padding(.trailing, 20)
             .onAppear {
-                displayProgress = realProgress
+                avatarImage = loadAvatarFromDisk()
+                displayProgress = progressRatio
             }
-            .onChange(of: realProgress) { _, newValue in
-                if newValue < displayProgress {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        displayProgress = 1.0
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            displayProgress = newValue
-                        }
-                    }
-                } else {
-                    withAnimation(.easeOut(duration: 0.6)) {
-                        displayProgress = newValue
-                    }
+            .onChange(of: progressRatio) { _, newValue in
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                    displayProgress = newValue
                 }
             }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: Color("MainBlack").opacity(0.05), radius: 6, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.settingsBackground)
         )
         .padding(.horizontal)
+        .sheet(isPresented: $showSettings) {
+            SettingsView().environmentObject(store)
+        }
     }
-}
 
-#Preview {
-    ProfileHeaderView().environmentObject(WordsStore())
+    private func loadAvatarFromDisk() -> UIImage? {
+        let url = avatarFileURL()
+        guard let data = try? Data(contentsOf: url),
+              let image = UIImage(data: data) else { return nil }
+        return image
+    }
+
+    private func avatarFileURL() -> URL {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return docs.appendingPathComponent("user_avatar.jpg")
+    }
 }
 
 extension Color {
@@ -157,4 +167,8 @@ extension Color {
         let b = Double(hexRGB & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
+}
+
+#Preview {
+    ProfileHeaderView().environmentObject(WordsStore())
 }

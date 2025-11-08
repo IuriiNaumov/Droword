@@ -40,14 +40,14 @@ struct AddWordView: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color(.appBackground).ignoresSafeArea()
 
             VStack(spacing: 28) {
                 HStack {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 28, weight: .semibold))
-                            .foregroundColor(Color("MainBlack"))
+                            .foregroundColor(.mainBlack)
                             .contentShape(Rectangle())
                     }
                     Spacer()
@@ -56,19 +56,19 @@ struct AddWordView: View {
                 .padding(.top, 12)
 
                 VStack(alignment: .leading, spacing: 32) {
-                    Text("Add new word")
+                    Text("New word")
                         .font(.custom("Poppins-Bold", size: 38))
-                        .foregroundColor(Color("MainBlack"))
+                        .foregroundColor(.mainBlack)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Word or phrase *")
-                            .font(.custom("Poppins-SemiBold", size: 18))
-                            .foregroundColor(Color("MainGrey").opacity(0.9))
+                            .font(.custom("Poppins-Regular", size: 18))
+                            .foregroundColor(.mainGrey)
 
                         FormTextField(
                             title: wordPlaceholder,
                             text: $word,
-                            focusedColor: Color("MainBlack"),
+                            focusedColor: .mainGrey,
                             maxLength: 40,
                             showCounter: true
                         )
@@ -79,31 +79,31 @@ struct AddWordView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Translation (optional)")
-                            .font(.custom("Poppins-SemiBold", size: 18))
-                            .foregroundColor(Color("MainGrey").opacity(0.9))
+                            .font(.custom("Poppins-Regular", size: 18))
+                            .foregroundColor(Color(.mainGrey).opacity(0.9))
 
                         FormTextField(
                             title: translationPlaceholder,
                             text: $translation,
-                            focusedColor: Color("MainBlack")
+                            focusedColor: Color(.mainGrey)
                         )
                         .focused($focusedField, equals: .translation)
 
                         Text("Don’t know the translation? I’ll handle it for you")
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(Color("MainGrey"))
+                            .foregroundColor(Color(.mainGrey))
                             .padding(.leading, 2)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Comment (optional)")
-                            .font(.custom("Poppins-SemiBold", size: 18))
-                            .foregroundColor(Color("MainGrey").opacity(0.9))
+                            .font(.custom("Poppins-Regular", size: 18))
+                            .foregroundColor(Color(.mainGrey).opacity(0.9))
 
                         FormTextField(
                             title: commentPlaceholder,
                             text: $comment,
-                            focusedColor: Color("MainBlack")
+                            focusedColor: Color(.mainGrey)
                         )
                         .focused($focusedField, equals: .comment)
                     }

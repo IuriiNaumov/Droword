@@ -6,7 +6,6 @@ struct Skeleton: View {
             SkeletonWordCardView(isExpanded: true)
             SkeletonWordCardView(isExpanded: true)
         }
-        .padding(.horizontal, 8)
     }
 }
 

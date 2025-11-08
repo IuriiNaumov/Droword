@@ -2,41 +2,36 @@ import Foundation
 import SwiftUI
 import Combine
 
-struct SuggestedWord: Identifiable, Equatable {
-    let id = UUID()
-    let word: String
-    let translation: String
-}
-
 @MainActor
 final class GoldenWordsStore: ObservableObject {
     @Published var goldenWords: [SuggestedWord] = []
+    @Published var topic: String? = nil
     @Published var isLoading = false
-    @Published var lastXPReward: Int?
 
     func fetchSuggestions(basedOn words: [StoredWord]) async {
+        guard !words.isEmpty else { return }
         isLoading = true
         defer { isLoading = false }
 
-        let samples = [
-            SuggestedWord(word: "aventura", translation: "adventure"),
-            SuggestedWord(word: "descubrir", translation: "to discover"),
-            SuggestedWord(word: "sabroso", translation: "tasty"),
-            SuggestedWord(word: "maravilla", translation: "wonder")
-        ]
-        goldenWords = Array(samples.shuffled().prefix(2))
+        do {
+            let baseWords = words.map { $0.word }
+            let result = try await fetchSuggestionsWithTopic(words: baseWords)
+            self.topic = result.topic
+            self.goldenWords = result.suggestions
+        } catch {
+            self.topic = nil
+            self.goldenWords = []
+        }
     }
 
     func accept(_ word: SuggestedWord, store: WordsStore) {
         let newWord = StoredWord(
             word: word.word,
-            type: "существительное",
+            type: word.type ?? "существительное",
             translation: word.translation,
-            example: "—",
-            comment: nil,
+            example: word.example ?? "—",
             tag: "Golden"
         )
-
         store.add(newWord)
         goldenWords.removeAll { $0.id == word.id }
     }

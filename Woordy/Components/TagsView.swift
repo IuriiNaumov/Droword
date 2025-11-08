@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct TagsView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var selectedTag: String?
     var compact: Bool = false
+    var hasGoldenWords: Bool = false
 
     static let allTags: [(name: String, color: Color)] = [
         ("Golden", Color(hexRGB: 0xFFC107)),
@@ -15,76 +17,90 @@ struct TagsView: View {
         ("Work",   Color(hexRGB: 0xBDF4F2)),
     ]
 
+    var visibleTags: [(name: String, color: Color)] {
+        Self.allTags.filter { tag in
+            if tag.name == "Golden" {
+                return hasGoldenWords
+            } else {
+                return true
+            }
+        }
+    }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: compact ? 10 : 14) {
-                ForEach(Self.allTags, id: \.name) { tag in
+                ForEach(visibleTags, id: \.name) { tag in
                     let isSelected = selectedTag == tag.name
-                    let baseColor = tag.color
-                    let darkerText = darkerShade(of: tag.color, by: 0.35)
+                    let baseColor = adaptiveColor(for: tag.color)
+                    let darkerText = darkerShade(of: baseColor, by: 0.35)
 
                     Button {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             selectedTag = isSelected ? nil : tag.name
                         }
                     } label: {
-                        VStack(spacing: 6) {
-                            Text(tag.name)
-                                .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
-                                .foregroundColor(
-                                    tag.name == "Golden"
-                                    ? (isSelected ? Color.white : darkerText)
-                                    : (isSelected ? darkerText : Color("MainBlack"))
-                                )
-                        }
-                        .frame(minWidth: 100)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(
-                                    tag.name == "Golden"
-                                    ? baseColor.opacity(isSelected ? 1.0 : 0.35)
-                                    : baseColor.opacity(isSelected ? 1.0 : 0.25)
-                                )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(
-                                    tag.name == "Golden"
-                                    ? baseColor.opacity(isSelected ? 0.55 : 0.35)
-                                    : baseColor.opacity(isSelected ? 0.45 : 0.35),
-                                    lineWidth: 1.5
-                                )
-                        )
-                        .shadow(
-                            color: baseColor.opacity(isSelected ? 0.45 : 0.25),
-                            radius: isSelected ? 8 : 5,
-                            x: 0, y: isSelected ? 4 : 2
-                        )
-                        .scaleEffect(isSelected ? 1.05 : 1.0)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
+                        Text(tag.name)
+                            .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
+                            .foregroundColor(
+                                isSelected ? darkerText : darkerText.opacity(0.9)
+                            )
+                            .frame(minWidth: 120)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(
+                                        colorScheme == .dark
+                                        ? baseColor.opacity(isSelected ? 0.25 : 0.15)
+                                        : baseColor.opacity(isSelected ? 0.9 : 0.3)
+                                    )
+                            )
+
+
+                            .scaleEffect(isSelected ? 1.05 : 1.0)
+                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, compact ? 10 : 16)
+            .padding(.horizontal, compact ? 10 : 6)
             .padding(.vertical, compact ? 6 : 10)
         }
     }
+
+    private func adaptiveColor(for color: Color) -> Color {
+        guard colorScheme == .dark else { return color }
+        return darkerShade(of: color, by: 0.2)
+    }
 }
 
+
 #Preview {
-    VStack(alignment: .leading, spacing: 20) {
-        Text("Select a Tag")
-            .font(.custom("Poppins-Bold", size: 22))
-            .foregroundColor(Color("MainBlack"))
-            .padding(.horizontal)
+    Group {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Light Mode")
+                .font(.custom("Poppins-Bold", size: 22))
+                .foregroundColor(Color("MainBlack"))
+                .padding(.horizontal)
 
-        TagsView(selectedTag: .constant(nil))
-        TagsView(selectedTag: .constant("Golden"))
+            TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
+            TagsView(selectedTag: .constant("Chat"), hasGoldenWords: false)
+        }
+        .padding(.vertical, 30)
+        .background(Color(hexRGB: 0xFFF8E7))
+        .preferredColorScheme(.light)
 
-        Spacer()
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Dark Mode")
+                .font(.custom("Poppins-Bold", size: 22))
+                .foregroundColor(.white)
+                .padding(.horizontal)
+
+            TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
+            TagsView(selectedTag: .constant("Work"), hasGoldenWords: false)
+        }
+        .padding(.vertical, 30)
+        .background(Color.black)
+        .preferredColorScheme(.dark)
     }
-    .padding(.vertical, 30)
-    .background(Color(hexRGB: 0xFFF8E7))
 }

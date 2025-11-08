@@ -9,7 +9,7 @@ struct StatCardView: View {
         VStack(spacing: 6) {
             Text(value)
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(darkerShade(of: color, by: 0.35))
+                .foregroundColor(.statsNumber)
 
             Text(title)
                 .font(.custom("Poppins-Medium", size: 13))
@@ -21,11 +21,7 @@ struct StatCardView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(color.opacity(0.25))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(color.opacity(0.45), lineWidth: 1.5)
-        )
-        .shadow(color: color.opacity(0.25), radius: 6, x: 0, y: 3)
+
         .scaleEffect(1.02)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
     }
@@ -38,5 +34,5 @@ struct StatCardView: View {
         StatCardView(title: "Last 7 days", value: "28", color: Color(hexRGB: 0xB9E3FF))
     }
     .padding()
-    .background(Color(hexRGB: 0xFFF8E7))
+    .background(Color(.appBackground))
 }
