@@ -9,7 +9,7 @@ final class AudioManager {
     private var player: AVAudioPlayer?
 
     private let elevenLabsURL = URL(string: "https://api.elevenlabs.io/v1/text-to-speech/MDLAMJ0jxkpYkjXbmG4t")!
-    private let apiKey = "sk_74ad1c950a9558250e576c5051863efb40250ec61111ae65"
+
 
     func play(word: String) async {
         do {

@@ -12,6 +12,7 @@ struct AddWordButton: View {
 
     var body: some View {
         VStack(spacing: 8) {
+
             Button {
                 if !isLoading && !isDisabled {
                     Task { await performAction() }
@@ -19,7 +20,8 @@ struct AddWordButton: View {
             } label: {
                 ZStack {
                     RoundedRectangle(cornerRadius: 50)
-                        .fill(isDisabled ? .gray : Color(.addButton))
+                        .fill(isDisabled ? Color.gray.opacity(0.4) : Color(.addButton))
+
                     if isLoading {
                         Loader()
                     } else {
@@ -29,12 +31,14 @@ struct AddWordButton: View {
                             .shadow(color: .white.opacity(0.4), radius: 1, x: 0, y: 1)
                     }
                 }
+                .frame(height: 60)                 // ← фиксированная высота кнопки
+                .padding(.vertical, 20)            // ← твой padding 20px
+                .padding(.horizontal, 10)
                 .scaleEffect(isLoading ? 0.98 : 1.0)
                 .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isLoading)
             }
             .disabled(isDisabled || isLoading)
             .buttonStyle(.plain)
-            .padding(.horizontal, 10)
 
             if let message = errorMessage {
                 Text(message)
@@ -69,7 +73,7 @@ struct AddWordButton: View {
 }
 
 #Preview {
-    VStack(spacing: 580) {
+    VStack(spacing: 50) {
         AddWordButton(
             title: "Add Word",
             isDisabled: false

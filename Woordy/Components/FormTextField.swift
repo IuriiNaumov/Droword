@@ -27,7 +27,7 @@ struct FormTextField: View {
                 .foregroundColor(.mainBlack)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(isFocused ? Color.mainBlack : .divider, lineWidth: 1.5)
+                        .stroke(isFocused ? focusedColor : Color.clear, lineWidth: 1)
                 )
                 .cornerRadius(12)
 

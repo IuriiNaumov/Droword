@@ -29,6 +29,7 @@ func translateWithGPT(
     
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+
     
     var request = URLRequest(url: url)
     request.httpMethod = "POST"

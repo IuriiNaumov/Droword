@@ -51,7 +51,6 @@ struct ProfileHeaderView: View {
     private let xpBackground = Color(hex: "#DEF1D0")
     private let xpText = Color(hex: "#3E8A64")
 
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 16) {
@@ -119,24 +118,28 @@ struct ProfileHeaderView: View {
                     .foregroundColor(.mainGrey)
                     .padding(.horizontal, 4)
             }
-            .onAppear {
-                avatarImage = loadAvatarFromDisk()
-                displayProgress = progressRatio
-            }
-            .onChange(of: progressRatio) { _, newValue in
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                    displayProgress = newValue
-                }
-            }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 24)
-                .fill(Color.defaultCard)
+                .fill(Color.cardBackground)
         )
         .padding(.horizontal)
+        .onAppear {
+            avatarImage = loadAvatarFromDisk()
+            displayProgress = progressRatio
+        }
+        .onChange(of: progressRatio) { _, newValue in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                displayProgress = newValue
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .avatarDidChange)) { _ in
+            avatarImage = loadAvatarFromDisk()
+        }
         .sheet(isPresented: $showSettings) {
-            SettingsView().environmentObject(store)
+            SettingsView()
+                .environmentObject(store)
         }
     }
 
@@ -160,6 +163,10 @@ extension Color {
         let b = Double(hexRGB & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
+}
+
+extension Notification.Name {
+    static let avatarDidChange = Notification.Name("avatarDidChange")
 }
 
 #Preview {

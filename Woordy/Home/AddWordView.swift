@@ -39,76 +39,21 @@ struct AddWordView: View {
         "Use it in a sentence"
     ]
 
+
+    private var wordCounterText: String {
+        "\(min(word.count, 40))/40"
+    }
+
     var body: some View {
         ZStack {
             Color(.appBackground).ignoresSafeArea()
 
-            VStack(spacing: 28) {
-                HStack {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundColor(.mainBlack)
-                            .contentShape(Rectangle())
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 12)
-
-                VStack(alignment: .leading, spacing: 32) {
-                    Text("New word")
-                        .font(.custom("Poppins-Bold", size: 38))
-                        .foregroundColor(.mainBlack)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Word or phrase *")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(.mainGrey)
-
-                        FormTextField(
-                            title: wordPlaceholder,
-                            text: $word,
-                            focusedColor: .mainGrey,
-                            maxLength: 40,
-                            showCounter: true
-                        )
-                        .focused($focusedField, equals: .word)
-                        .textInputAutocapitalization(.sentences)
-                        .disableAutocorrection(true)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Translation (optional)")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey).opacity(0.9))
-
-                        FormTextField(
-                            title: translationPlaceholder,
-                            text: $translation,
-                            focusedColor: Color(.mainGrey)
-                        )
-                        .focused($focusedField, equals: .translation)
-
-                        Text("Don’t know the translation? I’ll handle it for you")
-                            .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(Color(.mainGrey))
-                            .padding(.leading, 2)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Comment (optional)")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey).opacity(0.9))
-
-                        FormTextField(
-                            title: commentPlaceholder,
-                            text: $comment,
-                            focusedColor: Color(.mainGrey)
-                        )
-                        .focused($focusedField, equals: .comment)
-                    }
-
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    header
+                    wordSection
+                    translationSection
+                    commentSection
                     Group {
                         if didAppear {
                             TagsView(selectedTag: $selectedTag)
@@ -127,7 +72,7 @@ struct AddWordView: View {
                     .padding(.top, 16)
                 }
                 .padding(.horizontal, 24)
-                .padding(.bottom, 50)
+                .padding(.top, 28)
             }
         }
         .onTapGesture { focusedField = nil }
@@ -141,17 +86,90 @@ struct AddWordView: View {
         }
     }
 
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("New word")
+                .font(.custom("Poppins-Bold", size: 34))
+                .foregroundColor(.mainBlack)
+        }
+    }
+
+    private var wordSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Word or phrase *")
+                    .font(.custom("Poppins-Regular", size: 18))
+                    .foregroundColor(.mainGrey)
+
+                Spacer()
+
+                Text(wordCounterText)
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(Color(.mainGrey).opacity(0.6))
+            }
+
+            FormTextField(
+                title: wordPlaceholder,
+                text: $word,
+                focusedColor: .mainGrey,
+                maxLength: 40,
+                showCounter: false
+            )
+            .focused($focusedField, equals: .word)
+            .textInputAutocapitalization(.sentences)
+            .disableAutocorrection(true)
+        }
+    }
+
+    private var translationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Translation")
+                .font(.custom("Poppins-Regular", size: 18))
+                .foregroundColor(Color(.mainGrey))
+
+            FormTextField(
+                title: translationPlaceholder,
+                text: $translation,
+                focusedColor: Color(.mainGrey)
+            )
+            .focused($focusedField, equals: .translation)
+
+            Text("Don’t know the translation? I’ll handle it for you")
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(Color(.mainGrey).opacity(0.6))
+                .padding(.leading, 2)
+        }
+    }
+
+    private var commentSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Comment")
+                .font(.custom("Poppins-Regular", size: 18))
+                .foregroundColor(Color(.mainGrey).opacity(0.9))
+
+            FormTextField(
+                title: commentPlaceholder,
+                text: $comment,
+                focusedColor: Color(.mainGrey)
+            )
+            .focused($focusedField, equals: .comment)
+        }
+    }
+    
     private func addWord() async {
         guard !isAdding else { return }
+        let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedWord.isEmpty else { return }
+
         isAdding = true
 
         do {
-            let result = try await translateWithGPT(word: word, languageStore: languageStore)
+            let result = try await translateWithGPT(word: trimmedWord, languageStore: languageStore)
             let russianType = translatePartOfSpeechToRussian(result.type)
 
             await MainActor.run {
                 let newWord = StoredWord(
-                    word: word,
+                    word: trimmedWord,
                     type: russianType,
                     translation: result.translation.isEmpty ? translation : result.translation,
                     example: result.example,

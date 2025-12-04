@@ -30,7 +30,7 @@ struct StatsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Your stats")
+            Text("Stats")
                 .font(.custom("Poppins-Bold", size: 24))
                 .foregroundColor(Color(.mainBlack))
 
@@ -44,7 +44,7 @@ struct StatsView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.defaultCard)
+                .fill(.cardBackground)
         )
         .foregroundColor(.mainBlack)
         .padding(.horizontal)

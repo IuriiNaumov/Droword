@@ -11,7 +11,11 @@ struct HomeView: View {
     @State private var lastGoldenTrigger = 0
 
     enum Tab: String, CaseIterable, Identifiable {
-        case home, add, list
+        case home
+        case practice
+        case add
+        case list
+
         var id: String { rawValue }
     }
 
@@ -50,6 +54,10 @@ struct HomeView: View {
                 DictionaryView()
                     .tabItem { icon(for: .list) }
                     .tag(Tab.list)
+                
+                PracticeView()
+                    .tabItem { icon(for: .practice) }
+                    .tag(Tab.practice)
 
                 Color.clear
                     .tabItem { icon(for: .add) }
@@ -119,14 +127,17 @@ struct HomeView: View {
                 }
             }
             .padding(.bottom, 60)
-        }.background(Color(.appBackground))
+        }
+        .background(Color(.appBackground))
     }
 
     @ViewBuilder
     private func icon(for tab: Tab) -> some View {
         switch tab {
         case .home:
-            Image(systemName: "house")
+            Image(systemName: "house.fill")
+        case .practice:
+            Image(systemName: "rectangle.portrait.on.rectangle.portrait")
         case .list:
             Image(systemName: "book.fill")
         case .add:

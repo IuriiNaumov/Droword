@@ -61,8 +61,6 @@ struct SettingsView: View {
                 VStack(spacing: 20) {
                     groupedSettingsSection([
                         SettingItem(icon: "person.circle", color: .green, title: "Personal details"),
-                        SettingItem(icon: "lock.fill", color: .green, title: "Security"),
-                        SettingItem(icon: "creditcard.fill", color: .blue, title: "Destination accounts")
                     ])
 
                     groupedSettingsSection([
@@ -138,7 +136,7 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 20)
-                    .background(Color.defaultCard)
+                    .background(Color.cardBackground)
                 }
                 .buttonStyle(.plain)
             }
@@ -150,7 +148,12 @@ struct SettingsView: View {
     private func saveAvatarToDisk(_ image: UIImage) {
         guard let data = image.jpegData(compressionQuality: 0.9) else { return }
         let url = avatarFileURL()
-        try? data.write(to: url)
+        do {
+            try data.write(to: url)
+            NotificationCenter.default.post(name: .avatarDidChange, object: nil)
+        } catch {
+            print("⚠️ Failed to save avatar:", error.localizedDescription)
+        }
     }
 
     private func loadAvatarFromDisk() -> UIImage? {
