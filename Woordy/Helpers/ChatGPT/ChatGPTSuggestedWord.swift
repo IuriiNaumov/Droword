@@ -68,8 +68,8 @@ func fetchSuggestionsWithTopic(
     languageStore: LanguageStore
 ) async throws -> (topic: String?, suggestions: [SuggestedWord]) {
     
-    let language = languageStore.learningLanguage
-    let translationLanguage = languageStore.nativeLanguage
+    let learningLanguage = languageStore.learningLanguage
+    let nativeLanguage = languageStore.nativeLanguage
 
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
@@ -77,38 +77,45 @@ func fetchSuggestionsWithTopic(
 
 
     let prompt = """
-    You are a vocabulary assistant helping users learn \(language).
+    You are a professional vocabulary assistant.
 
-    Here is my current list of \(language) words: \(wordsList)
+    The user is learning: \(learningLanguage)
+    The user's native language is: \(nativeLanguage)
 
-    1. Identify the general topic or theme of these words (for example: food, travel, emotions, everyday life, etc.).
-    2. Suggest two NEW \(language) words that:
-       - are thematically related to my list,
+    Here is the current list of words in \(learningLanguage):
+    \(wordsList)
+
+    TASK:
+    1. Identify the main topic of these words (one short phrase).
+    2. Suggest exactly TWO new words in \(learningLanguage) that:
+       - are thematically related,
        - are NOT already in the list,
-       - fit the A2–B1 level for language learners,
-       - are commonly used in natural conversation.
+       - are appropriate for A2–B1 learners,
+       - are commonly used in everyday conversation.
 
-    For each suggested word, return:
-    - "word": the \(language) word,
-    - "translation": its translation into \(translationLanguage),
-    - "type": part of speech (noun, verb, adjective, etc.),
-    - "example": one natural \(language) sentence using that word.
+    STRICT RULES:
+    - "word" MUST be strictly in \(learningLanguage).
+    - "example" MUST be strictly in \(learningLanguage).
+    - "translation" MUST be strictly in \(nativeLanguage).
+    - Do NOT mix languages.
+    - Do NOT add explanations.
+    - Respond with valid JSON only.
 
-    Respond ONLY with JSON in this format:
+    Required JSON format:
     {
       "topic": "string",
       "suggestions": [
         {
-          "word": "palabra1",
-          "translation": "перевод1",
-          "type": "noun",
-          "example": "Ejemplo de uso para palabra1."
+          "word": "string",
+          "translation": "string",
+          "type": "noun | verb | adjective | etc.",
+          "example": "string"
         },
         {
-          "word": "palabra2",
-          "translation": "перевод2",
-          "type": "verb",
-          "example": "Ejemplo de uso para palabra2."
+          "word": "string",
+          "translation": "string",
+          "type": "noun | verb | adjective | etc.",
+          "example": "string"
         }
       ]
     }
@@ -120,11 +127,11 @@ func fetchSuggestionsWithTopic(
     request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
     let body: [String: Any] = [
-        "model": "gpt-4o-mini",
-        "temperature": 0.4,
+        "model": "gpt-4.1-mini",
+        "temperature": 0.3,
         "response_format": ["type": "json_object"],
         "messages": [
-            ["role": "system", "content": "You are a helpful assistant that always responds with valid JSON only."],
+            ["role": "system", "content": "You always return strictly valid JSON without explanations."],
             ["role": "user", "content": prompt]
         ]
     ]

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 
 struct LanguageCubePicker: View {
@@ -28,7 +29,9 @@ struct LanguageCubePicker: View {
                         isBlocked: isBlocked
                     ) {
                         if !isBlocked {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            let generator = UIImpactFeedbackGenerator(style: .soft)
+                            generator.impactOccurred()
+                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75, blendDuration: 0.1)) {
                                 selectedLanguage = lang.name
                             }
                         }
@@ -47,8 +50,14 @@ struct LanguageCube: View {
     let isBlocked: Bool
     let onTap: () -> Void
 
+    @State private var internalPressedState: Bool = false
+
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            if !isBlocked {
+                onTap()
+            }
+        }) {
             VStack(spacing: 8) {
                 Text(language.flag)
                     .font(.system(size: 42))
@@ -77,11 +86,54 @@ struct LanguageCube: View {
                 radius: isSelected ? 8 : 4,
                 y: isSelected ? 4 : 2
             )
-            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .scaleEffect(internalPressedState ? 0.96 : (isSelected ? 1.05 : 1.0))
             .opacity(isBlocked ? 0.5 : 1.0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
+            .animation(.spring(response: 0.32, dampingFraction: 0.75), value: isSelected)
+            .overlay(alignment: .topTrailing) {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white, language.color)
+                        .padding(8)
+                        .shadow(radius: 3, y: 2)
+                }
+            }
         }
         .buttonStyle(.plain)
         .disabled(isBlocked)
+        .pressAction { pressed in
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                internalPressedState = pressed
+            }
+        }
+    }
+}
+
+
+extension View {
+    func pressAction(onChange: @escaping (Bool) -> Void) -> some View {
+        modifier(PressActionsModifier(onChange: onChange))
+    }
+}
+
+private struct PressActionsModifier: ViewModifier {
+    @State private var isPressed = false
+    let onChange: (Bool) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                            onChange(true)
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                        onChange(false)
+                    }
+            )
     }
 }

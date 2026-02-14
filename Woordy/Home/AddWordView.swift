@@ -173,6 +173,8 @@ struct AddWordView: View {
                     type: russianType,
                     translation: result.translation.isEmpty ? translation : result.translation,
                     example: result.example,
+                    explanation: result.explanation,
+                    breakdown: result.breakdown,
                     comment: comment,
                     tag: selectedTag,
                     fromLanguage: languageStore.nativeLanguage,

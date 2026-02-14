@@ -15,6 +15,13 @@ struct PracticeView: View {
 
     @State private var currentIndex: Int = 0
 
+    @State private var easeFactors: [UUID: Double] = [:]
+    @State private var intervals: [UUID: Int] = [:]
+    @State private var repetitions: [UUID: Int] = [:]
+    @State private var lastIntervalDays: [UUID: Int] = [:]
+    @State private var learningQueue: [WordCard] = []
+    @State private var showCompletion = false
+
     private var cards: [WordCard] {
         store.words.map { word in
             WordCard(
@@ -27,11 +34,72 @@ struct PracticeView: View {
         }
     }
 
+    private func prepareSession() {
+        learningQueue = cards
+        currentIndex = 0
+        showCompletion = false
+        for c in learningQueue {
+            if easeFactors[c.id] == nil { easeFactors[c.id] = 2.5 }
+            if intervals[c.id] == nil { intervals[c.id] = 0 }
+            if repetitions[c.id] == nil { repetitions[c.id] = 0 }
+            if lastIntervalDays[c.id] == nil { lastIntervalDays[c.id] = 0 }
+        }
+    }
+
+    private enum Rating { case again, hard, good, easy }
+
+    private func scheduleNext(for card: WordCard, rating: Rating) {
+        var ef = easeFactors[card.id] ?? 2.5
+        var reps = repetitions[card.id] ?? 0
+        var ivl = intervals[card.id] ?? 0
+
+        let q: Double
+        switch rating {
+        case .again: q = 1
+        case .hard:  q = 3
+        case .good:  q = 4
+        case .easy:  q = 5
+        }
+
+        ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+        ef = max(1.3, ef)
+
+        if q < 3 {
+            reps = 0
+            ivl = 0
+            reinsert(card, after: 2)
+        } else {
+            reps += 1
+            if reps == 1 {
+                ivl = 1
+            } else if reps == 2 {
+                ivl = 6
+            } else {
+                ivl = Int(round(Double(ivl) * ef))
+                ivl = max(1, ivl)
+            }
+        }
+
+        easeFactors[card.id] = ef
+        repetitions[card.id] = reps
+        intervals[card.id] = ivl
+        lastIntervalDays[card.id] = ivl
+
+        showNextCard()
+    }
+
+    private func reinsert(_ card: WordCard, after positions: Int) {
+        guard currentIndex < learningQueue.count else { return }
+        learningQueue.remove(at: currentIndex)
+        let newIndex = min(currentIndex + positions, learningQueue.count)
+        learningQueue.insert(card, at: newIndex)
+    }
+
     var body: some View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
-            if cards.isEmpty {
+            if learningQueue.isEmpty {
                 emptyState
             } else {
                 VStack(spacing: 24) {
@@ -39,13 +107,15 @@ struct PracticeView: View {
                     Spacer()
 
                     ZStack {
-                        if currentIndex < cards.count {
+                        if currentIndex < learningQueue.count && !showCompletion {
                             WordCardPracticeView(
-                                card: cards[currentIndex],
-                                onForgot: showNextCard,
-                                onKnew: showNextCard
+                                card: learningQueue[currentIndex],
+                                onAgain: { scheduleNext(for: learningQueue[currentIndex], rating: .again) },
+                                onHard:  { scheduleNext(for: learningQueue[currentIndex], rating: .hard) },
+                                onGood:  { scheduleNext(for: learningQueue[currentIndex], rating: .good) },
+                                onEasy:  { scheduleNext(for: learningQueue[currentIndex], rating: .easy) }
                             )
-                            .id(cards[currentIndex].id)
+                            .id(learningQueue[currentIndex].id)
                             .padding(.horizontal, 24)
                             .transition(.opacity.combined(with: .move(edge: .trailing)))
                             .animation(.spring(response: 0.35, dampingFraction: 0.8),
@@ -58,6 +128,9 @@ struct PracticeView: View {
                     Spacer()
                 }
             }
+        }
+        .onAppear {
+            prepareSession()
         }
     }
 
@@ -95,9 +168,9 @@ struct PracticeView: View {
 
     private var completionScreen: some View {
         VStack(spacing: 12) {
-            Text("You're done for now ✨")
+            Text("Session complete ✨")
                 .font(.title2.bold())
-            Text("You’ve reviewed all words for this session.")
+            Text("You’ve reviewed all scheduled words for now.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -109,12 +182,36 @@ struct PracticeView: View {
     }
 }
 
+private struct RatingButton: View {
+    let title: String
+    let bg: Color
+    let fg: Color?
+    let action: () -> Void
+
+    var body: some View {
+        let textColor = fg ?? darkerShade(of: bg, by: 0.4)
+        return Button(action: action) {
+            Text(title)
+                .font(.custom("Poppins-Bold", size: 14))
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(bg)
+                .foregroundColor(textColor)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct WordCardPracticeView: View {
     let card: WordCard
-    @State private var isRevealed = false
 
-    let onForgot: () -> Void
-    let onKnew: () -> Void
+    let onAgain: () -> Void
+    let onHard: () -> Void
+    let onGood: () -> Void
+    let onEasy: () -> Void
+
+    @State private var isPlaying = false
 
     private var backgroundColor: Color {
         switch card.tag {
@@ -127,36 +224,33 @@ struct WordCardPracticeView: View {
         }
     }
 
-    private var clozeExample: String {
-        let placeholder = "_____"
-        let example = card.example
-        guard !example.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return placeholder }
+    private func highlightedExample(example: String, target: String) -> AttributedString {
+        var attr = AttributedString(example)
+        let lowerExample = example.lowercased()
+        let lowerTarget = target.lowercased()
 
-        let target = card.word.lowercased()
-        let punct = CharacterSet.punctuationCharacters
-        var replaced = false
+        guard let range = lowerExample.range(of: lowerTarget) else { return attr }
 
-        let tokens = example.split(separator: " ")
+        let startOK: Bool = {
+            if range.lowerBound == lowerExample.startIndex { return true }
+            let prev = lowerExample.index(before: range.lowerBound)
+            return !lowerExample[prev].isLetter && !lowerExample[prev].isNumber
+        }()
 
-        let processed = tokens.map { token -> String in
-            var core = String(token)
-            var trailing = ""
+        let endOK: Bool = {
+            if range.upperBound == lowerExample.endIndex { return true }
+            let next = range.upperBound
+            return !lowerExample[next].isLetter && !lowerExample[next].isNumber
+        }()
 
-            while let last = core.unicodeScalars.last, punct.contains(last) {
-                trailing.insert(Character(last), at: trailing.startIndex)
-                core = String(core.unicodeScalars.dropLast())
-            }
-
-            if core.lowercased() == target {
-                replaced = true
-                return placeholder + trailing
-            }
-
-            return String(token)
+        if startOK && endOK,
+           let attrStart = AttributedString.Index(range.lowerBound, within: attr),
+           let attrEnd = AttributedString.Index(range.upperBound, within: attr) {
+            let highlightRange = attrStart..<attrEnd
+            attr[highlightRange].foregroundColor = Color(hex: "#FF8C42")
+            attr[highlightRange].font = .custom("Poppins-SemiBold", size: 18)
         }
-
-        return replaced ? processed.joined(separator: " ")
-                        : "\(placeholder) \(example)"
+        return attr
     }
 
     var body: some View {
@@ -169,111 +263,94 @@ struct WordCardPracticeView: View {
             VStack(spacing: 16) {
                 Spacer(minLength: 12)
 
-                Group {
-                    if isRevealed {
-                        Text(card.word)
-                            .font(.custom("Poppins-Bold", size: 38))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(nil)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else {
-                        Text(clozeExample)
-                            .font(.custom("Poppins-SemiBold", size: 24))
+                HStack(spacing: 8) {
+                    Text(card.word)
+                        .font(.custom("Poppins-Bold", size: 38))
+                        .foregroundColor(.mainBlack)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(action: playAudio) {
+                        SoundWavesView(isPlaying: isPlaying)
+                            .frame(width: 24, height: 24)
+                            .tint(.black)
                     }
+                    .buttonStyle(.plain)
+                    .padding(.top, 8)
                 }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)
 
-                Text(card.partOfSpeech.uppercased())
-                    .font(.custom("Poppins-Medium", size: 14))
-                    .foregroundColor(.mainBlack.opacity(0.7))
-
-                if isRevealed {
-                    Text(card.example)
-                        .font(.custom("Poppins-Regular", size: 18))
-                        .padding(.horizontal, 16)
-                }
+                Text(highlightedExample(example: card.example, target: card.word))
+                    .font(.custom("Poppins-Regular", size: 18))
+                    .padding(.horizontal, 16)
 
                 Text(card.translation)
                     .font(.custom("Poppins-Regular", size: 18))
                     .padding(.horizontal, 16)
 
-                Text(isRevealed ? "Tap to hide the answer" : "Tap to reveal the missing word")
+                Text("Helpful: rate how hard it felt to schedule the next review.")
                     .font(.custom("Poppins-Regular", size: 12))
                     .foregroundColor(.mainBlack.opacity(0.45))
 
                 Spacer(minLength: 12)
 
                 HStack(spacing: 12) {
-                    Button {
-                        isRevealed = false
-                        onForgot()
-                    } label: {
-                        Text("I forgot")
-                            .font(.custom("Poppins-Bold", size: 14))
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.iDontKnowButton)
-                            .foregroundColor(darkerShade(of: Color(.red), by: 0.28))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    RatingButton(title: "Again", bg: Color.iDontKnowButton, fg: nil) {
+                        onAgain()
                     }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        isRevealed = false
-                        onKnew()
-                    } label: {
-                        Text("I knew this")
-                            .font(.custom("Poppins-Bold", size: 14))
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.iKnowButton)
-                            .foregroundColor(darkerShade(of: Color(.green), by: 0.28))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    RatingButton(title: "Hard", bg: Color(hex: "#FFE6A7"), fg: nil) {
+                        onHard()
                     }
-                    .buttonStyle(.plain)
+                    RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) {
+                        onGood()
+                    }
+                    RatingButton(title: "Easy", bg: Color(hex: "#D2FFD5"), fg: nil) {
+                        onEasy()
+                    }
                 }
-                .padding(.horizontal, 12)
             }
             .padding(22)
         }
         .frame(maxWidth: 520, maxHeight: 440)
-        .onTapGesture {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                isRevealed.toggle()
-            }
+    }
+
+    private func playAudio() {
+        Task {
+            isPlaying = true
+            await AudioManager.shared.play(word: card.word)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            withAnimation { isPlaying = false }
         }
     }
 }
     
-    #Preview {
-        let store = WordsStore()
-        store.add(
-            StoredWord(
-                word: "No puedo creer lo que está pasando aquí",
-                type: "adjective",
-                translation: "Вкусный",
-                example: "Este plato es muy sabroso y delicioso.",
-                comment: "Моё любимое слово!",
-                tag: "Golden",
-                fromLanguage: "es",
-                toLanguage: "ru"
-            )
+#Preview {
+    let store = WordsStore()
+    store.add(
+        StoredWord(
+            word: "No puedo creer lo que está pasando aquí",
+            type: "adjective",
+            translation: "Вкусный",
+            example: "Este plato es muy sabroso y delicioso.",
+            comment: "Моё любимое слово!",
+            tag: "Golden",
+            fromLanguage: "es",
+            toLanguage: "ru"
         )
-        store.add(
-            StoredWord(
-                word: "chido",
-                type: "adjective",
-                translation: "Круто",
-                example: "La fiesta estuvo chido y muy divertida.",
-                comment: nil,
-                tag: "Chat",
-                fromLanguage: "es",
-                toLanguage: "ru"
-            )
+    )
+    store.add(
+        StoredWord(
+            word: "chido",
+            type: "adjective",
+            translation: "Круто",
+            example: "La fiesta estuvo chido y muy divertida.",
+            comment: nil,
+            tag: "Chat",
+            fromLanguage: "es",
+            toLanguage: "ru"
         )
-        
-        return PracticeView()
-            .environmentObject(store)
-    }
+    )
+    
+    return PracticeView()
+        .environmentObject(store)
+}
 

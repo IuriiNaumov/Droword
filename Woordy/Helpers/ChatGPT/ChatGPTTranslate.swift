@@ -4,6 +4,8 @@ struct GPTTranslationResult: Codable {
     let translation: String
     let example: String
     let type: String
+    let explanation: String?
+    let breakdown: String?
 }
 
 struct OpenAIResponse: Codable {
@@ -24,33 +26,59 @@ func translateWithGPT(
     languageStore: LanguageStore
 ) async throws -> GPTTranslationResult {
     
-    let sourceLang = languageStore.learningLanguage
-    let targetLang = languageStore.nativeLanguage
+    let learningLanguage = languageStore.learningLanguage
+    let nativeLanguage = languageStore.nativeLanguage
     
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
 
-    
+
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
     request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
     let prompt = """
-    Translate the word "\(word)" from \(sourceLang) to \(targetLang).
-    Respond ONLY as pure JSON, with this structure:
+    You are a professional linguist.
+
+    Translate and deeply explain the word "\(word)".
+
+    Source language: \(learningLanguage)
+    Target language: \(nativeLanguage)
+
+    Provide:
+    - translation in \(nativeLanguage)
+    - example sentence in \(learningLanguage)
+    - part of speech
+    - short explanation of meaning in simple terms
+    - structural breakdown if applicable
+
+    BREAKDOWN RULES:
+    - If the language uses kanji (Japanese), explain the meaning of each character.
+    - If the word has prefixes/suffixes (Spanish, English, etc.), explain them.
+    - If the word is compound, explain its parts.
+    - If breakdown is not applicable, return null.
+
+    STRICT:
+    - Output ONLY valid JSON.
+    - No extra text.
+
+    Required JSON:
     {
-      "translation": "<translated word>",
-      "example": "<one natural sentence in \(sourceLang) showing how this word is used, without translation or parentheses>",
-      "type": "<part of speech like noun, verb, adjective>"
+      "translation": "string",
+      "example": "string",
+      "type": "string",
+      "explanation": "string",
+      "breakdown": "string or null"
     }
     """
 
     let body: [String: Any] = [
-        "model": "gpt-4o-mini",
-        "temperature": 0.3,
+        "model": "gpt-4.1-mini",
+        "temperature": 0.2,
+        "response_format": ["type": "json_object"],
         "messages": [
-            ["role": "system", "content": "You are a translation assistant. Output must be valid JSON only."],
+            ["role": "system", "content": "You always return strictly valid JSON without explanations."],
             ["role": "user", "content": prompt]
         ]
     ]

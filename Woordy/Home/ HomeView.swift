@@ -111,7 +111,9 @@ struct HomeView: View {
                                 translation: word.translation,
                                 type: word.type,
                                 example: word.example,
-                                comment: word.comment,
+                                comment: word.breakdown,
+                                explanation: word.explanation,
+                                breakdown: word.comment,
                                 tag: word.tag
                             ) {
                                 store.remove(word)

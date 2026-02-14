@@ -7,6 +7,8 @@ struct WordCardView: View, Equatable {
     let type: String?
     let example: String?
     let comment: String?
+    let explanation: String?
+    let breakdown: String?
     let tag: String?
     let onDelete: () -> Void
 
@@ -15,6 +17,8 @@ struct WordCardView: View, Equatable {
         lhs.translation == rhs.translation &&
         lhs.type == rhs.type &&
         lhs.example == rhs.example &&
+        lhs.explanation == rhs.explanation &&
+        lhs.breakdown == rhs.breakdown &&
         lhs.comment == rhs.comment &&
         lhs.tag == rhs.tag
     }
@@ -22,11 +26,6 @@ struct WordCardView: View, Equatable {
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var highlightedExample: AttributedString = ""
-
-    private static let gold = Color(hexRGB: 0xFFC107)
-    private static let darkGold = Color(hexRGB: 0xE0A600)
-    private static let deepTextGold = Color(hexRGB: 0x7B4B00)
-    private static let midTextGold = Color(hexRGB: 0x966000)
 
     private var isGolden: Bool { tag == "Golden" }
 
@@ -43,7 +42,9 @@ struct WordCardView: View, Equatable {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+
             if isExpanded {
+
                 if let tag = tag {
                     Text(tag)
                         .font(.custom("Poppins-Medium", size: 14))
@@ -54,25 +55,12 @@ struct WordCardView: View, Equatable {
                         .foregroundColor(.black)
                 }
 
-                HStack(alignment: .center, spacing: 8) {
-                    Text(word)
-                        .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(.mainBlack)
-
-                    Spacer()
-                    Button(action: playAudio) {
-                        SoundWavesView(isPlaying: isPlaying)
-                            .frame(width: 24, height: 24)
-                            .tint(.black)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 8)
-                }
+                headerRow
 
                 if let type = type {
                     Text(type)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(isGolden ? Self.midTextGold.opacity(0.8) : Color(.mainGrey))
+                        .foregroundColor(Color(.mainGrey))
                 }
 
                 if let translation = translation {
@@ -85,13 +73,53 @@ struct WordCardView: View, Equatable {
                     Text(highlightedExample)
                         .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(.mainBlack)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                
+                if let explanation = explanation {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(explanation)
+                            .font(.custom("Poppins-Regular", size: 15))
+                            .foregroundColor(.mainBlack)
+                    }
+                    .padding(.top, 6)
+                }
+
+                if let breakdown = breakdown {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(breakdown)
+                            .font(.custom("Poppins-Regular", size: 15))
+                            .foregroundColor(.mainBlack)
+                    }
+                    .padding(.top, 6)
                 }
 
                 if let comment = comment, !comment.isEmpty {
                     Text(comment)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(isGolden ? Self.midTextGold.opacity(0.9) : Color(.mainGrey))
+                        .foregroundColor(Color(.mainGrey))
                         .padding(.top, 4)
+                }
+                
+
+                HStack {
+                    Spacer()
+                    Button(action: onDelete) {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.red)
+                            .padding(.top, 8)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+            } else {
+
+                headerRow
+
+                if let translation = translation {
+                    Text(translation)
+                        .font(.custom("Poppins-Regular", size: 16))
+                        .foregroundColor(.mainBlack)
                 }
 
                 HStack {
@@ -99,60 +127,22 @@ struct WordCardView: View, Equatable {
                     Button(action: onDelete) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
-                            .padding(.trailing, 2)
                             .padding(.top, 8)
                     }
                     .buttonStyle(.plain)
                 }
-
-            } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .center, spacing: 8) {
-                        Text(word)
-                            .font(.custom("Poppins-Bold", size: 22))
-                            .foregroundColor(.mainBlack)
-                        Spacer()
-                        Button(action: playAudio) {
-                            SoundWavesView(isPlaying: isPlaying)
-                                .frame(width: 24, height: 24)
-                                .tint(.black)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 8)
-                    }
-
-                    if let translation = translation {
-                        Text(translation)
-                            .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
-                            .multilineTextAlignment(.leading)
-                    }
-
-                    HStack {
-                        Spacer()
-                        Button(action: onDelete) {
-                            Image(systemName: "trash.fill")
-                                .foregroundColor(.red)
-                                .padding(.trailing, 2)
-                                .padding(.top, 8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
             }
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(backgroundColor)
         .cornerRadius(16)
-        .scaleEffect(isExpanded ? 1.02 : 0.98)
-        .animation(.interpolatingSpring(stiffness: 100, damping: 12), value: isExpanded)
+        .padding(.top, 12)
         .onTapGesture {
             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
                 isExpanded.toggle()
             }
         }
-        .padding(.top, 12)
         .onAppear {
             if let example = example {
                 highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
@@ -169,12 +159,34 @@ struct WordCardView: View, Equatable {
         }
     }
 
+    private var headerRow: some View {
+        HStack(alignment: .top, spacing: 8) {
+
+            Text(word)
+                .font(.custom("Poppins-Bold", size: 24))
+                .foregroundColor(.mainBlack)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
+
+            Button(action: playAudio) {
+                SoundWavesView(isPlaying: isPlaying)
+                    .frame(width: 24, height: 24)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 6)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     private func playAudio() {
         Task {
             isPlaying = true
             await AudioManager.shared.play(word: word)
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-            withAnimation { isPlaying = false }
+            withAnimation {
+                isPlaying = false
+            }
         }
     }
 
@@ -187,36 +199,45 @@ struct WordCardView: View, Equatable {
         return attributedString
     }
 }
-
 #Preview {
     VStack(spacing: 20) {
+        
         WordCardView(
             word: "Sabroso",
             translation: "Вкусный",
             type: "adjective",
             example: "Este plato es muy sabroso y delicioso.",
             comment: "Мое любимое слово!",
+            explanation: "Используется для описания вкусной еды или напитков.",
+            breakdown: "Происходит от sabor (вкус) + -oso (обладающий качеством)",
             tag: "Golden",
             onDelete: {}
         )
+        
         WordCardView(
             word: "Chido",
             translation: "Круто",
             type: "adjective",
             example: "La fiesta estuvo chido y divertida.",
             comment: nil,
+            explanation: "Мексиканский разговорный термин, означающий что-то классное или приятное.",
+            breakdown: nil,
             tag: "Slang",
             onDelete: {}
         )
+        
         WordCardView(
-            word: "Chido",
-            translation: "Круто",
-            type: "adjective",
-            example: "La fiesta estuvo chido y divertida.",
+            word: "食べ物",
+            translation: "Еда",
+            type: "noun",
+            example: "この食べ物はとてもおいしいです。",
             comment: nil,
+            explanation: "Общее слово для обозначения еды или продуктов питания.",
+            breakdown: "食 (есть) + べる (глагольная основа) + 物 (вещь) — буквально: 'то, что едят'",
             tag: "Chat",
             onDelete: {}
         )
+        
     }
     .padding()
 }

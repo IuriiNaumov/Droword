@@ -2,48 +2,77 @@ import SwiftUI
 
 struct LanguageSelectionView: View {
     @EnvironmentObject var languageStore: LanguageStore
-    @Environment(\.dismiss) private var dismiss
-
+    
+    @State private var showToast = false
+    @State private var toastType: AppToastType = .success
+    @State private var toastMessage = ""
+    @State private var toastID = UUID()
+    
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 30) {
-                Text("Language Preferences")
-                    .font(.custom("Poppins-Bold", size: 24))
-                    .foregroundColor(.mainBlack)
-                    .padding(.top, 20)
-
-                LanguageCubePicker(
-                    selectedLanguage: $languageStore.nativeLanguage,
-                    title: "I speak",
-                    languages: LanguageSelectionView.availableLanguages
-                )
-
-                LanguageCubePicker(
-                    selectedLanguage: $languageStore.learningLanguage,
-                    title: "I’m learning",
-                    languages: LanguageSelectionView.availableLanguages,
-                    blockedLanguage: languageStore.nativeLanguage
-                )
-
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Save and go back")
-                        .font(.custom("Poppins-SemiBold", size: 16))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 60)
-                        .background(Color(hex: "#6F68A8"))
-                        .clipShape(Capsule())
-                        .shadow(color: Color(hex: "#6F68A8").opacity(0.3), radius: 6, y: 3)
+        ZStack {
+            
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 30) {
+                    
+                    Text("Language Preferences")
+                        .font(.custom("Poppins-Bold", size: 24))
+                        .foregroundColor(.mainBlack)
+                        .padding(.top, 20)
+                    
+                    LanguageCubePicker(
+                        selectedLanguage: $languageStore.nativeLanguage,
+                        title: "I speak",
+                        languages: Self.availableLanguages,
+                        blockedLanguage: languageStore.learningLanguage
+                    )
+                    .onChange(of: languageStore.nativeLanguage) { _ in
+                        showToastForChange()
+                    }
+                    
+                    LanguageCubePicker(
+                        selectedLanguage: $languageStore.learningLanguage,
+                        title: "I’m learning",
+                        languages: Self.availableLanguages,
+                        blockedLanguage: languageStore.nativeLanguage
+                    )
+                    .onChange(of: languageStore.learningLanguage) { _ in
+                        showToastForChange()
+                    }
                 }
-                .padding(.top, 30)
+                .padding(.bottom, 50)
             }
-            .padding(.bottom, 50)
+            .background(Color.appBackground.ignoresSafeArea())
+            
+            if showToast {
+                AppToastView(
+                    type: toastType,
+                    message: toastMessage,
+                    duration: 2
+                )
+                .id(toastID)
+            }
         }
-        .background(Color.appBackground.ignoresSafeArea())
     }
-
+    
+    private func showToastForChange() {
+        let native = languageStore.nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
+        let learning = languageStore.learningLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if native.isEmpty || learning.isEmpty {
+            toastType = .success
+            toastMessage = "Language updated"
+        } else if native == learning {
+            toastType = .error
+            toastMessage = "Oops! Something went wrong."
+        } else {
+            toastType = .success
+            toastMessage = "Language updated"
+        }
+        
+        toastID = UUID()
+        showToast = true
+    }
+    
     static let availableLanguages = [
         LanguageOption(name: "English", flag: "🇬🇧", color: Color(hex: "#CDEBF1")),
         LanguageOption(name: "Español", flag: "🇲🇽", color: Color(hex: "#DEF1D0")),
@@ -53,6 +82,7 @@ struct LanguageSelectionView: View {
         LanguageOption(name: "Italiano", flag: "🇮🇹", color: Color(hex: "#D2FFD5")),
         LanguageOption(name: "Português", flag: "🇧🇷", color: Color(hex: "#FFF4B0")),
         LanguageOption(name: "한국어", flag: "🇰🇷", color: Color(hex: "#D2E0FF")),
-        LanguageOption(name: "中文", flag: "🇨🇳", color: Color(hex: "#FFD5D2"))
+        LanguageOption(name: "中文", flag: "🇨🇳", color: Color(hex: "#FFD5D2")),
+        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color(hex: "#DDE8FF"))
     ]
 }

@@ -39,7 +39,8 @@ struct DictionaryView: View {
                                 translation: word.translation,
                                 type: word.type,
                                 example: word.example,
-                                comment: word.comment,
+                                comment: word.comment, explanation: word.explanation,
+                                breakdown: word.breakdown,
                                 tag: word.tag
                             ) {
                                 store.remove(word)
