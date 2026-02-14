@@ -10,6 +10,7 @@ final class AudioManager {
 
     private let elevenLabsURL = URL(string: "https://api.elevenlabs.io/v1/text-to-speech/MDLAMJ0jxkpYkjXbmG4t")!
 
+
     func play(word: String) async {
         do {
             let data = try await fetchAudioData(for: word)
@@ -17,7 +18,7 @@ final class AudioManager {
         } catch {
         }
     }
-
+  
     private func fetchAudioData(for text: String) async throws -> Data {
         var request = URLRequest(url: elevenLabsURL)
         request.httpMethod = "POST"

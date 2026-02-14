@@ -177,8 +177,8 @@ struct AddWordView: View {
                     breakdown: result.breakdown,
                     comment: comment,
                     tag: selectedTag,
-                    fromLanguage: languageStore.nativeLanguage,
-                    toLanguage: languageStore.learningLanguage
+                    fromLanguage: languageStore.learningLanguage,
+                    toLanguage: languageStore.nativeLanguage
                 )
                 store.add(newWord)
                 dismiss()

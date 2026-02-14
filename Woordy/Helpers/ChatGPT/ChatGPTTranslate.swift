@@ -32,7 +32,7 @@ func translateWithGPT(
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
 
-
+   
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -46,30 +46,25 @@ func translateWithGPT(
     Source language: \(learningLanguage)
     Target language: \(nativeLanguage)
 
-    Provide:
-    - translation in \(nativeLanguage)
-    - example sentence in \(learningLanguage)
-    - part of speech
-    - short explanation of meaning in simple terms
-    - structural breakdown if applicable
+    LANGUAGE RULES (STRICT):
 
-    BREAKDOWN RULES:
-    - If the language uses kanji (Japanese), explain the meaning of each character.
-    - If the word has prefixes/suffixes (Spanish, English, etc.), explain them.
-    - If the word is compound, explain its parts.
-    - If breakdown is not applicable, return null.
+    - "translation" MUST be strictly in \(nativeLanguage).
+    - "type" MUST be strictly in \(nativeLanguage).
+    - "example" MUST be strictly in \(learningLanguage).
+    - "explanation" MUST be strictly in \(nativeLanguage).
+    - "breakdown" MUST be strictly in \(nativeLanguage).
+    - Do NOT mix languages inside one field.
 
-    STRICT:
-    - Output ONLY valid JSON.
-    - No extra text.
+    If breakdown is not applicable, set it to null.
 
-    Required JSON:
+    Return ONLY valid JSON in this exact format:
+
     {
-      "translation": "string",
-      "example": "string",
-      "type": "string",
-      "explanation": "string",
-      "breakdown": "string or null"
+      "translation": "...",
+      "example": "...",
+      "type": "...",
+      "explanation": "...",
+      "breakdown": null or "..."
     }
     """
 

@@ -14,7 +14,6 @@ struct PracticeView: View {
     @EnvironmentObject private var store: WordsStore
 
     @State private var currentIndex: Int = 0
-
     @State private var easeFactors: [UUID: Double] = [:]
     @State private var intervals: [UUID: Int] = [:]
     @State private var repetitions: [UUID: Int] = [:]
@@ -148,11 +147,6 @@ struct PracticeView: View {
                 .foregroundColor(.secondary.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-
-            Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary.opacity(0.4))
-                .padding(.top, 8)
         }
     }
 
@@ -263,20 +257,21 @@ struct WordCardPracticeView: View {
             VStack(spacing: 16) {
                 Spacer(minLength: 12)
 
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     Text(card.word)
                         .font(.custom("Poppins-Bold", size: 38))
                         .foregroundColor(.mainBlack)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
+
                     Button(action: playAudio) {
                         SoundWavesView(isPlaying: isPlaying)
                             .frame(width: 24, height: 24)
                             .tint(.black)
                     }
                     .buttonStyle(.plain)
-                    .padding(.top, 8)
+                    .padding(.top, 6)
                 }
 
                 Text(highlightedExample(example: card.example, target: card.word))
@@ -303,7 +298,11 @@ struct WordCardPracticeView: View {
                     RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) {
                         onGood()
                     }
-                    RatingButton(title: "Easy", bg: Color(hex: "#D2FFD5"), fg: nil) {
+                    RatingButton(
+                        title: "Easy",
+                        bg: Color(hex: "#B7E4C7"),
+                        fg: Color(hex: "#5F8F6B")
+                    ) {
                         onEasy()
                     }
                 }
@@ -353,4 +352,3 @@ struct WordCardPracticeView: View {
     return PracticeView()
         .environmentObject(store)
 }
-
