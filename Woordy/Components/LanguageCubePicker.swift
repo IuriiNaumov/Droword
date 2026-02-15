@@ -86,14 +86,6 @@ struct LanguageCube: View {
             .scaleEffect(internalPressedState ? 0.96 : (isSelected ? 1.05 : 1.0))
             .opacity(isBlocked ? 0.5 : 1.0)
             .animation(.spring(response: 0.32, dampingFraction: 0.75), value: isSelected)
-            .overlay(alignment: .topTrailing) {
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(.white, language.color)
-                        .padding(8)
-                }
-            }
         }
         .buttonStyle(.plain)
         .disabled(isBlocked)

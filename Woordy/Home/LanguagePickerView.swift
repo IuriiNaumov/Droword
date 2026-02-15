@@ -60,13 +60,13 @@ struct LanguageSelectionView: View {
         
         if native.isEmpty || learning.isEmpty {
             toastType = .success
-            toastMessage = "Language updated"
+            toastMessage = "Language has been updated"
         } else if native == learning {
             toastType = .error
             toastMessage = "Oops! Something went wrong."
         } else {
             toastType = .success
-            toastMessage = "Language updated"
+            toastMessage = "Language has been updated"
         }
         
         toastID = UUID()
@@ -107,6 +107,6 @@ struct LanguageSelectionView: View {
 private func mockLanguageStore() -> LanguageStore {
     let store = LanguageStore()
     store.nativeLanguage = "Русский"
-    store.learningLanguage = "Español"
+    store.learningLanguage = "日本語"
     return store
 }

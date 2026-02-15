@@ -79,32 +79,46 @@ struct ToastView: View {
     }
 }
 
-#Preview {
-    Group {
-        
+#Preview("Light - Success & Error") {
+    ZStack(alignment: .top) {
+        Color(hexRGB: 0xFFF8E7)
+            .ignoresSafeArea()
+
         VStack(spacing: 30) {
             Text("Light Mode")
                 .font(.custom("Poppins-Bold", size: 22))
                 .foregroundColor(Color("MainBlack"))
-            
-            ToastView(type: .success, message: nil)
-            ToastView(type: .error, message: nil)
+                .padding(.top, 40)
+
+            // Show toasts without auto-dismiss in preview
+            ToastView(type: .success, message: nil, duration: 60)
+            ToastView(type: .error, message: nil, duration: 60)
+
+            Spacer()
         }
-        .padding(.top, 40)
-        .background(Color(hexRGB: 0xFFF8E7))
-        .preferredColorScheme(.light)
-        
-        
+        .padding(.horizontal)
+    }
+    .preferredColorScheme(.light)
+}
+
+#Preview("Dark - Success & Error") {
+    ZStack(alignment: .top) {
+        Color.black
+            .ignoresSafeArea()
+
         VStack(spacing: 30) {
             Text("Dark Mode")
                 .font(.custom("Poppins-Bold", size: 22))
                 .foregroundColor(.white)
-            
-            ToastView(type: .success, message: nil)
-            ToastView(type: .error, message: nil)
+                .padding(.top, 40)
+
+            // Show toasts without auto-dismiss in preview
+            ToastView(type: .success, message: nil, duration: 60)
+            ToastView(type: .error, message: nil, duration: 60)
+
+            Spacer()
         }
-        .padding(.top, 40)
-        .background(Color.black)
-        .preferredColorScheme(.dark)
+        .padding(.horizontal)
     }
+    .preferredColorScheme(.dark)
 }
