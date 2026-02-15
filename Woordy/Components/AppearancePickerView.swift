@@ -72,12 +72,12 @@ private struct AppearanceCard: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.green : Color.mainGrey.opacity(0.35), lineWidth: 2)
+                        .stroke(isSelected ? Color("MainGreen") : Color.mainGrey.opacity(0.35), lineWidth: 2)
                         .frame(width: 28, height: 28)
 
                     if isSelected {
                         Circle()
-                            .fill(Color.green)
+                            .fill(Color("MainGreen"))
                             .frame(width: 28, height: 28)
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
 

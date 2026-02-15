@@ -7,7 +7,7 @@ enum AppToastType {
     var background: Color {
         switch self {
         case .success:
-            return Color.iKnowButton
+            return Color("MainGreen")
         case .error:
             return Color.iDontKnowButton
         }
@@ -16,7 +16,7 @@ enum AppToastType {
     var textColor: Color {
         switch self {
         case .success:
-            return darkerShade(of: Color.iKnowButton, by: 0.4)
+            return darkerShade(of: Color("MainGreen"), by: 0.4)
         case .error:
             return darkerShade(of: Color.iDontKnowButton, by: 0.4)
         }
@@ -46,12 +46,12 @@ struct ToastView: View {
                 HStack(spacing: 10) {
                     
                     Image(systemName: type == .success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(type.textColor)
+                        .foregroundColor(.white)
                         .font(.system(size: 18, weight: .semibold))
                     
                     Text(message ?? type.text)
                         .font(.custom("Poppins-Medium", size: 15))
-                        .foregroundColor(type.textColor)
+                        .foregroundColor(.white)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
@@ -122,3 +122,4 @@ struct ToastView: View {
     }
     .preferredColorScheme(.dark)
 }
+

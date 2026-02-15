@@ -7,8 +7,20 @@ final class AudioManager {
     private init() {}
 
     private var player: AVAudioPlayer?
+    private let voiceKey = "ttsVoice"
+    private let rateKey = "ttsRate"
 
-    private let elevenLabsURL = URL(string: "https://api.elevenlabs.io/v1/text-to-speech/MDLAMJ0jxkpYkjXbmG4t")!
+    private var currentVoice: String {
+        UserDefaults.standard.string(forKey: voiceKey) ?? "coral"
+    }
+
+    private var currentRate: Float {
+        let val = UserDefaults.standard.double(forKey: rateKey)
+        return val == 0 ? 1.0 : Float(val)
+    }
+
+    private let openAITTSEndpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
+
 
 
     func play(word: String) async {
@@ -24,32 +36,30 @@ final class AudioManager {
     }
   
     private func fetchAudioData(for text: String) async throws -> Data {
-        var request = URLRequest(url: elevenLabsURL)
+        var request = URLRequest(url: openAITTSEndpoint)
         request.httpMethod = "POST"
-        request.addValue(apiKey, forHTTPHeaderField: "xi-api-key")
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue("audio/mpeg", forHTTPHeaderField: "Accept")
 
         let body: [String: Any] = [
-            "text": text,
-            "voice_settings": [
-                "stability": 0.4,
-                "similarity_boost": 0.9
-            ],
-            "model_id": "eleven_multilingual_v2",
-            "output_format": "mp3_44100_128"
+            "model": "gpt-4o-mini-tts",
+            "input": text,
+            "voice": currentVoice,
+            "format": "mp3"
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw NSError(domain: "ElevenLabs", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
+            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
         }
         if http.statusCode != 200 {
             let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            print("ElevenLabs HTTP error", http.statusCode, errorText)
-            throw NSError(domain: "ElevenLabs", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
+            print("OpenAI HTTP error", http.statusCode, errorText)
+            throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
         }
+
         return data
     }
 
@@ -61,6 +71,8 @@ final class AudioManager {
         do {
             player = try AVAudioPlayer(data: data)
             player?.prepareToPlay()
+            player?.enableRate = true
+            player?.rate = currentRate
             let ok = player?.play() ?? false
             print("AVAudioPlayer started:", ok)
             if !ok {

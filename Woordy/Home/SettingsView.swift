@@ -6,12 +6,15 @@ struct SettingsView: View {
     @EnvironmentObject private var languageStore: LanguageStore
 
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+    @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
+    @AppStorage("ttsRate") private var ttsRate: Double = 1.0
 
     @State private var avatarImage: UIImage?
     @State private var showPhotoPicker = false
     @State private var selectedItem: PhotosPickerItem?
     @State private var showLanguagePicker = false
     @State private var showAppearancePicker = false
+    @State private var showVoiceSheet = false
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .light
@@ -50,7 +53,7 @@ struct SettingsView: View {
                             Spacer()
                             HStack {
                                 Spacer()
-                                Image(systemName: "camera.fill")
+                                Image(systemName: "pencil")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(.white)
                                     .padding(6)
@@ -60,6 +63,27 @@ struct SettingsView: View {
                             }
                         }
                         .frame(width: 92, height: 92)
+                        
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Button {
+                                    deleteAvatarFromDisk()
+                                    avatarImage = nil
+                                } label: {
+                                    Image(systemName: "trash.fill")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(6)
+                                        .background(Color.mainBlack.opacity(0.6))
+                                        .clipShape(Circle())
+                                }
+                                .opacity(avatarImage == nil ? 0.0 : 1.0)
+                                Spacer()
+                            }
+                        }
+                        .frame(width: 92, height: 92)
+                        .offset(x: -4, y: 4)
                     }
                     .onTapGesture { showPhotoPicker = true }
 
@@ -71,16 +95,18 @@ struct SettingsView: View {
 
                 VStack(spacing: 20) {
                     groupedSettingsSection([
-                        SettingItem(icon: "person.circle", color: .green, title: "Personal details"),
+                        SettingItem(icon: "person.circle", color: Color("MainGreen"), title: "Personal details"),
                     ])
 
                     groupedSettingsSection([
                         SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
                         SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
-                        SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications")
+                        SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications"),
+                        SettingItem(icon: "mic.fill", color: .blue, title: "Voice & Speech")
                     ]) { item in
                         if item.title == "Language" { showLanguagePicker = true }
                         if item.title == "Appearance" { showAppearancePicker = true }
+                        if item.title == "Voice & Speech" { showVoiceSheet = true }
                     }
                 }
 
@@ -101,6 +127,13 @@ struct SettingsView: View {
                 .presentationBackground(Color.appBackground)
                 .preferredColorScheme(appearance.colorScheme)
                 .id(storedAppearance)
+        }
+        .sheet(isPresented: $showVoiceSheet) {
+            VoiceAndSpeechSettingsView()
+                .preferredColorScheme(appearance.colorScheme)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .background(Color.appBackground.ignoresSafeArea())
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { newItem in
@@ -182,9 +215,67 @@ struct SettingsView: View {
         return image
     }
 
+    private func deleteAvatarFromDisk() {
+        let url = avatarFileURL()
+        do {
+            if FileManager.default.fileExists(atPath: url.path) {
+                try FileManager.default.removeItem(at: url)
+                NotificationCenter.default.post(name: .avatarDidChange, object: nil)
+            }
+        } catch {
+            print("⚠️ Failed to delete avatar:", error.localizedDescription)
+        }
+    }
+
     private func avatarFileURL() -> URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         return docs.appendingPathComponent("user_avatar.jpg")
+    }
+
+    private struct VoiceAndSpeechSettingsView: View {
+        @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
+        @AppStorage("ttsRate") private var ttsRate: Double = 1.0
+
+        var body: some View {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Voice & Speech")
+                        .font(.custom("Poppins-Bold", size: 26))
+                        .foregroundColor(.mainBlack)
+                        .padding(.horizontal)
+                        .padding(.top, 12)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    VoicePickerView(
+                        selectedKey: $ttsVoice,
+                        options: [
+                            VoiceOption(key: "coral", title: "Coral", description: "soft, neutral"),
+                            VoiceOption(key: "alloy", title: "Alloy", description: "friendly, warm"),
+                            VoiceOption(key: "verse", title: "Verse", description: "energetic, expressive"),
+                            VoiceOption(key: "sage", title: "Sage", description: "calm, confident")
+                        ]
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Speed")
+                                .font(.custom("Poppins-Medium", size: 16))
+                                .foregroundColor(.mainBlack)
+                            Spacer()
+                            Text(String(format: "%.2fx", ttsRate))
+                                .font(.custom("Poppins-Regular", size: 14))
+                                .foregroundColor(.mainGrey)
+                        }
+                        .padding(.horizontal)
+
+                        Slider(value: $ttsRate, in: 0.75...1.5, step: 0.05)
+                            .padding(.horizontal)
+                    }
+                }
+                .padding(.vertical, 20)
+            }
+            .background(Color.appBackground.ignoresSafeArea())
+        }
     }
 }
 
@@ -215,3 +306,4 @@ struct SettingItem: Identifiable {
         .environmentObject(LanguageStore())
         .preferredColorScheme(.dark)
 }
+

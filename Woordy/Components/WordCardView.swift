@@ -241,3 +241,4 @@ struct WordCardView: View, Equatable {
     }
     .padding()
 }
+

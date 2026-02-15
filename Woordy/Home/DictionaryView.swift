@@ -8,6 +8,7 @@ struct DictionaryView: View {
     @State private var cachedTag: String? = nil
     @State private var cachedWords: [StoredWord] = []
     @State private var cachedFiltered: [StoredWord] = []
+    @State private var showAddTag = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
     private var horizontalPadding: CGFloat { 20 }
@@ -21,7 +22,7 @@ struct DictionaryView: View {
                     .padding(.top, 8)
                     .padding(.horizontal, horizontalPadding)
 
-                TagsView(selectedTag: $selectedTag)
+                TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true })
                     .padding(.horizontal, horizontalPadding)
 
                 LazyVStack(spacing: 8) {
@@ -51,7 +52,13 @@ struct DictionaryView: View {
                 .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, 40)
             }
-        }.background(Color(.appBackground))
+        }
+        .background(Color(.appBackground))
+        .sheet(isPresented: $showAddTag) {
+            AddTagView()
+                .presentationDetents([.fraction(0.35)])
+                .presentationDragIndicator(.visible)
+        }
         .onAppear {
             recalculateFiltered()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {

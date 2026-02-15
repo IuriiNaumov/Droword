@@ -2,19 +2,24 @@ import SwiftUI
 
 struct TagsView: View {
     @Binding var selectedTag: String?
+    @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
     var hasGoldenWords: Bool = false
+    var onAddTag: (() -> Void)? = nil
+    @State private var isDeleteMode: Bool = false
 
-    static let allTags: [(name: String, color: Color)] = [
-        ("Golden", Color(hexRGB: 0xFCDD9D)),
-        ("Chat",   Color(hexRGB: 0xCDEBF1)),
-        ("Travel", Color(hexRGB: 0xDEF1D0)),
-        ("Street", Color(hexRGB: 0xF8E5E5)),
-        ("Movies", Color(hexRGB: 0xCBCEEA)),
-    ]
+    var allTags: [(name: String, color: Color)] {
+        TagStore.shared.tags.map { ($0.name, Color(fromHexString: $0.colorHex) ?? Color.gray) } + [
+            ("Golden", Color(hexRGB: 0xFCDD9D)),
+            ("Chat",   Color(hexRGB: 0xCDEBF1)),
+            ("Travel", Color(hexRGB: 0xDEF1D0)),
+            ("Street", Color(hexRGB: 0xF8E5E5)),
+            ("Movies", Color(hexRGB: 0xCBCEEA)),
+        ]
+    }
 
     var visibleTags: [(name: String, color: Color)] {
-        Self.allTags.filter { tag in
+        allTags.filter { tag in
             tag.name == "Golden" ? hasGoldenWords : true
         }
     }
@@ -43,16 +48,77 @@ struct TagsView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(baseColor.opacity(isSelected ? 1.0 : 0.35), lineWidth: isSelected ? 1.4 : 1.0)
+                                    .stroke(baseColor.opacity(0.0), lineWidth: 0)
                             )
                             .scaleEffect(isSelected ? 1.06 : 1.0)
                             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
+                            .modifier(WiggleEffect(isActive: isDeleteMode && TagStore.shared.tags.contains(where: { $0.name == tag.name })))
+                            .overlay(alignment: .topTrailing) {
+                                if isDeleteMode, TagStore.shared.tags.contains(where: { $0.name == tag.name }) {
+                                    Button(action: {
+                                        TagStore.shared.removeTag(named: tag.name)
+                                    }) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.red)
+                                                .frame(width: 20, height: 20)
+                                            Image(systemName: "trash.fill")
+                                                .foregroundColor(.white)
+                                                .font(.system(size: 11, weight: .bold))
+                                        }
+                                    }
+                                    .offset(x: 6, y: -6)
+                                    .buttonStyle(.plain)
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
+
+                Button(action: { onAddTag?() }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Circle().fill(Color.black))
+                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: { withAnimation { isDeleteMode.toggle() } }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, compact ? 10 : 6)
             .padding(.vertical, compact ? 6 : 10)
+        }
+    }
+}
+
+private struct WiggleEffect: ViewModifier {
+    let isActive: Bool
+    @State private var angle: Double = 0
+    func body(content: Content) -> some View {
+        content
+            .rotationEffect(.degrees(isActive ? sin(angle) * 2.0 : 0))
+            .animation(.linear(duration: 0.12).repeatForever(autoreverses: true), value: isActive ? angle : 0)
+            .onAppear { if isActive { start() } }
+            .onChange(of: isActive) { newValue in
+                if newValue { start() }
+            }
+    }
+    private func start() {
+        angle = 0
+        withAnimation(.linear(duration: 0.12).repeatForever(autoreverses: true)) {
+            angle = .pi * 2
         }
     }
 }
