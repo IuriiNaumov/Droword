@@ -44,7 +44,7 @@ struct LanguageSelectionView: View {
             .background(Color.appBackground.ignoresSafeArea())
             
             if showToast {
-                AppToastView(
+                ToastView(
                     type: toastType,
                     message: toastMessage,
                     duration: 2
@@ -85,4 +85,28 @@ struct LanguageSelectionView: View {
         LanguageOption(name: "中文", flag: "🇨🇳", color: Color(hex: "#FFD5D2")),
         LanguageOption(name: "日本語", flag: "🇯🇵", color: Color(hex: "#DDE8FF"))
     ]
+}
+
+#Preview {
+    LanguageSelectionView()
+        .environmentObject(mockLanguageStore())
+}
+
+#Preview("Light") {
+    LanguageSelectionView()
+        .environmentObject(mockLanguageStore())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    LanguageSelectionView()
+        .environmentObject(mockLanguageStore())
+        .preferredColorScheme(.dark)
+}
+
+private func mockLanguageStore() -> LanguageStore {
+    let store = LanguageStore()
+    store.nativeLanguage = "Русский"
+    store.learningLanguage = "Español"
+    return store
 }

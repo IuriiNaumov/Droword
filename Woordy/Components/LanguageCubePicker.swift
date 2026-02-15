@@ -1,14 +1,13 @@
 import SwiftUI
 import UIKit
 
-
 struct LanguageCubePicker: View {
     @Binding var selectedLanguage: String
     var title: String
     var languages: [LanguageOption]
     var blockedLanguage: String? = nil
 
-    let columns = [
+    private let columns = [
         GridItem(.adaptive(minimum: 110), spacing: 16)
     ]
 
@@ -31,7 +30,7 @@ struct LanguageCubePicker: View {
                         if !isBlocked {
                             let generator = UIImpactFeedbackGenerator(style: .soft)
                             generator.impactOccurred()
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75, blendDuration: 0.1)) {
+                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
                                 selectedLanguage = lang.name
                             }
                         }
@@ -52,6 +51,12 @@ struct LanguageCube: View {
 
     @State private var internalPressedState: Bool = false
 
+    private var textColor: Color {
+        if isBlocked { return .gray }
+        if isSelected { return language.color.darker(by: 0.55) }
+        return language.color.darker(by: 0.4)
+    }
+
     var body: some View {
         Button(action: {
             if !isBlocked {
@@ -61,31 +66,23 @@ struct LanguageCube: View {
             VStack(spacing: 8) {
                 Text(language.flag)
                     .font(.system(size: 42))
+
                 Text(language.name)
                     .font(.custom("Poppins-Medium", size: 14))
-                    .foregroundColor(isBlocked ? .gray : .mainBlack)
+                    .foregroundColor(textColor)
             }
             .frame(width: 110, height: 110)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(isSelected ? language.color :
-                          isBlocked ? Color.gray.opacity(0.15) :
-                          language.color.opacity(0.25))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(
-                        isBlocked ? Color.gray.opacity(0.4) :
-                        language.color.opacity(isSelected ? 0.9 : 0.4),
-                        lineWidth: 2
+                    .fill(
+                        isSelected
+                        ? language.color
+                        : isBlocked
+                        ? Color.gray.opacity(0.15)
+                        : language.color.opacity(0.25)
                     )
             )
-            .shadow(
-                color: isBlocked ? .clear :
-                    language.color.opacity(isSelected ? 0.45 : 0.15),
-                radius: isSelected ? 8 : 4,
-                y: isSelected ? 4 : 2
-            )
+
             .scaleEffect(internalPressedState ? 0.96 : (isSelected ? 1.05 : 1.0))
             .opacity(isBlocked ? 0.5 : 1.0)
             .animation(.spring(response: 0.32, dampingFraction: 0.75), value: isSelected)
@@ -95,7 +92,6 @@ struct LanguageCube: View {
                         .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.white, language.color)
                         .padding(8)
-                        .shadow(radius: 3, y: 2)
                 }
             }
         }
@@ -109,6 +105,22 @@ struct LanguageCube: View {
     }
 }
 
+extension Color {
+    func darker(by amount: Double = 0.3) -> Color {
+        let uiColor = UIColor(self)
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return Color(
+            red: max(r - amount, 0),
+            green: max(g - amount, 0),
+            blue: max(b - amount, 0),
+            opacity: a
+        )
+    }
+}
 
 extension View {
     func pressAction(onChange: @escaping (Bool) -> Void) -> some View {
@@ -137,3 +149,26 @@ private struct PressActionsModifier: ViewModifier {
             )
     }
 }
+
+#Preview {
+    LanguageCubePicker(
+        selectedLanguage: .constant("Español"),
+        title: "I speak",
+        languages: previewLanguages
+    )
+}
+
+#Preview("Dark") {
+    LanguageCubePicker(
+        selectedLanguage: .constant("English"),
+        title: "I’m learning",
+        languages: previewLanguages
+    )
+    .preferredColorScheme(.dark)
+}
+
+private let previewLanguages = [
+    LanguageOption(name: "English", flag: "🇬🇧", color: Color(hex: "#CDEBF1")),
+    LanguageOption(name: "Español", flag: "🇲🇽", color: Color(hex: "#DEF1D0")),
+    LanguageOption(name: "Русский", flag: "🇷🇺", color: Color(hex: "#FFE6A7"))
+]

@@ -32,32 +32,28 @@ func translateWithGPT(
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
 
-   
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
     request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
     let prompt = """
-    You are a professional linguist.
+    You are a linguist.
 
-    Translate and deeply explain the word "\(word)".
+    Translate and explain the word "\(word)".
 
     Source language: \(learningLanguage)
     Target language: \(nativeLanguage)
 
-    LANGUAGE RULES (STRICT):
+    STRICT RULES:
+    - translation → only \(nativeLanguage)
+    - type → only \(nativeLanguage)
+    - explanation → short and clear, only \(nativeLanguage)
+    - breakdown → only \(nativeLanguage) or null
+    - example → only \(learningLanguage)
+    - Do not mix languages inside fields.
 
-    - "translation" MUST be strictly in \(nativeLanguage).
-    - "type" MUST be strictly in \(nativeLanguage).
-    - "example" MUST be strictly in \(learningLanguage).
-    - "explanation" MUST be strictly in \(nativeLanguage).
-    - "breakdown" MUST be strictly in \(nativeLanguage).
-    - Do NOT mix languages inside one field.
-
-    If breakdown is not applicable, set it to null.
-
-    Return ONLY valid JSON in this exact format:
+    Return ONLY valid JSON:
 
     {
       "translation": "...",

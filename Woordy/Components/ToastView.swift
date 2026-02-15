@@ -32,7 +32,7 @@ enum AppToastType {
     }
 }
 
-struct AppToastView: View {
+struct ToastView: View {
     
     let type: AppToastType
     let message: String?
@@ -87,8 +87,8 @@ struct AppToastView: View {
                 .font(.custom("Poppins-Bold", size: 22))
                 .foregroundColor(Color("MainBlack"))
             
-            AppToastView(type: .success, message: nil)
-            AppToastView(type: .error, message: nil)
+            ToastView(type: .success, message: nil)
+            ToastView(type: .error, message: nil)
         }
         .padding(.top, 40)
         .background(Color(hexRGB: 0xFFF8E7))
@@ -100,8 +100,8 @@ struct AppToastView: View {
                 .font(.custom("Poppins-Bold", size: 22))
                 .foregroundColor(.white)
             
-            AppToastView(type: .success, message: nil)
-            AppToastView(type: .error, message: nil)
+            ToastView(type: .success, message: nil)
+            ToastView(type: .error, message: nil)
         }
         .padding(.top, 40)
         .background(Color.black)

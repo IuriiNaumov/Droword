@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct TagsView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @Binding var selectedTag: String?
     var compact: Bool = false
     var hasGoldenWords: Bool = false
@@ -16,11 +15,7 @@ struct TagsView: View {
 
     var visibleTags: [(name: String, color: Color)] {
         Self.allTags.filter { tag in
-            if tag.name == "Golden" {
-                return hasGoldenWords
-            } else {
-                return true
-            }
+            tag.name == "Golden" ? hasGoldenWords : true
         }
     }
 
@@ -29,33 +24,29 @@ struct TagsView: View {
             HStack(spacing: compact ? 10 : 14) {
                 ForEach(visibleTags, id: \.name) { tag in
                     let isSelected = selectedTag == tag.name
-                    let baseColor = adaptiveColor(for: tag.color)
-                    let darkerText = darkerShade(of: baseColor, by: 0.35)
+                    let baseColor = tag.color
+                    let textColor = darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
 
                     Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                             selectedTag = isSelected ? nil : tag.name
                         }
                     } label: {
                         Text(tag.name)
                             .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
-                            .foregroundColor(
-                                isSelected ? darkerText : darkerText.opacity(0.9)
-                            )
+                            .foregroundColor(textColor)
                             .frame(minWidth: 120)
-                            .padding(.vertical, 14)
+                            .padding(.vertical, compact ? 12 : 14)
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(
-                                        colorScheme == .dark
-                                        ? baseColor.opacity(isSelected ? 0.25 : 0.15)
-                                        : baseColor.opacity(isSelected ? 0.9 : 0.3)
-                                    )
+                                    .fill(baseColor.opacity(isSelected ? 0.95 : 0.32))
                             )
-
-
-                            .scaleEffect(isSelected ? 1.05 : 1.0)
-                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(baseColor.opacity(isSelected ? 1.0 : 0.35), lineWidth: isSelected ? 1.4 : 1.0)
+                            )
+                            .scaleEffect(isSelected ? 1.06 : 1.0)
+                            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
                     }
                     .buttonStyle(.plain)
                 }
@@ -64,13 +55,7 @@ struct TagsView: View {
             .padding(.vertical, compact ? 6 : 10)
         }
     }
-
-    private func adaptiveColor(for color: Color) -> Color {
-        guard colorScheme == .dark else { return color }
-        return darkerShade(of: color, by: 0.2)
-    }
 }
-
 
 #Preview {
     Group {
@@ -94,7 +79,7 @@ struct TagsView: View {
                 .padding(.horizontal)
 
             TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
-            TagsView(selectedTag: .constant("Work"), hasGoldenWords: false)
+            TagsView(selectedTag: .constant("Street"), hasGoldenWords: false)
         }
         .padding(.vertical, 30)
         .background(Color.black)

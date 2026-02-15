@@ -12,10 +12,14 @@ final class AudioManager {
 
 
     func play(word: String) async {
+        print("AudioManager.play called with:", word)
         do {
             let data = try await fetchAudioData(for: word)
+            print("AudioManager fetched data bytes:", data.count)
             try playAudio(data: data)
+            print("AudioManager playback started")
         } catch {
+            print("AudioManager error:", error)
         }
     }
   
@@ -38,9 +42,13 @@ final class AudioManager {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+        guard let http = response as? HTTPURLResponse else {
+            throw NSError(domain: "ElevenLabs", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
+        }
+        if http.statusCode != 200 {
             let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw NSError(domain: "ElevenLabs", code: 1, userInfo: [NSLocalizedDescriptionKey: errorText])
+            print("ElevenLabs HTTP error", http.statusCode, errorText)
+            throw NSError(domain: "ElevenLabs", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
         }
         return data
     }
@@ -50,8 +58,17 @@ final class AudioManager {
         try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try session.setActive(true)
 
-        player = try AVAudioPlayer(data: data)
-        player?.prepareToPlay()
-        player?.play()
+        do {
+            player = try AVAudioPlayer(data: data)
+            player?.prepareToPlay()
+            let ok = player?.play() ?? false
+            print("AVAudioPlayer started:", ok)
+            if !ok {
+                print("AVAudioPlayer failed to start playback")
+            }
+        } catch {
+            print("AVAudioPlayer init/play error:", error)
+            throw error
+        }
     }
 }

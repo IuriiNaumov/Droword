@@ -5,10 +5,21 @@ struct SettingsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
 
+    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+
     @State private var avatarImage: UIImage?
     @State private var showPhotoPicker = false
     @State private var selectedItem: PhotosPickerItem?
     @State private var showLanguagePicker = false
+    @State private var showAppearancePicker = false
+
+    private var appearance: AppAppearance {
+        AppAppearance(rawValue: storedAppearance) ?? .light
+    }
+
+    private var appearanceTitle: String {
+        appearance.title
+    }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -64,13 +75,12 @@ struct SettingsView: View {
                     ])
 
                     groupedSettingsSection([
-                        SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: "System"),
+                        SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
                         SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
                         SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications")
                     ]) { item in
-                        if item.title == "Language" {
-                            showLanguagePicker = true
-                        }
+                        if item.title == "Language" { showLanguagePicker = true }
+                        if item.title == "Appearance" { showAppearancePicker = true }
                     }
                 }
 
@@ -79,9 +89,18 @@ struct SettingsView: View {
             .padding(.bottom, 40)
         }
         .background(Color.appBackground.ignoresSafeArea())
+        .preferredColorScheme(appearance.colorScheme)
         .sheet(isPresented: $showLanguagePicker) {
             LanguageSelectionView()
                 .environmentObject(languageStore)
+        }
+        .sheet(isPresented: $showAppearancePicker) {
+            AppearancePickerView()
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color.appBackground)
+                .preferredColorScheme(appearance.colorScheme)
+                .id(storedAppearance)
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { newItem in
@@ -175,4 +194,24 @@ struct SettingItem: Identifiable {
     let color: Color
     let title: String
     var value: String? = nil
+}
+
+#Preview {
+    SettingsView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+}
+
+#Preview("Light") {
+    SettingsView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    SettingsView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .preferredColorScheme(.dark)
 }

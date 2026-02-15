@@ -75,52 +75,50 @@ func fetchSuggestionsWithTopic(
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
     let wordsList = words.joined(separator: ", ")
 
-
     let prompt = """
-    You are a professional vocabulary assistant.
+    You are a vocabulary assistant.
 
-    The user is learning: \(learningLanguage)
-    The user's native language is: \(nativeLanguage)
+    Learning language: \(learningLanguage)
+    Native language: \(nativeLanguage)
 
-    Here is the current list of words in \(learningLanguage):
+    Current words:
     \(wordsList)
 
     TASK:
-    1. Identify the main topic of these words (one short phrase).
-    2. Suggest exactly TWO new words in \(learningLanguage) that:
-       - are thematically related,
-       - are NOT already in the list,
-       - are appropriate for A2–B1 learners,
-       - are commonly used in everyday conversation.
+    1. Detect the main topic (one short phrase).
+    2. Add exactly TWO new words in \(learningLanguage):
+       - related to the topic
+       - not in the list
+       - suitable for A2–B1
+       - common in daily use
 
-    STRICT RULES:
-    - "word" MUST be strictly in \(learningLanguage).
-    - "example" MUST be strictly in \(learningLanguage).
-    - "translation" MUST be strictly in \(nativeLanguage).
-    - Do NOT mix languages.
-    - Do NOT add explanations.
-    - Respond with valid JSON only.
+    STRICT:
+    - word → only \(learningLanguage)
+    - example → only \(learningLanguage)
+    - translation → only \(nativeLanguage)
+    - no explanations
+    - no mixed languages
+    - valid JSON only
 
-    Required JSON format:
     {
       "topic": "string",
       "suggestions": [
         {
           "word": "string",
           "translation": "string",
-          "type": "noun | verb | adjective | etc.",
+          "type": "string",
           "example": "string"
         },
         {
           "word": "string",
           "translation": "string",
-          "type": "noun | verb | adjective | etc.",
+          "type": "string",
           "example": "string"
         }
       ]
     }
     """
-  
+    
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")

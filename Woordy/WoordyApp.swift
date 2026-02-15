@@ -7,6 +7,12 @@ struct WoordyApp: App {
     @StateObject private var golden = GoldenWordsStore()
     @StateObject private var languageStore = LanguageStore()
 
+    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+
+    private var appearance: AppAppearance {
+        AppAppearance(rawValue: storedAppearance) ?? .light
+    }
+
     init() {
         warmUpKeyboard()
         warmUpAudioSession()
@@ -17,6 +23,7 @@ struct WoordyApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(appearance.colorScheme)
                 .environmentObject(store)
                 .environmentObject(golden)
                 .environmentObject(languageStore)

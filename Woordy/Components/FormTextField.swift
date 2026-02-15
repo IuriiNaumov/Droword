@@ -40,3 +40,36 @@ struct FormTextField: View {
         }
     }
 }
+
+#Preview("FormTextField Variants") {
+    VStack(spacing: 16) {
+        StatefulPreviewWrapper("") { binding in
+            FormTextField(title: "Name", text: binding)
+        }
+
+        StatefulPreviewWrapper("Hello") { binding in
+            FormTextField(title: "Username",
+                          text: binding,
+                          focusedColor: .blue,
+                          maxLength: 12,
+                          showCounter: true)
+        }
+    }
+    .padding()
+    .background(Color(.systemBackground))
+}
+
+
+private struct StatefulPreviewWrapper<Value, Content: View>: View {
+    @State private var value: Value
+    let content: (Binding<Value>) -> Content
+
+    init(_ initialValue: Value, @ViewBuilder content: @escaping (Binding<Value>) -> Content) {
+        self._value = State(initialValue: initialValue)
+        self.content = content
+    }
+
+    var body: some View {
+        content($value)
+    }
+}
