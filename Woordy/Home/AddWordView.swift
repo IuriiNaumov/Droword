@@ -56,7 +56,7 @@ struct AddWordView: View {
                     commentSection
                     Group {
                         if didAppear {
-                            TagsView(selectedTag: $selectedTag)
+                            TagsView(selectedTag: $selectedTag, showManagementControls: false)
                         } else {
                             Color.clear.frame(height: 1)
                         }

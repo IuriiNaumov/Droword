@@ -5,6 +5,7 @@ struct TagsView: View {
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
     var hasGoldenWords: Bool = false
+    var showManagementControls: Bool = true
     var onAddTag: (() -> Void)? = nil
     @State private var isDeleteMode: Bool = false
 
@@ -75,27 +76,29 @@ struct TagsView: View {
                     .buttonStyle(.plain)
                 }
 
-                Button(action: { onAddTag?() }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Circle().fill(Color.black))
-                        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
-                }
-                .buttonStyle(.plain)
-
-                Button(action: { withAnimation { isDeleteMode.toggle() } }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 32, height: 32)
-                        Image(systemName: "trash.fill")
+                if showManagementControls {
+                    Button(action: { onAddTag?() }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
-                            .font(.system(size: 13, weight: .bold))
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(Color.mainGreen))
+                            .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
                     }
+                    .buttonStyle(.plain)
+
+                    Button(action: { withAnimation { isDeleteMode.toggle() } }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, compact ? 10 : 6)
             .padding(.vertical, compact ? 6 : 10)

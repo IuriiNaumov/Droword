@@ -8,6 +8,9 @@ struct WordCard: Identifiable {
     let example: String
     let translation: String
     let tag: String?
+    let fromLanguage: String?
+    let toLanguage: String?
+    let comment: String?
 }
 
 struct PracticeView: View {
@@ -28,7 +31,10 @@ struct PracticeView: View {
                 partOfSpeech: word.type.isEmpty ? "word" : word.type,
                 example: word.example ?? "Add an example later",
                 translation: word.translation ?? "No translation yet",
-                tag: word.tag
+                tag: word.tag,
+                fromLanguage: word.fromLanguage,
+                toLanguage: word.toLanguage,
+                comment: word.comment
             )
         }
     }
@@ -208,14 +214,21 @@ struct WordCardPracticeView: View {
     @State private var isPlaying = false
 
     private var backgroundColor: Color {
-        switch card.tag {
-        case "Chat":   return Color(.accentBlue)
-        case "Travel": return Color(.accentGreen)
-        case "Street": return Color(.accentPink)
-        case "Movies": return Color(.accentPurple)
-        case "Golden": return Color(.accentGold)
-        default:       return Color(.defaultCard)
+        if let tag = card.tag {
+            switch tag {
+            case "Chat":   return Color(.accentBlue)
+            case "Travel": return Color(.accentGreen)
+            case "Street": return Color(.accentPink)
+            case "Movies": return Color(.accentPurple)
+            case "Golden": return Color(.accentGold)
+            default:
+                if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
+                   let color = Color(fromHexString: custom.colorHex) {
+                    return color
+                }
+            }
         }
+        return Color(.defaultCard)
     }
 
     private func highlightedExample(example: String, target: String) -> AttributedString {
@@ -241,10 +254,23 @@ struct WordCardPracticeView: View {
            let attrStart = AttributedString.Index(range.lowerBound, within: attr),
            let attrEnd = AttributedString.Index(range.upperBound, within: attr) {
             let highlightRange = attrStart..<attrEnd
-            attr[highlightRange].foregroundColor = Color(hex: "#FF8C42")
+            attr[highlightRange].foregroundColor = Color(red: 1.0, green: 0.549, blue: 0.259)
             attr[highlightRange].font = .custom("Poppins-SemiBold", size: 18)
         }
         return attr
+    }
+
+    private struct TagBadge: View {
+        let text: String
+        var body: some View {
+            Text(text)
+                .font(.custom("Poppins-SemiBold", size: 11))
+                .foregroundColor(.mainBlack)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Color.white.opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
     }
 
     var body: some View {
@@ -254,17 +280,16 @@ struct WordCardPracticeView: View {
                 .fill(backgroundColor.opacity(0.85))
                 .padding(6)
 
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 16) {
                 Spacer(minLength: 12)
 
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(card.word)
                         .font(.custom("Poppins-Bold", size: 38))
                         .foregroundColor(.mainBlack)
-                        .multilineTextAlignment(.center)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
-
+                    Spacer()
                     Button(action: playAudio) {
                         SoundWavesView(isPlaying: isPlaying)
                             .frame(width: 24, height: 24)
@@ -274,13 +299,37 @@ struct WordCardPracticeView: View {
                     .padding(.top, 6)
                 }
 
-                Text(highlightedExample(example: card.example, target: card.word))
-                    .font(.custom("Poppins-Regular", size: 18))
-                    .padding(.horizontal, 16)
+                // Badges: part of speech and tag if any
+                HStack(spacing: 8) {
+                    TagBadge(text: card.partOfSpeech.capitalized)
+                    if let tag = card.tag, !tag.isEmpty {
+                        TagBadge(text: tag)
+                    }
+                }
 
-                Text(card.translation)
-                    .font(.custom("Poppins-Regular", size: 18))
-                    .padding(.horizontal, 16)
+                // Languages direction and optional comment
+                HStack(spacing: 8) {
+                    if let from = card.fromLanguage, let to = card.toLanguage {
+                        Text("\(from) → \(to)")
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(.mainBlack.opacity(0.6))
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                if let comment = card.comment, !comment.isEmpty {
+                    Text(comment)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainBlack.opacity(0.8))
+                        .padding(.horizontal, 2)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(highlightedExample(example: card.example, target: card.word))
+                        .font(.custom("Poppins-Regular", size: 18))
+                    Text(card.translation)
+                        .font(.custom("Poppins-Regular", size: 18))
+                }
 
                 Text("Helpful: rate how hard it felt to schedule the next review.")
                     .font(.custom("Poppins-Regular", size: 12))
@@ -292,7 +341,7 @@ struct WordCardPracticeView: View {
                     RatingButton(title: "Again", bg: Color.iDontKnowButton, fg: nil) {
                         onAgain()
                     }
-                    RatingButton(title: "Hard", bg: Color(hex: "#FFE6A7"), fg: nil) {
+                    RatingButton(title: "Hard", bg: Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) {
                         onHard()
                     }
                     RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) {
@@ -300,8 +349,8 @@ struct WordCardPracticeView: View {
                     }
                     RatingButton(
                         title: "Easy",
-                        bg: Color(hex: "#B7E4C7"),
-                        fg: Color(hex: "#5F8F6B")
+                        bg: Color(red: 0.718, green: 0.894, blue: 0.780),
+                        fg: Color(red: 0.373, green: 0.561, blue: 0.420)
                     ) {
                         onEasy()
                     }
