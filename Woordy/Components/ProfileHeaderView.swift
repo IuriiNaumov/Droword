@@ -5,6 +5,7 @@ struct ProfileHeaderView: View {
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var displayProgress: Double = 0.0
+    @AppStorage("userName") private var storedUserName: String = ""
 
     private let xpPerWord = 10
     private let maxLevel = 50
@@ -45,6 +46,10 @@ struct ProfileHeaderView: View {
         max(0, wordsForCurrentLevel - wordsProgressInLevel)
     }
 
+    private var displayName: String {
+        storedUserName.isEmpty ? "Cool guy" : storedUserName
+    }
+
     private let levelBackground = Color(hex: "#FFE6AA")
     private let levelText = Color(hex: "#9C6B00")
 
@@ -77,7 +82,7 @@ struct ProfileHeaderView: View {
                 .onTapGesture { showSettings = true }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Yura")
+                    Text(displayName)
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.mainBlack)
 

@@ -75,7 +75,6 @@ func fetchSuggestionsWithTopic(
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
     let wordsList = words.joined(separator: ", ")
 
-    
     let prompt = """
     You are a vocabulary assistant.
 

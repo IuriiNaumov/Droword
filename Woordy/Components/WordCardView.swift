@@ -23,6 +23,22 @@ struct WordCardView: View, Equatable {
         lhs.tag == rhs.tag
     }
     
+    private func colorForTag(_ tag: String) -> Color {
+        switch tag {
+        case "Chat": return Color(.accentBlue)
+        case "Travel": return Color(.accentGreen)
+        case "Street": return Color(.accentPink)
+        case "Movies": return Color(.accentPurple)
+        case "Golden": return Color(.accentGold)
+        default:
+            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
+               let color = Color(fromHexString: custom.colorHex) {
+                return color
+            }
+            return Color(.defaultCard)
+        }
+    }
+    
     private struct TagBadge: View {
         let text: String
         var body: some View {
@@ -32,7 +48,7 @@ struct WordCardView: View, Equatable {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -43,30 +59,41 @@ struct WordCardView: View, Equatable {
     private var isGolden: Bool { tag == "Golden" }
 
     private var backgroundColor: Color {
-        switch tag {
-        case "Chat":   return Color(.accentBlue)
-        case "Travel": return Color(.accentGreen)
-        case "Street": return Color(.accentPink)
-        case "Movies": return Color(.accentPurple)
-        case "Golden": return Color(.accentGold)
-        default:       return Color(.defaultCard)
+        if let tag = tag, !tag.isEmpty {
+            return colorForTag(tag)
         }
+        return Color(.defaultCard)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
 
             if isExpanded {
-
+                
+                if let tag = tag, !tag.isEmpty {
+                    Text(tag)
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .foregroundColor(darkerShade(of: colorForTag(tag), by: 0.4))
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(darkerShade(of: colorForTag(tag), by: 0.1), lineWidth: 1)
+                        )
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colorForTag(tag))
+                        )
+                        .padding(.bottom, 2)
+                }
+                
                 headerRow
                 
-                HStack(spacing: 8) {
-                    if let type = type, !type.isEmpty {
-                        TagBadge(text: type.capitalized)
-                    }
-                    if let tag = tag, !tag.isEmpty {
-                        TagBadge(text: tag)
-                    }
+                if let type = type, !type.isEmpty {
+                    Text(type.capitalized)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                        .padding(.bottom, 2)
                 }
 
                 if let translation = translation {

@@ -82,7 +82,6 @@ struct AddTagView: View {
         guard !trimmedName.isEmpty else { return }
         let normalized = TagStore.shared.normalizeHex(colorHex)
         TagStore.shared.addTag(name: trimmedName, colorHex: normalized)
-        // Пример: ежедневное напоминание в 20:00 для этого тега
         NotificationManager.shared.scheduleDailyReminder(hour: 20, minute: 0, tagName: trimmedName)
         dismiss()
     }

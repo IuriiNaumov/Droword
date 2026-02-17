@@ -213,8 +213,6 @@ struct WordCardPracticeView: View {
 
     @State private var isPlaying = false
     @State private var showTranslation = false
-    @State private var showExplanation = false
-    @State private var showBreakdown = false
 
     private var backgroundColor: Color {
         if let tag = card.tag {
@@ -278,6 +276,20 @@ struct WordCardPracticeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            if let tag = card.tag, !tag.isEmpty {
+                Text(tag)
+                    .font(.custom("Poppins-SemiBold", size: 11))
+                    .foregroundColor(backgroundColor)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(Color.white.opacity(0.6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.mainBlack.opacity(0.2), lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(card.word)
                     .font(.custom("Poppins-Bold", size: 24))
@@ -294,12 +306,9 @@ struct WordCardPracticeView: View {
                 .padding(.top, 6)
             }
 
-            HStack(spacing: 8) {
-                TagBadge(text: card.partOfSpeech.capitalized)
-                if let tag = card.tag, !tag.isEmpty {
-                    TagBadge(text: tag)
-                }
-            }
+            Text(card.partOfSpeech.capitalized)
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(.mainGrey)
 
             if let comment = card.comment, !comment.isEmpty {
                 Text(comment)
@@ -337,44 +346,6 @@ struct WordCardPracticeView: View {
                     Text("Try to recall the translation without looking.")
                         .font(.custom("Poppins-Regular", size: 12))
                         .foregroundColor(.mainBlack.opacity(0.45))
-                }
-
-                if let explanation = card.comment, !explanation.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Spacer()
-                            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showExplanation.toggle() } }) {
-                                Image(systemName: showExplanation ? "chevron.up" : "chevron.down")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.mainBlack.opacity(0.7))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        if showExplanation {
-                            Text(explanation)
-                                .font(.custom("Poppins-Regular", size: 15))
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                    }
-                }
-
-                if let breakdown = card.comment, !breakdown.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Spacer()
-                            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showBreakdown.toggle() } }) {
-                                Image(systemName: showBreakdown ? "chevron.up" : "chevron.down")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.mainBlack.opacity(0.7))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        if showBreakdown {
-                            Text(breakdown)
-                                .font(.custom("Poppins-Regular", size: 15))
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        }
-                    }
                 }
             }
 

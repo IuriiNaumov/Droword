@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
     @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
     @AppStorage("ttsRate") private var ttsRate: Double = 1.0
+    @AppStorage("userName") private var storedUserName: String = ""
 
     @State private var avatarImage: UIImage?
     @State private var showPhotoPicker = false
@@ -15,6 +16,7 @@ struct SettingsView: View {
     @State private var showLanguagePicker = false
     @State private var showAppearancePicker = false
     @State private var showVoiceSheet = false
+    @State private var showPersonalDetails = false
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .light
@@ -22,6 +24,10 @@ struct SettingsView: View {
 
     private var appearanceTitle: String {
         appearance.title
+    }
+
+    private var displayName: String {
+        storedUserName.isEmpty ? "User" : storedUserName
     }
 
     var body: some View {
@@ -87,7 +93,7 @@ struct SettingsView: View {
                     }
                     .onTapGesture { showPhotoPicker = true }
 
-                    Text("Yura")
+                    Text(displayName)
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.mainBlack)
                 }
@@ -96,7 +102,9 @@ struct SettingsView: View {
                 VStack(spacing: 20) {
                     groupedSettingsSection([
                         SettingItem(icon: "person.circle", color: Color.mainGreen, title: "Personal details"),
-                    ])
+                    ]) { item in
+                        if item.title == "Personal details" { showPersonalDetails = true }
+                    }
 
                     groupedSettingsSection([
                         SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
@@ -134,6 +142,11 @@ struct SettingsView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .background(Color.appBackground.ignoresSafeArea())
+        }
+        .sheet(isPresented: $showPersonalDetails) {
+            PersonalDetailsView()
+                .presentationDetents([.fraction(0.5)])
+                .presentationDragIndicator(.visible)
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { newItem in

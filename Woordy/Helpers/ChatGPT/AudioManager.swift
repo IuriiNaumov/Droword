@@ -9,7 +9,6 @@ final class AudioManager {
     private var player: AVAudioPlayer?
     private let voiceKey = "ttsVoice"
     private let rateKey = "ttsRate"
-
     private var currentVoice: String {
         UserDefaults.standard.string(forKey: voiceKey) ?? "coral"
     }
