@@ -212,6 +212,9 @@ struct WordCardPracticeView: View {
     let onEasy: () -> Void
 
     @State private var isPlaying = false
+    @State private var showTranslation = false
+    @State private var showExplanation = false
+    @State private var showBreakdown = false
 
     private var backgroundColor: Color {
         if let tag = card.tag {
@@ -274,91 +277,127 @@ struct WordCardPracticeView: View {
     }
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 24).fill(backgroundColor)
-            RoundedRectangle(cornerRadius: 20)
-                .fill(backgroundColor.opacity(0.85))
-                .padding(6)
-
-            VStack(alignment: .leading, spacing: 16) {
-                Spacer(minLength: 12)
-
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(card.word)
-                        .font(.custom("Poppins-Bold", size: 38))
-                        .foregroundColor(.mainBlack)
-                        .lineLimit(nil)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer()
-                    Button(action: playAudio) {
-                        SoundWavesView(isPlaying: isPlaying)
-                            .frame(width: 24, height: 24)
-                            .tint(.black)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 6)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(card.word)
+                    .font(.custom("Poppins-Bold", size: 24))
+                    .foregroundColor(.mainBlack)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button(action: playAudio) {
+                    SoundWavesView(isPlaying: isPlaying)
+                        .frame(width: 24, height: 24)
+                        .tint(.black)
                 }
+                .buttonStyle(.plain)
+                .padding(.top, 6)
+            }
 
-                // Badges: part of speech and tag if any
-                HStack(spacing: 8) {
-                    TagBadge(text: card.partOfSpeech.capitalized)
-                    if let tag = card.tag, !tag.isEmpty {
-                        TagBadge(text: tag)
-                    }
+            HStack(spacing: 8) {
+                TagBadge(text: card.partOfSpeech.capitalized)
+                if let tag = card.tag, !tag.isEmpty {
+                    TagBadge(text: tag)
                 }
+            }
 
-                // Languages direction and optional comment
-                HStack(spacing: 8) {
-                    if let from = card.fromLanguage, let to = card.toLanguage {
-                        Text("\(from) → \(to)")
-                            .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(.mainBlack.opacity(0.6))
-                    }
-                    Spacer(minLength: 0)
-                }
+            if let comment = card.comment, !comment.isEmpty {
+                Text(comment)
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(.mainBlack.opacity(0.8))
+                    .padding(.horizontal, 2)
+            }
 
-                if let comment = card.comment, !comment.isEmpty {
-                    Text(comment)
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainBlack.opacity(0.8))
-                        .padding(.horizontal, 2)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(highlightedExample(example: card.example, target: card.word))
-                        .font(.custom("Poppins-Regular", size: 18))
-                    Text(card.translation)
-                        .font(.custom("Poppins-Regular", size: 18))
+                        .font(.custom("Poppins-Regular", size: 16))
                 }
 
-                Text("Helpful: rate how hard it felt to schedule the next review.")
-                    .font(.custom("Poppins-Regular", size: 12))
-                    .foregroundColor(.mainBlack.opacity(0.45))
+                if !card.translation.isEmpty {
+                    HStack(alignment: .firstTextBaseline) {
+                        if showTranslation {
+                            Text(card.translation)
+                                .font(.custom("Poppins-Regular", size: 16))
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        } else {
+                            let first = card.translation.prefix(1)
+                            Text("\(first)•••")
+                                .font(.custom("Poppins-Regular", size: 16))
+                                .foregroundColor(.mainBlack.opacity(0.5))
+                        }
+                        Spacer()
+                        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() } }) {
+                            Text(showTranslation ? "Hide" : "Show")
+                                .font(.custom("Poppins-Regular", size: 13))
+                                .foregroundColor(.mainBlack.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Text("Try to recall the translation without looking.")
+                        .font(.custom("Poppins-Regular", size: 12))
+                        .foregroundColor(.mainBlack.opacity(0.45))
+                }
 
-                Spacer(minLength: 12)
+                if let explanation = card.comment, !explanation.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Spacer()
+                            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showExplanation.toggle() } }) {
+                                Image(systemName: showExplanation ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.mainBlack.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        if showExplanation {
+                            Text(explanation)
+                                .font(.custom("Poppins-Regular", size: 15))
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                    }
+                }
 
-                HStack(spacing: 12) {
-                    RatingButton(title: "Again", bg: Color.iDontKnowButton, fg: nil) {
-                        onAgain()
-                    }
-                    RatingButton(title: "Hard", bg: Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) {
-                        onHard()
-                    }
-                    RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) {
-                        onGood()
-                    }
-                    RatingButton(
-                        title: "Easy",
-                        bg: Color(red: 0.718, green: 0.894, blue: 0.780),
-                        fg: Color(red: 0.373, green: 0.561, blue: 0.420)
-                    ) {
-                        onEasy()
+                if let breakdown = card.comment, !breakdown.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Spacer()
+                            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showBreakdown.toggle() } }) {
+                                Image(systemName: showBreakdown ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.mainBlack.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        if showBreakdown {
+                            Text(breakdown)
+                                .font(.custom("Poppins-Regular", size: 15))
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
                 }
             }
-            .padding(22)
+
+            Text("Helpful: rate how hard it felt to schedule the next review.")
+                .font(.custom("Poppins-Regular", size: 12))
+                .foregroundColor(.mainBlack.opacity(0.45))
+                .padding(.top, 50)
+
+            HStack(spacing: 12) {
+                RatingButton(title: "Again", bg: Color.iDontKnowButton, fg: nil) { onAgain() }
+                RatingButton(title: "Hard", bg: Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) { onHard() }
+                RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) { onGood() }
+                RatingButton(
+                    title: "Easy",
+                    bg: Color(red: 0.718, green: 0.894, blue: 0.780),
+                    fg: Color(red: 0.373, green: 0.561, blue: 0.420)
+                ) { onEasy() }
+            }
         }
-        .frame(maxWidth: 520, maxHeight: 440)
+        .padding()
+        .frame(maxWidth: 520)
+        .background(backgroundColor)
+        .cornerRadius(16)
     }
 
     private func playAudio() {
@@ -373,31 +412,46 @@ struct WordCardPracticeView: View {
     
 #Preview {
     let store = WordsStore()
-    store.add(
-        StoredWord(
-            word: "No puedo creer lo que está pasando aquí",
-            type: "adjective",
-            translation: "Вкусный",
-            example: "Este plato es muy sabroso y delicioso.",
-            comment: "Моё любимое слово!",
-            tag: "Golden",
-            fromLanguage: "es",
-            toLanguage: "ru"
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        store.clear()
+        store.add(
+            StoredWord(
+                word: "No puedo creer lo que está pasando aquí",
+                type: "adjective",
+                translation: "Вкусный",
+                example: "Este plato es muy sabroso y delicioso.",
+                comment: "Моё любимое слово!",
+                tag: "Golden",
+                fromLanguage: "es",
+                toLanguage: "ru"
+            )
         )
-    )
-    store.add(
-        StoredWord(
-            word: "chido",
-            type: "adjective",
-            translation: "Круто",
-            example: "La fiesta estuvo chido y muy divertida.",
-            comment: nil,
-            tag: "Chat",
-            fromLanguage: "es",
-            toLanguage: "ru"
+        store.add(
+            StoredWord(
+                word: "chido",
+                type: "adjective",
+                translation: "Круто",
+                example: "La fiesta estuvo chido y muy divertida.",
+                comment: nil,
+                tag: "Chat",
+                fromLanguage: "es",
+                toLanguage: "ru"
+            )
         )
-    )
-    
+        store.add(
+            StoredWord(
+                word: "食べ物",
+                type: "noun",
+                translation: "Еда",
+                example: "この食べ物はとてもおいしいです。",
+                comment: nil,
+                tag: "Travel",
+                fromLanguage: "ja",
+                toLanguage: "ru"
+            )
+        )
+    }
     return PracticeView()
         .environmentObject(store)
 }
+

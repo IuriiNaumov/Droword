@@ -22,6 +22,19 @@ struct WordCardView: View, Equatable {
         lhs.comment == rhs.comment &&
         lhs.tag == rhs.tag
     }
+    
+    private struct TagBadge: View {
+        let text: String
+        var body: some View {
+            Text(text)
+                .font(.custom("Poppins-Medium", size: 14))
+                .foregroundColor(.mainBlack)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .background(Color.white.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+    }
 
     @State private var isExpanded = true
     @State private var isPlaying = false
@@ -45,58 +58,53 @@ struct WordCardView: View, Equatable {
 
             if isExpanded {
 
-                if let tag = tag {
-                    Text(tag)
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 4)
-                        .background(isGolden ? Color.white.opacity(0.35) : Color(.mainGrey).opacity(0.2))
-                        .clipShape(Capsule())
-                        .foregroundColor(.black)
-                }
-
                 headerRow
-
-                if let type = type {
-                    Text(type)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(Color(.mainGrey))
+                
+                HStack(spacing: 8) {
+                    if let type = type, !type.isEmpty {
+                        TagBadge(text: type.capitalized)
+                    }
+                    if let tag = tag, !tag.isEmpty {
+                        TagBadge(text: tag)
+                    }
                 }
 
                 if let translation = translation {
-                    Text(translation)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainBlack)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(translation)
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(.mainBlack)
+                    }
                 }
 
                 if let _ = example {
-                    Text(highlightedExample)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainBlack)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(highlightedExample)
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(.mainBlack)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 
                 if let explanation = explanation {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(explanation)
-                            .font(.custom("Poppins-Regular", size: 15))
+                            .font(.custom("Poppins-Regular", size: 16))
                             .foregroundColor(.mainBlack)
                     }
-                    .padding(.top, 6)
                 }
 
                 if let breakdown = breakdown {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(breakdown)
-                            .font(.custom("Poppins-Regular", size: 15))
+                            .font(.custom("Poppins-Regular", size: 16))
                             .foregroundColor(.mainBlack)
                     }
-                    .padding(.top, 6)
                 }
 
                 if let comment = comment, !comment.isEmpty {
                     Text(comment)
-                        .font(.custom("Poppins-Regular", size: 14))
+                        .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(Color(.mainGrey))
                         .padding(.top, 4)
                 }

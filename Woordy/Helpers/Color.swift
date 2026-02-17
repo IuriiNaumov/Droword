@@ -20,5 +20,6 @@ extension Color {
     static let progressBar = Color("ProgressBar")
     static let iKnowButton = Color("IKnowButton")
     static let iDontKnowButton = Color("IDontKnowButton")
+    static let toastAndButtons = Color("ToastAndButtons")
 }
 

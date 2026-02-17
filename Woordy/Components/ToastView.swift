@@ -7,18 +7,18 @@ enum AppToastType {
     var background: Color {
         switch self {
         case .success:
-            return Color("MainGreen")
+            return Color.toastAndButtons
         case .error:
-            return Color.iDontKnowButton
+            return Color.red
         }
     }
     
     var textColor: Color {
         switch self {
         case .success:
-            return darkerShade(of: Color("MainGreen"), by: 0.4)
+            return darkerShade(of: Color.toastAndButtons, by: 0.4)
         case .error:
-            return darkerShade(of: Color.iDontKnowButton, by: 0.4)
+            return darkerShade(of: Color.toastAndButtons, by: 0.4)
         }
     }
     

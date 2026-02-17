@@ -16,7 +16,7 @@ struct RoundedInputField: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color("MainGrey"), lineWidth: 3)
+                .stroke(Color("MainGrey"), lineWidth: 1)
                 .background(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(Color(.systemBackground))

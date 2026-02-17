@@ -35,7 +35,7 @@ struct SettingsView: View {
                                 .scaledToFill()
                                 .frame(width: 92, height: 92)
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 3))
+                                .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 1))
                                 .shadow(color: Color.mainBlack.opacity(0.1), radius: 6, y: 3)
                         } else {
                             Circle()
@@ -95,7 +95,7 @@ struct SettingsView: View {
 
                 VStack(spacing: 20) {
                     groupedSettingsSection([
-                        SettingItem(icon: "person.circle", color: Color("MainGreen"), title: "Personal details"),
+                        SettingItem(icon: "person.circle", color: Color.mainGreen, title: "Personal details"),
                     ])
 
                     groupedSettingsSection([
@@ -236,15 +236,21 @@ struct SettingsView: View {
         @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
         @AppStorage("ttsRate") private var ttsRate: Double = 1.0
 
+        private let speedOptions: [Double] = [0.75, 0.9, 1.0, 1.25, 1.5]
+
         var body: some View {
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("Voice & Speech")
                         .font(.custom("Poppins-Bold", size: 26))
                         .foregroundColor(.mainBlack)
-                        .padding(.horizontal)
                         .padding(.top, 12)
                         .frame(maxWidth: .infinity, alignment: .center)
+
+                    Text("Voice")
+                        .font(.custom("Poppins-Medium", size: 16))
+                        .foregroundColor(.mainBlack)
+                        .padding(.horizontal)
 
                     VoicePickerView(
                         selectedKey: $ttsVoice,
@@ -255,26 +261,69 @@ struct SettingsView: View {
                             VoiceOption(key: "sage", title: "Sage", description: "calm, confident")
                         ]
                     )
+                    .padding(.horizontal)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Speed")
-                                .font(.custom("Poppins-Medium", size: 16))
-                                .foregroundColor(.mainBlack)
-                            Spacer()
-                            Text(String(format: "%.2fx", ttsRate))
-                                .font(.custom("Poppins-Regular", size: 14))
-                                .foregroundColor(.mainGrey)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Speed")
+                            .font(.custom("Poppins-Medium", size: 16))
+                            .foregroundColor(.mainBlack)
+                            .padding(.horizontal)
+
+                        VStack(spacing: 8) {
+                            ForEach(speedOptions, id: \.self) { option in
+                                RadioButtonRow(
+                                    title: String(format: "%.2fx", option),
+                                    isSelected: ttsRate == option
+                                ) {
+                                    withAnimation(.easeInOut(duration: 0.15)) { ttsRate = option }
+                                }
+                            }
                         }
                         .padding(.horizontal)
-
-                        Slider(value: $ttsRate, in: 0.75...1.5, step: 0.05)
-                            .padding(.horizontal)
                     }
                 }
                 .padding(.vertical, 20)
             }
             .background(Color.appBackground.ignoresSafeArea())
+        }
+
+        private struct RadioButtonRow: View {
+            let title: String
+            let isSelected: Bool
+            let action: () -> Void
+
+            var body: some View {
+                Button(action: action) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            Circle()
+                                .stroke(Color.mainGrey.opacity(0.4), lineWidth: 1)
+                                .frame(width: 22, height: 22)
+                            if isSelected {
+                                Circle()
+                                    .fill(Color.toastAndButtons)
+                                    .frame(width: 22, height: 22)
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+
+                        Text(title)
+                            .font(.custom("Poppins-Regular", size: 15))
+                            .foregroundColor(.mainBlack)
+
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.cardBackground)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
@@ -306,4 +355,3 @@ struct SettingItem: Identifiable {
         .environmentObject(LanguageStore())
         .preferredColorScheme(.dark)
 }
-

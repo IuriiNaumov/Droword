@@ -82,7 +82,7 @@ struct TagsView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                             .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.mainGreen))
+                            .background(Circle().fill(Color.toastAndButtons))
                             .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
                     }
                     .buttonStyle(.plain)

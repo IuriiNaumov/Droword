@@ -56,7 +56,7 @@ struct DictionaryView: View {
         .background(Color(.appBackground))
         .sheet(isPresented: $showAddTag) {
             AddTagView()
-                .presentationDetents([.fraction(0.35)])
+                .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
         }
         .onAppear {
