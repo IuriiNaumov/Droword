@@ -297,7 +297,7 @@ struct WordCardPracticeView: View {
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()
-                Button(action: playAudio) {
+                Button(action: { Haptics.selection(); playAudio() }) {
                     SoundWavesView(isPlaying: isPlaying)
                         .frame(width: 24, height: 24)
                         .tint(.black)

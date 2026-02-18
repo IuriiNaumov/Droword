@@ -174,6 +174,12 @@ struct WordCardView: View, Equatable {
         .cornerRadius(16)
         .padding(.top, 12)
         .onTapGesture {
+            // Gentle but noticeable haptic for state change
+            if isExpanded {
+                Haptics.lightImpact(intensity: 0.4) // collapsing
+            } else {
+                Haptics.lightImpact(intensity: 0.3) // expanding
+            }
             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
                 isExpanded.toggle()
             }
@@ -216,6 +222,7 @@ struct WordCardView: View, Equatable {
 
     private func playAudio() {
         Task {
+            Haptics.selection()
             isPlaying = true
             await AudioManager.shared.play(word: word)
             try? await Task.sleep(nanoseconds: 1_000_000_000)

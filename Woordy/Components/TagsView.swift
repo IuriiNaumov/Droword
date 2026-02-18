@@ -35,8 +35,10 @@ struct TagsView: View {
 
                     Button {
                         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                            selectedTag = isSelected ? nil : tag.name
+                            let willSelect = !(selectedTag == tag.name)
+                            selectedTag = willSelect ? tag.name : nil
                         }
+                        Haptics.selection()
                     } label: {
                         Text(tag.name)
                             .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
@@ -155,3 +157,4 @@ private struct WiggleEffect: ViewModifier {
         .preferredColorScheme(.dark)
     }
 }
+

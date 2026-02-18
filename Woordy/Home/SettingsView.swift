@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
     @AppStorage("ttsRate") private var ttsRate: Double = 1.0
     @AppStorage("userName") private var storedUserName: String = ""
+    @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
 
     @State private var avatarImage: UIImage?
     @State private var showPhotoPicker = false
@@ -17,6 +18,7 @@ struct SettingsView: View {
     @State private var showAppearancePicker = false
     @State private var showVoiceSheet = false
     @State private var showPersonalDetails = false
+    @State private var showFeatureFlags = false
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .light
@@ -116,6 +118,12 @@ struct SettingsView: View {
                         if item.title == "Appearance" { showAppearancePicker = true }
                         if item.title == "Voice & Speech" { showVoiceSheet = true }
                     }
+
+                    groupedSettingsSection([
+                        SettingItem(icon: "flag.checkered", color: Color.toastAndButtons, title: "Feature Flags", value: nil)
+                    ]) { item in
+                        showFeatureFlags = true
+                    }
                 }
 
                 Spacer()
@@ -147,6 +155,9 @@ struct SettingsView: View {
             PersonalDetailsView()
                 .presentationDetents([.fraction(0.5)])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showFeatureFlags) {
+            FeatureFlagsView()
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { newItem in
@@ -336,6 +347,31 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private struct FeatureFlagsView: View {
+        @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
+        var body: some View {
+            NavigationStack {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            Text("Show onboarding")
+                                .font(.custom("Poppins-Regular", size: 16))
+                                .foregroundColor(.mainBlack)
+                            Spacer()
+                            Toggle("", isOn: $featureFlagShowOnboarding)
+                                .labelsHidden()
+                        }
+                        .padding()
+                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.cardBackground))
+                    }
+                    .padding()
+                    .background(Color.appBackground.ignoresSafeArea())
+                }
+                .navigationTitle("Feature Flags")
             }
         }
     }
