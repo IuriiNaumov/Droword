@@ -12,7 +12,7 @@ final class AudioManager {
     private var currentVoice: String {
         UserDefaults.standard.string(forKey: voiceKey) ?? "coral"
     }
-    let apiKey = "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"
+
 
     private var currentRate: Float {
         let val = UserDefaults.standard.double(forKey: rateKey)
