@@ -5,20 +5,20 @@ struct ContentView: View {
     @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
     @StateObject private var store = WordsStore()
     @StateObject private var languageStore = LanguageStore()
+    @State private var hasCompletedOnboardingThisSession: Bool = false
 
     var body: some View {
         ZStack {
-            
-//            OnboardingView()
-//                .environmentObject(languageStore)
-//                .transition(.opacity)
-            
-            HomeView()
-                .environmentObject(store)
-                .environmentObject(languageStore)
-//                .opacity((hasCompletedOnboarding && !featureFlagShowOnboarding) ? 1 : 0)
-
-            
+            if featureFlagShowOnboarding && !hasCompletedOnboardingThisSession {
+                OnboardingView(isCompleted: $hasCompletedOnboardingThisSession)
+                    .environmentObject(languageStore)
+                    .transition(.opacity)
+            } else {
+                HomeView()
+                    .environmentObject(store)
+                    .environmentObject(languageStore)
+                    .transition(.opacity)
+            }
         }
     }
 }

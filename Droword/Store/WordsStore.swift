@@ -10,6 +10,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var comment: String?
     var explanation: String?
     var breakdown: String?
+    var transcription: String?
     var tag: String?
     var dateAdded: Date = Date()
     var fromLanguage: String
@@ -23,6 +24,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
         example: String?,
         explanation: String? = nil,
         breakdown: String? = nil,
+        transcription: String? = nil,
         comment: String? = nil,
         tag: String? = nil,
         dateAdded: Date = Date(),
@@ -36,6 +38,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.example = example
         self.explanation = explanation
         self.breakdown = breakdown
+        self.transcription = transcription
         self.comment = comment
         self.tag = tag
         self.dateAdded = dateAdded

@@ -8,7 +8,9 @@ struct LanguageCubePicker: View {
     var blockedLanguage: String? = nil
 
     private let columns = [
-        GridItem(.adaptive(minimum: 110), spacing: 16)
+        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
+        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
+        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16)
     ]
 
     var body: some View {
@@ -71,7 +73,8 @@ struct LanguageCube: View {
                     .font(.custom("Poppins-Medium", size: 14))
                     .foregroundColor(textColor)
             }
-            .frame(width: 110, height: 110)
+            .frame(height: 110)
+            .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(

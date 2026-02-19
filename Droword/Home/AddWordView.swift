@@ -175,6 +175,7 @@ struct AddWordView: View {
                     example: result.example,
                     explanation: result.explanation,
                     breakdown: result.breakdown,
+                    transcription: result.transcription,
                     comment: comment,
                     tag: selectedTag,
                     fromLanguage: languageStore.learningLanguage,

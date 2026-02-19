@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @Binding var isCompleted: Bool
     @State private var page: Int = 0
 
     @EnvironmentObject private var languageStore: LanguageStore
@@ -38,7 +38,7 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                Color.appBackground.ignoresSafeArea()
+                Color.white.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     TabView(selection: $page) {
@@ -207,7 +207,7 @@ struct OnboardingView: View {
     private func finish() {
         Haptics.lightImpact(intensity: 0.7)
         withAnimation(.easeInOut(duration: 0.25)) {
-            hasCompletedOnboarding = true
+            isCompleted = true
         }
     }
 
@@ -356,11 +356,11 @@ private struct ScaledPressStyle: ButtonStyle {
 }
 
 #Preview("Light") {
-    OnboardingView()
+    OnboardingView(isCompleted: .constant(false))
         .preferredColorScheme(.light)
 }
 
 #Preview("Dark") {
-    OnboardingView()
+    OnboardingView(isCompleted: .constant(false))
         .preferredColorScheme(.dark)
 }

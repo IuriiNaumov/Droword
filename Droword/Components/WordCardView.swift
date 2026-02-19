@@ -6,6 +6,7 @@ struct WordCardView: View, Equatable {
     let translation: String?
     let type: String?
     let example: String?
+    let transcription: String?
     let comment: String?
     let explanation: String?
     let breakdown: String?
@@ -17,6 +18,7 @@ struct WordCardView: View, Equatable {
         lhs.translation == rhs.translation &&
         lhs.type == rhs.type &&
         lhs.example == rhs.example &&
+        lhs.transcription == rhs.transcription &&
         lhs.explanation == rhs.explanation &&
         lhs.breakdown == rhs.breakdown &&
         lhs.comment == rhs.comment &&
@@ -88,6 +90,12 @@ struct WordCardView: View, Equatable {
                 }
                 
                 headerRow
+
+                if let transcription = transcription, !transcription.isEmpty {
+                    Text(transcription)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                }
                 
                 if let type = type, !type.isEmpty {
                     Text(type.capitalized)
@@ -150,6 +158,12 @@ struct WordCardView: View, Equatable {
             } else {
 
                 headerRow
+
+                if let transcription = transcription, !transcription.isEmpty {
+                    Text(transcription)
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                }
 
                 if let translation = translation {
                     Text(translation)
@@ -249,6 +263,7 @@ struct WordCardView: View, Equatable {
             translation: "Вкусный",
             type: "adjective",
             example: "Este plato es muy sabroso y delicioso.",
+            transcription: nil,
             comment: "Мое любимое слово!",
             explanation: "Используется для описания вкусной еды или напитков.",
             breakdown: "Происходит от sabor (вкус) + -oso (обладающий качеством)",
@@ -261,6 +276,7 @@ struct WordCardView: View, Equatable {
             translation: "Круто",
             type: "adjective",
             example: "La fiesta estuvo chido y divertida.",
+            transcription: nil,
             comment: nil,
             explanation: "Мексиканский разговорный термин, означающий что-то классное или приятное.",
             breakdown: nil,
@@ -273,6 +289,7 @@ struct WordCardView: View, Equatable {
             translation: "Еда",
             type: "noun",
             example: "この食べ物はとてもおいしいです。",
+            transcription: nil,
             comment: nil,
             explanation: "Общее слово для обозначения еды или продуктов питания.",
             breakdown: "食 (есть) + べる (глагольная основа) + 物 (вещь) — буквально: 'то, что едят'",

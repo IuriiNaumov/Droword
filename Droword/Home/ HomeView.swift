@@ -111,6 +111,7 @@ struct HomeView: View {
                                 translation: word.translation,
                                 type: word.type,
                                 example: word.example,
+                                transcription: word.transcription,
                                 comment: word.breakdown,
                                 explanation: word.explanation,
                                 breakdown: word.comment,

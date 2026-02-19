@@ -6,6 +6,7 @@ struct GPTTranslationResult: Codable {
     let type: String
     let explanation: String?
     let breakdown: String?
+    let transcription: String?
 }
 
 struct OpenAIResponse: Codable {
@@ -51,6 +52,7 @@ func translateWithGPT(
     - explanation → short and clear, only \(nativeLanguage)
     - breakdown → only \(nativeLanguage) or null
     - example → only \(learningLanguage)
+    - transcription → IPA or phonetic transcription using Latin letters only (ASCII), e.g., /…/ or […], or null
     - Do not mix languages inside fields.
 
     Return ONLY valid JSON:
@@ -60,7 +62,8 @@ func translateWithGPT(
       "example": "...",
       "type": "...",
       "explanation": "...",
-      "breakdown": null or "..."
+      "breakdown": null or "...",
+      "transcription": null or "..."
     }
     """
 

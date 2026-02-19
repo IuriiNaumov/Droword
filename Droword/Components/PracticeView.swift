@@ -7,6 +7,7 @@ struct WordCard: Identifiable {
     let partOfSpeech: String
     let example: String
     let translation: String
+    let transcription: String?    // Added transcription property
     let tag: String?
     let fromLanguage: String?
     let toLanguage: String?
@@ -31,6 +32,7 @@ struct PracticeView: View {
                 partOfSpeech: word.type.isEmpty ? "word" : word.type,
                 example: word.example ?? "Add an example later",
                 translation: word.translation ?? "No translation yet",
+                transcription: word.transcription, // Added transcription here
                 tag: word.tag,
                 fromLanguage: word.fromLanguage,
                 toLanguage: word.toLanguage,
@@ -278,24 +280,34 @@ struct WordCardPracticeView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let tag = card.tag, !tag.isEmpty {
                 Text(tag)
-                    .font(.custom("Poppins-SemiBold", size: 11))
-                    .foregroundColor(backgroundColor)
+                    .font(.custom("Poppins-Medium", size: 14))
+                    .foregroundColor(darkerShade(of: backgroundColor, by: 0.4))
                     .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
-                    .background(Color.white.opacity(0.6))
+                    .padding(.horizontal, 12)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.mainBlack.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(darkerShade(of: backgroundColor, by: 0.1), lineWidth: 1)
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(backgroundColor)
+                    )
+                    .padding(.bottom, 2)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(card.word)
-                    .font(.custom("Poppins-Bold", size: 24))
-                    .foregroundColor(.mainBlack)
-                    .lineLimit(nil)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(card.word)
+                        .font(.custom("Poppins-Bold", size: 24))
+                        .foregroundColor(.mainBlack)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let tr = card.transcription, !tr.isEmpty {
+                        Text(tr)
+                            .font(.custom("Poppins-Regular", size: 14))
+                            .foregroundColor(.mainGrey)
+                    }
+                }
                 Spacer()
                 Button(action: { Haptics.selection(); playAudio() }) {
                     SoundWavesView(isPlaying: isPlaying)

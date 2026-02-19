@@ -1,22 +1,16 @@
 import SwiftUI
 
 struct OnboardingLanguagePage: View {
-    @EnvironmentObject var languageStore: LanguageStore
+    @EnvironmentObject private var languageStore: LanguageStore
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                Text("Preferred Language")
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                    .padding(.top, 24)
-
+        ZStack {
+            Color.white.ignoresSafeArea()
+            VStack(spacing: 0) {
+                LanguageSelectionView()
+                    .environmentObject(languageStore)
             }
-            .padding(.horizontal, 32)
-            .padding(.bottom, 60)
+            .padding(.horizontal, 0)
         }
-        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
     }
 }
-
