@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 struct WordCard: Identifiable {
     let id = UUID()
@@ -7,7 +8,9 @@ struct WordCard: Identifiable {
     let partOfSpeech: String
     let example: String
     let translation: String
-    let transcription: String?    // Added transcription property
+    let explanation: String?
+    let breakdown: String?
+    let transcription: String?
     let tag: String?
     let fromLanguage: String?
     let toLanguage: String?
@@ -32,7 +35,9 @@ struct PracticeView: View {
                 partOfSpeech: word.type.isEmpty ? "word" : word.type,
                 example: word.example ?? "Add an example later",
                 translation: word.translation ?? "No translation yet",
-                transcription: word.transcription, // Added transcription here
+                explanation: word.explanation,
+                breakdown: word.breakdown,
+                transcription: word.transcription,
                 tag: word.tag,
                 fromLanguage: word.fromLanguage,
                 toLanguage: word.toLanguage,
@@ -234,6 +239,18 @@ struct WordCardPracticeView: View {
         return Color(.defaultCard)
     }
 
+    private var isDarkBackground: Bool {
+        backgroundColor.isDarkColor
+    }
+
+    private var primaryTextColor: Color {
+        isDarkBackground ? .white : .mainBlack
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.8)
+    }
+
     private func highlightedExample(example: String, target: String) -> AttributedString {
         var attr = AttributedString(example)
         let lowerExample = example.lowercased()
@@ -299,13 +316,13 @@ struct WordCardPracticeView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(card.word)
                         .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(primaryTextColor)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
                     if let tr = card.transcription, !tr.isEmpty {
                         Text(tr)
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(.mainGrey)
+                            .foregroundColor(secondaryTextColor)
                     }
                 }
                 Spacer()
@@ -320,12 +337,12 @@ struct WordCardPracticeView: View {
 
             Text(card.partOfSpeech.capitalized)
                 .font(.custom("Poppins-Regular", size: 14))
-                .foregroundColor(.mainGrey)
+                .foregroundColor(secondaryTextColor)
 
             if let comment = card.comment, !comment.isEmpty {
                 Text(comment)
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainBlack.opacity(0.8))
+                    .foregroundColor(secondaryTextColor)
                     .padding(.horizontal, 2)
             }
 
@@ -333,6 +350,21 @@ struct WordCardPracticeView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(highlightedExample(example: card.example, target: card.word))
                         .font(.custom("Poppins-Regular", size: 16))
+                        .foregroundColor(primaryTextColor)
+                }
+
+                if let explanation = card.explanation, !explanation.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(explanation)
+                            .font(.custom("Poppins-Regular", size: 16))
+                    }
+                }
+
+                if let breakdown = card.breakdown, !breakdown.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(breakdown)
+                            .font(.custom("Poppins-Regular", size: 16))
+                    }
                 }
 
                 if !card.translation.isEmpty {
@@ -340,24 +372,25 @@ struct WordCardPracticeView: View {
                         if showTranslation {
                             Text(card.translation)
                                 .font(.custom("Poppins-Regular", size: 16))
+                                .foregroundColor(primaryTextColor)
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         } else {
                             let first = card.translation.prefix(1)
                             Text("\(first)•••")
                                 .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundColor(.mainBlack.opacity(0.5))
+                                .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.5))
                         }
                         Spacer()
                         Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() } }) {
                             Text(showTranslation ? "Hide" : "Show")
                                 .font(.custom("Poppins-Regular", size: 13))
-                                .foregroundColor(.mainBlack.opacity(0.7))
+                                .foregroundColor(isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.7))
                         }
                         .buttonStyle(.plain)
                     }
                     Text("Try to recall the translation without looking.")
                         .font(.custom("Poppins-Regular", size: 12))
-                        .foregroundColor(.mainBlack.opacity(0.45))
+                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.45))
                 }
             }
 
@@ -390,6 +423,16 @@ struct WordCardPracticeView: View {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             withAnimation { isPlaying = false }
         }
+    }
+}
+
+private extension Color {
+    var isDarkColor: Bool {
+        let ui = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return lum < 0.5
     }
 }
     

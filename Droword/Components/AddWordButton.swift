@@ -92,28 +92,51 @@ struct AddWordButton: View {
         .animation(.easeInOut(duration: 0.3), value: errorMessage)
     }
 
+    private struct TimeoutError: Error {}
+
+    private func runWithTimeout(seconds: Double, _ operation: @escaping () async throws -> Void) async throws {
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw TimeoutError()
+            }
+            // Wait for the first task to finish (success or timeout)
+            let _ = try await group.next()
+            group.cancelAll()
+        }
+    }
+
+    @MainActor
     private func performAction() async {
         guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
 
+        defer {
+            // Ensure loader always turns off on main thread
+            isLoading = false
+        }
+
         do {
-            try await action()
-            DispatchQueue.main.async {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            try await runWithTimeout(seconds: 20) {
+                try await action()
             }
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
             onSuccess?()
         } catch {
-            DispatchQueue.main.async {
-                UINotificationFeedbackGenerator().notificationOccurred(.error)
-            }
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
             withAnimation {
-                errorMessage = "Something went wrong. Try again."
+                if (error as? TimeoutError) != nil {
+                    errorMessage = "The request took too long. Please try again."
+                } else {
+                    errorMessage = "Something went wrong. Try again."
+                }
             }
             onError?(error)
         }
-
-        isLoading = false
     }
 }
 

@@ -1,5 +1,11 @@
 import Foundation
 
+/// Common European Framework of Reference for Languages levels
+/// Minimal definition to make this file self-contained.
+enum CEFRLevel: String, CaseIterable, Codable {
+    case A1, A2, B1, B2, C1, C2
+}
+
 struct SuggestedWord: Identifiable, Codable, Equatable {
     let id: UUID
     let word: String
@@ -65,14 +71,14 @@ struct SuggestionsContainer: Codable {
 @MainActor
 func fetchSuggestionsWithTopic(
     words: [String],
-    languageStore: LanguageStore
+    languageStore: LanguageStore,
 ) async throws -> (topic: String?, suggestions: [SuggestedWord]) {
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
-
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
     let wordsList = words.joined(separator: ", ")
+
 
     let prompt = """
     You are a vocabulary assistant.

@@ -116,24 +116,26 @@ struct OnboardingView: View {
 
                         Spacer()
 
-                        Button(action: {
-                            Haptics.selection()
-                            withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
-                                page = pages.count // jump to language selection page
+                        if page < pages.count {
+                            Button(action: {
+                                Haptics.selection()
+                                withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
+                                    page = pages.count // jump to language selection page
+                                }
+                            }) {
+                                Text("Skip")
+                                    .font(.custom("Poppins-Regular", size: 16))
+                                    .foregroundColor(.mainBlack.opacity(0.75))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        Capsule().fill(Color.cardBackground.opacity(0.9))
+                                    )
                             }
-                        }) {
-                            Text("Skip")
-                                .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundColor(.mainBlack.opacity(0.75))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .background(
-                                    Capsule().fill(Color.cardBackground.opacity(0.9))
-                                )
+                            .buttonStyle(ScaledPressStyle())
+                            .padding(.trailing, 20)
+                            .padding(.top, 12)
                         }
-                        .buttonStyle(ScaledPressStyle())
-                        .padding(.trailing, 20)
-                        .padding(.top, 12)
                     }
                     Spacer()
                 }
@@ -165,7 +167,6 @@ struct OnboardingView: View {
                     .accessibilityLabel(page == totalPages - 1 ? "Get Started" : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
-            // Keep disabled state based on validation
             .disabled(!canProceedOnCurrentPage)
         }
     }
@@ -364,3 +365,4 @@ private struct ScaledPressStyle: ButtonStyle {
     OnboardingView(isCompleted: .constant(false))
         .preferredColorScheme(.dark)
 }
+

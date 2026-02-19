@@ -12,7 +12,6 @@ final class AudioManager {
     private var currentVoice: String {
         UserDefaults.standard.string(forKey: voiceKey) ?? "coral"
     }
-
     private var currentRate: Float {
         let val = UserDefaults.standard.double(forKey: rateKey)
         return val == 0 ? 1.0 : Float(val)

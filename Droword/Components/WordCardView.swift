@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 struct WordCardView: View, Equatable {
     let word: String
@@ -66,6 +67,18 @@ struct WordCardView: View, Equatable {
         }
         return Color(.defaultCard)
     }
+    
+    private var isDarkBackground: Bool {
+        backgroundColor.isDarkColor
+    }
+
+    private var primaryTextColor: Color {
+        isDarkBackground ? .white : .mainBlack
+    }
+
+    private var secondaryTextColor: Color {
+        isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.8)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -75,7 +88,7 @@ struct WordCardView: View, Equatable {
                 if let tag = tag, !tag.isEmpty {
                     Text(tag)
                         .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(darkerShade(of: colorForTag(tag), by: 0.4))
+                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.4))
                         .padding(.vertical, 4)
                         .padding(.horizontal, 12)
                         .overlay(
@@ -94,13 +107,13 @@ struct WordCardView: View, Equatable {
                 if let transcription = transcription, !transcription.isEmpty {
                     Text(transcription)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(secondaryTextColor)
                 }
                 
                 if let type = type, !type.isEmpty {
                     Text(type.capitalized)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(secondaryTextColor)
                         .padding(.bottom, 2)
                 }
 
@@ -108,7 +121,7 @@ struct WordCardView: View, Equatable {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(translation)
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(primaryTextColor)
                     }
                 }
 
@@ -116,7 +129,7 @@ struct WordCardView: View, Equatable {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(highlightedExample)
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(primaryTextColor)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -125,7 +138,7 @@ struct WordCardView: View, Equatable {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(explanation)
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(primaryTextColor)
                     }
                 }
 
@@ -133,14 +146,14 @@ struct WordCardView: View, Equatable {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(breakdown)
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(primaryTextColor)
                     }
                 }
 
                 if let comment = comment, !comment.isEmpty {
                     Text(comment)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(Color(.mainGrey))
+                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : Color(.mainGrey))
                         .padding(.top, 4)
                 }
                 
@@ -162,13 +175,13 @@ struct WordCardView: View, Equatable {
                 if let transcription = transcription, !transcription.isEmpty {
                     Text(transcription)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(secondaryTextColor)
                 }
 
                 if let translation = translation {
                     Text(translation)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(primaryTextColor)
                 }
 
                 HStack {
@@ -219,7 +232,7 @@ struct WordCardView: View, Equatable {
 
             Text(word)
                 .font(.custom("Poppins-Bold", size: 24))
-                .foregroundColor(.mainBlack)
+                .foregroundColor(primaryTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
@@ -255,6 +268,17 @@ struct WordCardView: View, Equatable {
         return attributedString
     }
 }
+
+private extension Color {
+    var isDarkColor: Bool {
+        let ui = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        return lum < 0.5
+    }
+}
+
 #Preview {
     VStack(spacing: 20) {
         

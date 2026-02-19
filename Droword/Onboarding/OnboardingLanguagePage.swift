@@ -6,11 +6,42 @@ struct OnboardingLanguagePage: View {
     var body: some View {
         ZStack {
             Color.white.ignoresSafeArea()
-            VStack(spacing: 0) {
-                LanguageSelectionView()
-                    .environmentObject(languageStore)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    LanguageCubePicker(
+                        selectedLanguage: $languageStore.nativeLanguage,
+                        title: "I speak",
+                        languages: LanguageCatalog.availableLanguages,
+                        blockedLanguage: languageStore.learningLanguage
+                    )
+
+                    LanguageCubePicker(
+                        selectedLanguage: $languageStore.learningLanguage,
+                        title: "I’m learning",
+                        languages: LanguageCatalog.availableLanguages,
+                        blockedLanguage: languageStore.nativeLanguage
+                    )
+                }
+                .padding(.top, 54)
+                .padding(.bottom, 12)
             }
-            .padding(.horizontal, 0)
         }
     }
+}
+
+#Preview("Light") {
+    let store = LanguageStore()
+    store.nativeLanguage = "English"
+    store.learningLanguage = "Español"
+    return OnboardingLanguagePage()
+        .environmentObject(store)
+}
+
+#Preview("Dark") {
+    let store = LanguageStore()
+    store.nativeLanguage = "English"
+    store.learningLanguage = "Español"
+    return OnboardingLanguagePage()
+        .environmentObject(store)
+        .preferredColorScheme(.dark)
 }

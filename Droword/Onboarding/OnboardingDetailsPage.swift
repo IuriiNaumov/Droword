@@ -22,8 +22,8 @@ struct OnboardingDetailsPage: View {
     }
     
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        VStack(spacing: 16) {
+            Spacer(minLength: 20)
             VStack(spacing: 12) {
                 VStack(spacing: 8) {
                     Text("Name")
@@ -31,29 +31,29 @@ struct OnboardingDetailsPage: View {
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 20)
-                    HStack {
-                        Spacer()
-                        Text(nameCounterText)
-                            .font(.caption)
-                            .foregroundColor(
-                                tempName.count > 40 ? Color("red") : Color.secondary
+
+                    ZStack(alignment: .trailing) {
+                        TextField("Enter your name", text: $tempName)
+                            .textContentType(.name)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.words)
+                            .padding(18)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.cardBackground)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(tempName.count > 40 ? Color("red") : Color.clear, lineWidth: 1)
                             )
                             .padding(.horizontal, 20)
-                    }
-                    TextField("Enter your name", text: $tempName)
-                        .textContentType(.name)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.words)
-                        .padding(14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.cardBackground)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(tempName.count > 40 ? Color("red") : Color.clear, lineWidth: 1)
-                        )
-                        .padding(.horizontal, 20)
+
+                        Text(nameCounterText)
+                            .font(.caption)
+                            .foregroundColor(tempName.count > 40 ? Color("red") : Color.secondary)
+                            .padding(.trailing, 40)
+
+                    }.padding(.bottom, 20)
                 }
 
                 VStack(spacing: 8) {
@@ -76,7 +76,7 @@ struct OnboardingDetailsPage: View {
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                        .padding(14)
+                        .padding(18)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(Color.cardBackground)
