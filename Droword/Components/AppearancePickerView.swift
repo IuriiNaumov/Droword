@@ -21,7 +21,7 @@ struct AppearancePickerView: View {
                 .padding(.top, 12)
 
             HStack(spacing: 16) {
-                ForEach(AppAppearance.allCases) { option in
+                ForEach(AppAppearance.allCases, id: \.self) { option in
                     AppearanceCard(
                         title: option.title,
                         style: option,
@@ -171,4 +171,3 @@ private struct AppearanceCard: View {
     AppearancePickerView()
         .preferredColorScheme(.dark)
 }
-

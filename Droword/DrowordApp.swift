@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 
 @main
-struct WoordyApp: App {
+struct DrowordApp: App {
     @StateObject private var store = WordsStore()
     @StateObject private var golden = GoldenWordsStore()
     @StateObject private var languageStore = LanguageStore()

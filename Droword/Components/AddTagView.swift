@@ -52,10 +52,10 @@ struct AddTagView: View {
                 .padding(.bottom, 30)
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button(isSaving ? "Adding..." : "Add") {
                         saveTag()
                     }

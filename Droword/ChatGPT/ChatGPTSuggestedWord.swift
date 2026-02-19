@@ -70,7 +70,7 @@ func fetchSuggestionsWithTopic(
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
-
+    let apiKey = "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"
 
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
     let wordsList = words.joined(separator: ", ")
