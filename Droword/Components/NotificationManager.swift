@@ -1,6 +1,31 @@
 import Foundation
 import UserNotifications
 
+private let friendlyBodies: [String] = [
+    "Давай подкачаем словарик? Пять минут — и ты молодец ✨",
+    "Пора освежить пару слов. Быстро и по делу!",
+    "Я приготовил тебе мини-сессию. Заглянешь?",
+    "Слова скучают по тебе. Залетаем на повтор?",
+    "Ещё шаг — и ты ближе к цели. Готов?"
+]
+
+private let friendlyTitles: [String] = [
+    "Время повторить слова",
+    "Минутка для языка",
+    "Твой словарик зовёт",
+    "Пора освежиться",
+    "Маленький шаг сегодня"
+]
+
+private func randomContent(tagName: String?) -> (title: String, body: String) {
+    let title = friendlyTitles.randomElement() ?? "Время повторить слова"
+    var body = friendlyBodies.randomElement() ?? "Пора повторить слова"
+    if let tagName, !tagName.isEmpty {
+        body += " по тегу \"\(tagName)\""
+    }
+    return (title, body)
+}
+
 final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
@@ -16,12 +41,9 @@ final class NotificationManager {
         let center = UNUserNotificationCenter.current()
 
         let content = UNMutableNotificationContent()
-        content.title = "Время повторить слова"
-        if let tagName, !tagName.isEmpty {
-            content.body = "Повторите слова по тегу \"\(tagName)\""
-        } else {
-            content.body = "Пора повторить слова"
-        }
+        let pair = randomContent(tagName: tagName)
+        content.title = pair.title
+        content.body = pair.body
         content.sound = .default
 
         var dateComponents = DateComponents()
@@ -40,12 +62,9 @@ final class NotificationManager {
         let center = UNUserNotificationCenter.current()
 
         let content = UNMutableNotificationContent()
-        content.title = "Время повторить слова"
-        if let tagName, !tagName.isEmpty {
-            content.body = "Повторите слова по тегу \"\(tagName)\""
-        } else {
-            content.body = "Пора повторить слова"
-        }
+        let pair = randomContent(tagName: tagName)
+        content.title = pair.title
+        content.body = pair.body
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(5, seconds), repeats: false)
@@ -56,5 +75,29 @@ final class NotificationManager {
     func cancelAll() {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
+    }
+
+    func scheduleInactivityReminders(lastActive: Date) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [
+            "inactive.3d", "inactive.7d", "inactive.14d", "inactive.30d"
+        ])
+
+        let daysOffsets = [3, 7, 14, 30]
+        for d in daysOffsets {
+            let id = "inactive.\(d)d"
+            let fire = Calendar.current.date(byAdding: .day, value: d, to: lastActive) ?? Date().addingTimeInterval(Double(d) * 86400)
+            if fire < Date() { continue }
+
+            let content = UNMutableNotificationContent()
+            let pair = randomContent(tagName: nil)
+            content.title = pair.title
+            content.body = pair.body + " — давно не виделись!"
+            content.sound = .default
+
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(5, fire.timeIntervalSinceNow), repeats: false)
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            center.add(request)
+        }
     }
 }

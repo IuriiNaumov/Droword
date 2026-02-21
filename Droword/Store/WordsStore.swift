@@ -16,6 +16,13 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var fromLanguage: String
     var toLanguage: String
 
+    // Spaced repetition scheduling fields
+    var easeFactor: Double = 2.5
+    var intervalDays: Int = 0
+    var repetitions: Int = 0
+    var lapses: Int = 0
+    var dueDate: Date? = nil
+
     init(
         id: UUID = UUID(),
         word: String,
@@ -29,7 +36,12 @@ struct StoredWord: Identifiable, Codable, Equatable {
         tag: String? = nil,
         dateAdded: Date = Date(),
         fromLanguage: String,
-        toLanguage: String
+        toLanguage: String,
+        easeFactor: Double = 2.5,
+        intervalDays: Int = 0,
+        repetitions: Int = 0,
+        lapses: Int = 0,
+        dueDate: Date? = nil
     ) {
         self.id = id
         self.word = word
@@ -44,6 +56,11 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.dateAdded = dateAdded
         self.fromLanguage = fromLanguage
         self.toLanguage = toLanguage
+        self.easeFactor = easeFactor
+        self.intervalDays = intervalDays
+        self.repetitions = repetitions
+        self.lapses = lapses
+        self.dueDate = dueDate
     }
 }
 
@@ -107,5 +124,21 @@ final class WordsStore: ObservableObject {
             }
             defaults.set(total, forKey: self.totalKey)
         }
+    }
+    
+    func updateScheduling(for id: UUID,
+                          easeFactor: Double,
+                          intervalDays: Int,
+                          repetitions: Int,
+                          lapses: Int,
+                          dueDate: Date?) {
+        guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
+        var w = words[idx]
+        w.easeFactor = easeFactor
+        w.intervalDays = intervalDays
+        w.repetitions = repetitions
+        w.lapses = lapses
+        w.dueDate = dueDate
+        words[idx] = w
     }
 }

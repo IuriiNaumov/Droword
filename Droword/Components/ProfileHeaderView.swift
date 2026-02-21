@@ -5,6 +5,20 @@ struct ProfileHeaderView: View {
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var displayProgress: Double = 0.0
+    private let cuteTags: [String] = [
+        "keep it up",
+        "proud of you",
+        "nice progress",
+        "you got this",
+        "so consistent",
+        "shining today",
+        "looking sharp",
+        "on a roll",
+        "love your vibe",
+        "crushing it"
+    ]
+    @AppStorage("selectedCuteTag") private var storedCuteTag: String = "cutie"
+    @AppStorage("selectedCuteTagDate") private var storedCuteTagDate: String = ""
     @AppStorage("userName") private var storedUserName: String = ""
 
     private let xpPerWord = 10
@@ -56,30 +70,59 @@ struct ProfileHeaderView: View {
     private let xpBackground = Color(hex: "#DEF1D0")
     private let xpText = Color(hex: "#3E8A64")
 
+    // Daily-changing palette for the cute tag (bg, text)
+    private let cuteTagPalettes: [(bg: Color, text: Color)] = [
+        (Color(hex: "#FFE6AA"), Color(hex: "#9C6B00")), // level colors
+        (Color(hex: "#DEF1D0"), Color(hex: "#3E8A64")), // xp colors
+        (Color(hex: "#DDEBFF"), Color(hex: "#2458B5")),
+        (Color(hex: "#FFDDE7"), Color(hex: "#B51957")),
+        (Color(hex: "#EDE3FF"), Color(hex: "#6B39B3")),
+        (Color(hex: "#DFF7FF"), Color(hex: "#0E6C85"))
+    ]
+
+    @State private var cuteTagBackground: Color = Color(hex: "#FFE6AA")
+    @State private var cuteTagTextColor: Color = Color(hex: "#9C6B00")
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 16) {
-                ZStack {
-                    if let avatarImage {
-                        Image(uiImage: avatarImage)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 72, height: 72)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(levelBackground, lineWidth: 3))
-                    } else {
-                        Circle()
-                            .fill(levelBackground.opacity(0.25))
-                            .frame(width: 72, height: 72)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 34, weight: .semibold))
-                                    .foregroundColor(.mainBlack)
-                            )
+                VStack(alignment: .center, spacing: 6) {
+                    ZStack {
+                        if let avatarImage {
+                            Image(uiImage: avatarImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 72, height: 72)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(levelBackground, lineWidth: 3))
+                        } else {
+                            Circle()
+                                .fill(levelBackground.opacity(0.25))
+                                .frame(width: 72, height: 72)
+                                .overlay(
+                                    Image(systemName: "person.fill")
+                                        .font(.system(size: 34, weight: .semibold))
+                                        .foregroundColor(.mainBlack)
+                                )
+                        }
                     }
+                    .overlay(alignment: .topTrailing) {
+                        Text(storedCuteTag)
+                            .font(.custom("Poppins-Bold", size: 10))
+                            .foregroundColor(cuteTagTextColor)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .truncationMode(.tail)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule().fill(cuteTagBackground)
+                            )
+                            .offset(x: 6, y: -6)
+                    }
+                    .contentShape(Circle())
+                    .onTapGesture { showSettings = true }
                 }
-                .contentShape(Circle())
-                .onTapGesture { showSettings = true }
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text(displayName)
@@ -133,6 +176,22 @@ struct ProfileHeaderView: View {
         .onAppear {
             avatarImage = loadAvatarFromDisk()
             displayProgress = progressRatio
+
+            let df = DateFormatter()
+            df.calendar = Calendar(identifier: .gregorian)
+            df.dateFormat = "yyyy-MM-dd"
+            let today = df.string(from: Date())
+
+            let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+            let colorIndex = dayOfYear % cuteTagPalettes.count
+            cuteTagBackground = cuteTagPalettes[colorIndex].bg
+            cuteTagTextColor = cuteTagPalettes[colorIndex].text
+
+            if storedCuteTagDate != today {
+                let index = dayOfYear % cuteTags.count
+                storedCuteTag = cuteTags[index]
+                storedCuteTagDate = today
+            }
         }
         .onChange(of: progressRatio) { _, newValue in
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
@@ -161,6 +220,35 @@ struct ProfileHeaderView: View {
     }
 }
 
+private struct CuteTagBubbleShape: Shape {
+    var cornerRadius: CGFloat = 10
+    var notchWidth: CGFloat = 12
+    var notchHeight: CGFloat = 6
+
+    func path(in rect: CGRect) -> Path {
+        let r = min(cornerRadius, min(rect.width, rect.height) / 2)
+        let nw = min(notchWidth, rect.width / 3)
+        let nh = min(notchHeight, rect.height / 2)
+        var p = Path()
+
+        p.move(to: CGPoint(x: rect.minX + r, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.midX - nw / 2, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.midX, y: rect.minY - nh))
+        p.addLine(to: CGPoint(x: rect.midX + nw / 2, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+        p.addArc(center: CGPoint(x: rect.maxX - r, y: rect.minY + r), radius: r, startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
+        p.addArc(center: CGPoint(x: rect.maxX - r, y: rect.maxY - r), radius: r, startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.minX + r, y: rect.maxY))
+        p.addArc(center: CGPoint(x: rect.minX + r, y: rect.maxY - r), radius: r, startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
+        p.addArc(center: CGPoint(x: rect.minX + r, y: rect.minY + r), radius: r, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+
+        p.closeSubpath()
+        return p
+    }
+}
+
 extension Color {
     init(hexRGB: UInt) {
         let r = Double((hexRGB >> 16) & 0xFF) / 255
@@ -177,3 +265,4 @@ extension Notification.Name {
 #Preview {
     ProfileHeaderView().environmentObject(WordsStore())
 }
+

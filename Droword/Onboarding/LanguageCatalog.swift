@@ -11,6 +11,9 @@ struct LanguageCatalog {
         LanguageOption(name: "Português", flag: "🇧🇷", color: Color(hex: "#FFF4B0")),
         LanguageOption(name: "한국어", flag: "🇰🇷", color: Color(hex: "#D2E0FF")),
         LanguageOption(name: "中文", flag: "🇨🇳", color: Color(hex: "#FFD5D2")),
-        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color(hex: "#DDE8FF"))
+        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color(hex: "#DDE8FF")),
+        LanguageOption(name: "العربية", flag: "🇸🇦", color: Color(hex: "#FDE2D0")),
+        LanguageOption(name: "हिन्दी", flag: "🇮🇳", color: Color(hex: "#D0F0FF"))
     ]
 }
+

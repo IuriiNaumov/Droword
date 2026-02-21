@@ -38,7 +38,7 @@ struct PersonalDetailsView: View {
                     Text("Personal details")
                         .font(.custom("Poppins-Bold", size: 26))
                         .foregroundColor(.mainBlack)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Name *")

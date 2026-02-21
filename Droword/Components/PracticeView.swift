@@ -3,7 +3,7 @@ import AVFoundation
 import UIKit
 
 struct WordCard: Identifiable {
-    let id = UUID()
+    let id: UUID
     let word: String
     let partOfSpeech: String
     let example: String
@@ -19,18 +19,16 @@ struct WordCard: Identifiable {
 
 struct PracticeView: View {
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var languageStore: LanguageStore
 
     @State private var currentIndex: Int = 0
-    @State private var easeFactors: [UUID: Double] = [:]
-    @State private var intervals: [UUID: Int] = [:]
-    @State private var repetitions: [UUID: Int] = [:]
-    @State private var lastIntervalDays: [UUID: Int] = [:]
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
 
     private var cards: [WordCard] {
         store.words.map { word in
             WordCard(
+                id: word.id,
                 word: word.word,
                 partOfSpeech: word.type.isEmpty ? "word" : word.type,
                 example: word.example ?? "Add an example later",
@@ -46,24 +44,51 @@ struct PracticeView: View {
         }
     }
 
+    private func dueWords(from words: [StoredWord]) -> [StoredWord] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return words.filter { w in
+            if let due = w.dueDate {
+                return due <= today
+            } else {
+                // treat words without due date as new and available
+                return true
+            }
+        }
+    }
+
     private func prepareSession() {
-        learningQueue = cards
+        let due = dueWords(from: store.words)
+        learningQueue = due.map { word in
+            WordCard(
+                id: word.id,
+                word: word.word,
+                partOfSpeech: word.type.isEmpty ? "word" : word.type,
+                example: word.example ?? "Add an example later",
+                translation: word.translation ?? "No translation yet",
+                explanation: word.explanation,
+                breakdown: word.breakdown,
+                transcription: word.transcription,
+                tag: word.tag,
+                fromLanguage: word.fromLanguage,
+                toLanguage: word.toLanguage,
+                comment: word.comment
+            )
+        }
         currentIndex = 0
         showCompletion = false
-        for c in learningQueue {
-            if easeFactors[c.id] == nil { easeFactors[c.id] = 2.5 }
-            if intervals[c.id] == nil { intervals[c.id] = 0 }
-            if repetitions[c.id] == nil { repetitions[c.id] = 0 }
-            if lastIntervalDays[c.id] == nil { lastIntervalDays[c.id] = 0 }
-        }
     }
 
     private enum Rating { case again, hard, good, easy }
 
     private func scheduleNext(for card: WordCard, rating: Rating) {
-        var ef = easeFactors[card.id] ?? 2.5
-        var reps = repetitions[card.id] ?? 0
-        var ivl = intervals[card.id] ?? 0
+        guard let w = store.words.first(where: { $0.id == card.id }) else {
+            showNextCard(); return
+        }
+
+        var ef = max(1.3, w.easeFactor)
+        var reps = w.repetitions
+        var ivl = w.intervalDays
+        var lapses = w.lapses
 
         let q: Double
         switch rating {
@@ -73,13 +98,40 @@ struct PracticeView: View {
         case .easy:  q = 5
         }
 
+        // Update automatic proficiency score (EMA over answer quality)
+        let quality: Double
+        switch rating {
+        case .again: quality = 0.0
+        case .hard:  quality = 0.35
+        case .good:  quality = 0.7
+        case .easy:  quality = 1.0
+        }
+        let alpha = 0.06 // smoothing factor
+        let prev = languageStore.learningScore
+        languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
+
+        // SM-2 EF update
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
         ef = max(1.3, ef)
 
+        let now = Date()
+        let cal = Calendar.current
+
         if q < 3 {
+            // Lapse: reset reps/interval and schedule soon (learning step)
+            lapses += 1
             reps = 0
             ivl = 0
+            // Reinsert in-session after 2 positions for immediate relearn
             reinsert(card, after: 2)
+            // Persist with a very near due date (e.g. 10 minutes)
+            let due = cal.date(byAdding: .minute, value: 10, to: now)
+            store.updateScheduling(for: card.id,
+                                   easeFactor: ef,
+                                   intervalDays: ivl,
+                                   repetitions: reps,
+                                   lapses: lapses,
+                                   dueDate: due)
         } else {
             reps += 1
             if reps == 1 {
@@ -87,17 +139,17 @@ struct PracticeView: View {
             } else if reps == 2 {
                 ivl = 6
             } else {
-                ivl = Int(round(Double(ivl) * ef))
-                ivl = max(1, ivl)
+                ivl = max(1, Int(round(Double(ivl) * ef)))
             }
+            let due = cal.date(byAdding: .day, value: ivl, to: now)
+            store.updateScheduling(for: card.id,
+                                   easeFactor: ef,
+                                   intervalDays: ivl,
+                                   repetitions: reps,
+                                   lapses: lapses,
+                                   dueDate: due)
+            showNextCard()
         }
-
-        easeFactors[card.id] = ef
-        repetitions[card.id] = reps
-        intervals[card.id] = ivl
-        lastIntervalDays[card.id] = ivl
-
-        showNextCard()
     }
 
     private func reinsert(_ card: WordCard, after positions: Int) {
@@ -147,30 +199,36 @@ struct PracticeView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Text("Review")
-                .font(.custom("Poppins-Bold", size: 38))
-
-            Text("No words to practice yet")
+        VStack(spacing: 18) {
+            Text("Nothing to review yet ✨")
                 .font(.title3.weight(.medium))
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
 
-            Text("Add some words to your dictionary and they will appear here.")
+            Text("Add a few words — I’ll prepare your first mini‑session. Start small and show up daily. That’s how progress sticks.")
                 .font(.subheadline)
+                .foregroundColor(.secondary.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Text("Tip: grab words from movies, chats, or walks — learning feels alive that way.")
+                .font(.footnote)
                 .foregroundColor(.secondary.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Review")
                 .font(.custom("Poppins-Bold", size: 38))
+                .foregroundColor(.mainBlack)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
-        .padding(.top, 16)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
     }
 
     private var completionScreen: some View {
@@ -211,6 +269,8 @@ private struct RatingButton: View {
 }
 
 struct WordCardPracticeView: View {
+    @EnvironmentObject private var languageStore: LanguageStore
+
     let card: WordCard
 
     let onAgain: () -> Void
@@ -249,6 +309,12 @@ struct WordCardPracticeView: View {
 
     private var secondaryTextColor: Color {
         isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.8)
+    }
+
+    private var adaptedExample: String {
+        let lang = languageStore.learningLanguage
+        let level = CEFRLevel(rawValue: languageStore.learningLevel) ?? .A1
+        return LevelAdaptation.adaptExample(card.example, targetLanguage: lang, level: level)
     }
 
     private func highlightedExample(example: String, target: String) -> AttributedString {
@@ -348,7 +414,7 @@ struct WordCardPracticeView: View {
 
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(highlightedExample(example: card.example, target: card.word))
+                    Text(highlightedExample(example: adaptedExample, target: card.word))
                         .font(.custom("Poppins-Regular", size: 16))
                         .foregroundColor(primaryTextColor)
                 }
@@ -479,5 +545,6 @@ private extension Color {
     }
     return PracticeView()
         .environmentObject(store)
+        .environmentObject(LanguageStore())
 }
 

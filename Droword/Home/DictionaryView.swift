@@ -29,10 +29,33 @@ struct DictionaryView: View {
                     if isLoading {
                         Skeleton()
                     } else if filteredWords.isEmpty {
-                        Text("No words yet 😌")
-                            .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainGrey)
-                            .padding(.top, 40)
+                        VStack {
+                            Spacer(minLength: 40)
+
+                            VStack(spacing: 18) {
+                                Text("Your word garden is waiting ❤️")
+                                    .font(.title3.weight(.medium))
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+
+                                Text("Add a couple of words and I’ll keep them safe here. Little by little — you’ll see your vocabulary grow every day.")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 32)
+
+                                Text("Tip: pick words from movies, chats, or walks — that’s how learning feels alive.")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary.opacity(0.7))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 42)
+                            }
+                            .frame(maxWidth: .infinity)
+
+                            Spacer(minLength: 100)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 360)
                     } else {
                         ForEach(filteredWords) { word in
                             WordCardView(

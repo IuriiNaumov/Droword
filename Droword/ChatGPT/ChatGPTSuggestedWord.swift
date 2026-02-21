@@ -1,7 +1,5 @@
 import Foundation
 
-/// Common European Framework of Reference for Languages levels
-/// Minimal definition to make this file self-contained.
 enum CEFRLevel: String, CaseIterable, Codable {
     case A1, A2, B1, B2, C1, C2
 }
@@ -76,6 +74,7 @@ func fetchSuggestionsWithTopic(
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
+
     let url = URL(string: "https://api.openai.com/v1/chat/completions")!
     let wordsList = words.joined(separator: ", ")
 
