@@ -135,6 +135,8 @@ struct ProfileHeaderView: View {
                     Text(displayName)
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.mainBlack)
+                        .padding(.top, 40)
+
 
                     Text("\(usageDurationString()) with Droword")
                         .font(.custom("Poppins-Regular", size: 14))
