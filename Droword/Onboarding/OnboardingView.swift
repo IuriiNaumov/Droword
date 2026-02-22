@@ -57,7 +57,7 @@ struct OnboardingView: View {
                         OnboardingLanguagePage()
                             .environmentObject(languageStore)
                             .tag(pages.count)
-                            .padding(.horizontal, 28)
+                            .padding(.horizontal, 18)
                             .padding(.top, 24)
 
                         OnboardingDetailsPage()
@@ -158,13 +158,13 @@ struct OnboardingView: View {
             Spacer()
 
             Button(action: next) {
-                Image(systemName: page == totalPages - 1 ? "checkmark" : "arrow.right")
+                Image(systemName: page == totalPages - 1 ? (canProceedOnCurrentPage ? "checkmark" : "xmark") : "arrow.right")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
                     .background(Circle().fill(Color.toastAndButtons))
                     .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
-                    .accessibilityLabel(page == totalPages - 1 ? "Get Started" : "Continue")
+                    .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
             .disabled(!canProceedOnCurrentPage)
@@ -201,6 +201,11 @@ struct OnboardingView: View {
                 page += 1
             }
         } else {
+            let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmedName.isEmpty && trimmedName.count <= 40 else {
+                Haptics.lightImpact(intensity: 0.5)
+                return
+            }
             finish()
         }
     }
@@ -244,7 +249,7 @@ private struct OnboardingPageView: View {
     var body: some View {
         VStack { 
             Spacer(minLength: 0)
-            VStack(spacing: 24) {
+            VStack(spacing: 34) {
                 illustration
                     .opacity(showArt ? 1 : 0)
                     .offset(y: showArt ? 0 : 20)
@@ -365,4 +370,3 @@ private struct ScaledPressStyle: ButtonStyle {
     OnboardingView(isCompleted: .constant(false))
         .preferredColorScheme(.dark)
 }
-

@@ -269,7 +269,7 @@ struct SettingsView: View {
                         .font(.custom("Poppins-Bold", size: 26))
                         .foregroundColor(.mainBlack)
                         .padding(.top, 12)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text("Voice")
                         .font(.custom("Poppins-Medium", size: 16))
@@ -372,6 +372,7 @@ struct SettingsView: View {
                     .background(Color.appBackground.ignoresSafeArea())
                 }
                 .navigationTitle("Feature Flags")
+                .navigationBarTitleDisplayMode(.large)
             }
         }
     }

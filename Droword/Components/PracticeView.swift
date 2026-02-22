@@ -364,7 +364,7 @@ struct WordCardPracticeView: View {
             if let tag = card.tag, !tag.isEmpty {
                 Text(tag)
                     .font(.custom("Poppins-Medium", size: 14))
-                    .foregroundColor(darkerShade(of: backgroundColor, by: 0.4))
+                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.4))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 12)
                     .overlay(
@@ -395,7 +395,7 @@ struct WordCardPracticeView: View {
                 Button(action: { Haptics.selection(); playAudio() }) {
                     SoundWavesView(isPlaying: isPlaying)
                         .frame(width: 24, height: 24)
-                        .tint(.black)
+                        .tint(primaryTextColor)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 6)
@@ -412,6 +412,32 @@ struct WordCardPracticeView: View {
                     .padding(.horizontal, 2)
             }
 
+            if !card.translation.isEmpty {
+                HStack(alignment: .firstTextBaseline) {
+                    if showTranslation {
+                        Text(card.translation)
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(primaryTextColor)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else {
+                        let first = card.translation.prefix(1)
+                        Text("\(first)•••")
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.5))
+                    }
+                    Spacer()
+                    Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() } }) {
+                        Text(showTranslation ? "Hide" : "Show")
+                            .font(.custom("Poppins-Regular", size: 13))
+                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.7))
+                    }
+                    .buttonStyle(.plain)
+                }
+                Text("Try to recall the translation without looking.")
+                    .font(.custom("Poppins-Regular", size: 12))
+                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.45))
+            }
+
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(highlightedExample(example: adaptedExample, target: card.word))
@@ -423,6 +449,7 @@ struct WordCardPracticeView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(explanation)
                             .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(primaryTextColor)
                     }
                 }
 
@@ -430,39 +457,14 @@ struct WordCardPracticeView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(breakdown)
                             .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(primaryTextColor)
                     }
-                }
-
-                if !card.translation.isEmpty {
-                    HStack(alignment: .firstTextBaseline) {
-                        if showTranslation {
-                            Text(card.translation)
-                                .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundColor(primaryTextColor)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                        } else {
-                            let first = card.translation.prefix(1)
-                            Text("\(first)•••")
-                                .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.5))
-                        }
-                        Spacer()
-                        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() } }) {
-                            Text(showTranslation ? "Hide" : "Show")
-                                .font(.custom("Poppins-Regular", size: 13))
-                                .foregroundColor(isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.7))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Text("Try to recall the translation without looking.")
-                        .font(.custom("Poppins-Regular", size: 12))
-                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.45))
                 }
             }
 
             Text("Helpful: rate how hard it felt to schedule the next review.")
                 .font(.custom("Poppins-Regular", size: 12))
-                .foregroundColor(.mainBlack.opacity(0.45))
+                .foregroundColor(isDarkBackground ? Color.white.opacity(0.7) : .mainBlack.opacity(0.45))
                 .padding(.top, 50)
 
             HStack(spacing: 12) {

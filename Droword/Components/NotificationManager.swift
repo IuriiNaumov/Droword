@@ -2,26 +2,37 @@ import Foundation
 import UserNotifications
 
 private let friendlyBodies: [String] = [
-    "Давай подкачаем словарик? Пять минут — и ты молодец ✨",
-    "Пора освежить пару слов. Быстро и по делу!",
-    "Я приготовил тебе мини-сессию. Заглянешь?",
-    "Слова скучают по тебе. Залетаем на повтор?",
-    "Ещё шаг — и ты ближе к цели. Готов?"
+    "Let’s grow your vocab — five minutes is all it takes ✨",
+    "Time to refresh a few words. Quick and simple!",
+    "I prepared a mini‑session for you. Jump in?",
+    "Your words miss you. Ready to review?",
+    "One small step today — closer to your goal."
 ]
 
 private let friendlyTitles: [String] = [
-    "Время повторить слова",
-    "Минутка для языка",
-    "Твой словарик зовёт",
-    "Пора освежиться",
-    "Маленький шаг сегодня"
+    "Time to review",
+    "Language minute",
+    "Your vocab calls",
+    "Quick refresh",
+    "Small step today"
 ]
 
+private var rotatingIndex: Int {
+    get { UserDefaults.standard.integer(forKey: "notif.rotate.index") }
+    set { UserDefaults.standard.set(newValue, forKey: "notif.rotate.index") }
+}
+
 private func randomContent(tagName: String?) -> (title: String, body: String) {
-    let title = friendlyTitles.randomElement() ?? "Время повторить слова"
-    var body = friendlyBodies.randomElement() ?? "Пора повторить слова"
+    // Cycle through titles/bodies to alternate messages
+    var idx = rotatingIndex
+    let title = friendlyTitles[idx % friendlyTitles.count]
+    let baseBody = friendlyBodies[idx % friendlyBodies.count]
+    idx = (idx + 1) % max(friendlyTitles.count, friendlyBodies.count)
+    rotatingIndex = idx
+
+    var body = baseBody
     if let tagName, !tagName.isEmpty {
-        body += " по тегу \"\(tagName)\""
+        body += " for \"\(tagName)\""
     }
     return (title, body)
 }
@@ -56,6 +67,20 @@ final class NotificationManager {
         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
 
         center.add(request)
+    }
+
+    func scheduleTwiceDaily(tagName: String? = nil) {
+        let center = UNUserNotificationCenter.current()
+        // Remove previous twice-daily identifiers to avoid duplicates
+        center.removePendingNotificationRequests(withIdentifiers: [
+            "daily.reminder.morning",
+            "daily.reminder.evening"
+        ])
+
+        // Morning at 9:00
+        scheduleDailyReminder(hour: 9, minute: 0, tagName: tagName, identifier: "daily.reminder.morning")
+        // Evening at 19:00
+        scheduleDailyReminder(hour: 19, minute: 0, tagName: tagName, identifier: "daily.reminder.evening")
     }
 
     func scheduleOneTimeReminder(after seconds: TimeInterval, tagName: String? = nil, identifier: String = UUID().uuidString) {

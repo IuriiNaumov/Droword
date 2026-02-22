@@ -5,6 +5,7 @@ struct ProfileHeaderView: View {
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var displayProgress: Double = 0.0
+    @State private var showStats = false
     private let cuteTags: [String] = [
         "keep it up",
         "proud of you",
@@ -20,6 +21,10 @@ struct ProfileHeaderView: View {
     @AppStorage("selectedCuteTag") private var storedCuteTag: String = "cutie"
     @AppStorage("selectedCuteTagDate") private var storedCuteTagDate: String = ""
     @AppStorage("userName") private var storedUserName: String = ""
+    @AppStorage("daysUsedCount") private var daysUsedCount: Int = 0
+    @AppStorage("lastActiveDay") private var lastActiveDay: String = ""
+    @AppStorage("firstUseDate") private var firstUseDate: String = ""
+    @AppStorage("currentStreak") private var currentStreak: Int = 0
 
     private let xpPerWord = 10
     private let maxLevel = 50
@@ -60,6 +65,23 @@ struct ProfileHeaderView: View {
         max(0, wordsForCurrentLevel - wordsProgressInLevel)
     }
 
+    private var overdueCount: Int {
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: Date())
+        return store.words.filter { w in
+            if let due = w.dueDate { return due < startOfToday } else { return false }
+        }.count
+    }
+
+    private var dueTodayCount: Int {
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: Date())
+        guard let startOfTomorrow = cal.date(byAdding: .day, value: 1, to: startOfToday) else { return 0 }
+        return store.words.filter { w in
+            if let due = w.dueDate { return (due >= startOfToday && due < startOfTomorrow) } else { return false }
+        }.count
+    }
+
     private var displayName: String {
         storedUserName.isEmpty ? "Cool guy" : storedUserName
     }
@@ -70,10 +92,9 @@ struct ProfileHeaderView: View {
     private let xpBackground = Color(hex: "#DEF1D0")
     private let xpText = Color(hex: "#3E8A64")
 
-    // Daily-changing palette for the cute tag (bg, text)
     private let cuteTagPalettes: [(bg: Color, text: Color)] = [
-        (Color(hex: "#FFE6AA"), Color(hex: "#9C6B00")), // level colors
-        (Color(hex: "#DEF1D0"), Color(hex: "#3E8A64")), // xp colors
+        (Color(hex: "#FFE6AA"), Color(hex: "#9C6B00")),
+        (Color(hex: "#DEF1D0"), Color(hex: "#3E8A64")),
         (Color(hex: "#DDEBFF"), Color(hex: "#2458B5")),
         (Color(hex: "#FFDDE7"), Color(hex: "#B51957")),
         (Color(hex: "#EDE3FF"), Color(hex: "#6B39B3")),
@@ -106,81 +127,74 @@ struct ProfileHeaderView: View {
                                 )
                         }
                     }
-                    .overlay(alignment: .topTrailing) {
-                        Text(storedCuteTag)
-                            .font(.custom("Poppins-Bold", size: 10))
-                            .foregroundColor(cuteTagTextColor)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .truncationMode(.tail)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                Capsule().fill(cuteTagBackground)
-                            )
-                            .offset(x: 6, y: -6)
-                    }
                     .contentShape(Circle())
                     .onTapGesture { showSettings = true }
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(displayName)
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.mainBlack)
 
-                    HStack(spacing: 10) {
-                        Label("Lv \(level)", systemImage: "star.fill")
-                            .font(.custom("Poppins-Bold", size: 13))
-                            .foregroundColor(levelText)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(levelBackground))
+                    Text("\(usageDurationString()) with Droword")
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                        .padding(.bottom, 40)
 
-                        Label("\(totalXP) XP", systemImage: "bolt.fill")
-                            .font(.custom("Poppins-Bold", size: 13))
-                            .foregroundColor(xpText)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(xpBackground))
-                    }
                 }
 
                 Spacer()
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(.divider)
-                        .frame(height: 16)
-
-                    Capsule()
-                        .fill(Color.progressBar)
-                        .frame(width: CGFloat(displayProgress) * 240, height: 16)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: displayProgress)
-                }
-
-                Text("\(totalXP) XP – \(wordsToNextLevel * xpPerWord) XP to level up")
-                    .font(.custom("Poppins-Regular", size: 12))
-                    .foregroundColor(.mainGrey)
-                    .padding(.horizontal, 4)
-            }
+//            VStack(alignment: .leading, spacing: 6) {
+//                ZStack(alignment: .leading) {
+//                    Capsule()
+//                        .fill(.divider)
+//                        .frame(height: 16)
+//
+//                    Capsule()
+//                        .fill(Color.progressBar)
+//                        .frame(width: CGFloat(displayProgress) * 240, height: 16)
+//                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: displayProgress)
+//                }
+//
+//                Text("\(totalXP) XP – \(wordsToNextLevel * xpPerWord) XP to level up")
+//                    .font(.custom("Poppins-Regular", size: 12))
+//                    .foregroundColor(.mainGrey)
+//                    .padding(.horizontal, 4)
+//            }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(Color.cardBackground)
-        )
         .padding(.horizontal)
+        .padding(.vertical, 8)
         .onAppear {
-            avatarImage = loadAvatarFromDisk()
-            displayProgress = progressRatio
-
             let df = DateFormatter()
             df.calendar = Calendar(identifier: .gregorian)
             df.dateFormat = "yyyy-MM-dd"
             let today = df.string(from: Date())
+            if firstUseDate.isEmpty { firstUseDate = today }
+
+            // Streak and active days tracking
+            if lastActiveDay != today {
+                // Compute yesterday in the same format
+                let calendar = Calendar(identifier: .gregorian)
+                if let yesterdayDate = calendar.date(byAdding: .day, value: -1, to: df.date(from: today) ?? Date()),
+                   df.string(from: yesterdayDate) == lastActiveDay {
+                    // Continued streak
+                    currentStreak = max(1, currentStreak + 1)
+                } else {
+                    // New streak starts
+                    currentStreak = 1
+                }
+                daysUsedCount += 1
+                lastActiveDay = today
+            } else if currentStreak == 0 {
+                // Initialize on first launch of the day
+                currentStreak = 1
+            }
+
+            avatarImage = loadAvatarFromDisk()
+            displayProgress = progressRatio
+
 
             let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
             let colorIndex = dayOfYear % cuteTagPalettes.count
@@ -204,6 +218,35 @@ struct ProfileHeaderView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(store)
+        }
+    }
+
+    private func usageDurationString() -> String {
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.dateFormat = "yyyy-MM-dd"
+        guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
+            return "0 days"
+        }
+        let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: start, to: end)
+        let years = max(0, comps.year ?? 0)
+        let months = max(0, comps.month ?? 0)
+        let days = max(0, comps.day ?? 0)
+
+        func plural(_ value: Int, _ singular: String, _ plural: String) -> String {
+            return value == 1 ? "\(value) \(singular)" : "\(value) \(plural)"
+        }
+
+        if years >= 1 {
+            if months > 0 {
+                return "\(plural(years, "year", "years")) \(plural(months, "month", "months"))"
+            } else {
+                return plural(years, "year", "years")
+            }
+        } else if months >= 1 {
+            return plural(months, "month", "months")
+        } else {
+            return plural(days + 1, "day", "days")
         }
     }
 

@@ -27,9 +27,12 @@ final class GoldenWordsStore: ObservableObject {
     func accept(_ word: SuggestedWord, store: WordsStore, languageStore: LanguageStore) {
         let newWord = StoredWord(
             word: word.word,
-            type: word.type ?? "noun",
+            type: word.type ?? "",
             translation: word.translation,
-            example: word.example ?? "—",
+            example: word.example,
+            explanation: word.explanation,
+            breakdown: word.breakdown,
+            transcription: word.transcription,
             comment: nil,
             tag: "Golden",
             fromLanguage: languageStore.nativeLanguage,
@@ -43,4 +46,3 @@ final class GoldenWordsStore: ObservableObject {
         goldenWords.removeAll { $0.id == suggestion.id }
     }
 }
-

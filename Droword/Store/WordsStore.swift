@@ -15,8 +15,6 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var dateAdded: Date = Date()
     var fromLanguage: String
     var toLanguage: String
-
-    // Spaced repetition scheduling fields
     var easeFactor: Double = 2.5
     var intervalDays: Int = 0
     var repetitions: Int = 0

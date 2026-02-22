@@ -15,6 +15,11 @@ struct AddTagView: View {
                 Color.appBackground.ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: 24) {
+                    Text("New Tag")
+                        .font(.custom("Poppins-Bold", size: 26))
+                        .foregroundColor(.mainBlack)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Name")
                             .font(.custom("Poppins-Regular", size: 18))
@@ -23,7 +28,9 @@ struct AddTagView: View {
                         FormTextField(
                             title: "Enter tag name",
                             text: $name,
-                            focusedColor: .mainGrey
+                            focusedColor: .mainGrey,
+                            maxLength: 40,
+                            showCounter: true
                         )
                     }
 
@@ -35,7 +42,9 @@ struct AddTagView: View {
                         FormTextField(
                             title: "e.g. #FFAA33",
                             text: $colorHex,
-                            focusedColor: .mainGrey
+                            focusedColor: .mainGrey,
+                            maxLength: 7,
+                            showCounter: false
                         ).overlay(alignment: .trailing) {
                             Circle()
                                 .fill(parsedColor ?? Color.gray)

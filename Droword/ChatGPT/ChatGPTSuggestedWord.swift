@@ -10,19 +10,28 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
     let translation: String
     let type: String?
     let example: String?
+    let explanation: String?
+    let breakdown: String?
+    let transcription: String?
 
     init(
         id: UUID = UUID(),
         word: String,
         translation: String,
         type: String? = nil,
-        example: String? = nil
+        example: String? = nil,
+        explanation: String? = nil,
+        breakdown: String? = nil,
+        transcription: String? = nil
     ) {
         self.id = id
         self.word = word
         self.translation = translation
         self.type = type
         self.example = example
+        self.explanation = explanation
+        self.breakdown = breakdown
+        self.transcription = transcription
     }
 
     init(from decoder: Decoder) throws {
@@ -32,6 +41,9 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
         self.translation = try container.decode(String.self, forKey: .translation)
         self.type = try? container.decode(String.self, forKey: .type)
         self.example = try? container.decode(String.self, forKey: .example)
+        self.explanation = try? container.decode(String.self, forKey: .explanation)
+        self.breakdown = try? container.decode(String.self, forKey: .breakdown)
+        self.transcription = try? container.decode(String.self, forKey: .transcription)
     }
 }
 
@@ -95,13 +107,15 @@ func fetchSuggestionsWithTopic(
        - not in the list
        - suitable for A2–B1
        - common in daily use
+    - Provide a short example sentence in the learning language.
+    - Provide a short one‑sentence explanation in the native language.
+    - Provide a brief breakdown/etymology in the native language if relevant (optional).
+    - Provide transcription in IPA or a common transcription if relevant (optional).
 
     STRICT:
-    - word → only \(learningLanguage)
-    - example → only \(learningLanguage)
-    - translation → only \(nativeLanguage)
-    - no explanations
-    - no mixed languages
+    - word and example → only \(learningLanguage)
+    - translation, explanation, breakdown → only \(nativeLanguage)
+    - transcription → standard IPA or common Latin transcription
     - valid JSON only
 
     {
@@ -111,13 +125,19 @@ func fetchSuggestionsWithTopic(
           "word": "string",
           "translation": "string",
           "type": "string",
-          "example": "string"
+          "example": "string",
+          "explanation": "string",
+          "breakdown": "string",
+          "transcription": "string"
         },
         {
           "word": "string",
           "translation": "string",
           "type": "string",
-          "example": "string"
+          "example": "string",
+          "explanation": "string",
+          "breakdown": "string",
+          "transcription": "string"
         }
       ]
     }

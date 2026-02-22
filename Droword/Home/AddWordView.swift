@@ -87,37 +87,34 @@ struct AddWordView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 6) {
             Text("New word")
-                .font(.custom("Poppins-Bold", size: 34))
+                .font(.custom("Poppins-Bold", size: 26))
                 .foregroundColor(.mainBlack)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
     private var wordSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Word or phrase *")
-                    .font(.custom("Poppins-Regular", size: 18))
-                    .foregroundColor(.mainGrey)
-
-                Spacer()
-
-                Text(wordCounterText)
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(Color(.mainGrey).opacity(0.6))
-            }
+            Text("Word or phrase *")
+                .font(.custom("Poppins-Regular", size: 18))
+                .foregroundColor(.mainGrey)
 
             FormTextField(
                 title: wordPlaceholder,
                 text: $word,
                 focusedColor: .mainGrey,
                 maxLength: 40,
-                showCounter: false
+                showCounter: true
             )
             .focused($focusedField, equals: .word)
             .textInputAutocapitalization(.sentences)
             .disableAutocorrection(true)
+            .onChange(of: word) { newValue in
+                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace }
+                if filtered != newValue { word = filtered }
+            }
         }
     }
 
@@ -133,6 +130,10 @@ struct AddWordView: View {
                 focusedColor: Color(.mainGrey)
             )
             .focused($focusedField, equals: .translation)
+            .onChange(of: translation) { newValue in
+                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace }
+                if filtered != newValue { translation = filtered }
+            }
 
             Text("Don’t know the translation? I’ll handle it for you")
                 .font(.custom("Poppins-Regular", size: 14))
@@ -213,3 +214,4 @@ struct AddWordView: View {
     AddWordView(store: WordsStore())
         .environmentObject(LanguageStore())
 }
+

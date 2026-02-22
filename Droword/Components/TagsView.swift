@@ -43,8 +43,8 @@ struct TagsView: View {
                         Text(tag.name)
                             .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
                             .foregroundColor(textColor)
-                            .frame(minWidth: 120)
                             .padding(.vertical, compact ? 12 : 14)
+                            .padding(.horizontal, compact ? 12 : 14)
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                                     .fill(baseColor.opacity(isSelected ? 0.95 : 0.32))
@@ -102,8 +102,8 @@ struct TagsView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, compact ? 10 : 6)
-            .padding(.vertical, compact ? 6 : 10)
+            .padding(.horizontal, compact ? 10 : 0)
+            .padding(.vertical, compact ? 16 : 10)
         }
     }
 }
@@ -157,4 +157,3 @@ private struct WiggleEffect: ViewModifier {
         .preferredColorScheme(.dark)
     }
 }
-
