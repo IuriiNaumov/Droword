@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LanguageSelectionView: View {
     @EnvironmentObject var languageStore: LanguageStore
+    @Environment(\.dismiss) private var dismiss
     
     @State private var showToast = false
     @State private var toastType: AppToastType = .success
@@ -15,8 +16,9 @@ struct LanguageSelectionView: View {
                 VStack(spacing: 30) {
                     
                     Text("Language Preferences")
-                        .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(.mainBlack)
+                        .font(.custom("Poppins-Bold", size: 26))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 20)
                     
                     LanguageCubePicker(
@@ -50,6 +52,16 @@ struct LanguageSelectionView: View {
                     duration: 2
                 )
                 .id(toastID)
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
             }
         }
     }

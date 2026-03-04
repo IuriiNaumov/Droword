@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileHeaderView: View {
     @EnvironmentObject private var store: WordsStore
+    @Environment(\.colorScheme) private var colorScheme
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var displayProgress: Double = 0.0
@@ -217,9 +218,10 @@ struct ProfileHeaderView: View {
         .onReceive(NotificationCenter.default.publisher(for: .avatarDidChange)) { _ in
             avatarImage = loadAvatarFromDisk()
         }
-        .sheet(isPresented: $showSettings) {
+        .fullScreenCover(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(store)
+                .preferredColorScheme(colorScheme)
         }
     }
 
@@ -310,4 +312,3 @@ extension Notification.Name {
 #Preview {
     ProfileHeaderView().environmentObject(WordsStore())
 }
-

@@ -17,7 +17,7 @@ struct LanguageCubePicker: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
                 .font(.custom("Poppins-Bold", size: 18))
-                .foregroundColor(.mainBlack)
+                .foregroundColor(.primary)
                 .padding(.horizontal)
 
             LazyVGrid(columns: columns, spacing: 16) {
@@ -46,6 +46,7 @@ struct LanguageCubePicker: View {
 }
 
 struct LanguageCube: View {
+    @Environment(\.colorScheme) private var colorScheme
     let language: LanguageOption
     let isSelected: Bool
     let isBlocked: Bool
@@ -55,6 +56,9 @@ struct LanguageCube: View {
 
     private var textColor: Color {
         if isBlocked { return .gray }
+        if colorScheme == .dark {
+            return isSelected ? .white : .white.opacity(0.85)
+        }
         if isSelected { return language.color.darker(by: 0.55) }
         return language.color.darker(by: 0.4)
     }

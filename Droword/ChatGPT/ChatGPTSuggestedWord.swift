@@ -47,30 +47,24 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
     }
 }
 
-struct OpenAISuggestionsResponse: Codable {
-    struct Choice: Codable {
-        struct Message: Codable {
-            let role: String?
-            let content: String
-        }
-        let index: Int?
-        let message: Message
-        let finish_reason: String?
+struct ClaudeSuggestionsResponse: Codable {
+    struct Content: Codable {
+        let type: String
+        let text: String?
     }
 
-    struct OpenAIError: Codable, Error {
+    struct ClaudeError: Codable {
+        let type: String
         let message: String
-        let type: String?
-        let param: String?
-        let code: String?
     }
 
     let id: String?
-    let object: String?
-    let created: Int?
+    let type: String?
+    let role: String?
+    let content: [Content]?
     let model: String?
-    let choices: [Choice]?
-    let error: OpenAIError?
+    let stop_reason: String?
+    let error: ClaudeError?
 }
 
 struct SuggestionsContainer: Codable {
@@ -87,7 +81,7 @@ func fetchSuggestionsWithTopic(
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
 
-    let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+    let url = URL(string: "https://api.anthropic.com/v1/messages")!
     let wordsList = words.joined(separator: ", ")
 
 
@@ -146,14 +140,14 @@ func fetchSuggestionsWithTopic(
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+    request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
     let body: [String: Any] = [
-        "model": "gpt-4.1-mini",
-        "temperature": 0.3,
-        "response_format": ["type": "json_object"],
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 1024,
+        "system": "You always return strictly valid JSON without explanations.",
         "messages": [
-            ["role": "system", "content": "You always return strictly valid JSON without explanations."],
             ["role": "user", "content": prompt]
         ]
     ]
@@ -164,17 +158,17 @@ func fetchSuggestionsWithTopic(
 
     guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
         let raw = String(data: data, encoding: .utf8) ?? "No body"
-        throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: raw])
+        throw NSError(domain: "Claude", code: -1, userInfo: [NSLocalizedDescriptionKey: raw])
     }
 
-    let decoded = try JSONDecoder().decode(OpenAISuggestionsResponse.self, from: data)
-    guard let content = decoded.choices?.first?.message.content else {
-        throw NSError(domain: "OpenAI", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
+    let decoded = try JSONDecoder().decode(ClaudeSuggestionsResponse.self, from: data)
+    guard let content = decoded.content?.first(where: { $0.type == "text" })?.text else {
+        throw NSError(domain: "Claude", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
     }
 
     let cleaned = sanitizeJSONObject(content)
     guard let jsonData = cleaned.data(using: .utf8) else {
-        throw NSError(domain: "ChatGPT", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
+        throw NSError(domain: "Claude", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
     }
 
     let container = try JSONDecoder().decode(SuggestionsContainer.self, from: jsonData)

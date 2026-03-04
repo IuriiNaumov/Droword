@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum AppAppearance: String, CaseIterable, Identifiable {
+    case system
     case light
     case dark
 
@@ -8,6 +9,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .system: return "System"
         case .light: return "Light"
         case .dark: return "Dark"
         }
@@ -15,6 +17,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
     var colorScheme: ColorScheme? {
         switch self {
+        case .system: return nil
         case .light: return .light
         case .dark: return .dark
         }

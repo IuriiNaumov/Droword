@@ -9,16 +9,17 @@ struct GPTTranslationResult: Codable {
     let transcription: String?
 }
 
-struct OpenAIResponse: Codable {
-    struct Choice: Codable { let message: Message }
-    struct Message: Codable { let content: String }
-    let choices: [Choice]?
-    let error: APIError?
-}
-
-struct APIError: Codable {
-    let message: String
-    let type: String?
+struct ClaudeTranslateResponse: Codable {
+    struct Content: Codable {
+        let type: String
+        let text: String?
+    }
+    struct ClaudeError: Codable {
+        let type: String
+        let message: String
+    }
+    let content: [Content]?
+    let error: ClaudeError?
 }
 
 @MainActor
@@ -30,13 +31,14 @@ func translateWithGPT(
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
 
-    let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+    let url = URL(string: "https://api.anthropic.com/v1/messages")!
 
 
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
+    request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
     let prompt = """
     You are a linguist.
@@ -68,11 +70,10 @@ func translateWithGPT(
     """
 
     let body: [String: Any] = [
-        "model": "gpt-4.1-mini",
-        "temperature": 0.2,
-        "response_format": ["type": "json_object"],
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 1024,
+        "system": "You always return strictly valid JSON without explanations.",
         "messages": [
-            ["role": "system", "content": "You always return strictly valid JSON without explanations."],
             ["role": "user", "content": prompt]
         ]
     ]
@@ -83,23 +84,22 @@ func translateWithGPT(
 
     if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
         let raw = String(data: data, encoding: .utf8) ?? "No body"
-        throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: raw])
+        throw NSError(domain: "Claude", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: raw])
     }
 
-    let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+    let decoded = try JSONDecoder().decode(ClaudeTranslateResponse.self, from: data)
 
     if let err = decoded.error {
-        throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: err.message])
+        throw NSError(domain: "Claude", code: -1, userInfo: [NSLocalizedDescriptionKey: err.message])
     }
 
-    guard let message = decoded.choices?.first?.message.content else {
-        let text = String(data: data, encoding: .utf8) ?? "Empty"
-        throw NSError(domain: "OpenAI", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content or invalid structure"])
+    guard let message = decoded.content?.first(where: { $0.type == "text" })?.text else {
+        throw NSError(domain: "Claude", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
     }
 
     let cleaned = sanitizeJSON(message)
     guard let jsonData = cleaned.data(using: .utf8) else {
-        throw NSError(domain: "ChatGPT", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
+        throw NSError(domain: "Claude", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
     }
 
     return try JSONDecoder().decode(GPTTranslationResult.self, from: jsonData)

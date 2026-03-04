@@ -1,27 +1,31 @@
 import SwiftUI
 import PhotosUI
 
+enum SettingsDestination: Hashable {
+    case personalDetails
+    case language
+    case appearance
+    case voiceAndSpeech
+    case featureFlags
+}
+
 struct SettingsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @Environment(\.dismiss) private var dismiss
 
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
     @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
     @AppStorage("ttsRate") private var ttsRate: Double = 1.0
     @AppStorage("userName") private var storedUserName: String = ""
     @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
 
     @State private var avatarImage: UIImage?
-    @State private var showPhotoPicker = false
-    @State private var selectedItem: PhotosPickerItem?
-    @State private var showLanguagePicker = false
-    @State private var showAppearancePicker = false
-    @State private var showVoiceSheet = false
-    @State private var showPersonalDetails = false
-    @State private var showFeatureFlags = false
+    @State private var showAvatarPicker = false
+    @State private var path = NavigationPath()
 
     private var appearance: AppAppearance {
-        AppAppearance(rawValue: storedAppearance) ?? .light
+        AppAppearance(rawValue: storedAppearance) ?? .system
     }
 
     private var appearanceTitle: String {
@@ -33,140 +37,139 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 28) {
-                VStack(spacing: 12) {
-                    ZStack {
-                        if let avatarImage {
-                            Image(uiImage: avatarImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 92, height: 92)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 1))
-                                .shadow(color: Color.mainBlack.opacity(0.1), radius: 6, y: 3)
-                        } else {
-                            Circle()
-                                .fill(Color.mainGrey.opacity(0.15))
-                                .frame(width: 92, height: 92)
-                                .overlay(
-                                    Image(systemName: "person.fill")
-                                        .font(.system(size: 40, weight: .medium))
-                                        .foregroundColor(Color.mainBlack.opacity(0.7))
-                                )
-                                .shadow(color: Color.mainBlack.opacity(0.1), radius: 5, y: 2)
-                        }
-
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Spacer()
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(6)
-                                    .background(Color.mainBlack.opacity(0.6))
+        NavigationStack(path: $path) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 28) {
+                    VStack(spacing: 12) {
+                        ZStack {
+                            if let avatarImage {
+                                Image(uiImage: avatarImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 92, height: 92)
                                     .clipShape(Circle())
-                                    .offset(x: 4, y: 4)
+                                    .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 1))
+                                    .shadow(color: Color.mainBlack.opacity(0.1), radius: 6, y: 3)
+                            } else {
+                                Circle()
+                                    .fill(Color.mainGrey.opacity(0.15))
+                                    .frame(width: 92, height: 92)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .font(.system(size: 40, weight: .medium))
+                                            .foregroundColor(Color.mainBlack.opacity(0.7))
+                                    )
+                                    .shadow(color: Color.mainBlack.opacity(0.1), radius: 5, y: 2)
                             }
-                        }
-                        .frame(width: 92, height: 92)
-                        
-                        VStack {
-                            Spacer()
-                            HStack {
-                                Button {
-                                    deleteAvatarFromDisk()
-                                    avatarImage = nil
-                                } label: {
-                                    Image(systemName: "trash.fill")
+
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
+                                    Image(systemName: "pencil")
                                         .font(.system(size: 13, weight: .bold))
                                         .foregroundColor(.white)
                                         .padding(6)
                                         .background(Color.mainBlack.opacity(0.6))
                                         .clipShape(Circle())
+                                        .offset(x: 4, y: 4)
                                 }
-                                .opacity(avatarImage == nil ? 0.0 : 1.0)
-                                Spacer()
                             }
+                            .frame(width: 92, height: 92)
+
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Button {
+                                        deleteAvatarFromDisk()
+                                        avatarImage = nil
+                                    } label: {
+                                        Image(systemName: "trash.fill")
+                                            .font(.system(size: 13, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .padding(6)
+                                            .background(Color.mainBlack.opacity(0.6))
+                                            .clipShape(Circle())
+                                    }
+                                    .opacity(avatarImage == nil ? 0.0 : 1.0)
+                                    Spacer()
+                                }
+                            }
+                            .frame(width: 92, height: 92)
+                            .offset(x: -4, y: 4)
                         }
-                        .frame(width: 92, height: 92)
-                        .offset(x: -4, y: 4)
-                    }
-                    .onTapGesture { showPhotoPicker = true }
+                        .onTapGesture { showAvatarPicker = true }
 
-                    Text(displayName)
-                        .font(.custom("Poppins-Bold", size: 22))
-                        .foregroundColor(.mainBlack)
+                        Text(displayName)
+                            .font(.custom("Poppins-Bold", size: 22))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.top, 32)
+
+                    VStack(spacing: 20) {
+                        groupedSettingsSection([
+                            SettingItem(icon: "person.circle", color: Color.mainGreen, title: "Personal details"),
+                        ]) { item in
+                            if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
+                            SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications"),
+                            SettingItem(icon: "mic.fill", color: .blue, title: "Voice & Speech")
+                        ]) { item in
+                            if item.title == "Language" { path.append(SettingsDestination.language) }
+                            if item.title == "Appearance" { path.append(SettingsDestination.appearance) }
+                            if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "flag.checkered", color: Color.toastAndButtons, title: "Feature Flags", value: nil)
+                        ]) { item in
+                            path.append(SettingsDestination.featureFlags)
+                        }
+                    }
+
+                    Spacer()
                 }
-                .padding(.top, 32)
-
-                VStack(spacing: 20) {
-                    groupedSettingsSection([
-                        SettingItem(icon: "person.circle", color: Color.mainGreen, title: "Personal details"),
-                    ]) { item in
-                        if item.title == "Personal details" { showPersonalDetails = true }
-                    }
-
-                    groupedSettingsSection([
-                        SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
-                        SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
-                        SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications"),
-                        SettingItem(icon: "mic.fill", color: .blue, title: "Voice & Speech")
-                    ]) { item in
-                        if item.title == "Language" { showLanguagePicker = true }
-                        if item.title == "Appearance" { showAppearancePicker = true }
-                        if item.title == "Voice & Speech" { showVoiceSheet = true }
-                    }
-
-                    groupedSettingsSection([
-                        SettingItem(icon: "flag.checkered", color: Color.toastAndButtons, title: "Feature Flags", value: nil)
-                    ]) { item in
-                        showFeatureFlags = true
-                    }
-                }
-
-                Spacer()
+                .padding(.bottom, 40)
             }
-            .padding(.bottom, 40)
+            .background(Color.appBackground.ignoresSafeArea())
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            .navigationBarBackButtonHidden(true)
+            .navigationDestination(for: SettingsDestination.self) { destination in
+                switch destination {
+                case .personalDetails:
+                    PersonalDetailsView()
+                case .language:
+                    LanguageSelectionView()
+                        .environmentObject(languageStore)
+                case .appearance:
+                    AppearancePickerView()
+                case .voiceAndSpeech:
+                    VoiceAndSpeechSettingsView()
+                case .featureFlags:
+                    FeatureFlagsView()
+                }
+            }
         }
-        .background(Color.appBackground.ignoresSafeArea())
-        .preferredColorScheme(appearance.colorScheme)
-        .sheet(isPresented: $showLanguagePicker) {
-            LanguageSelectionView()
-                .environmentObject(languageStore)
-        }
-        .sheet(isPresented: $showAppearancePicker) {
-            AppearancePickerView()
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Color.appBackground)
-                .preferredColorScheme(appearance.colorScheme)
-                .id(storedAppearance)
-        }
-        .sheet(isPresented: $showVoiceSheet) {
-            VoiceAndSpeechSettingsView()
-                .preferredColorScheme(appearance.colorScheme)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .background(Color.appBackground.ignoresSafeArea())
-        }
-        .sheet(isPresented: $showPersonalDetails) {
-            PersonalDetailsView()
-                .presentationDetents([.fraction(0.5)])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showFeatureFlags) {
-            FeatureFlagsView()
-        }
-        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedItem, matching: .images)
-        .onChange(of: selectedItem) { newItem in
-            guard let newItem else { return }
-            Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    avatarImage = uiImage
-                    saveAvatarToDisk(uiImage)
+        .fullScreenCover(isPresented: $showAvatarPicker) {
+            AvatarPickerView(currentImage: avatarImage) { newImage in
+                if let newImage {
+                    avatarImage = newImage
+                    saveAvatarToDisk(newImage)
+                } else {
+                    avatarImage = nil
+                    deleteAvatarFromDisk()
                 }
             }
         }
@@ -196,7 +199,7 @@ struct SettingsView: View {
 
                         Text(item.title)
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(.primary)
 
                         Spacer()
 
@@ -256,125 +259,150 @@ struct SettingsView: View {
         return docs.appendingPathComponent("user_avatar.jpg")
     }
 
-    private struct VoiceAndSpeechSettingsView: View {
-        @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
-        @AppStorage("ttsRate") private var ttsRate: Double = 1.0
+}
 
-        private let speedOptions: [Double] = [0.75, 0.9, 1.0, 1.25, 1.5]
+private struct SettingsBackButton: View {
+    @Environment(\.dismiss) private var dismiss
 
-        var body: some View {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Voice & Speech")
-                        .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.mainBlack)
-                        .padding(.top, 12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Text("Voice")
-                        .font(.custom("Poppins-Medium", size: 16))
-                        .foregroundColor(.mainBlack)
-                        .padding(.horizontal)
-
-                    VoicePickerView(
-                        selectedKey: $ttsVoice,
-                        options: [
-                            VoiceOption(key: "coral", title: "Coral", description: "soft, neutral"),
-                            VoiceOption(key: "alloy", title: "Alloy", description: "friendly, warm"),
-                            VoiceOption(key: "verse", title: "Verse", description: "energetic, expressive"),
-                            VoiceOption(key: "sage", title: "Sage", description: "calm, confident")
-                        ]
-                    )
-                    .padding(.horizontal)
-
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Speed")
-                            .font(.custom("Poppins-Medium", size: 16))
-                            .foregroundColor(.mainBlack)
-                            .padding(.horizontal)
-
-                        VStack(spacing: 8) {
-                            ForEach(speedOptions, id: \.self) { option in
-                                RadioButtonRow(
-                                    title: String(format: "%.2fx", option),
-                                    isSelected: ttsRate == option
-                                ) {
-                                    withAnimation(.easeInOut(duration: 0.15)) { ttsRate = option }
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-                .padding(.vertical, 20)
-            }
-            .background(Color.appBackground.ignoresSafeArea())
+    var body: some View {
+        Button { dismiss() } label: {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.primary)
         }
+    }
+}
 
-        private struct RadioButtonRow: View {
-            let title: String
-            let isSelected: Bool
-            let action: () -> Void
+struct VoiceAndSpeechSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
+    @AppStorage("ttsRate") private var ttsRate: Double = 1.0
 
-            var body: some View {
-                Button(action: action) {
-                    HStack(spacing: 14) {
-                        ZStack {
-                            Circle()
-                                .stroke(Color.mainGrey.opacity(0.4), lineWidth: 1)
-                                .frame(width: 22, height: 22)
-                            if isSelected {
-                                Circle()
-                                    .fill(Color.toastAndButtons)
-                                    .frame(width: 22, height: 22)
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(.white)
+    private let speedOptions: [Double] = [0.75, 0.9, 1.0, 1.25, 1.5]
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Voice & Speech")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+                    .padding(.top, 12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                Text("Voice")
+                    .font(.custom("Poppins-Medium", size: 16))
+                    .foregroundColor(.primary)
+                    .padding(.horizontal)
+
+                VoicePickerView(
+                    selectedKey: $ttsVoice,
+                    options: [
+                        VoiceOption(key: "coral", title: "Coral", description: "soft, neutral"),
+                        VoiceOption(key: "alloy", title: "Alloy", description: "friendly, warm"),
+                        VoiceOption(key: "verse", title: "Verse", description: "energetic, expressive"),
+                        VoiceOption(key: "sage", title: "Sage", description: "calm, confident")
+                    ]
+                )
+                .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Speed")
+                        .font(.custom("Poppins-Medium", size: 16))
+                        .foregroundColor(.primary)
+                        .padding(.horizontal)
+
+                    VStack(spacing: 8) {
+                        ForEach(speedOptions, id: \.self) { option in
+                            RadioButtonRow(
+                                title: String(format: "%.2fx", option),
+                                isSelected: ttsRate == option
+                            ) {
+                                withAnimation(.easeInOut(duration: 0.15)) { ttsRate = option }
                             }
                         }
-
-                        Text(title)
-                            .font(.custom("Poppins-Regular", size: 15))
-                            .foregroundColor(.mainBlack)
-
-                        Spacer()
                     }
                     .padding(.horizontal)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.cardBackground)
-                    )
                 }
-                .buttonStyle(.plain)
+            }
+            .padding(.vertical, 20)
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
             }
         }
     }
+}
 
-    private struct FeatureFlagsView: View {
-        @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
-        var body: some View {
-            NavigationStack {
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 20) {
-                        HStack {
-                            Text("Show onboarding")
-                                .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundColor(.mainBlack)
-                            Spacer()
-                            Toggle("", isOn: $featureFlagShowOnboarding)
-                                .labelsHidden()
-                        }
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.cardBackground))
+private struct RadioButtonRow: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.mainGrey.opacity(0.4), lineWidth: 1)
+                        .frame(width: 22, height: 22)
+                    if isSelected {
+                        Circle()
+                            .fill(Color.toastAndButtons)
+                            .frame(width: 22, height: 22)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
                     }
-                    .padding()
-                    .background(Color.appBackground.ignoresSafeArea())
                 }
-                .navigationTitle("Feature Flags")
-                .navigationBarTitleDisplayMode(.large)
+
+                Text(title)
+                    .font(.custom("Poppins-Regular", size: 15))
+                    .foregroundColor(.primary)
+
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.cardBackground)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct FeatureFlagsView: View {
+    @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    Text("Show onboarding")
+                        .font(.custom("Poppins-Regular", size: 16))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Toggle("", isOn: $featureFlagShowOnboarding)
+                        .labelsHidden()
+                }
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 16).fill(Color.cardBackground))
+            }
+            .padding()
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
             }
         }
+        .navigationTitle("Feature Flags")
+        .navigationBarTitleDisplayMode(.large)
     }
 }
 

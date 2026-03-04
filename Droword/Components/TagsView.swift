@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TagsView: View {
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var selectedTag: String?
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
@@ -31,7 +32,9 @@ struct TagsView: View {
                 ForEach(visibleTags, id: \.name) { tag in
                     let isSelected = selectedTag == tag.name
                     let baseColor = tag.color
-                    let textColor = darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
+                    let textColor: Color = colorScheme == .dark
+                        ? .white.opacity(isSelected ? 1.0 : 0.9)
+                        : darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
 
                     Button {
                         withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {

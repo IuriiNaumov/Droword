@@ -34,7 +34,7 @@ struct VoicePickerView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(option.title)
                             .font(.custom("Poppins-Medium", size: 16))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(.primary)
                         Text(option.description)
                             .font(.custom("Poppins-Regular", size: 13))
                             .foregroundColor(.mainGrey)

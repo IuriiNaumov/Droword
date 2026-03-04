@@ -7,10 +7,10 @@ struct DrowordApp: App {
     @StateObject private var golden = GoldenWordsStore()
     @StateObject private var languageStore = LanguageStore()
 
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
 
     private var appearance: AppAppearance {
-        AppAppearance(rawValue: storedAppearance) ?? .light
+        AppAppearance(rawValue: storedAppearance) ?? .system
     }
 
     init() {

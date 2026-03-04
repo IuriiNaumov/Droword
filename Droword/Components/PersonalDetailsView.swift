@@ -30,98 +30,99 @@ struct PersonalDetailsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appBackground.ignoresSafeArea()
+        ZStack {
+            Color.appBackground.ignoresSafeArea()
 
-                VStack(alignment: .leading, spacing: 24) {
-                    Text("Personal details")
-                        .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.mainBlack)
-                        .frame(maxWidth: .infinity, alignment: .center)
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Personal details")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Name *")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Name *")
+                        .font(.custom("Poppins-Regular", size: 18))
+                        .foregroundColor(Color(.mainGrey))
 
-                        FormTextField(
-                            title: "Your name",
-                            text: $tempName,
-                            focusedColor: .mainGrey
-                        )
-                        .overlay(alignment: .trailing) {
-                            Text(nameCounterText)
-                                .font(.custom("Poppins-Regular", size: 14))
-                                .foregroundColor(Color(.mainGrey).opacity(0.6))
-                                .padding(.trailing, 16)
-                                .allowsHitTesting(false)
-                        }
-                        .textInputAutocapitalization(.words)
-                        .autocorrectionDisabled()
-                        .onChange(of: tempName) { newValue in
-                            if newValue.count > 40 {
-                                tempName = String(newValue.prefix(40))
-                            }
+                    FormTextField(
+                        title: "Your name",
+                        text: $tempName,
+                        focusedColor: .mainGrey
+                    )
+                    .overlay(alignment: .trailing) {
+                        Text(nameCounterText)
+                            .font(.custom("Poppins-Regular", size: 14))
+                            .foregroundColor(Color(.mainGrey).opacity(0.6))
+                            .padding(.trailing, 16)
+                            .allowsHitTesting(false)
+                    }
+                    .textInputAutocapitalization(.words)
+                    .autocorrectionDisabled()
+                    .onChange(of: tempName) { newValue in
+                        if newValue.count > 40 {
+                            tempName = String(newValue.prefix(40))
                         }
                     }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Email")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey))
-
-                        FormTextField(
-                            title: "Email",
-                            text: $tempEmail,
-                            focusedColor: .mainGrey
-                        )
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.emailAddress)
-                        .onChange(of: tempEmail) { _ in
-                            let trimmed = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-                            showEmailError = !isEmailValid && !trimmed.isEmpty
-                        }
-
-                        if showEmailError {
-                            Text("Please enter a valid email")
-                                .font(.custom("Poppins-Regular", size: 12))
-                                .foregroundColor(.red)
-                                .padding(.top, 4)
-                        }
-                    }
-
-                    Spacer(minLength: 0)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-                .padding(.bottom, 30)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Email")
+                        .font(.custom("Poppins-Regular", size: 18))
+                        .foregroundColor(Color(.mainGrey))
+
+                    FormTextField(
+                        title: "Email",
+                        text: $tempEmail,
+                        focusedColor: .mainGrey
+                    )
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .keyboardType(.emailAddress)
+                    .onChange(of: tempEmail) { _ in
+                        let trimmed = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+                        showEmailError = !isEmailValid && !trimmed.isEmpty
+                    }
+
+                    if showEmailError {
+                        Text("Please enter a valid email")
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(.red)
+                            .padding(.top, 4)
+                    }
+                }
+
+                Spacer(minLength: 0)
             }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainGrey)
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+            .padding(.bottom, 30)
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
                 }
+            }
 
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
-                        let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
 
-                        if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
-                            userName = trimmedName
-                            userEmail = trimmedEmail.lowercased()
-                            dismiss()
-                        } else {
-                            showEmailError = !isEmailValid && !trimmedEmail.isEmpty
-                        }
+                    if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
+                        userName = trimmedName
+                        userEmail = trimmedEmail.lowercased()
+                        dismiss()
+                    } else {
+                        showEmailError = !isEmailValid && !trimmedEmail.isEmpty
                     }
-                    .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(canSave ? Color.toastAndButtons : Color.mainGrey)
-                    .disabled(!canSave)
                 }
+                .font(.custom("Poppins-Regular", size: 16))
+                .foregroundColor(canSave ? Color.toastAndButtons : Color.mainGrey)
+                .disabled(!canSave)
             }
         }
         .onAppear {

@@ -7,51 +7,54 @@ private struct NoHighlightButtonStyle: ButtonStyle {
 }
 
 struct AppearancePickerView: View {
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.light.rawValue
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
 
     private var selected: AppAppearance {
-        AppAppearance(rawValue: storedAppearance) ?? .light
+        AppAppearance(rawValue: storedAppearance) ?? .system
     }
 
     var body: some View {
-        VStack(spacing: 18) {
-            Text("Appearance")
-                .font(.custom("Poppins-Bold", size: 26))
-                .foregroundColor(.mainBlack)
-                .padding(.top, 12)
+        VStack {
+            Spacer()
 
-            HStack(spacing: 16) {
-                ForEach(AppAppearance.allCases, id: \.self) { option in
-                    AppearanceCard(
-                        title: option.title,
-                        style: option,
-                        isSelected: selected == option
-                    ) {
-                        storedAppearance = option.rawValue
+            VStack(spacing: 18) {
+                Text("Appearance")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+
+                HStack(spacing: 12) {
+                    ForEach(AppAppearance.allCases, id: \.self) { option in
+                        AppearanceCard(
+                            title: option.title,
+                            style: option,
+                            isSelected: selected == option
+                        ) {
+                            storedAppearance = option.rawValue
+                        }
                     }
                 }
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 16)
+            .animation(nil, value: storedAppearance)
+            .padding(.bottom, 14)
+
+            Spacer()
         }
-        .animation(nil, value: storedAppearance)
-        .padding(.bottom, 14)
         .background(Color.appBackground.ignoresSafeArea())
-        .preferredColorScheme(selected.colorScheme)
-    }
-}
-
-private struct PreferredColorSchemeModifier: ViewModifier {
-    let appAppearance: AppAppearance
-
-    func body(content: Content) -> some View {
-        switch appAppearance {
-        case .light:
-            content.preferredColorScheme(.light)
-        case .dark:
-            content.preferredColorScheme(.dark)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+            }
         }
     }
 }
+
 
 private struct AppearanceCard: View {
     let title: String
@@ -89,7 +92,7 @@ private struct AppearanceCard: View {
                 .padding(.top, 2)
                 .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
             }
-            .frame(width: 104)
+            .frame(maxWidth: .infinity)
             .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(NoHighlightButtonStyle())
@@ -97,40 +100,49 @@ private struct AppearanceCard: View {
 
     private var preview: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(previewBackground)
-            
+            if style == .system {
+                HStack(spacing: 0) {
+                    Color(hexRGB: 0xEEEEEE)
+                    Color(hexRGB: 0x1C1C1E)
+                }
+            } else {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(previewBackground)
+            }
+
             VStack(alignment: .leading, spacing: 8) {
                 Circle()
                     .fill(previewAvatar)
                     .frame(width: 18, height: 18)
                     .padding(.top, 12)
-                
+
                 VStack(alignment: .leading, spacing: 7) {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(previewLine)
                         .frame(width: 54, height: 10)
-                    
+
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(previewLine.opacity(0.9))
                         .frame(width: 42, height: 10)
-                    
+
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(previewBlock)
                         .frame(width: 60, height: 34)
                         .padding(.top, 6)
-                    
+
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(previewBlock.opacity(0.95))
                         .frame(width: 60, height: 34)
                 }
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .animation(nil, value: isSelected)
     }
 
     private var previewBackground: Color {
         switch style {
+        case .system: return Color(hexRGB: 0xEEEEEE)
         case .light: return Color(hexRGB: 0xEEEEEE)
         case .dark: return Color(hexRGB: 0x1C1C1E)
         }
@@ -138,6 +150,7 @@ private struct AppearanceCard: View {
 
     private var previewAvatar: Color {
         switch style {
+        case .system: return Color(hexRGB: 0xC9CBD1)
         case .light: return Color(hexRGB: 0xC9CBD1)
         case .dark: return Color(hexRGB: 0x2B2E34)
         }
@@ -145,6 +158,7 @@ private struct AppearanceCard: View {
 
     private var previewLine: Color {
         switch style {
+        case .system: return Color(hexRGB: 0xB7BAC1)
         case .light: return Color(hexRGB: 0xB7BAC1)
         case .dark: return Color(hexRGB: 0x2C3139)
         }
@@ -152,6 +166,7 @@ private struct AppearanceCard: View {
 
     private var previewBlock: Color {
         switch style {
+        case .system: return Color(hexRGB: 0xC9CBD1)
         case .light: return Color(hexRGB: 0xC9CBD1)
         case .dark: return Color(hexRGB: 0x22262D)
         }

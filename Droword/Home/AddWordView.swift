@@ -90,7 +90,7 @@ struct AddWordView: View {
         VStack(spacing: 6) {
             Text("New word")
                 .font(.custom("Poppins-Bold", size: 26))
-                .foregroundColor(.mainBlack)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .center)
         }
     }

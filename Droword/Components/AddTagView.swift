@@ -17,7 +17,7 @@ struct AddTagView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     Text("New Tag")
                         .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     VStack(alignment: .leading, spacing: 8) {
