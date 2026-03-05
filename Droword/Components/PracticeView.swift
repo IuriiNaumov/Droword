@@ -17,10 +17,17 @@ struct WordCard: Identifiable {
     let comment: String?
 }
 
+enum PracticeMode: String, CaseIterable {
+    case review = "Review"
+    case quiz = "Quiz"
+    case typing = "Typing"
+}
+
 struct PracticeView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
 
+    @State private var selectedMode: PracticeMode = .review
     @State private var currentIndex: Int = 0
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
@@ -163,14 +170,35 @@ struct PracticeView: View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
 
+            VStack(spacing: 0) {
+                header
+                    .padding(.bottom, 8)
+
+                switch selectedMode {
+                case .review:
+                    reviewContent
+                case .quiz:
+                    QuizMultipleChoiceView()
+                case .typing:
+                    QuizTypingView()
+                }
+            }
+        }
+        .onAppear {
+            if selectedMode == .review { prepareSession() }
+        }
+        .onChange(of: selectedMode) { _ in
+            if selectedMode == .review { prepareSession() }
+        }
+    }
+
+    private var reviewContent: some View {
+        Group {
             if learningQueue.isEmpty {
                 emptyState
             } else {
-                VStack(spacing: 24) {
-                    header
-                    Spacer()
-
-                    ZStack {
+                ScrollView(showsIndicators: false) {
+                    VStack {
                         if currentIndex < learningQueue.count && !showCompletion {
                             WordCardPracticeView(
                                 card: learningQueue[currentIndex],
@@ -188,13 +216,9 @@ struct PracticeView: View {
                             completionScreen
                         }
                     }
-
-                    Spacer()
+                    .padding(.vertical, 8)
                 }
             }
-        }
-        .onAppear {
-            prepareSession()
         }
     }
 
@@ -221,14 +245,45 @@ struct PracticeView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Review")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Practice")
                 .font(.custom("Poppins-Bold", size: 38))
                 .foregroundColor(.mainBlack)
+
+            modePicker
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
         .padding(.top, 8)
+    }
+
+    private var modePicker: some View {
+        HStack(spacing: 0) {
+            ForEach(PracticeMode.allCases, id: \.self) { mode in
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        selectedMode = mode
+                    }
+                    Haptics.selection()
+                } label: {
+                    Text(mode.rawValue)
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .foregroundColor(selectedMode == mode ? .white : Color(.mainBlack))
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(selectedMode == mode ? Color.toastAndButtons : Color.clear)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.cardBackground)
+        )
     }
 
     private var completionScreen: some View {

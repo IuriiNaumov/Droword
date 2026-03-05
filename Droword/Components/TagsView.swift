@@ -10,20 +10,30 @@ struct TagsView: View {
     var onAddTag: (() -> Void)? = nil
     @State private var isDeleteMode: Bool = false
 
-    var allTags: [(name: String, color: Color)] {
-        TagStore.shared.tags.map { ($0.name, Color(fromHexString: $0.colorHex) ?? Color.gray) } + [
-            ("Golden", Color(hexRGB: 0xFCDD9D)),
-            ("Chat",   Color(hexRGB: 0xCDEBF1)),
-            ("Travel", Color(hexRGB: 0xDEF1D0)),
-            ("Street", Color(hexRGB: 0xF8E5E5)),
-            ("Movies", Color(hexRGB: 0xCBCEEA)),
+    private let builtInNames: Set<String> = ["Golden", "Chat", "Travel", "Street", "Movies"]
+
+    var allTags: [(name: String, color: Color, isCustom: Bool)] {
+        let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
+            ($0.name, Color(fromHexString: $0.colorHex) ?? Color.gray, true)
+        }
+        let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
+            ("Golden", Color(hexRGB: 0xFCDD9D), false),
+            ("Chat",   Color(hexRGB: 0xCDEBF1), false),
+            ("Travel", Color(hexRGB: 0xDEF1D0), false),
+            ("Street", Color(hexRGB: 0xF8E5E5), false),
+            ("Movies", Color(hexRGB: 0xCBCEEA), false),
         ]
+        return custom + builtIn
     }
 
-    var visibleTags: [(name: String, color: Color)] {
+    var visibleTags: [(name: String, color: Color, isCustom: Bool)] {
         allTags.filter { tag in
             tag.name == "Golden" ? hasGoldenWords : true
         }
+    }
+
+    private var hasCustomTags: Bool {
+        !tagStore.tags.isEmpty
     }
 
     var body: some View {
@@ -32,53 +42,63 @@ struct TagsView: View {
                 ForEach(visibleTags, id: \.name) { tag in
                     let isSelected = selectedTag == tag.name
                     let baseColor = tag.color
+                    let dimmed = isDeleteMode && !tag.isCustom
                     let textColor: Color = colorScheme == .dark
                         ? .white.opacity(isSelected ? 1.0 : 0.9)
                         : darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
 
                     Button {
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                            let willSelect = !(selectedTag == tag.name)
-                            selectedTag = willSelect ? tag.name : nil
-                        }
-                        Haptics.selection()
-                    } label: {
-                        Text(tag.name)
-                            .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
-                            .foregroundColor(textColor)
-                            .padding(.vertical, compact ? 12 : 14)
-                            .padding(.horizontal, compact ? 12 : 14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(baseColor.opacity(isSelected ? 0.95 : 0.32))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(baseColor.opacity(0.0), lineWidth: 0)
-                            )
-                            .scaleEffect(isSelected ? 1.06 : 1.0)
-                            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
-                            .modifier(WiggleEffect(isActive: isDeleteMode && TagStore.shared.tags.contains(where: { $0.name == tag.name })))
-                            .overlay(alignment: .topTrailing) {
-                                if isDeleteMode, TagStore.shared.tags.contains(where: { $0.name == tag.name }) {
-                                    Button(action: {
-                                        TagStore.shared.removeTag(named: tag.name)
-                                    }) {
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color.red)
-                                                .frame(width: 20, height: 20)
-                                            Image(systemName: "trash.fill")
-                                                .foregroundColor(.white)
-                                                .font(.system(size: 11, weight: .bold))
-                                        }
-                                    }
-                                    .offset(x: 6, y: -6)
-                                    .buttonStyle(.plain)
+                        if isDeleteMode {
+                            if tag.isCustom {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    TagStore.shared.removeTag(named: tag.name)
+                                    if selectedTag == tag.name { selectedTag = nil }
                                 }
+                                Haptics.selection()
                             }
+                        } else {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                selectedTag = selectedTag == tag.name ? nil : tag.name
+                            }
+                            Haptics.selection()
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if isDeleteMode && tag.isCustom {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.red)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+
+                            Text(tag.name)
+                                .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
+                                .foregroundColor(textColor)
+
+                            if isDeleteMode && !tag.isCustom {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(textColor.opacity(0.5))
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .padding(.vertical, compact ? 12 : 14)
+                        .padding(.horizontal, compact ? 20 : 22)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32)))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(isDeleteMode && tag.isCustom ? Color.red.opacity(0.4) : Color.clear, lineWidth: 1.5)
+                        )
+                        .scaleEffect(isSelected && !isDeleteMode ? 1.06 : 1.0)
+                        .opacity(dimmed ? 0.5 : 1.0)
+                        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isDeleteMode)
                     }
                     .buttonStyle(.plain)
+                    .disabled(isDeleteMode && !tag.isCustom)
                 }
 
                 if showManagementControls {
@@ -91,22 +111,32 @@ struct TagsView: View {
                             .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
                     }
                     .buttonStyle(.plain)
+                    .opacity(isDeleteMode ? 0 : 1)
+                    .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
 
-                    Button(action: { withAnimation { isDeleteMode.toggle() } }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 32, height: 32)
-                            Image(systemName: "trash.fill")
-                                .foregroundColor(.white)
+                    if hasCustomTags {
+                        Button(action: { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
+                            Image(systemName: isDeleteMode ? "checkmark" : "pencil")
                                 .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(isDeleteMode ? .white : .mainGrey)
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    Circle().fill(isDeleteMode ? Color.red : Color.mainGrey.opacity(0.15))
+                                )
                         }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, compact ? 10 : 0)
             .padding(.vertical, compact ? 16 : 10)
+        }
+        .onChange(of: tagStore.tags.count) { newCount in
+            if newCount == 0 && isDeleteMode {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isDeleteMode = false
+                }
+            }
         }
     }
 }

@@ -29,29 +29,24 @@ struct AvatarPickerView: View {
                     }
                 }
                 .ignoresSafeArea()
-            } else {
-                Color.black.opacity(0.4).ignoresSafeArea()
-                    .onTapGesture { dismiss() }
-
-                if showCropper, let pickedImage {
-                    AvatarCropView(image: pickedImage) { croppedImage in
-                        onComplete(croppedImage)
-                        dismiss()
-                    } onCancel: {
-                        showCropper = false
-                        self.pickedImage = nil
-                        showSourcePicker = true
-                    }
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                } else if showSourcePicker {
-                    sourcePickerCard
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else if showCropper, let pickedImage {
+                AvatarCropView(image: pickedImage) { croppedImage in
+                    onComplete(croppedImage)
+                    dismiss()
+                } onCancel: {
+                    showCropper = false
+                    self.pickedImage = nil
+                    showSourcePicker = true
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            } else if showSourcePicker {
+                sourcePickerCard
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showCropper)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showSourcePicker)
         .animation(.easeInOut(duration: 0.2), value: showCamera)
+        .presentationDetents([.medium])
         .photosPicker(isPresented: $showPhotosPicker, selection: $selectedItem, matching: .images)
         .onChange(of: selectedItem) { newItem in
             guard let newItem else { return }
@@ -68,70 +63,57 @@ struct AvatarPickerView: View {
 
     private var sourcePickerCard: some View {
         VStack(spacing: 0) {
-            Spacer()
+            Text("Change photo")
+                .font(.custom("Poppins-Bold", size: 20))
+                .foregroundColor(.mainBlack)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
 
-            VStack(spacing: 0) {
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(Color.mainGrey.opacity(0.3))
-                    .frame(width: 36, height: 5)
-                    .padding(.top, 10)
-                    .padding(.bottom, 16)
+            VStack(spacing: 12) {
+                sourceButton(
+                    icon: "camera.fill",
+                    title: "Take a photo",
+                    color: .blue
+                ) {
+                    showSourcePicker = false
+                    showCamera = true
+                }
 
-                Text("Change photo")
-                    .font(.custom("Poppins-Bold", size: 20))
-                    .foregroundColor(.mainBlack)
-                    .padding(.bottom, 20)
+                sourceButton(
+                    icon: "photo.on.rectangle",
+                    title: "Choose from gallery",
+                    color: .green
+                ) {
+                    showPhotosPicker = true
+                }
 
-                VStack(spacing: 12) {
+                if currentImage != nil {
                     sourceButton(
-                        icon: "camera.fill",
-                        title: "Take a photo",
-                        color: .blue
+                        icon: "trash.fill",
+                        title: "Remove photo",
+                        color: .red
                     ) {
-                        showSourcePicker = false
-                        showCamera = true
-                    }
-
-                    sourceButton(
-                        icon: "photo.on.rectangle",
-                        title: "Choose from gallery",
-                        color: .green
-                    ) {
-                        showPhotosPicker = true
-                    }
-
-                    if currentImage != nil {
-                        sourceButton(
-                            icon: "trash.fill",
-                            title: "Remove photo",
-                            color: .red
-                        ) {
-                            onComplete(nil)
-                            dismiss()
-                        }
+                        onComplete(nil)
+                        dismiss()
                     }
                 }
-                .padding(.horizontal, 20)
-
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Cancel")
-                        .font(.custom("Poppins-Medium", size: 16))
-                        .foregroundColor(.mainGrey)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                }
-                .padding(.top, 8)
-                .padding(.bottom, 8)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.appBackground)
-            )
+            .padding(.horizontal, 20)
+
+            Button {
+                dismiss()
+            } label: {
+                Text("Cancel")
+                    .font(.custom("Poppins-Medium", size: 16))
+                    .foregroundColor(.mainGrey)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+            }
+            .padding(.top, 8)
+            .padding(.bottom, 8)
+
+            Spacer()
         }
-        .padding(.horizontal, 8)
-        .padding(.bottom, 8)
     }
 
     private func sourceButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -207,53 +189,43 @@ struct AvatarCropView: View {
 
             Spacer()
 
-            GeometryReader { geo in
-                ZStack {
-                    Color.black
+            Spacer()
 
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(
-                            width: cropSize * scale,
-                            height: cropSize * scale
-                        )
-                        .offset(offset)
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    offset = CGSize(
-                                        width: lastOffset.width + value.translation.width,
-                                        height: lastOffset.height + value.translation.height
-                                    )
-                                }
-                                .onEnded { _ in
-                                    lastOffset = offset
-                                    clampOffset()
-                                }
-                        )
-                        .gesture(
-                            MagnifyGesture()
-                                .onChanged { value in
-                                    let newScale = lastScale * value.magnification
-                                    scale = max(1.0, min(newScale, 5.0))
-                                }
-                                .onEnded { _ in
-                                    lastScale = scale
-                                    clampOffset()
-                                }
-                        )
-                        .clipShape(Circle())
+            ZStack {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: cropSize * scale, height: cropSize * scale)
+                    .offset(offset)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                offset = CGSize(
+                                    width: lastOffset.width + value.translation.width,
+                                    height: lastOffset.height + value.translation.height
+                                )
+                            }
+                            .onEnded { _ in
+                                lastOffset = offset
+                                clampOffset()
+                            }
+                    )
+                    .gesture(
+                        MagnifyGesture()
+                            .onChanged { value in
+                                let newScale = lastScale * value.magnification
+                                scale = max(1.0, min(newScale, 5.0))
+                            }
+                            .onEnded { _ in
+                                lastScale = scale
+                                clampOffset()
+                            }
+                    )
 
-                    // Overlay mask with circular cutout
-                    CropOverlay(cropSize: cropSize)
-                        .allowsHitTesting(false)
-                }
-                .frame(width: geo.size.width, height: geo.size.width)
-                .clipped()
+                CropOverlay(cropSize: cropSize)
+                    .allowsHitTesting(false)
             }
-            .aspectRatio(1, contentMode: .fit)
-            .padding(.horizontal, 20)
+            .frame(width: cropSize + 40, height: cropSize + 40)
 
             Spacer()
 
@@ -272,7 +244,7 @@ struct AvatarCropView: View {
                     )
             }
             .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+            .padding(.bottom, 50)
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -329,7 +301,6 @@ private struct CropOverlay: View {
     }
 }
 
-// MARK: - Camera UIKit Wrapper
 
 struct CameraView: UIViewControllerRepresentable {
     let onCapture: (UIImage?) -> Void

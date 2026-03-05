@@ -73,7 +73,7 @@ struct HomeView: View {
                     selectedTab = .home
                 }
             }
-            .sheet(isPresented: $showAddWordView) {
+            .fullScreenCover(isPresented: $showAddWordView) {
                 AddWordView(store: store)
                     .transaction { $0.disablesAnimations = true }
             }

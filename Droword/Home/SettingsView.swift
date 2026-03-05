@@ -162,7 +162,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showAvatarPicker) {
+        .sheet(isPresented: $showAvatarPicker) {
             AvatarPickerView(currentImage: avatarImage) { newImage in
                 if let newImage {
                     avatarImage = newImage

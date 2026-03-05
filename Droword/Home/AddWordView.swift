@@ -87,11 +87,23 @@ struct AddWordView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 6) {
+        ZStack {
             Text("New word")
                 .font(.custom("Poppins-Bold", size: 26))
                 .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.mainGrey)
+                        .padding(8)
+                        .background(Color.mainGrey.opacity(0.12))
+                        .clipShape(Circle())
+                }
+                Spacer()
+            }
         }
     }
 
