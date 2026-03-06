@@ -19,7 +19,7 @@ final class AudioManager {
     }
 
     private let openAITTSEndpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
-
+   
 
     func play(word: String) async {
         print("AudioManager.play called with:", word)
