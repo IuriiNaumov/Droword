@@ -80,7 +80,7 @@ func fetchSuggestionsWithTopic(
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
-   
+    
     let url = URL(string: "https://api.anthropic.com/v1/messages")!
     let wordsList = words.joined(separator: ", ")
 

@@ -42,7 +42,7 @@ struct DrowordApp: App {
 
     private func warmUpAudioSession() {
         let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback)
+        try? session.setCategory(.playback, options: .mixWithOthers)
         try? session.setActive(true)
     }
 
