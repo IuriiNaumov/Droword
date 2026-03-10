@@ -21,6 +21,7 @@ enum PracticeMode: String, CaseIterable {
     case review = "Review"
     case quiz = "Quiz"
     case typing = "Typing"
+    case listening = "Listening"
 }
 
 struct PracticeView: View {
@@ -31,6 +32,7 @@ struct PracticeView: View {
     @State private var currentIndex: Int = 0
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
+    @State private var showListeningPlayer = false
 
     private var cards: [WordCard] {
         store.words.map { word in
@@ -57,7 +59,6 @@ struct PracticeView: View {
             if let due = w.dueDate {
                 return due <= today
             } else {
-                // treat words without due date as new and available
                 return true
             }
         }
@@ -105,7 +106,6 @@ struct PracticeView: View {
         case .easy:  q = 5
         }
 
-        // Update automatic proficiency score (EMA over answer quality)
         let quality: Double
         switch rating {
         case .again: quality = 0.0
@@ -113,11 +113,10 @@ struct PracticeView: View {
         case .good:  quality = 0.7
         case .easy:  quality = 1.0
         }
-        let alpha = 0.06 // smoothing factor
+        let alpha = 0.06
         let prev = languageStore.learningScore
         languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
 
-        // SM-2 EF update
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
         ef = max(1.3, ef)
 
@@ -125,13 +124,10 @@ struct PracticeView: View {
         let cal = Calendar.current
 
         if q < 3 {
-            // Lapse: reset reps/interval and schedule soon (learning step)
             lapses += 1
             reps = 0
             ivl = 0
-            // Reinsert in-session after 2 positions for immediate relearn
             reinsert(card, after: 2)
-            // Persist with a very near due date (e.g. 10 minutes)
             let due = cal.date(byAdding: .minute, value: 10, to: now)
             store.updateScheduling(for: card.id,
                                    easeFactor: ef,
@@ -174,14 +170,19 @@ struct PracticeView: View {
                 header
                     .padding(.bottom, 8)
 
-                switch selectedMode {
-                case .review:
-                    reviewContent
-                case .quiz:
-                    QuizMultipleChoiceView()
-                case .typing:
-                    QuizTypingView()
+                Group {
+                    switch selectedMode {
+                    case .review:
+                        reviewContent
+                    case .quiz:
+                        QuizMultipleChoiceView()
+                    case .typing:
+                        QuizTypingView()
+                    case .listening:
+                        listeningEntryView
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .onAppear {
@@ -189,6 +190,10 @@ struct PracticeView: View {
         }
         .onChange(of: selectedMode) { _ in
             if selectedMode == .review { prepareSession() }
+        }
+        .fullScreenCover(isPresented: $showListeningPlayer) {
+            ListeningPlayerView()
+                .environmentObject(store)
         }
     }
 
@@ -268,12 +273,12 @@ struct PracticeView: View {
                 } label: {
                     Text(mode.rawValue)
                         .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(selectedMode == mode ? .white : Color(.mainBlack))
+                        .foregroundColor(selectedMode == mode ? .white : Color.mainBlack)
                         .padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selectedMode == mode ? Color.toastAndButtons : Color.clear)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .fill(selectedMode == mode ? Color.accentBlue : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)
@@ -281,7 +286,7 @@ struct PracticeView: View {
         }
         .padding(4)
         .background(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color.cardBackground)
         )
     }
@@ -295,6 +300,52 @@ struct PracticeView: View {
                 .foregroundColor(.secondary)
         }
         .padding()
+    }
+
+    private var listeningEntryView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "headphones")
+                .font(.system(size: 56))
+                .foregroundColor(.mainBlack.opacity(0.25))
+
+            VStack(spacing: 8) {
+                Text("Audio flashcards")
+                    .font(.custom("Poppins-Bold", size: 22))
+                    .foregroundColor(.mainBlack)
+
+                Text("Listen to words with pauses for active recall. Put on headphones and learn while doing other things.")
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(.mainGrey)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            Button(action: {
+                Haptics.mediumImpact()
+                showListeningPlayer = true
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14))
+                    Text("Open player")
+                        .font(.custom("Poppins-Bold", size: 16))
+                }
+                .foregroundColor(.white)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(store.words.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlue)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(store.words.isEmpty)
+
+            Spacer()
+            Spacer()
+        }
     }
 
     private func showNextCard() {
@@ -315,9 +366,12 @@ private struct RatingButton: View {
                 .font(.custom("Poppins-Bold", size: 14))
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
-                .background(bg)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(bg)
+                )
                 .foregroundColor(textColor)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -339,11 +393,11 @@ struct WordCardPracticeView: View {
     private var backgroundColor: Color {
         if let tag = card.tag {
             switch tag {
-            case "Chat":   return Color(.accentBlue)
-            case "Travel": return Color(.accentGreen)
-            case "Street": return Color(.accentPink)
-            case "Movies": return Color(.accentPurple)
-            case "Golden": return Color(.accentGold)
+            case "Chat":   return Color.accentBlue
+            case "Travel": return Color.accentGreen
+            case "Street": return Color.accentPink
+            case "Movies": return Color.accentPurple
+            case "Golden": return Color.accentGold
             default:
                 if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
                    let color = Color(fromHexString: custom.colorHex) {
@@ -351,7 +405,7 @@ struct WordCardPracticeView: View {
                 }
             }
         }
-        return Color(.defaultCard)
+        return Color.cardBackground
     }
 
     private var isDarkBackground: Bool {
@@ -410,7 +464,7 @@ struct WordCardPracticeView: View {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
 
@@ -423,11 +477,11 @@ struct WordCardPracticeView: View {
                     .padding(.vertical, 4)
                     .padding(.horizontal, 12)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .stroke(darkerShade(of: backgroundColor, by: 0.1), lineWidth: 1)
                     )
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .fill(backgroundColor)
                     )
                     .padding(.bottom, 2)
@@ -523,9 +577,9 @@ struct WordCardPracticeView: View {
                 .padding(.top, 50)
 
             HStack(spacing: 12) {
-                RatingButton(title: "Again", bg: Color.iDontKnowButton, fg: nil) { onAgain() }
+                RatingButton(title: "Again", bg: Color.accentRed, fg: nil) { onAgain() }
                 RatingButton(title: "Hard", bg: Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) { onHard() }
-                RatingButton(title: "Good", bg: Color.iKnowButton, fg: nil) { onGood() }
+                RatingButton(title: "Good", bg: Color.accentGreen, fg: nil) { onGood() }
                 RatingButton(
                     title: "Easy",
                     bg: Color(red: 0.718, green: 0.894, blue: 0.780),
@@ -535,8 +589,15 @@ struct WordCardPracticeView: View {
         }
         .padding()
         .frame(maxWidth: 520)
-        .background(backgroundColor)
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(backgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.divider, lineWidth: 1)
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private func playAudio() {
@@ -558,7 +619,7 @@ private extension Color {
         return lum < 0.5
     }
 }
-    
+
 #Preview {
     let store = WordsStore()
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -604,4 +665,3 @@ private extension Color {
         .environmentObject(store)
         .environmentObject(LanguageStore())
 }
-

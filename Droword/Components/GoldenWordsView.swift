@@ -4,10 +4,10 @@ struct GoldenWordsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var golden: GoldenWordsStore
 
-    private let gold = Color(hex: "#FCDD9D")
-    private let darkGold = Color(hex: "#D99B00")
-    private let midTextGold = Color(hex: "#7B5200")
-    private let titleGold = Color(hex: "#5A3C00")
+    private let gold = Color.accentGold
+    private var darkGold: Color { darkerShade(of: Color.accentGold, by: 0.15) }
+    private var midTextGold: Color { darkerShade(of: Color.accentGold, by: 0.35) }
+    private var titleGold: Color { darkerShade(of: Color.accentGold, by: 0.5) }
 
     var body: some View {
         if golden.isLoading || !golden.goldenWords.isEmpty {
@@ -15,7 +15,7 @@ struct GoldenWordsView: View {
                 if let topic = golden.topic {
                     Text("Suggestions")
                         .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(Color(.mainBlack))
+                        .foregroundColor(.mainBlack)
                         .padding(.top, 8)
                 }
 
@@ -56,7 +56,7 @@ struct GoldenWordsView: View {
                                         .padding(.horizontal, 12)
                                         .background(darkGold)
                                         .clipShape(Capsule())
-                                        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                                        
                                     }
 
                                     Spacer()
@@ -79,10 +79,14 @@ struct GoldenWordsView: View {
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
+                                RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .fill(gold)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                            .stroke(Color.divider, lineWidth: 1)
+                                    )
                             )
-                            .shadow(color: darkGold.opacity(0.25), radius: 10, y: 3)
+                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .transition(.scale.combined(with: .opacity))
                         }
                     }
@@ -139,5 +143,5 @@ extension Color {
         }
         .padding(.vertical, 40)
     }
-    .background(Color(.systemGroupedBackground))
+    .background(Color.appBackground)
 }

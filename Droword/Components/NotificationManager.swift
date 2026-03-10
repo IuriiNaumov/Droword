@@ -23,7 +23,6 @@ private var rotatingIndex: Int {
 }
 
 private func randomContent(tagName: String?) -> (title: String, body: String) {
-    // Cycle through titles/bodies to alternate messages
     var idx = rotatingIndex
     let title = friendlyTitles[idx % friendlyTitles.count]
     let baseBody = friendlyBodies[idx % friendlyBodies.count]
@@ -71,15 +70,12 @@ final class NotificationManager {
 
     func scheduleTwiceDaily(tagName: String? = nil) {
         let center = UNUserNotificationCenter.current()
-        // Remove previous twice-daily identifiers to avoid duplicates
         center.removePendingNotificationRequests(withIdentifiers: [
             "daily.reminder.morning",
             "daily.reminder.evening"
         ])
 
-        // Morning at 9:00
         scheduleDailyReminder(hour: 9, minute: 0, tagName: tagName, identifier: "daily.reminder.morning")
-        // Evening at 19:00
         scheduleDailyReminder(hour: 19, minute: 0, tagName: tagName, identifier: "daily.reminder.evening")
     }
 

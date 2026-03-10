@@ -17,11 +17,11 @@ struct TagsView: View {
             ($0.name, Color(fromHexString: $0.colorHex) ?? Color.gray, true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
-            ("Golden", Color(hexRGB: 0xFCDD9D), false),
-            ("Chat",   Color(hexRGB: 0xCDEBF1), false),
-            ("Travel", Color(hexRGB: 0xDEF1D0), false),
-            ("Street", Color(hexRGB: 0xF8E5E5), false),
-            ("Movies", Color(hexRGB: 0xCBCEEA), false),
+            ("Golden", Color.accentGold, false),
+            ("Chat",   Color.accentBlue, false),
+            ("Travel", Color.accentGreen, false),
+            ("Street", Color.accentPink, false),
+            ("Movies", Color.accentPurple, false),
         ]
         return custom + builtIn
     }
@@ -50,14 +50,14 @@ struct TagsView: View {
                     Button {
                         if isDeleteMode {
                             if tag.isCustom {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                     TagStore.shared.removeTag(named: tag.name)
                                     if selectedTag == tag.name { selectedTag = nil }
                                 }
                                 Haptics.selection()
                             }
                         } else {
-                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                 selectedTag = selectedTag == tag.name ? nil : tag.name
                             }
                             Haptics.selection()
@@ -82,20 +82,20 @@ struct TagsView: View {
                                     .transition(.scale.combined(with: .opacity))
                             }
                         }
-                        .padding(.vertical, compact ? 12 : 14)
-                        .padding(.horizontal, compact ? 20 : 22)
+                        .padding(.vertical, compact ? 8 : 10)
+                        .padding(.horizontal, compact ? 24 : 28)
                         .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            Capsule()
                                 .fill(baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32)))
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isDeleteMode && tag.isCustom ? Color.red.opacity(0.4) : Color.clear, lineWidth: 1.5)
+                            Capsule()
+                                .stroke(isDeleteMode && tag.isCustom ? Color.accentRed.opacity(0.4) : Color.clear, lineWidth: 1.5)
                         )
                         .scaleEffect(isSelected && !isDeleteMode ? 1.06 : 1.0)
                         .opacity(dimmed ? 0.5 : 1.0)
                         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
-                        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isDeleteMode)
+                        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isDeleteMode)
                     }
                     .buttonStyle(.plain)
                     .disabled(isDeleteMode && !tag.isCustom)
@@ -107,15 +107,15 @@ struct TagsView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                             .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.toastAndButtons))
-                            .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+                            .background(Circle().fill(Color.accentBlue))
+                            
                     }
                     .buttonStyle(.plain)
                     .opacity(isDeleteMode ? 0 : 1)
                     .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
 
                     if hasCustomTags {
-                        Button(action: { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
+                        Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(isDeleteMode ? .white : .mainGrey)
@@ -133,7 +133,7 @@ struct TagsView: View {
         }
         .onChange(of: tagStore.tags.count) { newCount in
             if newCount == 0 && isDeleteMode {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     isDeleteMode = false
                 }
             }
@@ -166,14 +166,14 @@ private struct WiggleEffect: ViewModifier {
         VStack(alignment: .leading, spacing: 20) {
             Text("Light Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(Color("MainBlack"))
+                .foregroundColor(Color.mainBlack)
                 .padding(.horizontal)
 
             TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
             TagsView(selectedTag: .constant("Chat"), hasGoldenWords: false)
         }
         .padding(.vertical, 30)
-        .background(Color(hexRGB: 0xFFF8E7))
+        .background(Color.white)
         .preferredColorScheme(.light)
 
         VStack(alignment: .leading, spacing: 20) {

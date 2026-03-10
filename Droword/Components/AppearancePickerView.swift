@@ -75,12 +75,12 @@ private struct AppearanceCard: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.toastAndButtons : Color.mainGrey, lineWidth: 1)
+                        .stroke(isSelected ? Color.accentBlue : Color.mainGrey, lineWidth: 1)
                         .frame(width: 28, height: 28)
 
                     if isSelected {
                         Circle()
-                            .fill(Color.toastAndButtons)
+                            .fill(Color.accentBlue)
                             .frame(width: 28, height: 28)
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
 
@@ -90,10 +90,10 @@ private struct AppearanceCard: View {
                     }
                 }
                 .padding(.top, 2)
-                .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isSelected)
             }
             .frame(maxWidth: .infinity)
-            .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isSelected)
         }
         .buttonStyle(NoHighlightButtonStyle())
     }
@@ -102,8 +102,8 @@ private struct AppearanceCard: View {
         ZStack {
             if style == .system {
                 HStack(spacing: 0) {
-                    Color(hexRGB: 0xEEEEEE)
-                    Color(hexRGB: 0x1C1C1E)
+                    Color("#EEEEEE")
+                    Color("#1C1C1E")
                 }
             } else {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -142,33 +142,33 @@ private struct AppearanceCard: View {
 
     private var previewBackground: Color {
         switch style {
-        case .system: return Color(hexRGB: 0xEEEEEE)
-        case .light: return Color(hexRGB: 0xEEEEEE)
-        case .dark: return Color(hexRGB: 0x1C1C1E)
+        case .system: return Color("#EEEEEE")
+        case .light: return Color("#EEEEEE")
+        case .dark: return Color("#1C1C1E")
         }
     }
 
     private var previewAvatar: Color {
         switch style {
-        case .system: return Color(hexRGB: 0xC9CBD1)
-        case .light: return Color(hexRGB: 0xC9CBD1)
-        case .dark: return Color(hexRGB: 0x2B2E34)
+        case .system: return Color("#C9CBD1")
+        case .light: return Color("#C9CBD1")
+        case .dark: return Color("#2B2E34")
         }
     }
 
     private var previewLine: Color {
         switch style {
-        case .system: return Color(hexRGB: 0xB7BAC1)
-        case .light: return Color(hexRGB: 0xB7BAC1)
-        case .dark: return Color(hexRGB: 0x2C3139)
+        case .system: return Color("#B7BAC1")
+        case .light: return Color("#B7BAC1")
+        case .dark: return Color("#2C3139")
         }
     }
 
     private var previewBlock: Color {
         switch style {
-        case .system: return Color(hexRGB: 0xC9CBD1)
-        case .light: return Color(hexRGB: 0xC9CBD1)
-        case .dark: return Color(hexRGB: 0x22262D)
+        case .system: return Color("#C9CBD1")
+        case .light: return Color("#C9CBD1")
+        case .dark: return Color("#2262D")
         }
     }
 }

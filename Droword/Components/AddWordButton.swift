@@ -9,87 +9,41 @@ struct AddWordButton: View {
 
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var isPressed = false
-    @Namespace private var buttonNamespace
 
     var body: some View {
         VStack(spacing: 8) {
-
             Button {
                 if !isLoading && !isDisabled {
                     Task { await performAction() }
                 }
             } label: {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 50)
-                        .fill(
-                            isDisabled
-                            ? LinearGradient(
-                                colors: [Color.gray.opacity(0.4), Color.gray.opacity(0.4)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                              )
-                            : LinearGradient(
-                                gradient: Gradient(colors: [Color(.addButton), Color(.addButton).opacity(0.85)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                              )
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 50)
-                                .stroke(isPressed ? Color.white.opacity(0.35) : Color.white.opacity(0.15), lineWidth: 1)
-                        )
-                        .shadow(color: Color(.addButton).opacity(isPressed ? 0.25 : 0.15), radius: isPressed ? 16 : 10, x: 0, y: isPressed ? 8 : 6)
-
                     if isLoading {
-                        Loader()
-                            .matchedGeometryEffect(id: "loader", in: buttonNamespace)
+                        ProgressView()
+                            .tint(.white)
                             .transition(.opacity)
                     } else {
                         Text(title)
-                            .font(.custom("Poppins-Medium", size: 20))
+                            .font(.custom("Poppins-Bold", size: 17))
                             .foregroundColor(.white)
-                            .shadow(color: .white.opacity(0.35), radius: 1, x: 0, y: 1)
-                            .matchedGeometryEffect(id: "title", in: buttonNamespace)
                             .transition(.opacity)
                     }
                 }
-                .frame(height: 60)
-                .padding(.vertical, 20)
-                .padding(.horizontal, 10)
-                .scaleEffect(isPressed ? 0.96 : 1.0)
-                .animation(.spring(response: 0.35, dampingFraction: 0.75, blendDuration: 0.1), value: isPressed)
+                .duo3DStyle(Color.accentGreen, isDisabled: isDisabled)
             }
             .disabled(isDisabled || isLoading)
             .buttonStyle(.plain)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        if !isPressed && !isLoading && !isDisabled {
-                            isPressed = true
-                            DispatchQueue.main.async {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            }
-                        }
-                    }
-                    .onEnded { _ in
-                        if isPressed {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                isPressed = false
-                            }
-                        }
-                    }
-            )
 
             if let message = errorMessage {
                 Text(message)
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(Color(.mainGrey))
+                    .foregroundColor(Color.mainGrey)
                     .multilineTextAlignment(.center)
                     .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: errorMessage)
+        .animation(.easeInOut(duration: 0.2), value: isLoading)
     }
 
     private struct TimeoutError: Error {}
@@ -103,7 +57,6 @@ struct AddWordButton: View {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 throw TimeoutError()
             }
-            // Wait for the first task to finish (success or timeout)
             let _ = try await group.next()
             group.cancelAll()
         }
@@ -116,7 +69,6 @@ struct AddWordButton: View {
         errorMessage = nil
 
         defer {
-            // Ensure loader always turns off on main thread
             isLoading = false
         }
 
@@ -124,10 +76,10 @@ struct AddWordButton: View {
             try await runWithTimeout(seconds: 20) {
                 try await action()
             }
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            Haptics.success()
             onSuccess?()
         } catch {
-            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            Haptics.error()
             withAnimation {
                 if (error as? TimeoutError) != nil {
                     errorMessage = "The request took too long. Please try again."
@@ -153,5 +105,5 @@ struct AddWordButton: View {
         ) { }
     }
     .padding()
-    .background(Color(hexRGB: 0xFFF8E7))
+    .background(Color.appBackground)
 }

@@ -46,7 +46,7 @@ struct AddWordView: View {
 
     var body: some View {
         ZStack {
-            Color(.appBackground).ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
@@ -116,7 +116,6 @@ struct AddWordView: View {
             FormTextField(
                 title: wordPlaceholder,
                 text: $word,
-                focusedColor: .mainGrey,
                 maxLength: 40,
                 showCounter: true
             )
@@ -134,12 +133,11 @@ struct AddWordView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Translation")
                 .font(.custom("Poppins-Regular", size: 18))
-                .foregroundColor(Color(.mainGrey))
+                .foregroundColor(Color.mainGrey)
 
             FormTextField(
                 title: translationPlaceholder,
                 text: $translation,
-                focusedColor: Color(.mainGrey)
             )
             .focused($focusedField, equals: .translation)
             .onChange(of: translation) { newValue in
@@ -149,7 +147,7 @@ struct AddWordView: View {
 
             Text("Don’t know the translation? I’ll handle it for you")
                 .font(.custom("Poppins-Regular", size: 14))
-                .foregroundColor(Color(.mainGrey).opacity(0.6))
+                .foregroundColor(Color.mainGrey.opacity(0.6))
                 .padding(.leading, 2)
         }
     }
@@ -158,12 +156,11 @@ struct AddWordView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Comment")
                 .font(.custom("Poppins-Regular", size: 18))
-                .foregroundColor(Color(.mainGrey).opacity(0.9))
+                .foregroundColor(Color.mainGrey.opacity(0.9))
 
             FormTextField(
                 title: commentPlaceholder,
                 text: $comment,
-                focusedColor: Color(.mainGrey)
             )
             .focused($focusedField, equals: .comment)
         }
@@ -226,4 +223,5 @@ struct AddWordView: View {
     AddWordView(store: WordsStore())
         .environmentObject(LanguageStore())
 }
+
 

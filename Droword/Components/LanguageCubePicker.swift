@@ -32,7 +32,7 @@ struct LanguageCubePicker: View {
                         if !isBlocked {
                             let generator = UIImpactFeedbackGenerator(style: .soft)
                             generator.impactOccurred()
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.75)) {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                 selectedLanguage = lang.name
                             }
                         }
@@ -56,11 +56,8 @@ struct LanguageCube: View {
 
     private var textColor: Color {
         if isBlocked { return .gray }
-        if colorScheme == .dark {
-            return isSelected ? .white : .white.opacity(0.85)
-        }
-        if isSelected { return language.color.darker(by: 0.55) }
-        return language.color.darker(by: 0.4)
+        if isSelected { return Color.accentBlue }
+        return Color.mainBlack
     }
 
     var body: some View {
@@ -80,19 +77,23 @@ struct LanguageCube: View {
             .frame(height: 110)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(
                         isSelected
-                        ? language.color
+                        ? language.color.opacity(0.15)
                         : isBlocked
-                        ? Color.gray.opacity(0.15)
-                        : language.color.opacity(0.25)
+                        ? Color.gray.opacity(0.08)
+                        : Color.cardBackground
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(isSelected ? language.color : Color.divider, lineWidth: isSelected ? 2.5 : 1)
                     )
             )
 
             .scaleEffect(internalPressedState ? 0.96 : (isSelected ? 1.05 : 1.0))
             .opacity(isBlocked ? 0.5 : 1.0)
-            .animation(.spring(response: 0.32, dampingFraction: 0.75), value: isSelected)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isSelected)
         }
         .buttonStyle(.plain)
         .disabled(isBlocked)
@@ -189,15 +190,6 @@ struct LanguagePreferencesView: View {
                 .padding(.bottom, 50)
             }
             .background(Color.appBackground.ignoresSafeArea())
-            
-            if showToast {
-                ToastView(
-                    type: toastType,
-                    message: toastMessage,
-                    duration: 2
-                )
-                .id(toastID)
-            }
         }
     }
     
@@ -221,18 +213,18 @@ struct LanguagePreferencesView: View {
     }
     
     static let availableLanguages = [
-        LanguageOption(name: "English", flag: "🇬🇧", color: Color(hex: "#CDEBF1")),
-        LanguageOption(name: "Español", flag: "🇲🇽", color: Color(hex: "#DEF1D0")),
-        LanguageOption(name: "Русский", flag: "🇷🇺", color: Color(hex: "#FFE6A7")),
-        LanguageOption(name: "Français", flag: "🇫🇷", color: Color(hex: "#E4D2FF")),
-        LanguageOption(name: "Deutsch", flag: "🇩🇪", color: Color(hex: "#FFD1A9")),
-        LanguageOption(name: "Italiano", flag: "🇮🇹", color: Color(hex: "#D2FFD5")),
-        LanguageOption(name: "Português", flag: "🇧🇷", color: Color(hex: "#FFF4B0")),
-        LanguageOption(name: "한국어", flag: "🇰🇷", color: Color(hex: "#D2E0FF")),
-        LanguageOption(name: "中文", flag: "🇨🇳", color: Color(hex: "#FFD5D2")),
-        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color(hex: "#DDE8FF")),
-        LanguageOption(name: "العربية", flag: "🇸🇦", color: Color(hex: "#FFE0CC")),
-        LanguageOption(name: "हिन्दी", flag: "🇮🇳", color: Color(hex: "#E6F0FF"))
+        LanguageOption(name: "English", flag: "🇬🇧", color: Color.accentBlue),
+        LanguageOption(name: "Español", flag: "🇲🇽", color: Color.accentBlue),
+        LanguageOption(name: "Русский", flag: "🇷🇺", color: Color.accentBlue),
+        LanguageOption(name: "Français", flag: "🇫🇷", color: Color.accentBlue),
+        LanguageOption(name: "Deutsch", flag: "🇩🇪", color: Color.accentBlue),
+        LanguageOption(name: "Italiano", flag: "🇮🇹", color: Color.accentBlue),
+        LanguageOption(name: "Português", flag: "🇧🇷", color: Color.accentBlue),
+        LanguageOption(name: "한국어", flag: "🇰🇷", color: Color.accentBlue),
+        LanguageOption(name: "中文", flag: "🇨🇳", color: Color.accentBlue),
+        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color.accentBlue),
+        LanguageOption(name: "العربية", flag: "🇸🇦", color: Color.accentBlue),
+        LanguageOption(name: "हिन्दी", flag: "🇮🇳", color: Color.accentBlue)
     ]
 }
 
@@ -254,8 +246,8 @@ struct LanguagePreferencesView: View {
 }
 
 private let previewLanguages = [
-    LanguageOption(name: "English", flag: "🇬🇧", color: Color(hex: "#CDEBF1")),
-    LanguageOption(name: "Español", flag: "🇲🇽", color: Color(hex: "#DEF1D0")),
-    LanguageOption(name: "Русский", flag: "🇷🇺", color: Color(hex: "#FFE6A7"))
+    LanguageOption(name: "English", flag: "🇬🇧", color: Color.accentBlue),
+    LanguageOption(name: "Español", flag: "🇲🇽", color: Color.accentBlue),
+    LanguageOption(name: "Русский", flag: "🇷🇺", color: Color.accentBlue)
 ]
 

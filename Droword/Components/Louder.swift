@@ -10,7 +10,7 @@ struct Loader: View {
         HStack(spacing: spacing) {
             ForEach(0..<dotCount, id: \.self) { i in
                 Circle()
-                    .fill(Color.white)
+                    .fill(Color.mainBlack)
                     .frame(width: dotSize, height: dotSize)
                     .scaleEffect(scale(for: i))
                     .opacity(Double(scale(for: i)))

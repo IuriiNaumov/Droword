@@ -16,19 +16,19 @@ struct OnboardingView: View {
         .init(
             title: "Build your dictionary",
             subtitle: "Save words with examples, tags and notes so they stay with you.",
-            systemImage: "book.fill",
+            illustrationStyle: .dictionary,
             accent: .accentBlue
         ),
         .init(
             title: "Smart practice",
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
-            systemImage: "rectangle.portrait.on.rectangle.portrait",
+            illustrationStyle: .practice,
             accent: .accentGreen
         ),
         .init(
             title: "Make it yours",
             subtitle: "Choose languages, voices and themes. Track progress and level up!",
-            systemImage: "star.fill",
+            illustrationStyle: .customize,
             accent: .accentGold
         )
     ]
@@ -38,7 +38,7 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                Color.white.ignoresSafeArea()
+                Color.appBackground.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     TabView(selection: $page) {
@@ -89,8 +89,7 @@ struct OnboardingView: View {
                         .padding(.bottom, 20)
                         .padding(.top, 8)
                 }
-                
-                // Top-right Skip button overlay
+
                 VStack {
                     HStack {
                         if page > 0 {
@@ -120,7 +119,7 @@ struct OnboardingView: View {
                             Button(action: {
                                 Haptics.selection()
                                 withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
-                                    page = pages.count // jump to language selection page
+                                    page = pages.count
                                 }
                             }) {
                                 Text("Skip")
@@ -146,11 +145,10 @@ struct OnboardingView: View {
 
     private var controls: some View {
         HStack {
-            // Pagination dots
             HStack(spacing: 8) {
                 ForEach(0..<totalPages, id: \.self) { idx in
                     Circle()
-                        .fill(idx == page ? Color.mainBlack : Color.mainGrey.opacity(0.3))
+                        .fill(idx == page ? Color.accentBlue : Color.mainGrey.opacity(0.3))
                         .frame(width: 8, height: 8)
                 }
             }
@@ -162,8 +160,7 @@ struct OnboardingView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Circle().fill(Color.toastAndButtons))
-                    .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+                    .background(Circle().fill(Color.accentBlue))
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
@@ -231,8 +228,14 @@ private struct OnboardingPageModel: Identifiable, Equatable {
     let id = UUID()
     let title: String
     let subtitle: String
-    let systemImage: String
+    let illustrationStyle: IllustrationStyle
     let accent: Color
+
+    enum IllustrationStyle: Equatable {
+        case dictionary
+        case practice
+        case customize
+    }
 }
 
 private struct OnboardingPageView: View {
@@ -241,7 +244,6 @@ private struct OnboardingPageView: View {
     let dragOffset: CGSize
     let containerSize: CGSize
 
-    // Local staged flags for fine control
     @State private var showArt = false
     @State private var showTitle = false
     @State private var showSubtitle = false
@@ -284,54 +286,25 @@ private struct OnboardingPageView: View {
     }
 
     private var illustration: some View {
-        let cardSize = min(containerSize.width * 0.75, 380)
-        let parallaxX = dragOffset.width * 0.25
-        let parallaxY = dragOffset.height * 0.18
+        let size = min(containerSize.width * 0.65, 300)
+        let px = dragOffset.width * 0.25
+        let py = dragOffset.height * 0.18
 
         return ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(model.accent.opacity(0.2))
-                .frame(width: cardSize, height: cardSize * 0.62)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(model.accent.opacity(0.35), lineWidth: 1)
-                )
-                .shadow(color: model.accent.opacity(0.12), radius: 10, y: 6)
-
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.cardBackground)
-                .frame(width: cardSize * 0.86, height: cardSize * 0.46)
-                .offset(x: -8 + parallaxX * 0.4, y: -6 + parallaxY * 0.35)
-                .shadow(color: .black.opacity(0.06), radius: 10, y: 5)
-
-            Image(systemName: model.systemImage)
-                .font(.system(size: min(72, cardSize * 0.22), weight: .bold))
-                .foregroundColor(model.accent)
-                .padding(24)
-                .background(
-                    Circle()
-                        .fill(model.accent.opacity(0.18))
-                )
-                .overlay(
-                    Circle().stroke(model.accent.opacity(0.3), lineWidth: 1)
-                )
-                .offset(x: parallaxX, y: parallaxY)
-                .rotation3DEffect(
-                    .degrees(Double(parallaxX) * 0.06),
-                    axis: (x: 0, y: 1, z: 0),
-                    perspective: 0.6
-                )
-                .rotation3DEffect(
-                    .degrees(Double(-parallaxY) * 0.06),
-                    axis: (x: 1, y: 0, z: 0),
-                    perspective: 0.6
-                )
+            switch model.illustrationStyle {
+            case .dictionary:
+                DictionaryIllustration(accent: model.accent, size: size, px: px, py: py)
+            case .practice:
+                PracticeIllustration(accent: model.accent, size: size, px: px, py: py)
+            case .customize:
+                CustomizeIllustration(accent: model.accent, size: size, px: px, py: py)
+            }
         }
+        .frame(width: size, height: size * 0.75)
         .accessibilityHidden(true)
     }
 
     private func stagedReveal() {
-        // Reset before animating in
         showArt = false
         showTitle = false
         showSubtitle = false
@@ -349,6 +322,235 @@ private struct OnboardingPageView: View {
                     showSubtitle = true
                 }
             }
+        }
+    }
+}
+
+private struct DictionaryIllustration: View {
+    let accent: Color
+    let size: CGFloat
+    let px: CGFloat
+    let py: CGFloat
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(accent.opacity(0.12))
+                .frame(width: size * 0.58, height: size * 0.38)
+                .rotationEffect(.degrees(-4))
+                .offset(x: -size * 0.06 + px * 0.15, y: size * 0.04 + py * 0.1)
+
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(accent.opacity(0.2))
+                .frame(width: size * 0.58, height: size * 0.38)
+                .rotationEffect(.degrees(2))
+                .offset(x: size * 0.02 + px * 0.25, y: -size * 0.01 + py * 0.15)
+
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.cardBackground)
+
+                VStack(alignment: .leading, spacing: size * 0.028) {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(accent.opacity(0.6))
+                        .frame(width: size * 0.22, height: size * 0.025)
+
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(accent.opacity(0.3))
+                        .frame(width: size * 0.30, height: size * 0.018)
+
+                    Spacer().frame(height: size * 0.01)
+
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(Color.mainGrey.opacity(0.15))
+                        .frame(width: size * 0.38, height: size * 0.014)
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(Color.mainGrey.opacity(0.12))
+                        .frame(width: size * 0.28, height: size * 0.014)
+
+                    Spacer().frame(height: size * 0.015)
+
+                    Capsule()
+                        .fill(accent.opacity(0.2))
+                        .frame(width: size * 0.14, height: size * 0.025)
+                }
+                .padding(size * 0.045)
+            }
+            .frame(width: size * 0.58, height: size * 0.38)
+            .offset(x: px * 0.35, y: py * 0.25)
+
+            Circle()
+                .fill(accent.opacity(0.35))
+                .frame(width: size * 0.04)
+                .offset(x: size * 0.34 + px * 0.5, y: -size * 0.22 + py * 0.4)
+
+            Circle()
+                .fill(accent.opacity(0.2))
+                .frame(width: size * 0.025)
+                .offset(x: -size * 0.36 + px * 0.6, y: size * 0.18 + py * 0.5)
+        }
+    }
+}
+
+private struct PracticeIllustration: View {
+    let accent: Color
+    let size: CGFloat
+    let px: CGFloat
+    let py: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(accent.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
+                .frame(width: size * 0.7, height: size * 0.7)
+                .offset(x: px * 0.1, y: py * 0.08)
+
+            Circle()
+                .stroke(accent.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [3, 8]))
+                .frame(width: size * 0.52, height: size * 0.52)
+                .offset(x: px * 0.15, y: py * 0.12)
+
+            ForEach(0..<5, id: \.self) { i in
+                let angle = Double(i) * (360.0 / 5.0) + 20
+                let radius = size * 0.35
+                Circle()
+                    .fill(accent.opacity(0.25 + Double(i) * 0.08))
+                    .frame(width: size * 0.022)
+                    .offset(
+                        x: cos(angle * .pi / 180) * radius + px * 0.2,
+                        y: sin(angle * .pi / 180) * radius + py * 0.15
+                    )
+            }
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.cardBackground)
+
+                VStack(spacing: size * 0.025) {
+                    RoundedRectangle(cornerRadius: 3, style: .continuous)
+                        .fill(accent.opacity(0.5))
+                        .frame(width: size * 0.18, height: size * 0.022)
+
+                    ZStack {
+                        Circle()
+                            .stroke(accent.opacity(0.15), lineWidth: size * 0.015)
+                        Circle()
+                            .trim(from: 0, to: 0.7)
+                            .stroke(accent.opacity(0.6), style: StrokeStyle(lineWidth: size * 0.015, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
+                    .frame(width: size * 0.1, height: size * 0.1)
+
+                    HStack(spacing: size * 0.018) {
+                        ForEach(0..<4, id: \.self) { i in
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(i == 2 ? accent.opacity(0.6) : accent.opacity(0.2))
+                                .frame(width: size * 0.055, height: size * 0.018)
+                        }
+                    }
+                }
+            }
+            .frame(width: size * 0.42, height: size * 0.42)
+            .offset(x: px * 0.3, y: py * 0.2)
+
+            Circle()
+                .fill(accent.opacity(0.3))
+                .frame(width: size * 0.035)
+                .offset(x: -size * 0.32 + px * 0.5, y: -size * 0.25 + py * 0.4)
+
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(accent.opacity(0.2))
+                .frame(width: size * 0.03, height: size * 0.03)
+                .rotationEffect(.degrees(45))
+                .offset(x: size * 0.30 + px * 0.6, y: size * 0.22 + py * 0.5)
+        }
+    }
+}
+
+private struct CustomizeIllustration: View {
+    let accent: Color
+    let size: CGFloat
+    let px: CGFloat
+    let py: CGFloat
+
+    private let palette: [Color] = [
+        Color.accentBlue,
+        Color.accentGreen,
+        Color.accentPurple,
+        Color.accentGold,
+        Color.accentPink
+    ]
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<3, id: \.self) { i in
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(accent.opacity(0.08 + Double(i) * 0.03))
+                    .frame(width: size * 0.6, height: 1)
+                    .offset(
+                        x: px * 0.1,
+                        y: CGFloat(i - 1) * size * 0.2 + py * 0.1
+                    )
+            }
+
+            HStack(spacing: size * 0.035) {
+                ForEach(0..<5, id: \.self) { i in
+                    Circle()
+                        .fill(palette[i])
+                        .frame(width: size * 0.065, height: size * 0.065)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                        )
+                }
+            }
+            .offset(x: px * 0.2, y: -size * 0.15 + py * 0.15)
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(accent.opacity(0.15))
+                    .frame(width: size * 0.28, height: size * 0.035)
+
+                Capsule()
+                    .fill(accent.opacity(0.5))
+                    .frame(width: size * 0.16, height: size * 0.035)
+
+                Circle()
+                    .fill(Color.cardBackground)
+                    .frame(width: size * 0.042, height: size * 0.042)
+
+                    .offset(x: size * 0.135)
+            }
+            .offset(x: px * 0.25, y: size * 0.02 + py * 0.2)
+
+            VStack(spacing: size * 0.025) {
+                ForEach(0..<2, id: \.self) { i in
+                    HStack(spacing: size * 0.02) {
+                        Circle()
+                            .fill(accent.opacity(0.25))
+                            .frame(width: size * 0.03)
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(Color.mainGrey.opacity(0.15))
+                            .frame(width: size * 0.15, height: size * 0.014)
+                        Spacer()
+                        RoundedRectangle(cornerRadius: 2, style: .continuous)
+                            .fill(accent.opacity(0.2))
+                            .frame(width: size * 0.06, height: size * 0.014)
+                    }
+                    .frame(width: size * 0.35)
+                }
+            }
+            .offset(x: px * 0.3, y: size * 0.16 + py * 0.25)
+
+            Image(systemName: "sparkle")
+                .font(.system(size: size * 0.05, weight: .light))
+                .foregroundColor(accent.opacity(0.4))
+                .offset(x: size * 0.32 + px * 0.5, y: -size * 0.28 + py * 0.4)
+
+            Circle()
+                .fill(accent.opacity(0.2))
+                .frame(width: size * 0.025)
+                .offset(x: -size * 0.34 + px * 0.6, y: size * 0.15 + py * 0.5)
         }
     }
 }

@@ -49,11 +49,11 @@ struct LoginFieldsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(focusedField == .email ? Color.fromHex(0x3D3D3D, alpha: 0.12) : Color(.secondarySystemBackground))
+                                    .fill(focusedField == .email ? Color.accentBlue.opacity(0.08) : Color(.secondarySystemBackground))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(focusedField == .email ? Color.fromHex(0x3D3D3D) : Color(.separator), lineWidth: focusedField == .email ? 1.5 : 1)
+                                    .stroke(focusedField == .email ? Color.accentBlue : Color(.separator), lineWidth: focusedField == .email ? 2 : 1)
                             )
                             
                             ZStack(alignment: .leading) {
@@ -78,11 +78,11 @@ struct LoginFieldsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(focusedField == .password ? Color.fromHex(0x3D3D3D, alpha: 0.12) : Color(.secondarySystemBackground))
+                                    .fill(focusedField == .password ? Color.accentBlue.opacity(0.08) : Color(.secondarySystemBackground))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(focusedField == .password ? Color.fromHex(0x3D3D3D) : Color(.separator), lineWidth: focusedField == .password ? 1.5 : 1)
+                                    .stroke(focusedField == .password ? Color.accentBlue : Color(.separator), lineWidth: focusedField == .password ? 2 : 1)
                             )
                         }
                         
@@ -100,7 +100,7 @@ struct LoginFieldsView: View {
                                         .stroke(Color(.separator), lineWidth: 1)
                                         .background(
                                             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                .fill(agreeToTerms ? Color("MainBlack") : Color.clear)
+                                                .fill(agreeToTerms ? Color.mainBlack : Color.clear)
                                         )
                                         .frame(width: 28, height: 24)
                                     
@@ -122,23 +122,22 @@ struct LoginFieldsView: View {
                             emailError = email.isEmpty || isEmailValid ? nil : "Email is not valid"
                         }) {
                             Text("Login")
-                                .font(.custom("Poppins-Regular", size: 24))
+                                .font(.custom("Poppins-Bold", size: 17))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 18)
+                                .padding(.vertical, 16)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 32, style: .continuous)
-                                        .fill(Color("MainBlack"))
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                        .fill(isFormValid ? Color.accentBlue : Color.mainGrey.opacity(0.3))
                                 )
                         }
                         .buttonStyle(.plain)
-                        .opacity(isFormValid ? 1 : 0.6)
                         .disabled(!isFormValid)
 
                         HStack(spacing: 6) {
                             Text("You don't have an account?")
                                 .font(.custom("Poppins-Regular", size: 16))
-                                .foregroundStyle(Color("MainBlack"))
+                                .foregroundStyle(Color.mainBlack)
                             Button(action: {
                                 isShowingSignUp = true
                             }) {

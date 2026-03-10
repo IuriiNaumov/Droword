@@ -2,24 +2,25 @@ import Foundation
 import AVFoundation
 
 @MainActor
-final class AudioManager {
+final class AudioManager: NSObject, AVAudioPlayerDelegate {
     static let shared = AudioManager()
-    private init() {}
+    private override init() { super.init() }
 
     private var player: AVAudioPlayer?
     private let voiceKey = "ttsVoice"
     private let rateKey = "ttsRate"
-    private var currentVoice: String {
+    var currentVoice: String {
         UserDefaults.standard.string(forKey: voiceKey) ?? "coral"
     }
 
-    private var currentRate: Float {
+    var currentRate: Float {
         let val = UserDefaults.standard.double(forKey: rateKey)
         return val == 0 ? 1.0 : Float(val)
     }
 
-    private let openAITTSEndpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
-   
+
+
+    private var playbackContinuation: CheckedContinuation<Void, Never>?
 
     func play(word: String) async {
         print("AudioManager.play called with:", word)
@@ -42,6 +43,34 @@ final class AudioManager {
             print("AudioManager preview playback started")
         } catch {
             print("AudioManager preview error:", error)
+        }
+    }
+
+    func playAndWait(text: String, rate: Float? = nil) async throws {
+        let data = try await fetchAudioData(for: text)
+        try await playAudioSync(data: data, rate: rate)
+    }
+
+    /// Fetches TTS audio data without playing it
+    func fetchTTS(for text: String) async throws -> Data {
+        return try await fetchAudioData(for: text)
+    }
+
+    func stopPlayback() {
+        player?.stop()
+        player = nil
+        if let cont = playbackContinuation {
+            playbackContinuation = nil
+            cont.resume()
+        }
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            if let cont = self.playbackContinuation {
+                self.playbackContinuation = nil
+                cont.resume()
+            }
         }
     }
     
@@ -119,6 +148,27 @@ final class AudioManager {
         } catch {
             print("AVAudioPlayer init/play error:", error)
             throw error
+        }
+    }
+
+    private func playAudioSync(data: Data, rate: Float? = nil) async throws {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playback, mode: .default, options: [])
+        try session.setActive(true)
+
+        player = try AVAudioPlayer(data: data)
+        player?.delegate = self
+        player?.prepareToPlay()
+        player?.enableRate = true
+        player?.rate = rate ?? currentRate
+        
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            self.playbackContinuation = cont
+            let ok = player?.play() ?? false
+            if !ok {
+                self.playbackContinuation = nil
+                cont.resume()
+            }
         }
     }
 }

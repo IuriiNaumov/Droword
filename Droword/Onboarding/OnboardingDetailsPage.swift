@@ -22,76 +22,75 @@ struct OnboardingDetailsPage: View {
     }
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Spacer(minLength: 20)
-            VStack(spacing: 12) {
-                VStack(spacing: 8) {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Name")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 20)
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .foregroundColor(.mainBlack.opacity(0.75))
+                        .padding(.horizontal, 4)
 
                     ZStack(alignment: .trailing) {
                         TextField("Enter your name", text: $tempName)
+                            .font(.custom("Poppins-Regular", size: 16))
                             .textContentType(.name)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.words)
-                            .padding(18)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 16)
                             .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
                                     .fill(Color.cardBackground)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(tempName.count > 40 ? Color("red") : Color.clear, lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(tempName.count > 40 ? Color.red : Color.divider, lineWidth: 2)
                             )
-                            .padding(.horizontal, 20)
 
                         Text(nameCounterText)
-                            .font(.caption)
-                            .foregroundColor(tempName.count > 40 ? Color("red") : Color.secondary)
-                            .padding(.trailing, 40)
-
-                    }.padding(.bottom, 20)
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(tempName.count > 40 ? Color.red : Color.mainGrey)
+                            .padding(.trailing, 16)
+                    }
                 }
 
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Email")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 20)
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .foregroundColor(.mainBlack.opacity(0.75))
+                        .padding(.horizontal, 4)
 
                     if showEmailError {
                         Text("Please enter a valid email address")
-                            .font(.caption)
-                            .foregroundColor(Color("red"))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 20)
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(.red)
+                            .padding(.horizontal, 4)
                     }
 
                     TextField("Enter your email (optional)", text: $tempEmail)
+                        .font(.custom("Poppins-Regular", size: 16))
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                        .padding(18)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
                                 .fill(Color.cardBackground)
                         )
                         .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(showEmailError ? Color("red") : Color.clear, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .stroke(showEmailError ? Color.red : Color.divider, lineWidth: 2)
                         )
-                        .padding(.horizontal, 20)
                 }
             }
+            .padding(.horizontal, 20)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+        .background(Color.appBackground)
         .onAppear {
             tempName = userName
             tempEmail = userEmail

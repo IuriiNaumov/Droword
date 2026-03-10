@@ -47,14 +47,14 @@ struct SignUpFieldsView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(focusedField == .email ? Color(hex: 0x3D3D3D, alpha: 0.12)
+                                .fill(focusedField == .email ? Color.accentBlue.opacity(0.08)
                                       : Color(.secondarySystemBackground))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(focusedField == .email ? Color(hex: 0x3D3D3D)
+                                .stroke(focusedField == .email ? Color.accentBlue
                                         : Color(.separator),
-                                        lineWidth: focusedField == .email ? 1.5 : 1)
+                                        lineWidth: focusedField == .email ? 2 : 1)
                         )
 
                         ZStack(alignment: .leading) {
@@ -78,14 +78,14 @@ struct SignUpFieldsView: View {
                         }
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(focusedField == .password ? Color(hex: 0x3D3D3D, alpha: 0.12)
+                                .fill(focusedField == .password ? Color.accentBlue.opacity(0.08)
                                       : Color(.secondarySystemBackground))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(focusedField == .password ? Color(hex: 0x3D3D3D)
+                                .stroke(focusedField == .password ? Color.accentBlue
                                         : Color(.separator),
-                                        lineWidth: focusedField == .password ? 1.5 : 1)
+                                        lineWidth: focusedField == .password ? 2 : 1)
                         )
                     }
 
@@ -103,7 +103,7 @@ struct SignUpFieldsView: View {
                                     .stroke(Color(.separator), lineWidth: 1)
                                     .background(
                                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                            .fill(agreeToTerms ? Color("MainBlack") : Color.clear)
+                                            .fill(agreeToTerms ? Color.mainBlack : Color.clear)
                                     )
                                     .frame(width: 28, height: 24)
 
@@ -122,17 +122,16 @@ struct SignUpFieldsView: View {
                         emailError = email.isEmpty || isEmailValid ? nil : "Email is not valid"
                     }) {
                         Text("Sign Up")
-                            .font(.custom("Poppins-Regular", size: 24))
+                            .font(.custom("Poppins-Bold", size: 17))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
+                            .padding(.vertical, 16)
                             .background(
-                                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                                    .fill(Color("MainBlack"))
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .fill(isFormValid ? Color.accentBlue : Color.mainGrey.opacity(0.3))
                             )
                     }
                     .buttonStyle(.plain)
-                    .opacity(isFormValid ? 1 : 0.6)
                     .disabled(!isFormValid)
 
                     HStack {
@@ -141,7 +140,7 @@ struct SignUpFieldsView: View {
                             .foregroundColor(.gray.opacity(0.3))
                         Text("OR")
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(.black)
+                            .foregroundColor(.mainGrey)
                         Rectangle()
                             .frame(height: 1)
                             .foregroundColor(.gray.opacity(0.3))
@@ -155,12 +154,12 @@ struct SignUpFieldsView: View {
                             Text("Sign up with Google")
                                 .font(.custom("Poppins-Regular", size: 16))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(.mainBlack)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
-                            RoundedRectangle(cornerRadius: 32)
-                                .stroke(Color.black, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .stroke(Color.mainBlack, lineWidth: 1.5)
                         )
                     }
                     .buttonStyle(.plain)
@@ -168,7 +167,7 @@ struct SignUpFieldsView: View {
                     HStack(spacing: 6) {
                         Text("Already have an account?")
                             .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundStyle(Color("MainBlack"))
+                            .foregroundStyle(Color.mainBlack)
                         Button(action: {}) {
                             Text("Log in")
                                 .font(.custom("Poppins-Bold", size: 16))

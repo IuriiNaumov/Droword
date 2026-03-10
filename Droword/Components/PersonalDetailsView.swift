@@ -42,7 +42,7 @@ struct PersonalDetailsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Name *")
                         .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color(.mainGrey))
+                        .foregroundColor(Color.mainGrey)
 
                     FormTextField(
                         title: "Your name",
@@ -52,7 +52,7 @@ struct PersonalDetailsView: View {
                     .overlay(alignment: .trailing) {
                         Text(nameCounterText)
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(Color(.mainGrey).opacity(0.6))
+                            .foregroundColor(Color.mainGrey.opacity(0.6))
                             .padding(.trailing, 16)
                             .allowsHitTesting(false)
                     }
@@ -68,7 +68,7 @@ struct PersonalDetailsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Email")
                         .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color(.mainGrey))
+                        .foregroundColor(Color.mainGrey)
 
                     FormTextField(
                         title: "Email",
@@ -86,12 +86,29 @@ struct PersonalDetailsView: View {
                     if showEmailError {
                         Text("Please enter a valid email")
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(.red)
+                            .foregroundColor(.accentRed)
                             .padding(.top, 4)
                     }
                 }
 
                 Spacer(minLength: 0)
+                Button(action: {
+                    let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                    if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
+                        userName = trimmedName
+                        userEmail = trimmedEmail.lowercased()
+                        dismiss()
+                    } else {
+                        showEmailError = !isEmailValid && !trimmedEmail.isEmpty
+                    }
+                }) {
+                    Text("Save")
+                        .duo3DStyle(Color.accentGreen, isDisabled: !canSave)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave)
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
@@ -106,24 +123,6 @@ struct PersonalDetailsView: View {
                         .foregroundColor(.primary)
                 }
             }
-
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                    if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
-                        userName = trimmedName
-                        userEmail = trimmedEmail.lowercased()
-                        dismiss()
-                    } else {
-                        showEmailError = !isEmailValid && !trimmedEmail.isEmpty
-                    }
-                }
-                .font(.custom("Poppins-Regular", size: 16))
-                .foregroundColor(canSave ? Color.toastAndButtons : Color.mainGrey)
-                .disabled(!canSave)
-            }
         }
         .onAppear {
             tempName = userName
@@ -135,3 +134,4 @@ struct PersonalDetailsView: View {
 #Preview {
     PersonalDetailsView()
 }
+

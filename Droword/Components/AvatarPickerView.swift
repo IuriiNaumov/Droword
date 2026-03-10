@@ -149,8 +149,6 @@ struct AvatarPickerView: View {
     }
 }
 
-// MARK: - Crop View
-
 struct AvatarCropView: View {
     let image: UIImage
     let onConfirm: (UIImage) -> Void
@@ -240,7 +238,7 @@ struct AvatarCropView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.toastAndButtons)
+                            .fill(Color.accentBlue)
                     )
             }
             .padding(.horizontal, 24)
@@ -265,7 +263,6 @@ struct AvatarCropView: View {
         return renderer.image { _ in
             let ctx = UIGraphicsGetCurrentContext()!
 
-            // Clip to circle
             let circlePath = UIBezierPath(ovalIn: CGRect(origin: .zero, size: rendererSize))
             ctx.addPath(circlePath.cgPath)
             ctx.clip()
@@ -300,7 +297,6 @@ private struct CropOverlay: View {
             .frame(width: cropSize, height: cropSize)
     }
 }
-
 
 struct CameraView: UIViewControllerRepresentable {
     let onCapture: (UIImage?) -> Void

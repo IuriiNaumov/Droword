@@ -87,23 +87,23 @@ struct ProfileHeaderView: View {
         storedUserName.isEmpty ? "Cool guy" : storedUserName
     }
 
-    private let levelBackground = Color(hex: "#FFE6AA")
-    private let levelText = Color(hex: "#9C6B00")
+    private let levelBackground = Color.accentBlue
+    private let levelText = Color.accentBlue
 
-    private let xpBackground = Color(hex: "#DEF1D0")
-    private let xpText = Color(hex: "#3E8A64")
+    private let xpBackground = Color.accentGold
+    private let xpText = Color.accentGold
 
     private let cuteTagPalettes: [(bg: Color, text: Color)] = [
-        (Color(hex: "#FFE6AA"), Color(hex: "#9C6B00")),
-        (Color(hex: "#DEF1D0"), Color(hex: "#3E8A64")),
-        (Color(hex: "#DDEBFF"), Color(hex: "#2458B5")),
-        (Color(hex: "#FFDDE7"), Color(hex: "#B51957")),
-        (Color(hex: "#EDE3FF"), Color(hex: "#6B39B3")),
-        (Color(hex: "#DFF7FF"), Color(hex: "#0E6C85"))
+        (Color.accentGold.opacity(0.3), Color.mainBlack),
+        (Color.accentGreen.opacity(0.3), Color.mainBlack),
+        (Color.accentBlue.opacity(0.3), Color.mainBlack),
+        (Color.accentPink.opacity(0.3), Color.mainBlack),
+        (Color.accentPurple.opacity(0.3), Color.mainBlack),
+        (Color.accentBlue.opacity(0.25), Color.mainBlack)
     ]
 
-    @State private var cuteTagBackground: Color = Color(hex: "#FFE6AA")
-    @State private var cuteTagTextColor: Color = Color(hex: "#9C6B00")
+    @State private var cuteTagBackground: Color = Color.accentGold.opacity(0.3)
+    @State private var cuteTagTextColor: Color = Color.mainBlack
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -113,8 +113,9 @@ struct ProfileHeaderView: View {
                         if let avatarImage {
                             Image(uiImage: avatarImage)
                                 .resizable()
-                                .scaledToFill()
+                                .aspectRatio(contentMode: .fill)
                                 .frame(width: 72, height: 72)
+                                .clipped()
                                 .clipShape(Circle())
                                 .overlay(Circle().stroke(levelBackground, lineWidth: 3))
                         } else {
@@ -136,39 +137,19 @@ struct ProfileHeaderView: View {
                     Text(displayName)
                         .font(.custom("Poppins-Bold", size: 22))
                         .foregroundColor(.mainBlack)
-                        .padding(.top, 40)
-
 
                     Text("\(usageDurationString()) with Droword")
                         .font(.custom("Poppins-Regular", size: 14))
                         .foregroundColor(.mainGrey)
-                        .padding(.bottom, 40)
 
                 }
 
                 Spacer()
             }
 
-//            VStack(alignment: .leading, spacing: 6) {
-//                ZStack(alignment: .leading) {
-//                    Capsule()
-//                        .fill(.divider)
-//                        .frame(height: 16)
-//
-//                    Capsule()
-//                        .fill(Color.progressBar)
-//                        .frame(width: CGFloat(displayProgress) * 240, height: 16)
-//                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: displayProgress)
-//                }
-//
-//                Text("\(totalXP) XP – \(wordsToNextLevel * xpPerWord) XP to level up")
-//                    .font(.custom("Poppins-Regular", size: 12))
-//                    .foregroundColor(.mainGrey)
-//                    .padding(.horizontal, 4)
-//            }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .onAppear {
             let df = DateFormatter()
             df.calendar = Calendar(identifier: .gregorian)
@@ -176,28 +157,22 @@ struct ProfileHeaderView: View {
             let today = df.string(from: Date())
             if firstUseDate.isEmpty { firstUseDate = today }
 
-            // Streak and active days tracking
             if lastActiveDay != today {
-                // Compute yesterday in the same format
                 let calendar = Calendar(identifier: .gregorian)
                 if let yesterdayDate = calendar.date(byAdding: .day, value: -1, to: df.date(from: today) ?? Date()),
                    df.string(from: yesterdayDate) == lastActiveDay {
-                    // Continued streak
                     currentStreak = max(1, currentStreak + 1)
                 } else {
-                    // New streak starts
                     currentStreak = 1
                 }
                 daysUsedCount += 1
                 lastActiveDay = today
             } else if currentStreak == 0 {
-                // Initialize on first launch of the day
                 currentStreak = 1
             }
 
             avatarImage = loadAvatarFromDisk()
             displayProgress = progressRatio
-
 
             let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
             let colorIndex = dayOfYear % cuteTagPalettes.count
@@ -211,7 +186,7 @@ struct ProfileHeaderView: View {
             }
         }
         .onChange(of: progressRatio) { _, newValue in
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                 displayProgress = newValue
             }
         }

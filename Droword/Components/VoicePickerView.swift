@@ -23,7 +23,7 @@ struct VoicePickerView: View {
                             .frame(width: 22, height: 22)
                         if option.key == selectedKey {
                             Circle()
-                                .fill(Color.toastAndButtons)
+                                .fill(Color.accentBlue)
                                 .frame(width: 22, height: 22)
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))
@@ -44,7 +44,7 @@ struct VoicePickerView: View {
                     Button(action: { preview(option) }) {
                         SoundWavesView(isPlaying: previewingKey == option.key)
                             .frame(width: 24, height: 24)
-                            .tint(.black)
+                            .tint(.mainBlack)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Preview voice \(option.title)")
@@ -62,7 +62,7 @@ struct VoicePickerView: View {
     }
 
     private func select(_ option: VoiceOption) {
-        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             selectedKey = option.key
         }
       

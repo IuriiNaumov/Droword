@@ -11,7 +11,7 @@ struct DictionaryView: View {
     @State private var showAddTag = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
-    private var horizontalPadding: CGFloat { 20 }
+    private let horizontalPadding: CGFloat = 20
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -77,7 +77,7 @@ struct DictionaryView: View {
                 .padding(.bottom, 40)
             }
         }
-        .background(Color(.appBackground))
+        .background(Color.appBackground)
         .sheet(isPresented: $showAddTag) {
             AddTagView()
                 .presentationDetents([.fraction(0.5)])

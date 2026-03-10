@@ -25,23 +25,23 @@ struct WordCardView: View, Equatable {
         lhs.comment == rhs.comment &&
         lhs.tag == rhs.tag
     }
-    
+
     private func colorForTag(_ tag: String) -> Color {
         switch tag {
-        case "Chat": return Color(.accentBlue)
-        case "Travel": return Color(.accentGreen)
-        case "Street": return Color(.accentPink)
-        case "Movies": return Color(.accentPurple)
-        case "Golden": return Color(.accentGold)
+        case "Chat": return Color.accentBlue
+        case "Travel": return Color.accentGreen
+        case "Street": return Color.accentPink
+        case "Movies": return Color.accentPurple
+        case "Golden": return Color.accentGold
         default:
             if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
                let color = Color(fromHexString: custom.colorHex) {
                 return color
             }
-            return Color(.defaultCard)
+            return Color.cardBackground
         }
     }
-    
+
     private struct TagBadge: View {
         let text: String
         var body: some View {
@@ -51,7 +51,7 @@ struct WordCardView: View, Equatable {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
 
@@ -65,9 +65,9 @@ struct WordCardView: View, Equatable {
         if let tag = tag, !tag.isEmpty {
             return colorForTag(tag)
         }
-        return Color(.defaultCard)
+        return Color.cardBackground
     }
-    
+
     private var isDarkBackground: Bool {
         backgroundColor.isDarkColor
     }
@@ -84,7 +84,7 @@ struct WordCardView: View, Equatable {
         VStack(alignment: .leading, spacing: 8) {
 
             if isExpanded {
-                
+
                 if let tag = tag, !tag.isEmpty {
                     Text(tag)
                         .font(.custom("Poppins-Medium", size: 14))
@@ -92,16 +92,16 @@ struct WordCardView: View, Equatable {
                         .padding(.vertical, 4)
                         .padding(.horizontal, 12)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
                                 .stroke(darkerShade(of: colorForTag(tag), by: 0.1), lineWidth: 1)
                         )
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
                                 .fill(colorForTag(tag))
                         )
                         .padding(.bottom, 2)
                 }
-                
+
                 headerRow
 
                 if let transcription = transcription, !transcription.isEmpty {
@@ -109,7 +109,7 @@ struct WordCardView: View, Equatable {
                         .font(.custom("Poppins-Regular", size: 14))
                         .foregroundColor(secondaryTextColor)
                 }
-                
+
                 if let type = type, !type.isEmpty {
                     Text(type.capitalized)
                         .font(.custom("Poppins-Regular", size: 14))
@@ -133,7 +133,7 @@ struct WordCardView: View, Equatable {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                
+
                 if let explanation = explanation {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(explanation)
@@ -153,10 +153,9 @@ struct WordCardView: View, Equatable {
                 if let comment = comment, !comment.isEmpty {
                     Text(comment)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : Color(.mainGrey))
+                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : Color.mainGrey)
                         .padding(.top, 4)
                 }
-                
 
                 HStack {
                     Spacer()
@@ -197,15 +196,21 @@ struct WordCardView: View, Equatable {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(backgroundColor)
-        .cornerRadius(16)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(backgroundColor)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.divider, lineWidth: 1)
+                )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .padding(.top, 12)
         .onTapGesture {
-            // Gentle but noticeable haptic for state change
             if isExpanded {
-                Haptics.lightImpact(intensity: 0.4) // collapsing
+                Haptics.lightImpact(intensity: 0.4)
             } else {
-                Haptics.lightImpact(intensity: 0.3) // expanding
+                Haptics.lightImpact(intensity: 0.3)
             }
             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
                 isExpanded.toggle()
@@ -281,7 +286,7 @@ private extension Color {
 
 #Preview {
     VStack(spacing: 20) {
-        
+
         WordCardView(
             word: "Sabroso",
             translation: "Вкусный",
@@ -294,7 +299,7 @@ private extension Color {
             tag: "Golden",
             onDelete: {}
         )
-        
+
         WordCardView(
             word: "Chido",
             translation: "Круто",
@@ -307,7 +312,7 @@ private extension Color {
             tag: "Slang",
             onDelete: {}
         )
-        
+
         WordCardView(
             word: "食べ物",
             translation: "Еда",
@@ -320,8 +325,7 @@ private extension Color {
             tag: "Chat",
             onDelete: {}
         )
-        
+
     }
     .padding()
 }
-

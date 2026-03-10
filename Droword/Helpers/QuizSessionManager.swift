@@ -25,8 +25,6 @@ final class QuizSessionManager: ObservableObject {
 
     var total: Int { queue.count }
 
-    // MARK: - Session
-
     func prepareSession(from words: [StoredWord]) {
         let items = words
             .filter { $0.translation != nil && !$0.translation!.isEmpty }
@@ -68,8 +66,6 @@ final class QuizSessionManager: ObservableObject {
         }
     }
 
-    // MARK: - SM-2 Bridge
-
     static func applyScheduling(
         for wordID: UUID,
         correct: Bool,
@@ -85,13 +81,11 @@ final class QuizSessionManager: ObservableObject {
 
         let q: Double = correct ? 4 : 1
 
-        // Update learningScore (EMA)
         let quality: Double = correct ? 0.7 : 0.0
         let alpha = 0.06
         let prev = languageStore.learningScore
         languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
 
-        // SM-2 EF update
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
         ef = max(1.3, ef)
 

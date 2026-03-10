@@ -10,67 +10,75 @@ struct AddTagView: View {
     @State private var didRequestNotifications = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appBackground.ignoresSafeArea()
+        ZStack {
+            Color.appBackground.ignoresSafeArea()
 
-                VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 24) {
+                ZStack {
                     Text("New Tag")
                         .font(.custom("Poppins-Bold", size: 26))
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Name")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey))
-
-                        FormTextField(
-                            title: "Enter tag name",
-                            text: $name,
-                            focusedColor: .mainGrey,
-                            maxLength: 40,
-                            showCounter: true
-                        )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Color")
-                            .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(Color(.mainGrey))
-
-                        FormTextField(
-                            title: "e.g. #FFAA33",
-                            text: $colorHex,
-                            focusedColor: .mainGrey,
-                            maxLength: 7,
-                            showCounter: false
-                        ).overlay(alignment: .trailing) {
-                            Circle()
-                                .fill(parsedColor ?? Color.gray)
-                                .frame(width: 24, height: 24)
-                                .padding(.trailing, 12)
-                                .allowsHitTesting(false)
+                    HStack {
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.mainGrey)
+                                .padding(8)
+                                .background(Color.mainGrey.opacity(0.12))
+                                .clipShape(Circle())
                         }
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+                        Spacer()
                     }
+                }.padding(.top, 40)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Name")
+                        .font(.custom("Poppins-Regular", size: 18))
+                        .foregroundColor(Color.mainGrey)
+
+                    FormTextField(
+                        title: "Enter tag name",
+                        text: $name,
+                        maxLength: 40,
+                        showCounter: true
+                    )
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-                .padding(.bottom, 30)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(isSaving ? "Adding..." : "Add") {
-                        saveTag()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Color")
+                        .font(.custom("Poppins-Regular", size: 18))
+                        .foregroundColor(Color.mainGrey)
+
+                    FormTextField(
+                        title: "e.g. #FFAA33",
+                        text: $colorHex,
+                        maxLength: 7,
+                        showCounter: false
+                    ).overlay(alignment: .trailing) {
+                        Circle()
+                            .fill(parsedColor ?? Color.gray)
+                            .frame(width: 24, height: 24)
+                            .padding(.trailing, 12)
+                            .allowsHitTesting(false)
                     }
-                    .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
                 }
+
+                Spacer()
+
+                Button(action: { saveTag() }) {
+                    Text(isSaving ? "Adding..." : "Add")
+                        .duo3DStyle(Color.accentGreen, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .buttonStyle(.plain)
+                .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .padding(.bottom, 16)
             }
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
         }
         .task {
             if !didRequestNotifications {

@@ -7,14 +7,12 @@ struct DetailedStatsView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var statColor: Color {
-        colorScheme == .dark ? Color(hex: "#6F68A8") : Color(hex: "#CBCDEA")
+        Color.accentBlue
     }
 
     private var statTextColor: Color {
         darkerShade(of: statColor, by: colorScheme == .dark ? 0.3 : 0.4)
     }
-
-    // MARK: - Computed Stats
 
     private var wordsAddedToday: Int {
         let cal = Calendar.current
@@ -120,8 +118,6 @@ struct DetailedStatsView: View {
         return f
     }
 
-    // MARK: - Body
-
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -153,8 +149,6 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Overview
-
     private var overviewSection: some View {
         HStack(spacing: 12) {
             miniStatCard(value: "\(store.totalWordsAdded)", label: "Total")
@@ -176,12 +170,10 @@ struct DetailedStatsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(statColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
         )
     }
-
-    // MARK: - Activity Chart
 
     private var activitySection: some View {
         let data = last14Days
@@ -193,7 +185,7 @@ struct DetailedStatsView: View {
                     ForEach(Array(data.enumerated()), id: \.offset) { _, item in
                         VStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(item.count > 0 ? Color.toastAndButtons : Color.mainGrey.opacity(0.2))
+                                .fill(item.count > 0 ? Color.accentGreen : Color.mainGrey.opacity(0.2))
                                 .frame(height: max(4, CGFloat(item.count) / CGFloat(maxCount) * 80))
 
                             Text(shortDayFormatter.string(from: item.date).prefix(1))
@@ -212,15 +204,12 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Mastery
-
     private var masterySection: some View {
         let m = masteryBreakdown
         let total = max(store.words.count, 1)
 
         return sectionCard(title: "Mastery", icon: "brain.fill") {
             VStack(spacing: 12) {
-                // Progress bar
                 GeometryReader { geo in
                     HStack(spacing: 2) {
                         RoundedRectangle(cornerRadius: 4)
@@ -256,8 +245,6 @@ struct DetailedStatsView: View {
                 .foregroundColor(.primary)
         }
     }
-
-    // MARK: - Review
 
     private var reviewSection: some View {
         sectionCard(title: "Review", icon: "arrow.clockwise") {
@@ -295,8 +282,6 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Tags
-
     private var tagSection: some View {
         let tags = tagDistribution
 
@@ -321,8 +306,6 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Types
-
     private var typeSection: some View {
         let types = typeDistribution
 
@@ -346,8 +329,6 @@ struct DetailedStatsView: View {
             }
         }
     }
-
-    // MARK: - Fun Facts
 
     private var factsSection: some View {
         sectionCard(title: "Fun facts", icon: "sparkles") {
@@ -391,7 +372,7 @@ struct DetailedStatsView: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(.toastAndButtons)
+                .foregroundColor(.accentBlue)
                 .frame(width: 20)
             Text(text)
                 .font(.custom("Poppins-Regular", size: 14))
@@ -399,14 +380,12 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Section Card
-
     private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.toastAndButtons)
+                    .foregroundColor(.accentBlue)
                 Text(title)
                     .font(.custom("Poppins-Bold", size: 18))
                     .foregroundColor(.primary)
@@ -417,8 +396,12 @@ struct DetailedStatsView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.divider, lineWidth: 1)
+                )
         )
     }
 }

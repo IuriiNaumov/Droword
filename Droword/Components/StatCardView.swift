@@ -7,7 +7,7 @@ struct StatCardView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var baseColor: Color {
-        colorScheme == .dark ? Color(hex: "#6F68A8") : Color(hex: "#CBCDEA")
+        Color.accentBlue
     }
 
     private var textColor: Color {
@@ -27,16 +27,14 @@ struct StatCardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(baseColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.divider, lineWidth: 1)
+                )
         )
-        .shadow(
-            color: baseColor.opacity(colorScheme == .dark ? 0.25 : 0.4),
-            radius: colorScheme == .dark ? 6 : 8,
-            y: colorScheme == .dark ? 3 : 4
-        )
-        .scaleEffect(1.02)
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: value)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: value)
     }
 }
 

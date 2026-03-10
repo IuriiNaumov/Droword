@@ -46,7 +46,7 @@ struct LanguageSelectionView: View {
             .background(Color.appBackground.ignoresSafeArea())
             
             if showToast {
-                ToastView(
+                BannerToastView(
                     type: toastType,
                     message: toastMessage,
                     duration: 2

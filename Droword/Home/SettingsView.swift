@@ -5,6 +5,7 @@ enum SettingsDestination: Hashable {
     case personalDetails
     case language
     case appearance
+    case theme
     case voiceAndSpeech
     case featureFlags
 }
@@ -12,6 +13,7 @@ enum SettingsDestination: Hashable {
 struct SettingsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
@@ -49,7 +51,7 @@ struct SettingsView: View {
                                     .frame(width: 92, height: 92)
                                     .clipShape(Circle())
                                     .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 1))
-                                    .shadow(color: Color.mainBlack.opacity(0.1), radius: 6, y: 3)
+                                    
                             } else {
                                 Circle()
                                     .fill(Color.mainGrey.opacity(0.15))
@@ -59,7 +61,7 @@ struct SettingsView: View {
                                             .font(.system(size: 40, weight: .medium))
                                             .foregroundColor(Color.mainBlack.opacity(0.7))
                                     )
-                                    .shadow(color: Color.mainBlack.opacity(0.1), radius: 5, y: 2)
+                                    
                             }
 
                             VStack {
@@ -108,24 +110,26 @@ struct SettingsView: View {
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
-                            SettingItem(icon: "person.circle", color: Color.mainGreen, title: "Personal details"),
+                            SettingItem(icon: "person.circle", color: Color.accentGreen, title: "Personal details"),
                         ]) { item in
                             if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
                         }
 
                         groupedSettingsSection([
                             SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "paintpalette.fill", color: .mainBlack, title: "Theme", value: themeStore.title),
                             SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
                             SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications"),
                             SettingItem(icon: "mic.fill", color: .blue, title: "Voice & Speech")
                         ]) { item in
                             if item.title == "Language" { path.append(SettingsDestination.language) }
                             if item.title == "Appearance" { path.append(SettingsDestination.appearance) }
+                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "flag.checkered", color: Color.toastAndButtons, title: "Feature Flags", value: nil)
+                            SettingItem(icon: "flag.checkered", color: Color.accentBlue, title: "Feature Flags", value: nil)
                         ]) { item in
                             path.append(SettingsDestination.featureFlags)
                         }
@@ -155,6 +159,9 @@ struct SettingsView: View {
                         .environmentObject(languageStore)
                 case .appearance:
                     AppearancePickerView()
+                case .theme:
+                    ThemePickerView()
+                        .environmentObject(themeStore)
                 case .voiceAndSpeech:
                     VoiceAndSpeechSettingsView()
                 case .featureFlags:
@@ -220,8 +227,8 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
             }
         }
-        .cornerRadius(18)
-        .padding(.horizontal)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .padding(.horizontal, 20)
     }
 
     private func saveAvatarToDisk(_ image: UIImage) {
@@ -350,7 +357,7 @@ private struct RadioButtonRow: View {
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(Color.toastAndButtons)
+                            .fill(Color.accentBlue)
                             .frame(width: 22, height: 22)
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
@@ -367,7 +374,7 @@ private struct RadioButtonRow: View {
             .padding(.horizontal)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(Color.cardBackground)
             )
         }
@@ -390,7 +397,7 @@ struct FeatureFlagsView: View {
                         .labelsHidden()
                 }
                 .padding()
-                .background(RoundedRectangle(cornerRadius: 16).fill(Color.cardBackground))
+                .background(RoundedRectangle(cornerRadius: 20).fill(Color.cardBackground))
             }
             .padding()
         }
@@ -418,12 +425,14 @@ struct SettingItem: Identifiable {
     SettingsView()
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
 }
 
 #Preview("Light") {
     SettingsView()
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
         .preferredColorScheme(.light)
 }
 
@@ -431,5 +440,7 @@ struct SettingItem: Identifiable {
     SettingsView()
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
         .preferredColorScheme(.dark)
 }
+

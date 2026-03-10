@@ -5,7 +5,7 @@ struct OnboardingLanguagePage: View {
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     LanguageCubePicker(

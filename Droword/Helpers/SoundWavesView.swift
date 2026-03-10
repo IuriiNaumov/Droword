@@ -12,7 +12,7 @@ struct SoundWavesView: View {
         HStack(spacing: 4) {
             ForEach(0..<3, id: \.self) { index in
                 Rectangle()
-                    .fill(Color.black)
+                    .fill(Color.mainBlack)
                     .frame(width: barWidth, height: barHeights[index])
                     .cornerRadius(2)
             }

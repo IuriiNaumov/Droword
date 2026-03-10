@@ -12,10 +12,10 @@ struct GoldenWordsSkeletonView: View {
 }
 
 struct GoldenWordSkeletonCard: View {
-    private let baseGold = Color(hex: "#FCDD9D")
-    private let softGold = Color(hex: "#FFEBC8")
-    private let warmBeige = Color(hex: "#F9DDA8")
-    private let shadowGold = Color(hex: "#E6B965")
+    private let baseGold = Color.accentGold
+    private var softGold: Color { Color.accentGold.opacity(0.6) }
+    private var warmBeige: Color { Color.accentGold.opacity(0.4) }
+    private var shadowGold: Color { darkerShade(of: Color.accentGold, by: 0.15) }
 
     @State private var shimmerPhase: CGFloat = -1.0
 
@@ -54,7 +54,7 @@ struct GoldenWordSkeletonCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 24)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [softGold, baseGold, warmBeige]),
@@ -63,7 +63,10 @@ struct GoldenWordSkeletonCard: View {
                     )
                 )
         )
-        .shadow(color: shadowGold.opacity(0.25), radius: 10, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.divider, lineWidth: 1)
+        )
         .onAppear {
             withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
                 shimmerPhase = 2.0
@@ -80,7 +83,7 @@ extension View {
                     gradient: Gradient(colors: [
                         .clear,
                         Color.white.opacity(0.5),
-                        Color(hex: "#FFF8E1").opacity(0.9),
+                        Color.accentGold.opacity(0.3),
                         Color.white.opacity(0.5),
                         .clear
                     ]),

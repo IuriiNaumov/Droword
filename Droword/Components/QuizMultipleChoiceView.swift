@@ -31,11 +31,8 @@ struct QuizMultipleChoiceView: View {
         .onAppear { startSession() }
     }
 
-    // MARK: - Question
-
     private func questionView(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
-            // Progress
             Text("\(session.currentIndex + 1) / \(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
                 .foregroundColor(.mainGrey)
@@ -43,7 +40,6 @@ struct QuizMultipleChoiceView: View {
 
             Spacer()
 
-            // Word card
             VStack(spacing: 8) {
                 Text(item.word)
                     .font(.custom("Poppins-Bold", size: 28))
@@ -63,7 +59,6 @@ struct QuizMultipleChoiceView: View {
             }
             .padding(.bottom, 32)
 
-            // Options
             VStack(spacing: 12) {
                 ForEach(options, id: \.self) { option in
                     optionButton(option: option, correctAnswer: item.translation)
@@ -73,7 +68,6 @@ struct QuizMultipleChoiceView: View {
 
             Spacer()
 
-            // Next button
             if hasAnswered {
                 Button {
                     goToNext()
@@ -83,8 +77,11 @@ struct QuizMultipleChoiceView: View {
                         .foregroundColor(.white)
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity)
-                        .background(Color.toastAndButtons)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .background(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .fill(Color.accentBlue)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
@@ -93,8 +90,6 @@ struct QuizMultipleChoiceView: View {
             }
         }
     }
-
-    // MARK: - Option Button
 
     private func optionButton(option: String, correctAnswer: String) -> some View {
         let isThisCorrect = option.lowercased() == correctAnswer.lowercased()
@@ -105,25 +100,25 @@ struct QuizMultipleChoiceView: View {
                 return Color.cardBackground
             }
             if isThisCorrect {
-                return Color.iKnowButton
+                return Color.accentGreen
             }
             if isSelected && !isThisCorrect {
-                return Color.iDontKnowButton
+                return Color.accentRed
             }
             return Color.cardBackground
         }
 
         var textColor: Color {
             if !hasAnswered {
-                return Color(.mainBlack)
+                return Color.mainBlack
             }
             if isThisCorrect {
-                return darkerShade(of: Color.iKnowButton, by: 0.4)
+                return darkerShade(of: Color.accentGreen, by: 0.4)
             }
             if isSelected && !isThisCorrect {
-                return darkerShade(of: Color.iDontKnowButton, by: 0.4)
+                return darkerShade(of: Color.accentRed, by: 0.4)
             }
-            return Color(.mainBlack).opacity(0.4)
+            return Color.mainBlack.opacity(0.4)
         }
 
         return Button {
@@ -138,19 +133,19 @@ struct QuizMultipleChoiceView: View {
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(darkerShade(of: Color.iKnowButton, by: 0.3))
+                        .foregroundColor(darkerShade(of: Color.accentGreen, by: 0.3))
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(darkerShade(of: Color.iDontKnowButton, by: 0.3))
+                        .foregroundColor(darkerShade(of: Color.accentRed, by: 0.3))
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 20)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(bgColor)
             )
         }
@@ -158,8 +153,6 @@ struct QuizMultipleChoiceView: View {
         .disabled(hasAnswered)
         .animation(.easeInOut(duration: 0.25), value: hasAnswered)
     }
-
-    // MARK: - Logic
 
     private func startSession() {
         session.prepareSession(from: store.words)
@@ -212,8 +205,6 @@ struct QuizMultipleChoiceView: View {
         }
     }
 
-    // MARK: - Not Enough Words
-
     private var notEnoughState: some View {
         VStack(spacing: 18) {
             Text("Not enough words yet ✨")
@@ -231,8 +222,6 @@ struct QuizMultipleChoiceView: View {
     }
 }
 
-// MARK: - Shared Completion View
-
 struct QuizCompletionView: View {
     let correct: Int
     let total: Int
@@ -244,9 +233,9 @@ struct QuizCompletionView: View {
 
     private var scoreColor: Color {
         switch percentage {
-        case 70...100: return Color.iKnowButton
+        case 70...100: return Color.accentGreen
         case 40..<70: return Color(red: 1.0, green: 0.902, blue: 0.655)
-        default: return Color.iDontKnowButton
+        default: return Color.accentRed
         }
     }
 
@@ -285,8 +274,11 @@ struct QuizCompletionView: View {
                     .foregroundColor(.white)
                     .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
-                    .background(Color.toastAndButtons)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .background(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(Color.accentBlue)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 40)

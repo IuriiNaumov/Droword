@@ -24,7 +24,7 @@ struct StatsView: View {
             HStack {
                 Text("Stats")
                     .font(.custom("Poppins-Bold", size: 24))
-                    .foregroundColor(Color(.mainBlack))
+                    .foregroundColor(.mainBlack)
 
                 Spacer()
 
@@ -33,19 +33,23 @@ struct StatsView: View {
                     .foregroundColor(.mainGrey.opacity(0.6))
             }
 
-            HStack(spacing: 20) {
+            HStack(spacing: 12) {
                 StatCardView(title: "Total", value: "\(totalWordsEver)")
                 StatCardView(title: "Today", value: "\(wordsAddedToday)")
                 StatCardView(title: "Last 7 days", value: "\(wordsAddedLastWeek)")
             }
         }
-        .padding()
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.cardBackground)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.cardBackground)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.divider, lineWidth: 1)
+                )
         )
         .foregroundColor(.mainBlack)
-        .padding(.horizontal)
+        .padding(.horizontal, 20)
         .onTapGesture { showDetailedStats = true }
         .fullScreenCover(isPresented: $showDetailedStats) {
             DetailedStatsView()

@@ -59,13 +59,13 @@ struct LevelAdaptation {
 
     private static func isCJKIdeograph(_ scalar: UnicodeScalar) -> Bool {
         switch scalar.value {
-        case 0x4E00...0x9FFF, // CJK Unified Ideographs
-             0x3400...0x4DBF, // CJK Unified Ideographs Extension A
-             0x20000...0x2A6DF, // Extension B
-             0x2A700...0x2B73F, // Extension C
-             0x2B740...0x2B81F, // Extension D
-             0x2B820...0x2CEAF, // Extension E
-             0x2CEB0...0x2EBEF: // Extension F
+        case 0x4E00...0x9FFF,
+             0x3400...0x4DBF,
+             0x20000...0x2A6DF,
+             0x2A700...0x2B73F,
+             0x2B740...0x2B81F,
+             0x2B820...0x2CEAF,
+             0x2CEB0...0x2EBEF:
             return true
         default:
             return false
@@ -84,4 +84,3 @@ struct LevelAdaptation {
         return String(s[..<end]) + "…"
     }
 }
-

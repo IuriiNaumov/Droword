@@ -6,6 +6,7 @@ struct DrowordApp: App {
     @StateObject private var store = WordsStore()
     @StateObject private var golden = GoldenWordsStore()
     @StateObject private var languageStore = LanguageStore()
+    @StateObject private var themeStore = ThemeStore()
 
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
 
@@ -27,6 +28,8 @@ struct DrowordApp: App {
                 .environmentObject(store)
                 .environmentObject(golden)
                 .environmentObject(languageStore)
+                .environmentObject(themeStore)
+
         }
     }
 

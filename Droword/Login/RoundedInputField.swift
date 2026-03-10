@@ -15,11 +15,11 @@ struct RoundedInputField: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color("MainGrey"), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color.divider, lineWidth: 2)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .fill(Color(.systemBackground))
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.cardBackground)
                 )
 
             HStack(spacing: 4) {
