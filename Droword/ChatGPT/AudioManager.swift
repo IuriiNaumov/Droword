@@ -18,6 +18,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return val == 0 ? 1.0 : Float(val)
     }
 
+    private let openAITTSEndpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
 
 
     private var playbackContinuation: CheckedContinuation<Void, Never>?

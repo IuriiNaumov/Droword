@@ -5,12 +5,7 @@ enum AppToastType {
     case error
 
     var background: Color {
-        switch self {
-        case .success:
-            return Color.accentGreen
-        case .error:
-            return Color.accentRed
-        }
+        return Color.accentBlack
     }
 
     var textColor: Color {
@@ -56,7 +51,7 @@ struct BannerToastView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
                 .background(
-                    Capsule()
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(type.background)
                 )
                 .padding(.top, 20)

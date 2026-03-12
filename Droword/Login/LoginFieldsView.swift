@@ -49,11 +49,11 @@ struct LoginFieldsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(focusedField == .email ? Color.accentBlue.opacity(0.08) : Color(.secondarySystemBackground))
+                                    .fill(focusedField == .email ? Color.mainBlack.opacity(0.08) : Color(.secondarySystemBackground))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(focusedField == .email ? Color.accentBlue : Color(.separator), lineWidth: focusedField == .email ? 2 : 1)
+                                    .stroke(focusedField == .email ? Color.mainBlack : Color(.separator), lineWidth: focusedField == .email ? 2 : 1)
                             )
                             
                             ZStack(alignment: .leading) {
@@ -78,11 +78,11 @@ struct LoginFieldsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(focusedField == .password ? Color.accentBlue.opacity(0.08) : Color(.secondarySystemBackground))
+                                    .fill(focusedField == .password ? Color.mainBlack.opacity(0.08) : Color(.secondarySystemBackground))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(focusedField == .password ? Color.accentBlue : Color(.separator), lineWidth: focusedField == .password ? 2 : 1)
+                                    .stroke(focusedField == .password ? Color.mainBlack : Color(.separator), lineWidth: focusedField == .password ? 2 : 1)
                             )
                         }
                         
@@ -100,7 +100,7 @@ struct LoginFieldsView: View {
                                         .stroke(Color(.separator), lineWidth: 1)
                                         .background(
                                             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                                .fill(agreeToTerms ? Color.mainBlack : Color.clear)
+                                                .fill(agreeToTerms ? Color.accentBlack : Color.clear)
                                         )
                                         .frame(width: 28, height: 24)
                                     
@@ -128,7 +128,7 @@ struct LoginFieldsView: View {
                                 .padding(.vertical, 16)
                                 .background(
                                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                        .fill(isFormValid ? Color.accentBlue : Color.mainGrey.opacity(0.3))
+                                        .fill(isFormValid ? Color.accentBlack : Color.mainGrey.opacity(0.3))
                                 )
                         }
                         .buttonStyle(.plain)

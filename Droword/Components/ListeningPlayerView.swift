@@ -127,7 +127,7 @@ struct ListeningPlayerView: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: unifiedCornerRadius, style: .continuous)
-                        .fill(filteredWords.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlue)
+                        .fill(filteredWords.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlack)
                 )
             }
             .buttonStyle(.plain)
@@ -174,7 +174,7 @@ struct ListeningPlayerView: View {
             VStack(spacing: 20) {
                 VStack(spacing: 8) {
                     ProgressView(value: Double(session.currentWordIndex), total: max(1, Double(session.totalWords)))
-                        .tint(.accentBlue)
+                        .tint(.mainBlack)
 
                     Text("\(min(session.currentWordIndex + 1, max(1, session.totalWords))) / \(session.totalWords)")
                         .font(.custom("Poppins-Regular", size: 13))
@@ -200,7 +200,7 @@ struct ListeningPlayerView: View {
                     Button(action: { session.togglePause(); Haptics.mediumImpact() }) {
                         Image(systemName: session.isPaused ? "play.circle.fill" : "pause.circle.fill")
                             .font(.system(size: 64))
-                            .foregroundColor(.accentBlue)
+                            .foregroundColor(.mainBlack)
                     }
                     .buttonStyle(.plain)
 
@@ -214,10 +214,10 @@ struct ListeningPlayerView: View {
             }
             .padding(24)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(Color.cardBackground)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .stroke(Color.divider, lineWidth: 1)
                     )
             )
@@ -355,7 +355,7 @@ struct ListeningSettingsSheet: View {
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
-                .tint(Color.accentBlue)
+                .tint(Color.mainBlack)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -386,7 +386,7 @@ struct ListeningSettingsSheet: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: unifiedCornerRadius - 4)
-                                .fill(isSelected ? Color.accentBlue : Color.clear)
+                                .fill(isSelected ? Color.accentBlack : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)

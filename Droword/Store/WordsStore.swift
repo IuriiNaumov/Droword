@@ -65,50 +65,46 @@ struct StoredWord: Identifiable, Codable, Equatable {
 
 final class WordsStore: ObservableObject {
     @Published private(set) var words: [StoredWord] = [] {
-        didSet { saveAsync() }
+        didSet { if hasLoaded { saveAsync() } }
     }
 
     @Published private(set) var totalWordsAdded: Int = 0 {
-        didSet { saveAsync() }
+        didSet { if hasLoaded { saveAsync() } }
     }
 
     private let storageKey = "WordsStore.words"
     private let totalKey = "WordsStore.totalWordsAdded"
+    private var hasLoaded = false
 
-    init() { loadAsync() }
+    init() { load() }
 
     func add(_ word: StoredWord) {
-        DispatchQueue.main.async {
-            self.words.append(word)
-            self.totalWordsAdded += 1
-        }
+        words.append(word)
+        totalWordsAdded += 1
     }
 
     func remove(_ word: StoredWord) {
         words.removeAll { $0.id == word.id }
     }
 
+    func removeMultiple(ids: Set<UUID>) {
+        words.removeAll { ids.contains($0.id) }
+    }
+
     func clear() {
         words.removeAll()
     }
 
-    private func loadAsync() {
-        DispatchQueue.global(qos: .background).async {
-            let defaults = UserDefaults.standard
+    private func load() {
+        let defaults = UserDefaults.standard
 
-            var decodedWords: [StoredWord] = []
-            if let data = defaults.data(forKey: self.storageKey),
-               let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
-                decodedWords = decoded
-            }
-
-            let total = defaults.integer(forKey: self.totalKey)
-
-            DispatchQueue.main.async {
-                self.words = decodedWords
-                self.totalWordsAdded = total
-            }
+        if let data = defaults.data(forKey: storageKey),
+           let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
+            words = decoded
         }
+
+        totalWordsAdded = defaults.integer(forKey: totalKey)
+        hasLoaded = true
     }
 
     private func saveAsync() {

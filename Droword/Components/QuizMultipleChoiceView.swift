@@ -3,7 +3,11 @@ import SwiftUI
 struct QuizMultipleChoiceView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @StateObject private var session = QuizSessionManager()
+
+    var sessionSize: Int = 10
+    var filterTag: String? = nil
 
     @State private var options: [String] = []
     @State private var selectedOption: String? = nil
@@ -70,18 +74,18 @@ struct QuizMultipleChoiceView: View {
 
             if hasAnswered {
                 Button {
+                    Haptics.lightImpact()
                     goToNext()
                 } label: {
                     Text("Next")
-                        .font(.custom("Poppins-Bold", size: 14))
+                        .font(.custom("Poppins-Bold", size: 16))
                         .foregroundColor(.white)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(Color.accentBlue)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.accentBlack)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
@@ -100,10 +104,10 @@ struct QuizMultipleChoiceView: View {
                 return Color.cardBackground
             }
             if isThisCorrect {
-                return Color.accentGreen
+                return themeStore.accentGreen
             }
             if isSelected && !isThisCorrect {
-                return Color.accentRed
+                return themeStore.accentRed
             }
             return Color.cardBackground
         }
@@ -113,10 +117,10 @@ struct QuizMultipleChoiceView: View {
                 return Color.mainBlack
             }
             if isThisCorrect {
-                return darkerShade(of: Color.accentGreen, by: 0.4)
+                return darkerShade(of: themeStore.accentGreen, by: 0.4)
             }
             if isSelected && !isThisCorrect {
-                return darkerShade(of: Color.accentRed, by: 0.4)
+                return darkerShade(of: themeStore.accentRed, by: 0.4)
             }
             return Color.mainBlack.opacity(0.4)
         }
@@ -133,19 +137,19 @@ struct QuizMultipleChoiceView: View {
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(darkerShade(of: Color.accentGreen, by: 0.3))
+                        .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(darkerShade(of: Color.accentRed, by: 0.3))
+                        .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 20)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(bgColor)
             )
         }
@@ -155,7 +159,8 @@ struct QuizMultipleChoiceView: View {
     }
 
     private func startSession() {
-        session.prepareSession(from: store.words)
+        session.maxSessionSize = sessionSize
+        session.prepareSession(from: store.words, filterTag: filterTag)
         if let item = session.currentItem {
             prepareOptions(for: item)
         }
@@ -223,6 +228,8 @@ struct QuizMultipleChoiceView: View {
 }
 
 struct QuizCompletionView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     let correct: Int
     let total: Int
     let onRestart: () -> Void
@@ -233,9 +240,9 @@ struct QuizCompletionView: View {
 
     private var scoreColor: Color {
         switch percentage {
-        case 70...100: return Color.accentGreen
-        case 40..<70: return Color(red: 1.0, green: 0.902, blue: 0.655)
-        default: return Color.accentRed
+        case 70...100: return themeStore.accentGreen
+        case 40..<70: return themeStore.isMonochrome ? Color("MonoMedium") : Color(red: 1.0, green: 0.902, blue: 0.655)
+        default: return themeStore.accentRed
         }
     }
 
@@ -268,17 +275,16 @@ struct QuizCompletionView: View {
                 }
             }
 
-            Button(action: onRestart) {
+            Button(action: { Haptics.mediumImpact(); onRestart() }) {
                 Text("Try Again")
-                    .font(.custom("Poppins-Bold", size: 14))
+                    .font(.custom("Poppins-Bold", size: 16))
                     .foregroundColor(.white)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 16)
                     .frame(maxWidth: .infinity)
                     .background(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(Color.accentBlue)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color.accentBlack)
                     )
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 40)

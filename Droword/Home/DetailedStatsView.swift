@@ -3,11 +3,12 @@ import SwiftUI
 struct DetailedStatsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
     private var statColor: Color {
-        Color.accentBlue
+        themeStore.accentBlue
     }
 
     private var statTextColor: Color {
@@ -185,7 +186,7 @@ struct DetailedStatsView: View {
                     ForEach(Array(data.enumerated()), id: \.offset) { _, item in
                         VStack(spacing: 4) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(item.count > 0 ? Color.accentGreen : Color.mainGrey.opacity(0.2))
+                                .fill(item.count > 0 ? themeStore.accentGreen : Color.mainGrey.opacity(0.2))
                                 .frame(height: max(4, CGFloat(item.count) / CGFloat(maxCount) * 80))
 
                             Text(shortDayFormatter.string(from: item.date).prefix(1))
@@ -372,7 +373,7 @@ struct DetailedStatsView: View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(.accentBlue)
+                .foregroundColor(themeStore.accentBlue)
                 .frame(width: 20)
             Text(text)
                 .font(.custom("Poppins-Regular", size: 14))
@@ -385,7 +386,7 @@ struct DetailedStatsView: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.accentBlue)
+                    .foregroundColor(themeStore.accentBlue)
                 Text(title)
                     .font(.custom("Poppins-Bold", size: 18))
                     .foregroundColor(.primary)
@@ -396,10 +397,10 @@ struct DetailedStatsView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color.divider, lineWidth: 1)
                 )
         )

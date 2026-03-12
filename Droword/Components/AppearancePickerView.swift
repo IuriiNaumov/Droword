@@ -75,12 +75,12 @@ private struct AppearanceCard: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.accentBlue : Color.mainGrey, lineWidth: 1)
+                        .stroke(isSelected ? Color.accentBlack : Color.mainGrey, lineWidth: 1)
                         .frame(width: 28, height: 28)
 
                     if isSelected {
                         Circle()
-                            .fill(Color.accentBlue)
+                            .fill(Color.accentBlack)
                             .frame(width: 28, height: 28)
                             .transition(.scale(scale: 0.8).combined(with: .opacity))
 

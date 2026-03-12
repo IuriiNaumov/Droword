@@ -16,6 +16,7 @@ struct AddWordView: View {
     @State private var wordPlaceholder = ""
     @State private var translationPlaceholder = ""
     @State private var commentPlaceholder = ""
+    @State private var clipboardText: String? = nil
 
     enum Field { case word, translation, comment }
 
@@ -51,6 +52,45 @@ struct AddWordView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     header
+
+                    if let clip = clipboardText, word.isEmpty {
+                        Button {
+                            Haptics.lightImpact()
+                            word = clip
+                            clipboardText = nil
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "doc.on.clipboard")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(.mainBlack)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Paste from clipboard")
+                                        .font(.custom("Poppins-Medium", size: 14))
+                                        .foregroundColor(.mainBlack)
+                                    Text(clip)
+                                        .font(.custom("Poppins-Regular", size: 13))
+                                        .foregroundColor(.mainGrey)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Image(systemName: "arrow.down.doc.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.mainGrey)
+                            }
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.cardBackground)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                            .stroke(Color.divider, lineWidth: 1)
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+
                     wordSection
                     translationSection
                     commentSection
@@ -74,13 +114,21 @@ struct AddWordView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 28)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
-        .onTapGesture { focusedField = nil }
         .transaction { tx in tx.disablesAnimations = true }
         .onAppear {
             wordPlaceholder = wordPlaceholders.randomElement() ?? "Enter a word"
             translationPlaceholder = translationPlaceholders.randomElement() ?? "Enter translation"
             commentPlaceholder = commentPlaceholders.randomElement() ?? "Enter a comment"
+
+            // Check clipboard for potential word
+            if let pasteString = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !pasteString.isEmpty,
+               pasteString.count <= 60,
+               !pasteString.contains("\n") {
+                clipboardText = pasteString
+            }
 
             if !didAppear { didAppear = true }
         }
@@ -196,6 +244,21 @@ struct AddWordView: View {
             }
         } catch {
             print("⚠️ Translation error: \(error.localizedDescription)")
+            // Add the word with user-provided data even when translation fails
+            await MainActor.run {
+                let newWord = StoredWord(
+                    word: trimmedWord,
+                    type: "",
+                    translation: translation.isEmpty ? nil : translation,
+                    example: nil,
+                    comment: comment.isEmpty ? nil : comment,
+                    tag: selectedTag,
+                    fromLanguage: languageStore.learningLanguage,
+                    toLanguage: languageStore.nativeLanguage
+                )
+                store.add(newWord)
+                dismiss()
+            }
         }
 
         await MainActor.run { isAdding = false }

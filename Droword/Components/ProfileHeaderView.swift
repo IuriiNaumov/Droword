@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileHeaderView: View {
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.colorScheme) private var colorScheme
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
@@ -87,22 +88,22 @@ struct ProfileHeaderView: View {
         storedUserName.isEmpty ? "Cool guy" : storedUserName
     }
 
-    private let levelBackground = Color.accentBlue
-    private let levelText = Color.accentBlue
+    private var levelBackground: Color { themeStore.accentBlue }
+    private var levelText: Color { themeStore.accentBlue }
 
-    private let xpBackground = Color.accentGold
-    private let xpText = Color.accentGold
+    private var xpBackground: Color { themeStore.accentGold }
+    private var xpText: Color { themeStore.accentGold }
 
-    private let cuteTagPalettes: [(bg: Color, text: Color)] = [
-        (Color.accentGold.opacity(0.3), Color.mainBlack),
-        (Color.accentGreen.opacity(0.3), Color.mainBlack),
-        (Color.accentBlue.opacity(0.3), Color.mainBlack),
-        (Color.accentPink.opacity(0.3), Color.mainBlack),
-        (Color.accentPurple.opacity(0.3), Color.mainBlack),
-        (Color.accentBlue.opacity(0.25), Color.mainBlack)
-    ]
+    private var cuteTagPalettes: [(bg: Color, text: Color)] {[
+        (themeStore.accentGold.opacity(0.3), Color.mainBlack),
+        (themeStore.accentGreen.opacity(0.3), Color.mainBlack),
+        (themeStore.accentBlue.opacity(0.3), Color.mainBlack),
+        (themeStore.accentPink.opacity(0.3), Color.mainBlack),
+        (themeStore.accentPurple.opacity(0.3), Color.mainBlack),
+        (themeStore.accentBlue.opacity(0.25), Color.mainBlack)
+    ]}
 
-    @State private var cuteTagBackground: Color = Color.accentGold.opacity(0.3)
+    @State private var cuteTagBackground: Color = Color("MonoLight").opacity(0.3)
     @State private var cuteTagTextColor: Color = Color.mainBlack
 
     var body: some View {
@@ -167,6 +168,7 @@ struct ProfileHeaderView: View {
                 }
                 daysUsedCount += 1
                 lastActiveDay = today
+                NotificationManager.shared.scheduleStreakMilestone(streak: currentStreak)
             } else if currentStreak == 0 {
                 currentStreak = 1
             }
@@ -196,6 +198,7 @@ struct ProfileHeaderView: View {
         .fullScreenCover(isPresented: $showSettings) {
             SettingsView()
                 .environmentObject(store)
+                .environmentObject(themeStore)
                 .preferredColorScheme(colorScheme)
         }
     }

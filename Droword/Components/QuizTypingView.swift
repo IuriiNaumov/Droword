@@ -3,7 +3,11 @@ import SwiftUI
 struct QuizTypingView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @StateObject private var session = QuizSessionManager()
+
+    var sessionSize: Int = 10
+    var filterTag: String? = nil
 
     @State private var userInput: String = ""
     @State private var hasSubmitted = false
@@ -64,15 +68,15 @@ struct QuizTypingView: View {
                 TextField("Your answer", text: $userInput)
                     .focused($isInputFocused)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 19)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 18)
                     .background(Color.cardBackground)
                     .foregroundColor(.mainBlack)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(borderColor, lineWidth: hasSubmitted ? 3 : 2)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(borderColor, lineWidth: hasSubmitted ? 2 : 1.5)
                     )
-                    .cornerRadius(20)
+                    .cornerRadius(14)
                     .disabled(hasSubmitted)
                     .submitLabel(.done)
                     .onSubmit {
@@ -84,16 +88,16 @@ struct QuizTypingView: View {
                 if hasSubmitted && !isCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(darkerShade(of: Color.accentRed, by: 0.3))
+                            .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
                         Text("Correct: \(session.currentItem?.translation ?? "")")
                             .font(.custom("Poppins-Medium", size: 14))
-                            .foregroundColor(darkerShade(of: Color.accentGreen, by: 0.3))
+                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.accentGreen.opacity(0.3))
+                            .fill(themeStore.accentGreen.opacity(0.3))
                     )
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -101,16 +105,16 @@ struct QuizTypingView: View {
                 if hasSubmitted && isCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(darkerShade(of: Color.accentGreen, by: 0.3))
+                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
                         Text("Correct!")
                             .font(.custom("Poppins-Medium", size: 14))
-                            .foregroundColor(darkerShade(of: Color.accentGreen, by: 0.3))
+                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.accentGreen.opacity(0.3))
+                            .fill(themeStore.accentGreen.opacity(0.3))
                     )
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -124,17 +128,16 @@ struct QuizTypingView: View {
                     checkAnswer()
                 } label: {
                     Text("Check")
-                        .font(.custom("Poppins-Bold", size: 14))
+                        .font(.custom("Poppins-Bold", size: 16))
                         .foregroundColor(.white)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
                                     ? Color.mainGrey.opacity(0.3)
-                                    : Color.accentBlue)
+                                    : Color.accentBlack)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .disabled(userInput.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -142,18 +145,18 @@ struct QuizTypingView: View {
                 .padding(.bottom, 24)
             } else {
                 Button {
+                    Haptics.lightImpact()
                     goToNext()
                 } label: {
                     Text("Next")
-                        .font(.custom("Poppins-Bold", size: 14))
+                        .font(.custom("Poppins-Bold", size: 16))
                         .foregroundColor(.white)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(Color.accentBlue)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.accentBlack)
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 24)
@@ -165,13 +168,14 @@ struct QuizTypingView: View {
 
     private var borderColor: Color {
         if !hasSubmitted {
-            return isInputFocused ? Color.accentBlue : Color.clear
+            return isInputFocused ? Color.mainBlack : Color.divider
         }
-        return isCorrect ? Color.accentGreen : Color.accentRed
+        return isCorrect ? themeStore.accentGreen : themeStore.accentRed
     }
 
     private func startSession() {
-        session.prepareSession(from: store.words)
+        session.maxSessionSize = sessionSize
+        session.prepareSession(from: store.words, filterTag: filterTag)
         userInput = ""
         hasSubmitted = false
         isCorrect = false

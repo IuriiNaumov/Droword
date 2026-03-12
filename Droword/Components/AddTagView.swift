@@ -2,6 +2,7 @@ import SwiftUI
 import UserNotifications
 
 struct AddTagView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
     @State private var colorHex: String = ""
@@ -71,9 +72,9 @@ struct AddTagView: View {
 
                 Button(action: { saveTag() }) {
                     Text(isSaving ? "Adding..." : "Add")
-                        .duo3DStyle(Color.accentGreen, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .duo3DStyle(Color.accentBlack, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .padding(.bottom, 16)
             }
@@ -100,6 +101,7 @@ struct AddTagView: View {
         let normalized = TagStore.shared.normalizeHex(colorHex)
         TagStore.shared.addTag(name: trimmedName, colorHex: normalized)
         NotificationManager.shared.scheduleDailyReminder(hour: 20, minute: 0, tagName: trimmedName)
+        Haptics.success()
         dismiss()
     }
 }

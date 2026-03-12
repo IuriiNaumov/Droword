@@ -8,7 +8,6 @@ struct AvatarPickerView: View {
     let currentImage: UIImage?
     let onComplete: (UIImage?) -> Void
 
-    @State private var showSourcePicker = true
     @State private var showCamera = false
     @State private var showPhotosPicker = false
     @State private var selectedItem: PhotosPickerItem?
@@ -16,49 +15,40 @@ struct AvatarPickerView: View {
     @State private var showCropper = false
 
     var body: some View {
-        ZStack {
-            if showCamera {
+        sourcePickerCard
+            .presentationDetents([.medium])
+            .photosPicker(isPresented: $showPhotosPicker, selection: $selectedItem, matching: .images)
+            .onChange(of: selectedItem) { newItem in
+                guard let newItem else { return }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        pickedImage = uiImage
+                        showCropper = true
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showCamera) {
                 CameraView { image in
                     showCamera = false
                     if let image {
                         pickedImage = image
-                        showSourcePicker = false
                         showCropper = true
-                    } else {
-                        showSourcePicker = true
                     }
                 }
                 .ignoresSafeArea()
-            } else if showCropper, let pickedImage {
-                AvatarCropView(image: pickedImage) { croppedImage in
-                    onComplete(croppedImage)
-                    dismiss()
-                } onCancel: {
-                    showCropper = false
-                    self.pickedImage = nil
-                    showSourcePicker = true
-                }
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-            } else if showSourcePicker {
-                sourcePickerCard
             }
-        }
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showCropper)
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showSourcePicker)
-        .animation(.easeInOut(duration: 0.2), value: showCamera)
-        .presentationDetents([.medium])
-        .photosPicker(isPresented: $showPhotosPicker, selection: $selectedItem, matching: .images)
-        .onChange(of: selectedItem) { newItem in
-            guard let newItem else { return }
-            Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    pickedImage = uiImage
-                    showSourcePicker = false
-                    showCropper = true
+            .fullScreenCover(isPresented: $showCropper) {
+                if let pickedImage {
+                    AvatarCropView(image: pickedImage) { croppedImage in
+                        onComplete(croppedImage)
+                        dismiss()
+                    } onCancel: {
+                        showCropper = false
+                        self.pickedImage = nil
+                    }
                 }
             }
-        }
     }
 
     private var sourcePickerCard: some View {
@@ -75,7 +65,6 @@ struct AvatarPickerView: View {
                     title: "Take a photo",
                     color: .blue
                 ) {
-                    showSourcePicker = false
                     showCamera = true
                 }
 
@@ -111,8 +100,6 @@ struct AvatarPickerView: View {
             }
             .padding(.top, 8)
             .padding(.bottom, 8)
-
-            Spacer()
         }
     }
 
@@ -159,121 +146,135 @@ struct AvatarCropView: View {
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
 
-    private let cropSize: CGFloat = 300
-
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Button { onCancel() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(12)
-                        .background(Circle().fill(Color.white.opacity(0.2)))
-                }
-
-                Spacer()
-
-                Text("Move and scale")
-                    .font(.custom("Poppins-Medium", size: 17))
-                    .foregroundColor(.white)
-
-                Spacer()
-
-                Color.clear.frame(width: 42, height: 42)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-
-            Spacer()
-
-            Spacer()
+        GeometryReader { geo in
+            let cropSize = geo.size.width - 48
 
             ZStack {
+                Color.black.ignoresSafeArea()
+
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: cropSize * scale, height: cropSize * scale)
+                    .frame(width: imageSize(for: cropSize).width * scale,
+                           height: imageSize(for: cropSize).height * scale)
                     .offset(offset)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                offset = CGSize(
-                                    width: lastOffset.width + value.translation.width,
-                                    height: lastOffset.height + value.translation.height
-                                )
-                            }
-                            .onEnded { _ in
-                                lastOffset = offset
-                                clampOffset()
-                            }
-                    )
-                    .gesture(
-                        MagnifyGesture()
-                            .onChanged { value in
-                                let newScale = lastScale * value.magnification
-                                scale = max(1.0, min(newScale, 5.0))
-                            }
-                            .onEnded { _ in
-                                lastScale = scale
-                                clampOffset()
-                            }
-                    )
+                    .allowsHitTesting(false)
 
                 CropOverlay(cropSize: cropSize)
+                    .ignoresSafeArea()
                     .allowsHitTesting(false)
-            }
-            .frame(width: cropSize + 40, height: cropSize + 40)
 
-            Spacer()
+                VStack {
+                    HStack {
+                        Button { onCancel() } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Circle().fill(Color.white.opacity(0.2)))
+                        }
+                        Spacer()
+                        Text("Move and scale")
+                            .font(.custom("Poppins-Medium", size: 17))
+                            .foregroundColor(.white)
+                        Spacer()
+                        Color.clear.frame(width: 42, height: 42)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, geo.safeAreaInsets.top + 8)
 
-            Button {
-                let cropped = cropImage()
-                onConfirm(cropped)
-            } label: {
-                Text("Choose")
-                    .font(.custom("Poppins-Bold", size: 17))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.accentBlue)
-                    )
+                    Spacer()
+
+                    Button {
+                        let cropped = cropImage(cropSize: cropSize)
+                        onConfirm(cropped)
+                    } label: {
+                        Text("Choose")
+                            .font(.custom("Poppins-Bold", size: 17))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(Color.accentBlack)
+                            )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, geo.safeAreaInsets.bottom + 16)
+                }
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 50)
+            .gesture(
+                SimultaneousGesture(
+                    DragGesture()
+                        .onChanged { value in
+                            offset = CGSize(
+                                width: lastOffset.width + value.translation.width,
+                                height: lastOffset.height + value.translation.height
+                            )
+                        }
+                        .onEnded { _ in
+                            lastOffset = offset
+                            clampOffset(cropSize: cropSize)
+                        },
+                    MagnifyGesture()
+                        .onChanged { value in
+                            let newScale = lastScale * value.magnification
+                            scale = max(1.0, min(newScale, 5.0))
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            clampOffset(cropSize: cropSize)
+                        }
+                )
+            )
         }
-        .background(Color.black.ignoresSafeArea())
+        .ignoresSafeArea()
     }
 
-    private func clampOffset() {
-        let maxOffset = (cropSize * scale - cropSize) / 2
+    /// Computes the image display size so the shorter side fills the crop circle.
+    private func imageSize(for cropSize: CGFloat) -> CGSize {
+        let imgW = image.size.width
+        let imgH = image.size.height
+        guard imgW > 0, imgH > 0 else { return CGSize(width: cropSize, height: cropSize) }
+        let aspect = imgW / imgH
+        if aspect > 1 {
+            return CGSize(width: cropSize * aspect, height: cropSize)
+        } else {
+            return CGSize(width: cropSize, height: cropSize / aspect)
+        }
+    }
+
+    private func clampOffset(cropSize: CGFloat) {
+        let size = imageSize(for: cropSize)
+        let displayW = size.width * scale
+        let displayH = size.height * scale
+        let maxOffsetX = max(0, (displayW - cropSize) / 2)
+        let maxOffsetY = max(0, (displayH - cropSize) / 2)
         withAnimation(.easeOut(duration: 0.2)) {
-            offset.width = max(-maxOffset, min(maxOffset, offset.width))
-            offset.height = max(-maxOffset, min(maxOffset, offset.height))
+            offset.width = max(-maxOffsetX, min(maxOffsetX, offset.width))
+            offset.height = max(-maxOffsetY, min(maxOffsetY, offset.height))
             lastOffset = offset
         }
     }
 
-    private func cropImage() -> UIImage {
-        let rendererSize = CGSize(width: cropSize, height: cropSize)
-        let renderer = UIGraphicsImageRenderer(size: rendererSize)
-
+    private func cropImage(cropSize: CGFloat) -> UIImage {
+        let outputSize = CGSize(width: cropSize * 2, height: cropSize * 2)
+        let renderer = UIGraphicsImageRenderer(size: outputSize)
         return renderer.image { _ in
             let ctx = UIGraphicsGetCurrentContext()!
-
-            let circlePath = UIBezierPath(ovalIn: CGRect(origin: .zero, size: rendererSize))
+            let circlePath = UIBezierPath(ovalIn: CGRect(origin: .zero, size: outputSize))
             ctx.addPath(circlePath.cgPath)
             ctx.clip()
 
-            let imageSize = CGSize(width: cropSize * scale, height: cropSize * scale)
+            let size = imageSize(for: cropSize)
+            let drawW = size.width * scale * 2
+            let drawH = size.height * scale * 2
             let origin = CGPoint(
-                x: (cropSize - imageSize.width) / 2 + offset.width,
-                y: (cropSize - imageSize.height) / 2 + offset.height
+                x: (outputSize.width - drawW) / 2 + offset.width * 2,
+                y: (outputSize.height - drawH) / 2 + offset.height * 2
             )
-
-            image.draw(in: CGRect(origin: origin, size: imageSize))
+            image.draw(in: CGRect(origin: origin, size: CGSize(width: drawW, height: drawH)))
         }
     }
 }
@@ -282,19 +283,22 @@ private struct CropOverlay: View {
     let cropSize: CGFloat
 
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(Color.black.opacity(0.55))
+        GeometryReader { geo in
+            ZStack {
+                Rectangle()
+                    .fill(Color.black.opacity(0.55))
+
+                Circle()
+                    .frame(width: cropSize, height: cropSize)
+                    .blendMode(.destinationOut)
+            }
+            .compositingGroup()
 
             Circle()
+                .stroke(Color.white.opacity(0.4), lineWidth: 1)
                 .frame(width: cropSize, height: cropSize)
-                .blendMode(.destinationOut)
+                .position(x: geo.size.width / 2, y: geo.size.height / 2)
         }
-        .compositingGroup()
-
-        Circle()
-            .stroke(Color.white.opacity(0.7), lineWidth: 1.5)
-            .frame(width: cropSize, height: cropSize)
     }
 }
 

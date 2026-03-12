@@ -2,26 +2,28 @@ import SwiftUI
 
 struct TagsView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var themeStore: ThemeStore
     @Binding var selectedTag: String?
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
     var hasGoldenWords: Bool = false
     var showManagementControls: Bool = true
     var onAddTag: (() -> Void)? = nil
+    var sortOption: Binding<DictionarySortOption>? = nil
     @State private var isDeleteMode: Bool = false
 
     private let builtInNames: Set<String> = ["Golden", "Chat", "Travel", "Street", "Movies"]
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
-            ($0.name, Color(fromHexString: $0.colorHex) ?? Color.gray, true)
+            ($0.name, themeStore.resolvedTagColor($0.colorHex), true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
-            ("Golden", Color.accentGold, false),
-            ("Chat",   Color.accentBlue, false),
-            ("Travel", Color.accentGreen, false),
-            ("Street", Color.accentPink, false),
-            ("Movies", Color.accentPurple, false),
+            ("Golden", themeStore.accentGold, false),
+            ("Chat",   themeStore.accentBlue, false),
+            ("Travel", themeStore.accentGreen, false),
+            ("Street", themeStore.accentPink, false),
+            ("Movies", themeStore.accentPurple, false),
         ]
         return custom + builtIn
     }
@@ -43,9 +45,14 @@ struct TagsView: View {
                     let isSelected = selectedTag == tag.name
                     let baseColor = tag.color
                     let dimmed = isDeleteMode && !tag.isCustom
-                    let textColor: Color = colorScheme == .dark
-                        ? .white.opacity(isSelected ? 1.0 : 0.9)
-                        : darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
+                    let textColor: Color = {
+                        if themeStore.isMonochrome && isSelected {
+                            return .white
+                        }
+                        return colorScheme == .dark
+                            ? .white.opacity(isSelected ? 1.0 : 0.9)
+                            : darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
+                    }()
 
                     Button {
                         if isDeleteMode {
@@ -85,11 +92,15 @@ struct TagsView: View {
                         .padding(.vertical, compact ? 8 : 10)
                         .padding(.horizontal, compact ? 24 : 28)
                         .background(
-                            Capsule()
-                                .fill(baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32)))
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    themeStore.isMonochrome && isSelected && !dimmed
+                                        ? Color.mainBlack.opacity(0.85)
+                                        : baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32))
+                                )
                         )
                         .overlay(
-                            Capsule()
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .stroke(isDeleteMode && tag.isCustom ? Color.accentRed.opacity(0.4) : Color.clear, lineWidth: 1.5)
                         )
                         .scaleEffect(isSelected && !isDeleteMode ? 1.06 : 1.0)
@@ -102,18 +113,34 @@ struct TagsView: View {
                 }
 
                 if showManagementControls {
-                    Button(action: { onAddTag?() }) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.accentBlue))
-                            
+                    // Sort button (only when sortOption binding is provided)
+                    if let sortBinding = sortOption {
+                        Menu {
+                            ForEach(DictionarySortOption.allCases, id: \.self) { option in
+                                Button {
+                                    sortBinding.wrappedValue = option
+                                    Haptics.selection()
+                                } label: {
+                                    HStack {
+                                        Text(option.rawValue)
+                                        if sortBinding.wrappedValue == option {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.mainGrey)
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(Color.mainGrey.opacity(0.15)))
+                        }
+                        .opacity(isDeleteMode ? 0 : 1)
+                        .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
                     }
-                    .buttonStyle(.plain)
-                    .opacity(isDeleteMode ? 0 : 1)
-                    .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
 
+                    // Edit tags button
                     if hasCustomTags {
                         Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")
@@ -126,6 +153,18 @@ struct TagsView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    // Add tag button
+                    Button(action: { onAddTag?() }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(Color.accentBlack))
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(isDeleteMode ? 0 : 1)
+                    .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
                 }
             }
             .padding(.horizontal, compact ? 10 : 0)

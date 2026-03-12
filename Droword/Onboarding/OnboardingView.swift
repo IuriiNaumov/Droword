@@ -5,6 +5,7 @@ struct OnboardingView: View {
     @State private var page: Int = 0
 
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
 
     @AppStorage("userName") private var userName: String = ""
     @AppStorage("userEmail") private var userEmail: String = ""
@@ -12,26 +13,26 @@ struct OnboardingView: View {
     @State private var animateStage: Bool = false
     @State private var dragOffset: CGSize = .zero
 
-    private let pages: [OnboardingPageModel] = [
+    private var pages: [OnboardingPageModel] {[
         .init(
             title: "Build your dictionary",
             subtitle: "Save words with examples, tags and notes so they stay with you.",
             illustrationStyle: .dictionary,
-            accent: .accentBlue
+            accent: themeStore.accentBlue
         ),
         .init(
             title: "Smart practice",
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
-            accent: .accentGreen
+            accent: themeStore.accentGreen
         ),
         .init(
             title: "Make it yours",
             subtitle: "Choose languages, voices and themes. Track progress and level up!",
             illustrationStyle: .customize,
-            accent: .accentGold
+            accent: themeStore.accentGold
         )
-    ]
+    ]}
 
     private var totalPages: Int { pages.count + 2 }
 
@@ -148,7 +149,7 @@ struct OnboardingView: View {
             HStack(spacing: 8) {
                 ForEach(0..<totalPages, id: \.self) { idx in
                     Circle()
-                        .fill(idx == page ? Color.accentBlue : Color.mainGrey.opacity(0.3))
+                        .fill(idx == page ? Color.mainBlack : Color.mainGrey.opacity(0.3))
                         .frame(width: 8, height: 8)
                 }
             }
@@ -160,7 +161,7 @@ struct OnboardingView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Circle().fill(Color.accentBlue))
+                    .background(Circle().fill(Color.accentBlack))
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
@@ -468,18 +469,20 @@ private struct PracticeIllustration: View {
 }
 
 private struct CustomizeIllustration: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     let accent: Color
     let size: CGFloat
     let px: CGFloat
     let py: CGFloat
 
-    private let palette: [Color] = [
-        Color.accentBlue,
-        Color.accentGreen,
-        Color.accentPurple,
-        Color.accentGold,
-        Color.accentPink
-    ]
+    private var palette: [Color] {[
+        themeStore.accentBlue,
+        themeStore.accentGreen,
+        themeStore.accentPurple,
+        themeStore.accentGold,
+        themeStore.accentPink
+    ]}
 
     var body: some View {
         ZStack {

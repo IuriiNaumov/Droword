@@ -3,7 +3,6 @@ import SwiftUI
 struct Duo3DStyle: ViewModifier {
     let bgColor: Color
     var isDisabled: Bool = false
-    @State private var isPressed = false
 
     func body(content: Content) -> some View {
         content
@@ -12,23 +11,18 @@ struct Duo3DStyle: ViewModifier {
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .background(
-                ZStack(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(darkerShade(of: bgColor, by: 0.15))
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(isDisabled ? Color.mainGrey.opacity(0.5) : bgColor)
-                        .padding(.bottom, isPressed ? 1 : 4)
-                }
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isDisabled ? Color.mainGrey.opacity(0.4) : bgColor)
             )
-            .offset(y: isPressed ? 3 : 0)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .animation(.spring(response: 0.15, dampingFraction: 0.9), value: isPressed)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in if !isDisabled { isPressed = true } }
-                    .onEnded { _ in isPressed = false }
-            )
-            .allowsHitTesting(!isDisabled)
+    }
+}
+
+struct Duo3DButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

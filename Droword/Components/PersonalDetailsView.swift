@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PersonalDetailsView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("userName") private var userName: String = ""
     @AppStorage("userEmail") private var userEmail: String = ""
@@ -8,6 +9,7 @@ struct PersonalDetailsView: View {
     @State private var tempName: String = ""
     @State private var tempEmail: String = ""
     @State private var showEmailError = false
+    @State private var showToast = false
 
     private var isEmailValid: Bool {
         let email = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -86,12 +88,11 @@ struct PersonalDetailsView: View {
                     if showEmailError {
                         Text("Please enter a valid email")
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(.accentRed)
+                            .foregroundColor(themeStore.accentRed)
                             .padding(.top, 4)
                     }
                 }
 
-                Spacer(minLength: 0)
                 Button(action: {
                     let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
                     let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -99,20 +100,27 @@ struct PersonalDetailsView: View {
                     if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
                         userName = trimmedName
                         userEmail = trimmedEmail.lowercased()
-                        dismiss()
+                        showToast = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            dismiss()
+                        }
                     } else {
                         showEmailError = !isEmailValid && !trimmedEmail.isEmpty
                     }
                 }) {
                     Text("Save")
-                        .duo3DStyle(Color.accentGreen, isDisabled: !canSave)
+                        .duo3DStyle(Color.accentBlack, isDisabled: !canSave)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
                 .disabled(!canSave)
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
             .padding(.bottom, 30)
+
+            if showToast {
+                BannerToastView(type: .success, message: "Saved", duration: 1.5)
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {

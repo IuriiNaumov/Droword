@@ -47,6 +47,7 @@ struct LanguageCubePicker: View {
 
 struct LanguageCube: View {
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var themeStore: ThemeStore
     let language: LanguageOption
     let isSelected: Bool
     let isBlocked: Bool
@@ -54,9 +55,13 @@ struct LanguageCube: View {
 
     @State private var internalPressedState: Bool = false
 
+    private var resolvedColor: Color {
+        themeStore.isMonochrome ? themeStore.monoDark : language.color
+    }
+
     private var textColor: Color {
         if isBlocked { return .gray }
-        if isSelected { return Color.accentBlue }
+        if isSelected { return resolvedColor }
         return Color.mainBlack
     }
 
@@ -80,14 +85,14 @@ struct LanguageCube: View {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(
                         isSelected
-                        ? language.color.opacity(0.15)
+                        ? resolvedColor.opacity(0.15)
                         : isBlocked
                         ? Color.gray.opacity(0.08)
                         : Color.cardBackground
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(isSelected ? language.color : Color.divider, lineWidth: isSelected ? 2.5 : 1)
+                            .stroke(isSelected ? resolvedColor : Color.divider, lineWidth: isSelected ? 2.5 : 1)
                     )
             )
 

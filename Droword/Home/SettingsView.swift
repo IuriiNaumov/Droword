@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UserNotifications
 
 enum SettingsDestination: Hashable {
     case personalDetails
@@ -7,6 +8,7 @@ enum SettingsDestination: Hashable {
     case appearance
     case theme
     case voiceAndSpeech
+    case notifications
     case featureFlags
 }
 
@@ -25,6 +27,7 @@ struct SettingsView: View {
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
     @State private var path = NavigationPath()
+    @State private var csvFileURL: URL?
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
@@ -100,7 +103,7 @@ struct SettingsView: View {
                             .frame(width: 92, height: 92)
                             .offset(x: -4, y: 4)
                         }
-                        .onTapGesture { showAvatarPicker = true }
+                        .onTapGesture { Haptics.lightImpact(); showAvatarPicker = true }
 
                         Text(displayName)
                             .font(.custom("Poppins-Bold", size: 22))
@@ -110,28 +113,35 @@ struct SettingsView: View {
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
-                            SettingItem(icon: "person.circle", color: Color.accentGreen, title: "Personal details"),
+                            SettingItem(icon: "person.circle", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentGreen, title: "Personal details"),
                         ]) { item in
                             if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "moon.fill", color: .accentGold, title: "Appearance", value: appearanceTitle),
-                            SettingItem(icon: "paintpalette.fill", color: .mainBlack, title: "Theme", value: themeStore.title),
-                            SettingItem(icon: "textformat.size", color: .yellow, title: "Language", value: languageStore.learningLanguage),
-                            SettingItem(icon: "bell.badge.fill", color: .pink, title: "Notifications"),
-                            SettingItem(icon: "mic.fill", color: .blue, title: "Voice & Speech")
+                            SettingItem(icon: "moon.fill", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentGold, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "paintpalette.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .mainBlack, title: "Theme", value: themeStore.title),
+                            SettingItem(icon: "textformat.size", color: themeStore.isMonochrome ? themeStore.monoDark : .yellow, title: "Language", value: languageStore.learningLanguage),
+                            SettingItem(icon: "bell.badge.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .pink, title: "Notifications"),
+                            SettingItem(icon: "mic.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .blue, title: "Voice & Speech")
                         ]) { item in
                             if item.title == "Language" { path.append(SettingsDestination.language) }
                             if item.title == "Appearance" { path.append(SettingsDestination.appearance) }
                             if item.title == "Theme" { path.append(SettingsDestination.theme) }
+                            if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "flag.checkered", color: Color.accentBlue, title: "Feature Flags", value: nil)
+                            SettingItem(icon: "flag.checkered", color: Color.mainBlack, title: "Feature Flags", value: nil)
                         ]) { item in
                             path.append(SettingsDestination.featureFlags)
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "square.and.arrow.up", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentBlue, title: "Export Dictionary")
+                        ]) { _ in
+                            exportCSV()
                         }
                     }
 
@@ -164,6 +174,8 @@ struct SettingsView: View {
                         .environmentObject(themeStore)
                 case .voiceAndSpeech:
                     VoiceAndSpeechSettingsView()
+                case .notifications:
+                    NotificationSettingsView()
                 case .featureFlags:
                     FeatureFlagsView()
                 }
@@ -180,9 +192,61 @@ struct SettingsView: View {
                 }
             }
         }
+        .onChange(of: csvFileURL) { _, newURL in
+            guard let url = newURL else { return }
+            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let root = scene.windows.first?.rootViewController {
+                var topVC = root
+                while let presented = topVC.presentedViewController { topVC = presented }
+                if let popover = av.popoverPresentationController {
+                    popover.sourceView = topVC.view
+                    popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
+                    popover.permittedArrowDirections = []
+                }
+                topVC.present(av, animated: true)
+            }
+            csvFileURL = nil
+        }
         .onAppear {
             avatarImage = loadAvatarFromDisk()
         }
+    }
+
+    private func exportCSV() {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+
+        var csv = "Word,Translation,Type,Tag,Comment,Example,Date Added\n"
+        for w in store.words {
+            let fields: [String] = [
+                csvEscape(w.word),
+                csvEscape(w.translation ?? ""),
+                csvEscape(w.type),
+                csvEscape(w.tag ?? ""),
+                csvEscape(w.comment ?? ""),
+                csvEscape(w.example ?? ""),
+                df.string(from: w.dateAdded)
+            ]
+            csv += fields.joined(separator: ",") + "\n"
+        }
+
+        let tempDir = FileManager.default.temporaryDirectory
+        let fileURL = tempDir.appendingPathComponent("Droword_Dictionary.csv")
+        do {
+            try csv.write(to: fileURL, atomically: true, encoding: .utf8)
+            csvFileURL = fileURL
+        } catch {
+            print("Failed to write CSV:", error.localizedDescription)
+        }
+    }
+
+    private func csvEscape(_ field: String) -> String {
+        let needsQuoting = field.contains(",") || field.contains("\"") || field.contains("\n")
+        if needsQuoting {
+            return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        }
+        return field
     }
 
     private func groupedSettingsSection(
@@ -192,6 +256,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             ForEach(items) { item in
                 Button {
+                    Haptics.selection()
                     onTap?(item)
                 } label: {
                     HStack(spacing: 16) {
@@ -227,7 +292,7 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 20)
     }
 
@@ -357,7 +422,7 @@ private struct RadioButtonRow: View {
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(Color.accentBlue)
+                            .fill(Color.accentBlack)
                             .frame(width: 22, height: 22)
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
@@ -374,7 +439,7 @@ private struct RadioButtonRow: View {
             .padding(.horizontal)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.cardBackground)
             )
         }
@@ -395,6 +460,7 @@ struct FeatureFlagsView: View {
                     Spacer()
                     Toggle("", isOn: $featureFlagShowOnboarding)
                         .labelsHidden()
+                        .tint(Color.accentBlack)
                 }
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 20).fill(Color.cardBackground))
@@ -410,6 +476,84 @@ struct FeatureFlagsView: View {
         }
         .navigationTitle("Feature Flags")
         .navigationBarTitleDisplayMode(.large)
+    }
+}
+
+struct NotificationSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("notifDailyReminders") private var dailyReminders: Bool = true
+    @AppStorage("notifStreakMilestones") private var streakMilestones: Bool = true
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Notifications")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+                    .padding(.top, 12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Daily reminders")
+                                .font(.custom("Poppins-Medium", size: 16))
+                                .foregroundColor(.primary)
+                            Text("Morning & evening practice nudges")
+                                .font(.custom("Poppins-Regular", size: 13))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Toggle("", isOn: $dailyReminders)
+                            .labelsHidden()
+                            .tint(Color.accentBlack)
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Streak milestones")
+                                .font(.custom("Poppins-Medium", size: 16))
+                                .foregroundColor(.primary)
+                            Text("Celebrate 7, 30, 100 day streaks")
+                                .font(.custom("Poppins-Regular", size: 13))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Toggle("", isOn: $streakMilestones)
+                            .labelsHidden()
+                            .tint(Color.accentBlack)
+                    }
+                    .padding()
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
+                }
+                .padding(.horizontal)
+            }
+            .padding(.vertical, 20)
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .onChange(of: dailyReminders) { _, enabled in
+            if enabled {
+                NotificationManager.shared.requestAuthorization { granted in
+                    if granted {
+                        NotificationManager.shared.scheduleTwiceDaily()
+                    }
+                }
+            } else {
+                let center = UNUserNotificationCenter.current()
+                center.removePendingNotificationRequests(withIdentifiers: [
+                    "daily.reminder.morning",
+                    "daily.reminder.evening"
+                ])
+            }
+        }
     }
 }
 

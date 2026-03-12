@@ -93,6 +93,34 @@ final class NotificationManager {
         center.add(request)
     }
 
+    func scheduleStreakMilestone(streak: Int) {
+        let milestones = [7, 30, 100, 365]
+        guard milestones.contains(streak) else { return }
+        guard UserDefaults.standard.bool(forKey: "notifStreakMilestones") else { return }
+
+        let center = UNUserNotificationCenter.current()
+        let content = UNMutableNotificationContent()
+        content.title = "Streak milestone!"
+        content.body = "You've been learning for \(streak) days in a row. Keep going!"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: "streak.milestone.\(streak)", content: content, trigger: trigger)
+        center.add(request)
+    }
+
+    func scheduleDailyGoalCompletion() {
+        let center = UNUserNotificationCenter.current()
+        let content = UNMutableNotificationContent()
+        content.title = "Daily goal reached!"
+        content.body = "Awesome, you've hit your word goal for today."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        let request = UNNotificationRequest(identifier: "daily.goal.done.\(Date().timeIntervalSince1970)", content: content, trigger: trigger)
+        center.add(request)
+    }
+
     func cancelAll() {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()

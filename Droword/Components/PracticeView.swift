@@ -27,12 +27,17 @@ enum PracticeMode: String, CaseIterable {
 struct PracticeView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
 
     @State private var selectedMode: PracticeMode = .review
     @State private var currentIndex: Int = 0
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
     @State private var showListeningPlayer = false
+
+    @State private var quizSessionSize: Int = 10
+    @State private var quizFilterTag: String? = nil
+    @State private var quizStarted = false
 
     private var cards: [WordCard] {
         store.words.map { word in
@@ -175,9 +180,17 @@ struct PracticeView: View {
                     case .review:
                         reviewContent
                     case .quiz:
-                        QuizMultipleChoiceView()
+                        if quizStarted {
+                            QuizMultipleChoiceView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
+                        } else {
+                            quizSetupView
+                        }
                     case .typing:
-                        QuizTypingView()
+                        if quizStarted {
+                            QuizTypingView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
+                        } else {
+                            quizSetupView
+                        }
                     case .listening:
                         listeningEntryView
                     }
@@ -190,10 +203,12 @@ struct PracticeView: View {
         }
         .onChange(of: selectedMode) { _ in
             if selectedMode == .review { prepareSession() }
+            quizStarted = false
         }
         .fullScreenCover(isPresented: $showListeningPlayer) {
             ListeningPlayerView()
                 .environmentObject(store)
+                .environmentObject(themeStore)
         }
     }
 
@@ -277,8 +292,8 @@ struct PracticeView: View {
                         .padding(.vertical, 10)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(selectedMode == mode ? Color.accentBlue : Color.clear)
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(selectedMode == mode ? Color.accentBlack : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)
@@ -286,9 +301,115 @@ struct PracticeView: View {
         }
         .padding(4)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color.cardBackground)
         )
+    }
+
+    private var availableTags: [String] {
+        let tags = Set(store.words.compactMap { $0.tag }).sorted()
+        return tags
+    }
+
+    private var quizSetupView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            VStack(spacing: 8) {
+                Text(selectedMode == .quiz ? "Quiz Setup" : "Typing Setup")
+                    .font(.custom("Poppins-Bold", size: 24))
+                    .foregroundColor(.mainBlack)
+
+                Text("Choose how many words and which tags to include")
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(.mainGrey)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Session size")
+                    .font(.custom("Poppins-Medium", size: 15))
+                    .foregroundColor(.mainBlack)
+
+                HStack(spacing: 10) {
+                    ForEach([5, 10, 15, 20], id: \.self) { size in
+                        Button {
+                            Haptics.selection()
+                            quizSessionSize = size
+                        } label: {
+                            Text("\(size)")
+                                .font(.custom("Poppins-Medium", size: 15))
+                                .foregroundColor(quizSessionSize == size ? .white : .mainBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(quizSessionSize == size ? Color.accentBlack : Color.cardBackground)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+
+            if !availableTags.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Filter by tag")
+                        .font(.custom("Poppins-Medium", size: 15))
+                        .foregroundColor(.mainBlack)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            tagChip(title: "All words", tag: nil)
+                            ForEach(availableTags, id: \.self) { tag in
+                                tagChip(title: tag, tag: tag)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+
+            Button {
+                Haptics.mediumImpact()
+                quizStarted = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14))
+                    Text("Start \(selectedMode == .quiz ? "Quiz" : "Typing")")
+                        .font(.custom("Poppins-Bold", size: 17))
+                }
+                .foregroundColor(.white)
+            }
+            .duo3DStyle(Color.accentBlack)
+            .buttonStyle(Duo3DButtonStyle())
+            .padding(.horizontal, 24)
+
+            Spacer()
+            Spacer()
+        }
+    }
+
+    private func tagChip(title: String, tag: String?) -> some View {
+        let isSelected = quizFilterTag == tag
+        return Button {
+            Haptics.selection()
+            quizFilterTag = tag
+        } label: {
+            Text(title)
+                .font(.custom("Poppins-Medium", size: 14))
+                .foregroundColor(isSelected ? .white : .mainBlack)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(isSelected ? Color.accentBlack : Color.cardBackground)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private var completionScreen: some View {
@@ -336,8 +457,8 @@ struct PracticeView: View {
                 .padding(.vertical, 14)
                 .padding(.horizontal, 40)
                 .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(store.words.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlue)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(store.words.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlack)
                 )
             }
             .buttonStyle(.plain)
@@ -367,11 +488,10 @@ private struct RatingButton: View {
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .fill(bg)
                 )
                 .foregroundColor(textColor)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -379,6 +499,7 @@ private struct RatingButton: View {
 
 struct WordCardPracticeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
 
     let card: WordCard
 
@@ -393,15 +514,14 @@ struct WordCardPracticeView: View {
     private var backgroundColor: Color {
         if let tag = card.tag {
             switch tag {
-            case "Chat":   return Color.accentBlue
-            case "Travel": return Color.accentGreen
-            case "Street": return Color.accentPink
-            case "Movies": return Color.accentPurple
-            case "Golden": return Color.accentGold
+            case "Chat":   return themeStore.accentBlue
+            case "Travel": return themeStore.accentGreen
+            case "Street": return themeStore.accentPink
+            case "Movies": return themeStore.accentPurple
+            case "Golden": return themeStore.accentGold
             default:
-                if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
-                   let color = Color(fromHexString: custom.colorHex) {
-                    return color
+                if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
+                    return themeStore.resolvedTagColor(custom.colorHex)
                 }
             }
         }
@@ -464,7 +584,7 @@ struct WordCardPracticeView: View {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.6))
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
@@ -472,17 +592,17 @@ struct WordCardPracticeView: View {
         VStack(alignment: .leading, spacing: 12) {
             if let tag = card.tag, !tag.isEmpty {
                 Text(tag)
-                    .font(.custom("Poppins-Medium", size: 14))
-                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.4))
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .stroke(darkerShade(of: backgroundColor, by: 0.1), lineWidth: 1)
-                    )
+                    .font(.custom("Poppins-Medium", size: 15))
+                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 28)
                     .background(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(backgroundColor)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(backgroundColor.opacity(isDarkBackground ? 0.5 : 0.32))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(backgroundColor.opacity(isDarkBackground ? 0.6 : 0.45), lineWidth: 1)
                     )
                     .padding(.bottom, 2)
             }
@@ -577,27 +697,27 @@ struct WordCardPracticeView: View {
                 .padding(.top, 50)
 
             HStack(spacing: 12) {
-                RatingButton(title: "Again", bg: Color.accentRed, fg: nil) { onAgain() }
-                RatingButton(title: "Hard", bg: Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) { onHard() }
-                RatingButton(title: "Good", bg: Color.accentGreen, fg: nil) { onGood() }
+                RatingButton(title: "Again", bg: themeStore.accentRed, fg: nil) { onAgain() }
+                RatingButton(title: "Hard", bg: themeStore.isMonochrome ? Color("MonoMedium") : Color(red: 1.0, green: 0.902, blue: 0.655), fg: nil) { onHard() }
+                RatingButton(title: "Good", bg: themeStore.accentGreen, fg: nil) { onGood() }
                 RatingButton(
                     title: "Easy",
-                    bg: Color(red: 0.718, green: 0.894, blue: 0.780),
-                    fg: Color(red: 0.373, green: 0.561, blue: 0.420)
+                    bg: themeStore.isMonochrome ? Color("MonoLight") : Color(red: 0.718, green: 0.894, blue: 0.780),
+                    fg: themeStore.isMonochrome ? nil : Color(red: 0.373, green: 0.561, blue: 0.420)
                 ) { onEasy() }
             }
         }
         .padding()
         .frame(maxWidth: 520)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(backgroundColor)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .stroke(Color.divider, lineWidth: 1)
                 )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func playAudio() {

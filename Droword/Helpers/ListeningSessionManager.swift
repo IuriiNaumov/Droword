@@ -59,6 +59,7 @@ final class ListeningSessionManager: ObservableObject {
     @Published var settings = ListeningSettings.load()
     @Published var totalWords = 0
     @Published var sleepTimerRemaining: Int = 0
+    @Published var isSessionComplete = false
 
     private var queue: [StoredWord] = []
     private var sessionTask: Task<Void, Never>?
@@ -68,7 +69,7 @@ final class ListeningSessionManager: ObservableObject {
     func startSession(words: [StoredWord], filterTag: String?) {
         stop()
 
-        settings.includeExamples = false
+        isSessionComplete = false
 
         var filtered = words
         if let tag = filterTag, !tag.isEmpty {
@@ -127,22 +128,34 @@ final class ListeningSessionManager: ObservableObject {
     }
 
     func skipForward() {
-        AudioManager.shared.stopPlayback()
-        resumeIfPaused()
+        let nextIndex = currentWordIndex + 1
+        if nextIndex >= queue.count {
+            stop()
+            isSessionComplete = true
+            return
+        }
+        restartSession(at: nextIndex)
     }
 
     func skipBackward() {
-        if currentWordIndex > 0 {
-            currentWordIndex -= 2
-            if currentWordIndex < 0 { currentWordIndex = -1 }
-        }
-        AudioManager.shared.stopPlayback()
-        resumeIfPaused()
+        let prevIndex = max(0, currentWordIndex - 1)
+        restartSession(at: prevIndex)
     }
 
     func updateSettings(_ newSettings: ListeningSettings) {
         settings = newSettings
         settings.save()
+    }
+
+    private func restartSession(at index: Int) {
+        sessionTask?.cancel()
+        sessionTask = nil
+        AudioManager.shared.stopPlayback()
+        resumeIfPaused()
+        isPaused = false
+
+        currentWordIndex = index
+        sessionTask = Task { await runSession() }
     }
 
     private func runSession() async {
@@ -169,17 +182,17 @@ final class ListeningSessionManager: ObservableObject {
                 }
 
                 currentPhase = .word
-                if Task.isCancelled { break }
+                try Task.checkCancellation()
                 try await waitIfPaused()
                 try await AudioManager.shared.playAndWait(text: firstText)
 
                 currentPhase = .pause
-                if Task.isCancelled { break }
+                try Task.checkCancellation()
                 try await waitIfPaused()
                 try await sleepFor(settings.pauseDuration)
 
                 currentPhase = .translation
-                if Task.isCancelled { break }
+                try Task.checkCancellation()
                 try await waitIfPaused()
                 if !secondText.isEmpty {
                     try await AudioManager.shared.playAndWait(text: secondText)
@@ -187,14 +200,14 @@ final class ListeningSessionManager: ObservableObject {
 
                 if settings.includeExamples, let example = word.example, !example.isEmpty {
                     currentPhase = .example
-                    if Task.isCancelled { break }
+                    try Task.checkCancellation()
                     try await waitIfPaused()
                     try await sleepFor(0.8)
                     try await AudioManager.shared.playAndWait(text: example)
                 }
 
                 currentPhase = .gap
-                if Task.isCancelled { break }
+                try Task.checkCancellation()
                 try await sleepFor(1.5)
 
             } catch is CancellationError {
@@ -206,10 +219,13 @@ final class ListeningSessionManager: ObservableObject {
             currentWordIndex += 1
         }
 
-        AudioManager.shared.stopPlayback()
-        isPlaying = false
-        currentWord = nil
-        clearNowPlaying()
+        if !Task.isCancelled {
+            AudioManager.shared.stopPlayback()
+            isPlaying = false
+            currentWord = nil
+            isSessionComplete = true
+            clearNowPlaying()
+        }
     }
 
     private func waitIfPaused() async throws {

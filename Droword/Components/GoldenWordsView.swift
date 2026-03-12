@@ -3,11 +3,12 @@ import SwiftUI
 struct GoldenWordsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var golden: GoldenWordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
 
-    private let gold = Color.accentGold
-    private var darkGold: Color { darkerShade(of: Color.accentGold, by: 0.15) }
-    private var midTextGold: Color { darkerShade(of: Color.accentGold, by: 0.35) }
-    private var titleGold: Color { darkerShade(of: Color.accentGold, by: 0.5) }
+    private var gold: Color { themeStore.accentGold }
+    private var darkGold: Color { darkerShade(of: themeStore.accentGold, by: 0.15) }
+    private var midTextGold: Color { darkerShade(of: themeStore.accentGold, by: 0.35) }
+    private var titleGold: Color { darkerShade(of: themeStore.accentGold, by: 0.5) }
 
     var body: some View {
         if golden.isLoading || !golden.goldenWords.isEmpty {

@@ -1,17 +1,20 @@
 import SwiftUI
 
 struct StatCardView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     let title: String
     let value: String
 
     @Environment(\.colorScheme) private var colorScheme
 
     private var baseColor: Color {
-        Color.accentBlue
+        themeStore.isMonochrome ? Color.mainBlack.opacity(0.75) : themeStore.accentBlue
     }
 
     private var textColor: Color {
-        darkerShade(of: baseColor, by: colorScheme == .dark ? 0.3 : 0.4)
+        if themeStore.isMonochrome { return .white }
+        return darkerShade(of: baseColor, by: colorScheme == .dark ? 0.3 : 0.4)
     }
 
     var body: some View {
@@ -27,10 +30,10 @@ struct StatCardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(baseColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color.divider, lineWidth: 1)
                 )
         )

@@ -29,7 +29,6 @@ struct DrowordApp: App {
                 .environmentObject(golden)
                 .environmentObject(languageStore)
                 .environmentObject(themeStore)
-
         }
     }
 

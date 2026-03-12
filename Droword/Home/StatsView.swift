@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StatsView: View {
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @State private var showDetailedStats = false
 
     private var totalWordsEver: Int {
@@ -53,6 +54,7 @@ struct StatsView: View {
         .onTapGesture { showDetailedStats = true }
         .fullScreenCover(isPresented: $showDetailedStats) {
             DetailedStatsView()
+                .environmentObject(themeStore)
         }
     }
 }

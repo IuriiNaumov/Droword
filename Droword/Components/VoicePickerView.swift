@@ -23,7 +23,7 @@ struct VoicePickerView: View {
                             .frame(width: 22, height: 22)
                         if option.key == selectedKey {
                             Circle()
-                                .fill(Color.accentBlue)
+                                .fill(Color.accentBlack)
                                 .frame(width: 22, height: 22)
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))

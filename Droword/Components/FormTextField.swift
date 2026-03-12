@@ -4,7 +4,7 @@ import Combine
 struct FormTextField: View {
     let title: String
     @Binding var text: String
-    var focusedColor: Color = Color.accentBlue
+    var focusedColor: Color = Color.mainBlack
     var maxLength: Int? = nil
     var showCounter: Bool = false
 

@@ -29,10 +29,10 @@ struct AddWordButton: View {
                             .transition(.opacity)
                     }
                 }
-                .duo3DStyle(Color.accentGreen, isDisabled: isDisabled)
+                .duo3DStyle(Color.accentBlack, isDisabled: isDisabled)
             }
             .disabled(isDisabled || isLoading)
-            .buttonStyle(.plain)
+            .buttonStyle(Duo3DButtonStyle())
 
             if let message = errorMessage {
                 Text(message)

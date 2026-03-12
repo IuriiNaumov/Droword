@@ -16,7 +16,7 @@ final class QuizSessionManager: ObservableObject {
     @Published var correctCount: Int = 0
     @Published var isComplete: Bool = false
 
-    private let maxSessionSize = 10
+    var maxSessionSize = 10
 
     var currentItem: QuizItem? {
         guard currentIndex < queue.count else { return nil }
@@ -25,9 +25,15 @@ final class QuizSessionManager: ObservableObject {
 
     var total: Int { queue.count }
 
-    func prepareSession(from words: [StoredWord]) {
-        let items = words
+    func prepareSession(from words: [StoredWord], filterTag: String? = nil) {
+        var filtered = words
             .filter { $0.translation != nil && !$0.translation!.isEmpty }
+
+        if let tag = filterTag, !tag.isEmpty {
+            filtered = filtered.filter { $0.tag == tag }
+        }
+
+        let items = filtered
             .map { w in
                 QuizItem(
                     id: w.id,

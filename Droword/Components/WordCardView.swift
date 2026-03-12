@@ -3,6 +3,8 @@ import AVFoundation
 import UIKit
 
 struct WordCardView: View, Equatable {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     let word: String
     let translation: String?
     let type: String?
@@ -28,15 +30,14 @@ struct WordCardView: View, Equatable {
 
     private func colorForTag(_ tag: String) -> Color {
         switch tag {
-        case "Chat": return Color.accentBlue
-        case "Travel": return Color.accentGreen
-        case "Street": return Color.accentPink
-        case "Movies": return Color.accentPurple
-        case "Golden": return Color.accentGold
+        case "Chat": return themeStore.accentBlue
+        case "Travel": return themeStore.accentGreen
+        case "Street": return themeStore.accentPink
+        case "Movies": return themeStore.accentPurple
+        case "Golden": return themeStore.accentGold
         default:
-            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
-               let color = Color(fromHexString: custom.colorHex) {
-                return color
+            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
+                return themeStore.resolvedTagColor(custom.colorHex)
             }
             return Color.cardBackground
         }
@@ -51,13 +52,14 @@ struct WordCardView: View, Equatable {
                 .padding(.vertical, 4)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var highlightedExample: AttributedString = ""
+    @State private var showDeleteConfirmation = false
 
     private var isGolden: Bool { tag == "Golden" }
 
@@ -87,17 +89,17 @@ struct WordCardView: View, Equatable {
 
                 if let tag = tag, !tag.isEmpty {
                     Text(tag)
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.4))
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .stroke(darkerShade(of: colorForTag(tag), by: 0.1), lineWidth: 1)
-                        )
+                        .font(.custom("Poppins-Medium", size: 15))
+                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 28)
                         .background(
-                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                .fill(colorForTag(tag))
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(colorForTag(tag).opacity(isDarkBackground ? 0.5 : 0.32))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(colorForTag(tag).opacity(isDarkBackground ? 0.6 : 0.45), lineWidth: 1)
                         )
                         .padding(.bottom, 2)
                 }
@@ -159,7 +161,13 @@ struct WordCardView: View, Equatable {
 
                 HStack {
                     Spacer()
-                    Button(action: onDelete) {
+                    Button(action: { shareWord() }) {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundColor(secondaryTextColor.opacity(0.6))
+                            .padding(.top, 8)
+                    }
+                    .buttonStyle(.plain)
+                    Button(action: { Haptics.warning(); showDeleteConfirmation = true }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -185,7 +193,7 @@ struct WordCardView: View, Equatable {
 
                 HStack {
                     Spacer()
-                    Button(action: onDelete) {
+                    Button(action: { Haptics.warning(); showDeleteConfirmation = true }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -197,14 +205,14 @@ struct WordCardView: View, Equatable {
         .padding()
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(backgroundColor)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .stroke(Color.divider, lineWidth: 1)
                 )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .padding(.top, 12)
         .onTapGesture {
             if isExpanded {
@@ -215,6 +223,12 @@ struct WordCardView: View, Equatable {
             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
                 isExpanded.toggle()
             }
+        }
+        .alert("Delete word?", isPresented: $showDeleteConfirmation) {
+            Button("Delete", role: .destructive) { onDelete() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete \"\(word)\"?")
         }
         .onAppear {
             if let example = example {
@@ -250,6 +264,27 @@ struct WordCardView: View, Equatable {
             .padding(.top, 6)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func shareWord() {
+        Haptics.lightImpact()
+        var text = "\(word)"
+        if let translation = translation { text += " — \(translation)" }
+        if let example = example, !example.isEmpty { text += "\n\"\(example)\"" }
+        UIPasteboard.general.string = text
+
+        let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.windows.first?.rootViewController {
+            var topVC = root
+            while let presented = topVC.presentedViewController { topVC = presented }
+            if let popover = av.popoverPresentationController {
+                popover.sourceView = topVC.view
+                popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            topVC.present(av, animated: true)
+        }
     }
 
     private func playAudio() {

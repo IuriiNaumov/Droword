@@ -4,11 +4,15 @@ import AVFoundation
 struct HomeView: View {
     @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @StateObject private var golden = GoldenWordsStore()
 
     @State private var showAddWordView = false
     @State private var selectedTab: Tab = .home
     @State private var lastGoldenTrigger = 0
+    @State private var activeMilestone: MilestoneType?
+    @AppStorage("lastCelebratedWordCount") private var lastCelebratedWordCount: Int = 0
+    @AppStorage("lastCelebratedDailyGoal") private var lastCelebratedDailyGoalDate: String = ""
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -81,9 +85,10 @@ struct HomeView: View {
                     .tabItem { Label("Add", systemImage: "plus.circle.fill") }
                     .tag(Tab.add)
             }
-            .tint(Color.accentBlue)
+            .tint(Color.mainBlack)
             .background(Color.appBackground.ignoresSafeArea())
             .onChange(of: selectedTab) { _, newValue in
+                Haptics.selection()
                 if newValue == .add {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                         showAddWordView = true
@@ -93,9 +98,21 @@ struct HomeView: View {
             }
             .fullScreenCover(isPresented: $showAddWordView) {
                 AddWordView(store: store)
+                    .environmentObject(themeStore)
                     .transaction { $0.disablesAnimations = true }
             }
             .environmentObject(golden)
+            .overlay {
+                if let milestone = activeMilestone {
+                    MilestoneCelebrationView(milestone: milestone) {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            activeMilestone = nil
+                        }
+                    }
+                    .transition(.opacity)
+                    .zIndex(100)
+                }
+            }
         }
         .onChange(of: store.words.count) { _, newValue in
             if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
@@ -103,6 +120,27 @@ struct HomeView: View {
                     await golden.fetchSuggestions(basedOn: store.words, languageStore: LanguageStore())
                 }
                 lastGoldenTrigger = newValue
+            }
+
+            let todayCount = store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
+            let target = UserDefaults.standard.integer(forKey: "dailyGoalTarget")
+            let effectiveTarget = target > 0 ? target : 5
+            if todayCount == effectiveTarget {
+                NotificationManager.shared.scheduleDailyGoalCompletion()
+                let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+                if lastCelebratedDailyGoalDate != todayStr {
+                    lastCelebratedDailyGoalDate = todayStr
+                    activeMilestone = .dailyGoal
+                }
+            }
+
+            let wordMilestones = [10, 25, 50, 100, 200, 500]
+            for m in wordMilestones {
+                if newValue >= m, lastCelebratedWordCount < m {
+                    lastCelebratedWordCount = m
+                    activeMilestone = .wordCount(m)
+                    break
+                }
             }
         }
     }
@@ -113,11 +151,15 @@ struct HomeView: View {
                 ProfileHeaderView()
                 StatsView()
 
+                StreakCalendarView()
+                    .padding(.horizontal, 20)
+
                 dailyGoalWidget
                     .padding(.horizontal, 20)
 
                 if dueWordCount > 0 {
                     Button {
+                        Haptics.mediumImpact()
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                             selectedTab = .practice
                         }
@@ -130,7 +172,8 @@ struct HomeView: View {
                         }
                         .foregroundColor(.white)
                     }
-                    .duo3DStyle(Color.accentGreen)
+                    .duo3DStyle(Color.accentBlack)
+                    .buttonStyle(Duo3DButtonStyle())
                     .padding(.horizontal, 20)
                 }
 
@@ -179,11 +222,11 @@ struct HomeView: View {
         return HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .stroke(Color.accentGreen.opacity(0.2), lineWidth: 6)
+                    .stroke(themeStore.accentGreen.opacity(0.2), lineWidth: 6)
                     .frame(width: 56, height: 56)
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(Color.accentGreen, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .stroke(themeStore.accentGreen, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .frame(width: 56, height: 56)
                     .rotationEffect(.degrees(-90))
                     .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
@@ -203,10 +246,10 @@ struct HomeView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.cardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color.divider, lineWidth: 1)
                 )
         )

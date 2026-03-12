@@ -3,33 +3,45 @@ import SwiftUI
 struct ThemePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
+    @State private var showToast = false
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Theme")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 12)
+        ZStack {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("Theme")
+                        .font(.custom("Poppins-Bold", size: 26))
+                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 12)
 
-                VStack(spacing: 16) {
-                    paletteRow(title: "Colorful", palette: .colorful)
-                    paletteRow(title: "Monochrome", palette: .monochrome)
+                    VStack(spacing: 16) {
+                        paletteRow(title: "Colorful", palette: .colorful)
+                        paletteRow(title: "Monochrome", palette: .monochrome)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    Button(action: {
+                        showToast = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            dismiss()
+                        }
+                    }) {
+                        Text("Save")
+                            .duo3DStyle(Color.accentBlack)
+                    }
+                    .buttonStyle(Duo3DButtonStyle())
                 }
-
-                Spacer(minLength: 0)
-
-                Button(action: { dismiss() }) {
-                    Text("Save")
-                        .duo3DStyle(Color.accentGreen)
-                }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 30)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 30)
+            .background(Color.appBackground.ignoresSafeArea())
+
+            if showToast {
+                BannerToastView(type: .success, message: "Saved", duration: 1.5)
+            }
         }
-        .background(Color.appBackground.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -57,18 +69,18 @@ struct ThemePickerView: View {
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.accentBlue)
+                        .foregroundColor(.mainBlack)
                 }
             }
             .padding(16)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color.cardBackground)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(isSelected ? Color.accentBlue : Color.divider, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isSelected ? Color.mainBlack : Color.divider, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
