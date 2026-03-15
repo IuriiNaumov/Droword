@@ -263,9 +263,12 @@ struct HomeView: View {
                     }
                     .padding(.top, 4)
                 } else {
-                    EmptyListView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .padding(.top, 40)
+                    EmptyListView(
+                        icon: "heart.fill",
+                        title: "Add your first word",
+                        subtitle: "That's all it takes to start learning."
+                    )
+                    .padding(.top, 40)
                 }
             }
             .padding(.bottom, 60)

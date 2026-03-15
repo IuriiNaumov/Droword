@@ -148,16 +148,15 @@ struct DrowordApp: App {
     }
 
     private func handleIncomingURL(_ url: URL) {
-        guard url.scheme == "droword",
-              url.host == "add",
-              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let wordParam = components.queryItems?.first(where: { $0.name == "word" })?.value,
-              !wordParam.isEmpty else { return }
+        guard url.scheme == "droword", url.host == "add" else { return }
+
+        let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
 
         NotificationCenter.default.post(
             name: .sharedWordReceived,
             object: nil,
-            userInfo: ["word": wordParam]
+            userInfo: ["word": word]
         )
     }
 }

@@ -100,33 +100,21 @@ struct DictionaryView: View {
                     if isLoading {
                         Skeleton()
                     } else if filteredWords.isEmpty {
-                        VStack {
-                            Spacer(minLength: 40)
-                            VStack(spacing: 18) {
-                                Text(searchText.isEmpty ? "Your word garden is waiting" : "No words found")
-                                    .font(.title3.weight(.medium))
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-
-                                if searchText.isEmpty {
-                                    Text("Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day.")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary.opacity(0.8))
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 32)
-                                } else {
-                                    Text("Try a different search or remove the filter.")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary.opacity(0.8))
-                                        .multilineTextAlignment(.center)
-                                        .padding(.horizontal, 32)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            Spacer(minLength: 100)
+                        if searchText.isEmpty {
+                            EmptyListView(
+                                icon: "book.closed",
+                                title: "Your word garden is waiting",
+                                subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
+                            )
+                            .frame(minHeight: 300)
+                        } else {
+                            EmptyListView(
+                                icon: "magnifyingglass",
+                                title: "No words found",
+                                subtitle: "Try a different search or remove the filter."
+                            )
+                            .frame(minHeight: 300)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 300)
                     } else {
                         if isSelectMode {
                             Button {
