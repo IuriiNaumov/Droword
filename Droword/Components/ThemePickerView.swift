@@ -48,13 +48,12 @@ struct ThemePickerView: View {
             Haptics.selection()
         } label: {
             VStack(spacing: 12) {
-                // Preview card
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(previewBg)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? Color.accentBlack : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
                         )
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -89,15 +88,14 @@ struct ThemePickerView: View {
                     .font(.custom("Poppins-Medium", size: 14))
                     .foregroundColor(.primary)
 
-                // Checkmark
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.accentBlack : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
+                        .stroke(isSelected ? themeStore.buttonAccent : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
                         .frame(width: 26, height: 26)
 
                     if isSelected {
                         Circle()
-                            .fill(Color.accentBlack)
+                            .fill(themeStore.buttonAccent)
                             .frame(width: 26, height: 26)
 
                         Image(systemName: "checkmark")
@@ -112,17 +110,15 @@ struct ThemePickerView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Preview colors per palette (avatar, line1, line2, card1, card2)
-
     private func previewColors(for palette: ThemeStore.Palette) -> (Color, Color, Color, Color, Color) {
         switch palette {
         case .colorful:
             return (
-                Color(red: 0.35, green: 0.60, blue: 0.95),
-                Color(red: 0.35, green: 0.75, blue: 0.55),
-                Color(red: 0.90, green: 0.70, blue: 0.30),
-                Color(red: 0.55, green: 0.45, blue: 0.85),
-                Color(red: 0.90, green: 0.45, blue: 0.55)
+                Color(red: 0.60, green: 0.76, blue: 0.95),
+                Color(red: 0.58, green: 0.84, blue: 0.70),
+                Color(red: 0.93, green: 0.82, blue: 0.55),
+                Color(red: 0.72, green: 0.64, blue: 0.90),
+                Color(red: 0.93, green: 0.65, blue: 0.70)
             )
         case .duolingo:
             return (
@@ -137,8 +133,6 @@ struct ThemePickerView: View {
             return (mono, mono.opacity(0.8), mono.opacity(0.6), mono.opacity(0.7), mono.opacity(0.5))
         }
     }
-
-    // MARK: - Colors
 
     private var previewBg: Color {
         colorScheme == .dark

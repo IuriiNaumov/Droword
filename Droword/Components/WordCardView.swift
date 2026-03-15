@@ -2,7 +2,7 @@ import SwiftUI
 import AVFoundation
 import UIKit
 
-struct WordCardView: View, Equatable {
+struct WordCardView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     let word: String
@@ -14,18 +14,21 @@ struct WordCardView: View, Equatable {
     let explanation: String?
     let breakdown: String?
     let tag: String?
+    let storedWord: StoredWord?
     let onDelete: () -> Void
 
-    static func == (lhs: WordCardView, rhs: WordCardView) -> Bool {
-        lhs.word == rhs.word &&
-        lhs.translation == rhs.translation &&
-        lhs.type == rhs.type &&
-        lhs.example == rhs.example &&
-        lhs.transcription == rhs.transcription &&
-        lhs.explanation == rhs.explanation &&
-        lhs.breakdown == rhs.breakdown &&
-        lhs.comment == rhs.comment &&
-        lhs.tag == rhs.tag
+    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void) {
+        self.word = word
+        self.translation = translation
+        self.type = type
+        self.example = example
+        self.transcription = transcription
+        self.comment = comment
+        self.explanation = explanation
+        self.breakdown = breakdown
+        self.tag = tag
+        self.storedWord = storedWord
+        self.onDelete = onDelete
     }
 
     private func colorForTag(_ tag: String) -> Color {
@@ -59,13 +62,12 @@ struct WordCardView: View, Equatable {
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var highlightedExample: AttributedString = ""
-    @State private var cachedBgColor: Color?
-    @State private var cachedIsDark: Bool?
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
 
     private var isGolden: Bool { tag == "Golden" }
 
     private var backgroundColor: Color {
-        if let cached = cachedBgColor { return cached }
         if let tag = tag, !tag.isEmpty {
             return colorForTag(tag)
         }
@@ -73,8 +75,7 @@ struct WordCardView: View, Equatable {
     }
 
     private var isDarkBackground: Bool {
-        if let cached = cachedIsDark { return cached }
-        return backgroundColor.isDarkColor
+        backgroundColor.isDarkColor
     }
 
     private var primaryTextColor: Color {
@@ -163,14 +164,22 @@ struct WordCardView: View, Equatable {
                 }
 
                 HStack {
+                    if storedWord != nil {
+                        Button(action: shareWord) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16))
+                                .foregroundColor(secondaryTextColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     Spacer()
                     Button(action: { Haptics.warning(); onDelete() }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
-                            .padding(.top, 8)
                     }
                     .buttonStyle(.plain)
                 }
+                .padding(.top, 8)
 
             } else {
 
@@ -189,14 +198,22 @@ struct WordCardView: View, Equatable {
                 }
 
                 HStack {
+                    if storedWord != nil {
+                        Button(action: shareWord) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16))
+                                .foregroundColor(secondaryTextColor)
+                        }
+                        .buttonStyle(.plain)
+                    }
                     Spacer()
                     Button(action: { Haptics.warning(); onDelete() }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
-                            .padding(.top, 8)
                     }
                     .buttonStyle(.plain)
                 }
+                .padding(.top, 8)
             }
         }
         .padding()
@@ -222,16 +239,6 @@ struct WordCardView: View, Equatable {
             }
         }
         .onAppear {
-            // Cache expensive color computations once
-            let bg: Color
-            if let tag = tag, !tag.isEmpty {
-                bg = colorForTag(tag)
-            } else {
-                bg = Color.cardBackground
-            }
-            cachedBgColor = bg
-            cachedIsDark = bg.isDarkColor
-
             if let example = example {
                 highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
             } else {
@@ -276,6 +283,27 @@ struct WordCardView: View, Equatable {
             withAnimation {
                 isPlaying = false
             }
+        }
+    }
+
+    private func shareWord() {
+        guard let stored = storedWord else { return }
+        Haptics.lightImpact()
+
+        guard let image = ShareWordCardView.renderImage(for: stored, themeStore: themeStore) else { return }
+
+        let text = "\(stored.word) — \(stored.translation ?? "")"
+        let items: [Any] = [image, text]
+
+        let ac = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = windowScene.keyWindow?.rootViewController {
+            if let popover = ac.popoverPresentationController {
+                popover.sourceView = root.view
+                popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            root.present(ac, animated: true)
         }
     }
 

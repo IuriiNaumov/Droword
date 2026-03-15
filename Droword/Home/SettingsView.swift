@@ -13,6 +13,8 @@ enum SettingsDestination: Hashable {
     case dictionary
     case featureFlags
     case privacyPolicy
+    case achievements
+    case seasonalEffects
 }
 
 struct SettingsView: View {
@@ -25,8 +27,8 @@ struct SettingsView: View {
     @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
     @AppStorage("ttsRate") private var ttsRate: Double = 1.0
     @AppStorage("userName") private var storedUserName: String = ""
-    @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
-
+    @AppStorage("firstUseDate") private var firstUseDate: String = ""
+    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
     @State private var path = NavigationPath()
@@ -72,41 +74,7 @@ struct SettingsView: View {
                                     
                             }
 
-                            VStack {
-                                Spacer()
-                                HStack {
-                                    Spacer()
-                                    Image(systemName: "pencil")
-                                        .font(.system(size: 13, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(6)
-                                        .background(Color.mainBlack.opacity(0.6))
-                                        .clipShape(Circle())
-                                        .offset(x: 4, y: 4)
-                                }
-                            }
-                            .frame(width: 92, height: 92)
 
-                            VStack {
-                                Spacer()
-                                HStack {
-                                    Button {
-                                        deleteAvatarFromDisk()
-                                        avatarImage = nil
-                                    } label: {
-                                        Image(systemName: "trash.fill")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .padding(6)
-                                            .background(Color.mainBlack.opacity(0.6))
-                                            .clipShape(Circle())
-                                    }
-                                    .opacity(avatarImage == nil ? 0.0 : 1.0)
-                                    Spacer()
-                                }
-                            }
-                            .frame(width: 92, height: 92)
-                            .offset(x: -4, y: 4)
                         }
                         .onTapGesture { Haptics.lightImpact(); showAvatarPicker = true }
 
@@ -117,28 +85,32 @@ struct SettingsView: View {
                                 showFeatureFlags.toggle()
                                 Haptics.lightImpact()
                             }
+
+                        Text("\(usageDurationString()) with Droword")
+                            .font(.custom("Poppins-Regular", size: 14))
+                            .foregroundColor(.mainGrey)
                     }
                     .padding(.top, 32)
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
-                            SettingItem(icon: "person.circle", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentGreen, title: "Personal details"),
+                            SettingItem(icon: "person.circle", color: themeStore.iconGreen, title: "Personal details"),
                         ]) { item in
                             if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "moon.fill", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentGold, title: "Appearance", value: appearanceTitle),
-                            SettingItem(icon: "paintpalette.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .mainBlack, title: "Theme", value: themeStore.title),
-                            SettingItem(icon: "textformat.size", color: themeStore.isMonochrome ? themeStore.monoDark : .yellow, title: "Language", value: languageStore.learningLanguage),
-                            SettingItem(icon: "bell.badge.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .pink, title: "Notifications"),
-                            SettingItem(icon: "mic.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .blue, title: "Voice & Speech")
+                            SettingItem(icon: "moon.fill", color: themeStore.iconGold, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "textformat.size", color: themeStore.iconGold, title: "Language", value: languageStore.learningLanguage),
+                            SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
+                            SettingItem(icon: "mic.fill", color: themeStore.iconBlue, title: "Voice & Speech"),
+                            SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
                         ]) { item in
                             if item.title == "Language" { path.append(SettingsDestination.language) }
                             if item.title == "Appearance" { path.append(SettingsDestination.appearance) }
-                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
+                            if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
                         }
 
                         if showFeatureFlags {
@@ -150,13 +122,21 @@ struct SettingsView: View {
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "book.closed.fill", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentBlue, title: "Dictionary")
+                            SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title),
+                            SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off")
+                        ]) { item in
+                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
+                            if item.title == "Seasonal effects" { path.append(SettingsDestination.seasonalEffects) }
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "book.closed.fill", color: themeStore.iconBlue, title: "Dictionary")
                         ]) { _ in
                             path.append(SettingsDestination.dictionary)
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "hand.raised.fill", color: themeStore.isMonochrome ? themeStore.monoDark : .gray, title: "Privacy Policy")
+                            SettingItem(icon: "hand.raised.fill", color: themeStore.isMonochrome ? themeStore.monoDark : Color.gray, title: "Privacy Policy")
                         ]) { _ in
                             path.append(SettingsDestination.privacyPolicy)
                         }
@@ -201,6 +181,10 @@ struct SettingsView: View {
                     FeatureFlagsView()
                 case .privacyPolicy:
                     PrivacyPolicyView()
+                case .achievements:
+                    AchievementsView()
+                case .seasonalEffects:
+                    SeasonalEffectsSettingsView()
                 }
             }
         }
@@ -265,6 +249,35 @@ struct SettingsView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 20)
+    }
+
+    private func usageDurationString() -> String {
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.dateFormat = "yyyy-MM-dd"
+        guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
+            return "0 days"
+        }
+        let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: start, to: end)
+        let years = max(0, comps.year ?? 0)
+        let months = max(0, comps.month ?? 0)
+        let days = max(0, comps.day ?? 0)
+
+        func plural(_ value: Int, _ singular: String, _ plural: String) -> String {
+            return value == 1 ? "\(value) \(singular)" : "\(value) \(plural)"
+        }
+
+        if years >= 1 {
+            if months > 0 {
+                return "\(plural(years, "year", "years")) \(plural(months, "month", "months"))"
+            } else {
+                return plural(years, "year", "years")
+            }
+        } else if months >= 1 {
+            return plural(months, "month", "months")
+        } else {
+            return plural(days + 1, "day", "days")
+        }
     }
 
     private func saveAvatarToDisk(_ image: UIImage) {
@@ -684,6 +697,7 @@ struct VoiceAndSpeechSettingsView: View {
 }
 
 private struct RadioButtonRow: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -697,7 +711,7 @@ private struct RadioButtonRow: View {
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(Color.accentBlack)
+                            .fill(themeStore.buttonAccent)
                             .frame(width: 22, height: 22)
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
@@ -723,22 +737,14 @@ private struct RadioButtonRow: View {
 }
 
 struct FeatureFlagsView: View {
-    @AppStorage("featureFlagShowOnboarding") private var featureFlagShowOnboarding: Bool = false
-
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    Text("Show onboarding")
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Toggle("", isOn: $featureFlagShowOnboarding)
-                        .labelsHidden()
-                        .tint(Color.accentBlack)
-                }
-                .padding()
-                .background(RoundedRectangle(cornerRadius: 20).fill(Color.cardBackground))
+                Text("No active flags")
+                    .font(.custom("Poppins-Regular", size: 16))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 40)
             }
             .padding()
         }
@@ -755,6 +761,7 @@ struct FeatureFlagsView: View {
 }
 
 struct NotificationSettingsView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("notifDailyReminders") private var dailyReminders: Bool = true
     @AppStorage("notifStreakMilestones") private var streakMilestones: Bool = true
@@ -781,7 +788,7 @@ struct NotificationSettingsView: View {
                         Spacer()
                         Toggle("", isOn: $dailyReminders)
                             .labelsHidden()
-                            .tint(Color.accentBlack)
+                            .tint(themeStore.buttonAccent)
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
@@ -798,7 +805,7 @@ struct NotificationSettingsView: View {
                         Spacer()
                         Toggle("", isOn: $streakMilestones)
                             .labelsHidden()
-                            .tint(Color.accentBlack)
+                            .tint(themeStore.buttonAccent)
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
@@ -927,6 +934,124 @@ struct PrivacyPolicyView: View {
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
         .environmentObject(ThemeStore())
+}
+
+struct SeasonalEffectsSettingsView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
+    @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Seasonal effects")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+                    .padding(.top, 12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+
+                Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(.mainGrey)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 8)
+
+                VStack(spacing: 0) {
+                    toggleRow(
+                        icon: "sparkles",
+                        color: themeStore.iconPink,
+                        title: "Show effects",
+                        isOn: $seasonalEffectsEnabled
+                    )
+
+                    if seasonalEffectsEnabled {
+                        Divider().padding(.leading, 68)
+
+                        toggleRow(
+                            icon: "wind",
+                            color: themeStore.iconBlue,
+                            title: "Animate",
+                            isOn: $seasonalAnimationEnabled
+                        )
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .animation(.easeInOut(duration: 0.25), value: seasonalEffectsEnabled)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Current season")
+                        .font(.custom("Poppins-Medium", size: 14))
+                        .foregroundColor(.mainGrey)
+
+                    let season = Season.current
+                    HStack(spacing: 8) {
+                        Text(season.shapes.first?.emoji ?? "")
+                            .font(.system(size: 28))
+                        Text(seasonName(season))
+                            .font(.custom("Poppins-Medium", size: 16))
+                            .foregroundColor(.primary)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 4)
+
+                if seasonalEffectsEnabled {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.cardBackground)
+                            .frame(height: 180)
+                        SeasonalOverlayView(animated: seasonalAnimationEnabled)
+                            .frame(height: 180)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .allowsHitTesting(false)
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 20)
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+    }
+
+    private func toggleRow(icon: String, color: Color, title: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            Text(title)
+                .font(.custom("Poppins-Regular", size: 16))
+                .foregroundColor(.primary)
+            Spacer()
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(themeStore.buttonAccent)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 20)
+        .background(Color.cardBackground)
+    }
+
+    private func seasonName(_ season: Season) -> String {
+        switch season {
+        case .spring: return "Spring"
+        case .summer: return "Summer"
+        case .fall: return "Fall"
+        case .winter: return "Winter"
+        }
+    }
 }
 
 #Preview("Light") {

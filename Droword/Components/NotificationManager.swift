@@ -2,7 +2,7 @@ import Foundation
 import UserNotifications
 
 private let friendlyBodies: [String] = [
-    "Let’s grow your vocab — five minutes is all it takes ✨",
+    "Let's grow your vocab — five minutes is all it takes ✨",
     "Time to refresh a few words. Quick and simple!",
     "I prepared a mini‑session for you. Jump in?",
     "Your words miss you. Ready to review?",
@@ -15,6 +15,13 @@ private let friendlyTitles: [String] = [
     "Your vocab calls",
     "Quick refresh",
     "Small step today"
+]
+
+private let inactivityBodies: [String] = [
+    "It's been a while — your words are waiting!",
+    "A quick review keeps words fresh. Come back?",
+    "Don't let your progress fade — even 2 minutes help.",
+    "Your vocabulary misses you. Let's pick up where you left off!"
 ]
 
 private var rotatingIndex: Int {
@@ -79,6 +86,66 @@ final class NotificationManager {
         scheduleDailyReminder(hour: 19, minute: 0, tagName: tagName, identifier: "daily.reminder.evening")
     }
 
+    func scheduleDueWordsReminder(dueCount: Int, hour: Int = 12, minute: Int = 0) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["smart.due.words"])
+
+        guard dueCount > 0 else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Words waiting for you"
+        let wordUnit = dueCount == 1 ? "word" : "words"
+        content.body = "You have \(dueCount) \(wordUnit) ready for review. A quick session keeps them fresh!"
+        content.sound = .default
+
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: "smart.due.words", content: content, trigger: trigger)
+        center.add(request)
+    }
+
+    func scheduleStreakAtRiskReminder(currentStreak: Int) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["streak.at.risk"])
+
+        guard currentStreak >= 2 else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Don't break your streak!"
+        content.body = "You're on a \(currentStreak)-day streak. Practice today to keep it going!"
+        content.sound = .default
+
+        var dateComponents = DateComponents()
+        dateComponents.hour = 20
+        dateComponents.minute = 30
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let request = UNNotificationRequest(identifier: "streak.at.risk", content: content, trigger: trigger)
+        center.add(request)
+    }
+
+    func cancelStreakAtRiskReminder() {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["streak.at.risk"])
+    }
+
+    func scheduleWordQuizReminder(word: String, translation: String, after seconds: TimeInterval = 14400) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: ["word.quiz.contextual"])
+
+        let content = UNMutableNotificationContent()
+        content.title = "Do you remember?"
+        content.body = "What does \"\(word)\" mean? Tap to check → \(translation)"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(60, seconds), repeats: false)
+        let request = UNNotificationRequest(identifier: "word.quiz.contextual", content: content, trigger: trigger)
+        center.add(request)
+    }
+
     func scheduleOneTimeReminder(after seconds: TimeInterval, tagName: String? = nil, identifier: String = UUID().uuidString) {
         let center = UNUserNotificationCenter.current()
 
@@ -133,7 +200,7 @@ final class NotificationManager {
         ])
 
         let daysOffsets = [3, 7, 14, 30]
-        for d in daysOffsets {
+        for (i, d) in daysOffsets.enumerated() {
             let id = "inactive.\(d)d"
             let fire = Calendar.current.date(byAdding: .day, value: d, to: lastActive) ?? Date().addingTimeInterval(Double(d) * 86400)
             if fire < Date() { continue }
@@ -141,7 +208,7 @@ final class NotificationManager {
             let content = UNMutableNotificationContent()
             let pair = randomContent(tagName: nil)
             content.title = pair.title
-            content.body = pair.body + " — давно не виделись!"
+            content.body = inactivityBodies[i % inactivityBodies.count]
             content.sound = .default
 
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(5, fire.timeIntervalSinceNow), repeats: false)

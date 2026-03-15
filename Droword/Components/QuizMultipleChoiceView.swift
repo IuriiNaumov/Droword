@@ -4,10 +4,12 @@ struct QuizMultipleChoiceView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var badgeStore: BadgeStore
     @StateObject private var session = QuizSessionManager()
 
     var sessionSize: Int = 10
     var filterTag: String? = nil
+    var reversed: Bool = false
 
     @State private var options: [String] = []
     @State private var selectedOption: String? = nil
@@ -33,6 +35,19 @@ struct QuizMultipleChoiceView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.currentIndex)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
         .onAppear { startSession() }
+        .onChange(of: session.isComplete) { _, isComplete in
+            if isComplete { badgeStore.recordQuizCompletion() }
+        }
+    }
+
+    private var promptText: String {
+        guard let item = session.currentItem else { return "" }
+        return reversed ? item.translation : item.word
+    }
+
+    private var correctAnswer: String {
+        guard let item = session.currentItem else { return "" }
+        return reversed ? item.word : item.translation
     }
 
     private func questionView(item: QuizSessionManager.QuizItem) -> some View {
@@ -45,18 +60,18 @@ struct QuizMultipleChoiceView: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text(item.word)
+                Text(promptText)
                     .font(.custom("Poppins-Bold", size: 28))
                     .foregroundColor(.mainBlack)
                     .multilineTextAlignment(.center)
 
-                if let tr = item.transcription, !tr.isEmpty {
+                if !reversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
                         .foregroundColor(.mainGrey)
                 }
 
-                Text("Choose the correct translation")
+                Text(reversed ? "Choose the correct word" : "Choose the correct translation")
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(.mainGrey.opacity(0.7))
                     .padding(.top, 8)
@@ -65,7 +80,7 @@ struct QuizMultipleChoiceView: View {
 
             VStack(spacing: 12) {
                 ForEach(options, id: \.self) { option in
-                    optionButton(option: option, correctAnswer: item.translation)
+                    optionButton(option: option, correctAnswer: correctAnswer)
                 }
             }
             .padding(.horizontal, 24)
@@ -84,7 +99,7 @@ struct QuizMultipleChoiceView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.accentBlack)
+                                .fill(themeStore.buttonAccent)
                         )
                 }
                 .buttonStyle(.plain)
@@ -167,8 +182,9 @@ struct QuizMultipleChoiceView: View {
     }
 
     private func prepareOptions(for item: QuizSessionManager.QuizItem) {
-        let distractors = session.distractors(for: item, from: store.words)
-        var all = distractors + [item.translation]
+        let distractors = session.distractors(for: item, from: store.words, reversed: reversed)
+        let answer = reversed ? item.word : item.translation
+        var all = distractors + [answer]
         all.shuffle()
         options = all
         selectedOption = nil
@@ -181,7 +197,7 @@ struct QuizMultipleChoiceView: View {
         Haptics.selection()
         selectedOption = option
         hasAnswered = true
-        isCorrect = option.lowercased() == session.currentItem?.translation.lowercased()
+        isCorrect = option.lowercased() == correctAnswer.lowercased()
 
         if isCorrect {
             Haptics.success()
@@ -247,49 +263,57 @@ struct QuizCompletionView: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ZStack {
+            VStack(spacing: 24) {
+                Spacer()
 
-            Text("Session Complete!")
-                .font(.custom("Poppins-Bold", size: 28))
-                .foregroundColor(.mainBlack)
+                Text("Session Complete!")
+                    .font(.custom("Poppins-Bold", size: 28))
+                    .foregroundColor(.mainBlack)
 
-            ZStack {
-                Circle()
-                    .stroke(scoreColor.opacity(0.3), lineWidth: 8)
-                    .frame(width: 120, height: 120)
-                Circle()
-                    .trim(from: 0, to: Double(percentage) / 100.0)
-                    .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 120, height: 120)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeOut(duration: 0.8), value: percentage)
+                ZStack {
+                    Circle()
+                        .stroke(scoreColor.opacity(0.3), lineWidth: 8)
+                        .frame(width: 120, height: 120)
+                    Circle()
+                        .trim(from: 0, to: Double(percentage) / 100.0)
+                        .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 120, height: 120)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.8), value: percentage)
 
-                VStack(spacing: 2) {
-                    Text("\(correct)/\(total)")
-                        .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(.mainBlack)
-                    Text("\(percentage)%")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainGrey)
+                    VStack(spacing: 2) {
+                        Text("\(correct)/\(total)")
+                            .font(.custom("Poppins-Bold", size: 24))
+                            .foregroundColor(.mainBlack)
+                        Text("\(percentage)%")
+                            .font(.custom("Poppins-Medium", size: 14))
+                            .foregroundColor(.mainGrey)
+                    }
                 }
+
+                Button(action: { Haptics.mediumImpact(); onRestart() }) {
+                    Text("Try Again")
+                        .font(.custom("Poppins-Bold", size: 16))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(themeStore.buttonAccent)
+                        )
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 40)
+
+                Spacer()
             }
 
-            Button(action: { Haptics.mediumImpact(); onRestart() }) {
-                Text("Try Again")
-                    .font(.custom("Poppins-Bold", size: 16))
-                    .foregroundColor(.white)
-                    .padding(.vertical, 16)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color.accentBlack)
-                    )
+            if percentage >= 70 {
+                ConfettiView()
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 40)
-
-            Spacer()
         }
     }
 }

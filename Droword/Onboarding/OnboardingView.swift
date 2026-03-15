@@ -161,7 +161,7 @@ struct OnboardingView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Circle().fill(Color.accentBlack))
+                    .background(Circle().fill(themeStore.buttonAccent))
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
@@ -335,60 +335,77 @@ private struct DictionaryIllustration: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(accent.opacity(0.12))
-                .frame(width: size * 0.58, height: size * 0.38)
-                .rotationEffect(.degrees(-4))
-                .offset(x: -size * 0.06 + px * 0.15, y: size * 0.04 + py * 0.1)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(accent.opacity(0.15))
+                .frame(width: size * 0.68, height: size * 0.52)
+                .rotationEffect(.degrees(-3))
+                .offset(x: -size * 0.02 + px * 0.12, y: size * 0.02 + py * 0.08)
 
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(accent.opacity(0.2))
-                .frame(width: size * 0.58, height: size * 0.38)
-                .rotationEffect(.degrees(2))
-                .offset(x: size * 0.02 + px * 0.25, y: -size * 0.01 + py * 0.15)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Travel")
+                    .font(.custom("Poppins-Medium", size: size * 0.04))
+                    .foregroundColor(darkerShade(of: accent, by: 0.45))
+                    .padding(.vertical, size * 0.014)
+                    .padding(.horizontal, size * 0.03)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(accent.opacity(0.32))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(darkerShade(of: accent, by: 0.15), lineWidth: 1)
+                    )
 
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.cardBackground)
+                Spacer().frame(height: size * 0.025)
 
-                VStack(alignment: .leading, spacing: size * 0.028) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(accent.opacity(0.6))
-                        .frame(width: size * 0.22, height: size * 0.025)
+                HStack(alignment: .top, spacing: size * 0.015) {
+                    Text("Serendipity")
+                        .font(.custom("Poppins-Bold", size: size * 0.065))
+                        .foregroundColor(.mainBlack)
 
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(accent.opacity(0.3))
-                        .frame(width: size * 0.30, height: size * 0.018)
+                    Spacer()
 
-                    Spacer().frame(height: size * 0.01)
-
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(Color.mainGrey.opacity(0.15))
-                        .frame(width: size * 0.38, height: size * 0.014)
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(Color.mainGrey.opacity(0.12))
-                        .frame(width: size * 0.28, height: size * 0.014)
-
-                    Spacer().frame(height: size * 0.015)
-
-                    Capsule()
-                        .fill(accent.opacity(0.2))
-                        .frame(width: size * 0.14, height: size * 0.025)
+                    Image(systemName: "waveform")
+                        .font(.system(size: size * 0.032, weight: .medium))
+                        .foregroundColor(.mainBlack.opacity(0.4))
+                        .padding(.top, size * 0.015)
                 }
-                .padding(size * 0.045)
+
+                Text("/ˌser.ənˈdɪp.ə.ti/")
+                    .font(.custom("Poppins-Regular", size: size * 0.035))
+                    .foregroundColor(.mainGrey)
+
+                Spacer().frame(height: size * 0.02)
+
+                Text("Счастливая случайность")
+                    .font(.custom("Poppins-Regular", size: size * 0.038))
+                    .foregroundColor(.mainBlack.opacity(0.8))
+
+                Spacer().frame(height: size * 0.02)
+
+                HStack(spacing: 0) {
+                    Text("A ")
+                        .font(.custom("Poppins-Regular", size: size * 0.032))
+                        .foregroundColor(.mainBlack.opacity(0.6))
+                    Text("serendipity")
+                        .font(.custom("Poppins-Bold", size: size * 0.032))
+                        .foregroundColor(.orange)
+                    Text(" led me...")
+                        .font(.custom("Poppins-Regular", size: size * 0.032))
+                        .foregroundColor(.mainBlack.opacity(0.6))
+                }
             }
-            .frame(width: size * 0.58, height: size * 0.38)
-            .offset(x: px * 0.35, y: py * 0.25)
-
-            Circle()
-                .fill(accent.opacity(0.35))
-                .frame(width: size * 0.04)
-                .offset(x: size * 0.34 + px * 0.5, y: -size * 0.22 + py * 0.4)
-
-            Circle()
-                .fill(accent.opacity(0.2))
-                .frame(width: size * 0.025)
-                .offset(x: -size * 0.36 + px * 0.6, y: size * 0.18 + py * 0.5)
+            .padding(size * 0.05)
+            .frame(width: size * 0.68, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(accent.opacity(0.2))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color.mainGrey.opacity(0.12), lineWidth: 1)
+            )
+            .offset(x: px * 0.3, y: py * 0.2)
         }
     }
 }
@@ -401,70 +418,72 @@ private struct PracticeIllustration: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .stroke(accent.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
-                .frame(width: size * 0.7, height: size * 0.7)
-                .offset(x: px * 0.1, y: py * 0.08)
+            VStack(spacing: size * 0.025) {
+                VStack(spacing: size * 0.012) {
+                    Text("3 / 10")
+                        .font(.custom("Poppins-Medium", size: size * 0.035))
+                        .foregroundColor(.mainGrey)
 
-            Circle()
-                .stroke(accent.opacity(0.08), style: StrokeStyle(lineWidth: 1, dash: [3, 8]))
-                .frame(width: size * 0.52, height: size * 0.52)
-                .offset(x: px * 0.15, y: py * 0.12)
-
-            ForEach(0..<5, id: \.self) { i in
-                let angle = Double(i) * (360.0 / 5.0) + 20
-                let radius = size * 0.35
-                Circle()
-                    .fill(accent.opacity(0.25 + Double(i) * 0.08))
-                    .frame(width: size * 0.022)
-                    .offset(
-                        x: cos(angle * .pi / 180) * radius + px * 0.2,
-                        y: sin(angle * .pi / 180) * radius + py * 0.15
-                    )
-            }
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.cardBackground)
-
-                VStack(spacing: size * 0.025) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(accent.opacity(0.5))
-                        .frame(width: size * 0.18, height: size * 0.022)
-
-                    ZStack {
-                        Circle()
-                            .stroke(accent.opacity(0.15), lineWidth: size * 0.015)
-                        Circle()
-                            .trim(from: 0, to: 0.7)
-                            .stroke(accent.opacity(0.6), style: StrokeStyle(lineWidth: size * 0.015, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
-                    }
-                    .frame(width: size * 0.1, height: size * 0.1)
-
-                    HStack(spacing: size * 0.018) {
-                        ForEach(0..<4, id: \.self) { i in
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(i == 2 ? accent.opacity(0.6) : accent.opacity(0.2))
-                                .frame(width: size * 0.055, height: size * 0.018)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(accent.opacity(0.15))
+                            Capsule()
+                                .fill(accent)
+                                .frame(width: geo.size.width * 0.3)
                         }
                     }
+                    .frame(height: size * 0.012)
+                    .clipShape(Capsule())
+                    .padding(.horizontal, size * 0.02)
+                }
+
+                Text("Ephemeral")
+                    .font(.custom("Poppins-Bold", size: size * 0.07))
+                    .foregroundColor(.mainBlack)
+
+                Text("Choose the correct translation")
+                    .font(.custom("Poppins-Regular", size: size * 0.03))
+                    .foregroundColor(.mainGrey.opacity(0.7))
+
+                Spacer().frame(height: size * 0.005)
+
+                VStack(spacing: size * 0.02) {
+                    quizOption(text: "Постоянный", isCorrect: false, isSelected: false, size: size)
+                    quizOption(text: "Мимолётный", isCorrect: true, isSelected: true, size: size)
+                    quizOption(text: "Огромный", isCorrect: false, isSelected: false, size: size)
+                    quizOption(text: "Внезапный", isCorrect: false, isSelected: false, size: size)
                 }
             }
-            .frame(width: size * 0.42, height: size * 0.42)
-            .offset(x: px * 0.3, y: py * 0.2)
-
-            Circle()
-                .fill(accent.opacity(0.3))
-                .frame(width: size * 0.035)
-                .offset(x: -size * 0.32 + px * 0.5, y: -size * 0.25 + py * 0.4)
-
-            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                .fill(accent.opacity(0.2))
-                .frame(width: size * 0.03, height: size * 0.03)
-                .rotationEffect(.degrees(45))
-                .offset(x: size * 0.30 + px * 0.6, y: size * 0.22 + py * 0.5)
+            .padding(size * 0.045)
+            .frame(width: size * 0.72)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.cardBackground)
+                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+            )
+            .offset(x: px * 0.25, y: py * 0.18)
         }
+    }
+
+    private func quizOption(text: String, isCorrect: Bool, isSelected: Bool, size: CGFloat) -> some View {
+        HStack {
+            Text(text)
+                .font(.custom("Poppins-Medium", size: size * 0.037))
+                .foregroundColor(isSelected ? darkerShade(of: accent, by: 0.4) : .mainBlack.opacity(0.7))
+            Spacer()
+            if isSelected && isCorrect {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: size * 0.04))
+                    .foregroundColor(darkerShade(of: accent, by: 0.3))
+            }
+        }
+        .padding(.vertical, size * 0.025)
+        .padding(.horizontal, size * 0.035)
+        .background(
+            RoundedRectangle(cornerRadius: size * 0.035, style: .continuous)
+                .fill(isSelected ? accent.opacity(0.3) : Color.mainGrey.opacity(0.08))
+        )
     }
 }
 
@@ -486,75 +505,122 @@ private struct CustomizeIllustration: View {
 
     var body: some View {
         ZStack {
-            ForEach(0..<3, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(accent.opacity(0.08 + Double(i) * 0.03))
-                    .frame(width: size * 0.6, height: 1)
-                    .offset(
-                        x: px * 0.1,
-                        y: CGFloat(i - 1) * size * 0.2 + py * 0.1
-                    )
-            }
-
-            HStack(spacing: size * 0.035) {
-                ForEach(0..<5, id: \.self) { i in
-                    Circle()
-                        .fill(palette[i])
-                        .frame(width: size * 0.065, height: size * 0.065)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
-                        )
-                }
-            }
-            .offset(x: px * 0.2, y: -size * 0.15 + py * 0.15)
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(accent.opacity(0.15))
-                    .frame(width: size * 0.28, height: size * 0.035)
-
-                Capsule()
-                    .fill(accent.opacity(0.5))
-                    .frame(width: size * 0.16, height: size * 0.035)
-
-                Circle()
-                    .fill(Color.cardBackground)
-                    .frame(width: size * 0.042, height: size * 0.042)
-
-                    .offset(x: size * 0.135)
-            }
-            .offset(x: px * 0.25, y: size * 0.02 + py * 0.2)
-
             VStack(spacing: size * 0.025) {
-                ForEach(0..<2, id: \.self) { i in
-                    HStack(spacing: size * 0.02) {
-                        Circle()
-                            .fill(accent.opacity(0.25))
-                            .frame(width: size * 0.03)
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(Color.mainGrey.opacity(0.15))
-                            .frame(width: size * 0.15, height: size * 0.014)
-                        Spacer()
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(accent.opacity(0.2))
-                            .frame(width: size * 0.06, height: size * 0.014)
-                    }
-                    .frame(width: size * 0.35)
+                VStack(spacing: size * 0.012) {
+                    Circle()
+                        .fill(Color.mainGrey.opacity(0.15))
+                        .frame(width: size * 0.1, height: size * 0.1)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: size * 0.045, weight: .medium))
+                                .foregroundColor(.mainBlack.opacity(0.5))
+                        )
+
+                    Text("User")
+                        .font(.custom("Poppins-Bold", size: size * 0.038))
+                        .foregroundColor(.mainBlack)
                 }
+
+                VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: size * 0.014) {
+                        Text("Theme")
+                            .font(.custom("Poppins-Medium", size: size * 0.034))
+                            .foregroundColor(.mainBlack)
+
+                        HStack(spacing: size * 0.02) {
+                            ForEach(0..<5, id: \.self) { i in
+                                Circle()
+                                    .fill(palette[i])
+                                    .frame(width: size * 0.05, height: size * 0.05)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(i == 1 ? Color.mainBlack : Color.clear, lineWidth: 1.5)
+                                    )
+                            }
+                        }
+                    }
+                    .padding(.vertical, size * 0.022)
+                    .padding(.horizontal, size * 0.03)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.cardBackground)
+                )
+
+                VStack(spacing: 0) {
+                    settingsRow(icon: "moon.fill", color: accent, title: "Appearance", value: "Light", size: size)
+                    settingsRow(icon: "textformat.size", color: themeStore.accentGreen, title: "Language", value: "English", size: size)
+                    settingsRow(icon: "bell.badge.fill", color: themeStore.accentPink, title: "Notifications", value: nil, size: size)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                VStack(alignment: .leading, spacing: size * 0.01) {
+                    HStack {
+                        Text("Level 5")
+                            .font(.custom("Poppins-Bold", size: size * 0.033))
+                            .foregroundColor(.mainBlack)
+                        Spacer()
+                        Text("120 XP")
+                            .font(.custom("Poppins-Medium", size: size * 0.028))
+                            .foregroundColor(.mainGrey)
+                    }
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(accent.opacity(0.15))
+                            Capsule()
+                                .fill(accent)
+                                .frame(width: geo.size.width * 0.65)
+                        }
+                    }
+                    .frame(height: size * 0.016)
+                    .clipShape(Capsule())
+                }
+                .padding(.horizontal, size * 0.01)
             }
-            .offset(x: px * 0.3, y: size * 0.16 + py * 0.25)
-
-            Image(systemName: "sparkle")
-                .font(.system(size: size * 0.05, weight: .light))
-                .foregroundColor(accent.opacity(0.4))
-                .offset(x: size * 0.32 + px * 0.5, y: -size * 0.28 + py * 0.4)
-
-            Circle()
-                .fill(accent.opacity(0.2))
-                .frame(width: size * 0.025)
-                .offset(x: -size * 0.34 + px * 0.6, y: size * 0.15 + py * 0.5)
+            .padding(size * 0.035)
+            .frame(width: size * 0.72)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.appBackground)
+                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+            )
+            .offset(x: px * 0.25, y: py * 0.18)
         }
+    }
+
+    private func settingsRow(icon: String, color: Color, title: String, value: String?, size: CGFloat) -> some View {
+        HStack(spacing: size * 0.022) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: size * 0.045, height: size * 0.045)
+                Image(systemName: icon)
+                    .font(.system(size: size * 0.022, weight: .semibold))
+                    .foregroundColor(color)
+            }
+
+            Text(title)
+                .font(.custom("Poppins-Regular", size: size * 0.033))
+                .foregroundColor(.mainBlack)
+
+            Spacer()
+
+            if let value {
+                Text(value)
+                    .font(.custom("Poppins-Regular", size: size * 0.028))
+                    .foregroundColor(.mainGrey)
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: size * 0.022, weight: .semibold))
+                .foregroundColor(.mainGrey.opacity(0.5))
+        }
+        .padding(.vertical, size * 0.018)
+        .padding(.horizontal, size * 0.025)
+        .background(Color.cardBackground)
     }
 }
 

@@ -8,10 +8,12 @@ struct QuizTypingView: View {
 
     var sessionSize: Int = 10
     var filterTag: String? = nil
+    var reversed: Bool = false
 
     @State private var userInput: String = ""
     @State private var hasSubmitted = false
     @State private var isCorrect = false
+    @State private var isAlmostCorrect = false
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -36,6 +38,14 @@ struct QuizTypingView: View {
         .onTapGesture { isInputFocused = false }
     }
 
+    private func promptText(for item: QuizSessionManager.QuizItem) -> String {
+        reversed ? item.translation : item.word
+    }
+
+    private func expectedAnswer(for item: QuizSessionManager.QuizItem) -> String {
+        reversed ? item.word : item.translation
+    }
+
     private func typingView(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
             Text("\(session.currentIndex + 1) / \(session.total)")
@@ -46,18 +56,18 @@ struct QuizTypingView: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text(item.word)
+                Text(promptText(for: item))
                     .font(.custom("Poppins-Bold", size: 28))
                     .foregroundColor(.mainBlack)
                     .multilineTextAlignment(.center)
 
-                if let tr = item.transcription, !tr.isEmpty {
+                if !reversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
                         .foregroundColor(.mainGrey)
                 }
 
-                Text("Type the translation")
+                Text(reversed ? "Type the word" : "Type the translation")
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(.mainGrey.opacity(0.7))
                     .padding(.top, 8)
@@ -85,13 +95,39 @@ struct QuizTypingView: View {
                         }
                     }
 
-                if hasSubmitted && !isCorrect {
+                if hasSubmitted && isAlmostCorrect {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.3))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Almost correct!")
+                                .font(.custom("Poppins-Medium", size: 14))
+                                .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.3))
+                            if let item = session.currentItem {
+                                Text("Answer: \(expectedAnswer(for: item))")
+                                    .font(.custom("Poppins-Regular", size: 13))
+                                    .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.2))
+                            }
+                        }
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(themeStore.accentGold.opacity(0.3))
+                    )
+                    .transition(.scale.combined(with: .opacity))
+                }
+
+                if hasSubmitted && !isCorrect && !isAlmostCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
-                        Text("Correct: \(session.currentItem?.translation ?? "")")
-                            .font(.custom("Poppins-Medium", size: 14))
-                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                        if let item = session.currentItem {
+                            Text("Correct: \(expectedAnswer(for: item))")
+                                .font(.custom("Poppins-Medium", size: 14))
+                                .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                        }
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
@@ -102,7 +138,7 @@ struct QuizTypingView: View {
                     .transition(.scale.combined(with: .opacity))
                 }
 
-                if hasSubmitted && isCorrect {
+                if hasSubmitted && isCorrect && !isAlmostCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
@@ -136,7 +172,7 @@ struct QuizTypingView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
                                     ? Color.mainGrey.opacity(0.3)
-                                    : Color.accentBlack)
+                                    : themeStore.buttonAccent)
                         )
                 }
                 .buttonStyle(.plain)
@@ -155,7 +191,7 @@ struct QuizTypingView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.accentBlack)
+                                .fill(themeStore.buttonAccent)
                         )
                 }
                 .buttonStyle(.plain)
@@ -170,6 +206,7 @@ struct QuizTypingView: View {
         if !hasSubmitted {
             return isInputFocused ? Color.mainBlack : Color.divider
         }
+        if isAlmostCorrect { return themeStore.accentGold }
         return isCorrect ? themeStore.accentGreen : themeStore.accentRed
     }
 
@@ -179,6 +216,7 @@ struct QuizTypingView: View {
         userInput = ""
         hasSubmitted = false
         isCorrect = false
+        isAlmostCorrect = false
         isInputFocused = true
     }
 
@@ -187,10 +225,23 @@ struct QuizTypingView: View {
         let trimmed = userInput.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        hasSubmitted = true
-        isCorrect = trimmed.lowercased() == item.translation
+        let answer = expectedAnswer(for: item)
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
+        let input = trimmed.lowercased()
+
+        hasSubmitted = true
+        isCorrect = input == answer
+        isAlmostCorrect = false
+
+        if !isCorrect {
+            let dist = levenshteinDistance(input, answer)
+            let threshold = max(1, answer.count / 4)
+            if dist <= threshold {
+                isAlmostCorrect = true
+                isCorrect = true
+            }
+        }
 
         if isCorrect {
             Haptics.success()
@@ -202,6 +253,7 @@ struct QuizTypingView: View {
         QuizSessionManager.applyScheduling(
             for: item.id,
             correct: isCorrect,
+            isAlmostCorrect: isAlmostCorrect,
             store: store,
             languageStore: languageStore
         )
@@ -216,10 +268,38 @@ struct QuizTypingView: View {
         userInput = ""
         hasSubmitted = false
         isCorrect = false
+        isAlmostCorrect = false
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             isInputFocused = true
         }
+    }
+
+    private func levenshteinDistance(_ s: String, _ t: String) -> Int {
+        let sArr = Array(s)
+        let tArr = Array(t)
+        let m = sArr.count
+        let n = tArr.count
+
+        if m == 0 { return n }
+        if n == 0 { return m }
+
+        var prev = Array(0...n)
+        var curr = [Int](repeating: 0, count: n + 1)
+
+        for i in 1...m {
+            curr[0] = i
+            for j in 1...n {
+                let cost = sArr[i - 1] == tArr[j - 1] ? 0 : 1
+                curr[j] = min(
+                    prev[j] + 1,
+                    curr[j - 1] + 1,
+                    prev[j - 1] + cost
+                )
+            }
+            prev = curr
+        }
+        return prev[n]
     }
 
     private var emptyState: some View {

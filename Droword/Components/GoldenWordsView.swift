@@ -4,6 +4,7 @@ struct GoldenWordsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var golden: GoldenWordsStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var badgeStore: BadgeStore
 
     private var gold: Color { themeStore.accentGold }
     private var darkGold: Color { darkerShade(of: themeStore.accentGold, by: 0.15) }
@@ -45,6 +46,7 @@ struct GoldenWordsView: View {
                                     Button {
                                         withAnimation(.spring()) {
                                             golden.accept(word, store: store, languageStore: LanguageStore())
+                                            badgeStore.recordGoldenWordAccepted()
                                         }
                                     } label: {
                                         HStack(spacing: 6) {

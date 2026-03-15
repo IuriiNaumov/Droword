@@ -161,9 +161,15 @@ struct DetailedStatsView: View {
 
     private func miniStatCard(value: String, label: String) -> some View {
         VStack(spacing: 4) {
-            Text(value)
-                .font(.custom("Poppins-Bold", size: 20))
-                .foregroundColor(statTextColor)
+            Group {
+                if let num = Int(value) {
+                    AnimatedCounter(value: num)
+                } else {
+                    Text(value)
+                }
+            }
+            .font(.custom("Poppins-Bold", size: 20))
+            .foregroundColor(statTextColor)
             Text(label)
                 .font(.custom("Poppins-Medium", size: 12))
                 .foregroundColor(statTextColor.opacity(0.75))

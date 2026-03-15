@@ -12,6 +12,7 @@ enum DictionarySortOption: String, CaseIterable {
 
 struct DictionaryView: View {
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @State private var selectedTag: String? = nil
     @State private var isLoading = true
 
@@ -56,7 +57,7 @@ struct DictionaryView: View {
                                 .padding(.horizontal, 16)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(isSelectMode ? Color.accentBlack : Color.cardBackground)
+                                        .fill(isSelectMode ? themeStore.buttonAccent : Color.cardBackground)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -65,7 +66,6 @@ struct DictionaryView: View {
                 .padding(.top, 8)
                 .padding(.horizontal, horizontalPadding)
 
-                // Search bar
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.mainGrey)
@@ -140,7 +140,7 @@ struct DictionaryView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
-                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? Color.accentBlack : .mainGrey)
+                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.buttonAccent : .mainGrey)
                                     Text("Select all (\(filteredWords.count))")
                                         .font(.custom("Poppins-Medium", size: 15))
                                         .foregroundColor(.mainBlack)
@@ -164,7 +164,7 @@ struct DictionaryView: View {
                                     } label: {
                                         Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
                                             .font(.system(size: 22))
-                                            .foregroundColor(selectedWordIDs.contains(word.id) ? Color.accentBlack : .mainGrey)
+                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.buttonAccent : .mainGrey)
                                     }
                                     .buttonStyle(.plain)
                                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -179,7 +179,8 @@ struct DictionaryView: View {
                                     comment: word.comment,
                                     explanation: word.explanation,
                                     breakdown: word.breakdown,
-                                    tag: word.tag
+                                    tag: word.tag,
+                                    storedWord: word
                                 ) {
                                     store.remove(word)
                                 }
@@ -264,7 +265,6 @@ struct DictionaryView: View {
 
         var result = store.words
 
-        // Tag filter
         if !tag.isEmpty {
             result = result.filter {
                 ($0.tag ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -272,7 +272,6 @@ struct DictionaryView: View {
             }
         }
 
-        // Search filter
         if !search.isEmpty {
             result = result.filter { w in
                 w.word.lowercased().contains(search) ||
@@ -280,7 +279,6 @@ struct DictionaryView: View {
             }
         }
 
-        // Sort
         switch sortOption {
         case .newestFirst:
             result.sort { $0.dateAdded > $1.dateAdded }

@@ -3,8 +3,9 @@ import SwiftUI
 struct AddWordView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var languageStore: LanguageStore
-    @ObservedObject var store: WordsStore
 
+    var initialWord: String = ""
+    @ObservedObject var store: WordsStore
     @State private var word = ""
     @State private var translation = ""
     @State private var comment = ""
@@ -123,7 +124,10 @@ struct AddWordView: View {
             translationPlaceholder = translationPlaceholders.randomElement() ?? "Enter translation"
             commentPlaceholder = commentPlaceholders.randomElement() ?? "Enter a comment"
 
-            // Check clipboard for potential word
+            if !initialWord.isEmpty && word.isEmpty {
+                word = initialWord
+            }
+
             if let pasteString = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
                !pasteString.isEmpty,
                pasteString.count <= 60,
@@ -224,12 +228,11 @@ struct AddWordView: View {
 
         do {
             let result = try await translateWithGPT(word: trimmedWord, languageStore: languageStore)
-            let russianType = translatePartOfSpeechToRussian(result.type)
 
             await MainActor.run {
                 let newWord = StoredWord(
                     word: trimmedWord,
-                    type: russianType,
+                    type: result.type.lowercased(),
                     translation: result.translation.isEmpty ? translation : result.translation,
                     example: result.example,
                     explanation: result.explanation,
@@ -245,7 +248,6 @@ struct AddWordView: View {
             }
         } catch {
             print("⚠️ Translation error: \(error.localizedDescription)")
-            // Add the word with user-provided data even when translation fails
             await MainActor.run {
                 let newWord = StoredWord(
                     word: trimmedWord,
@@ -266,22 +268,7 @@ struct AddWordView: View {
         await MainActor.run { isAdding = false }
     }
 
-    private func translatePartOfSpeechToRussian(_ type: String?) -> String {
-        guard let type = type?.lowercased() else { return "" }
-        switch type {
-        case "verb": return "глагол"
-        case "phrase": return "фраза"
-        case "noun": return "существительное"
-        case "adjective": return "прилагательное"
-        case "adverb": return "наречие"
-        case "pronoun": return "местоимение"
-        case "preposition": return "предлог"
-        case "conjunction": return "союз"
-        case "interjection": return "междометие"
-        case "article": return "артикль"
-        default: return type
-        }
-    }
+
 }
 
 #Preview {

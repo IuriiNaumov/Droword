@@ -12,11 +12,9 @@ struct StreakCalendarView: View {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
 
-        // Group words by day
         let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
 
-        // Find the start of the grid (Sunday of weeksToShow weeks ago)
-        let todayWeekday = cal.component(.weekday, from: today) // 1=Sun, 7=Sat
+        let todayWeekday = cal.component(.weekday, from: today)
         let daysBack = (weeksToShow - 1) * 7 + (todayWeekday - 1)
         guard let startDate = cal.date(byAdding: .day, value: -daysBack, to: today) else { return [] }
 
@@ -78,7 +76,6 @@ struct StreakCalendarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                // Month labels
                 GeometryReader { geo in
                     let cellSize = (geo.size.width - CGFloat(weeksToShow - 1) * 3) / CGFloat(weeksToShow)
                     HStack(spacing: 0) {
@@ -95,7 +92,6 @@ struct StreakCalendarView: View {
                 }
                 .frame(height: 14)
 
-                // Calendar grid
                 GeometryReader { geo in
                     let cellSize = (geo.size.width - CGFloat(weeksToShow - 1) * 3) / CGFloat(weeksToShow)
                     HStack(alignment: .top, spacing: 3) {
@@ -119,7 +115,6 @@ struct StreakCalendarView: View {
                 .aspectRatio(CGFloat(weeksToShow) / CGFloat(daysInWeek), contentMode: .fit)
             }
 
-            // Legend
             HStack(spacing: 4) {
                 Text("Less")
                     .font(.custom("Poppins-Regular", size: 10))

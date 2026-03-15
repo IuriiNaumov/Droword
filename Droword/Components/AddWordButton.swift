@@ -1,5 +1,32 @@
 import SwiftUI
 
+private struct BouncingDotsView: View {
+    @State private var offsets: [CGFloat] = [0, 0, 0]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<3, id: \.self) { index in
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 8, height: 8)
+                    .offset(y: offsets[index])
+            }
+        }
+        .onAppear {
+            for i in 0..<3 {
+                withAnimation(
+                    .easeInOut(duration: 0.4)
+                    .repeatForever(autoreverses: true)
+                    .delay(Double(i) * 0.15)
+                ) {
+                    offsets[i] = -8
+                }
+            }
+            Haptics.selection()
+        }
+    }
+}
+
 struct AddWordButton: View {
     let title: String
     let isDisabled: Bool
@@ -7,6 +34,7 @@ struct AddWordButton: View {
     var onSuccess: (() -> Void)? = nil
     var onError: ((Error) -> Void)? = nil
 
+    @EnvironmentObject private var themeStore: ThemeStore
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -18,9 +46,13 @@ struct AddWordButton: View {
                 }
             } label: {
                 ZStack {
+                    // Hidden text to keep button size constant
+                    Text(title)
+                        .font(.custom("Poppins-Bold", size: 17))
+                        .foregroundColor(.clear)
+
                     if isLoading {
-                        ProgressView()
-                            .tint(.white)
+                        BouncingDotsView()
                             .transition(.opacity)
                     } else {
                         Text(title)
@@ -29,7 +61,7 @@ struct AddWordButton: View {
                             .transition(.opacity)
                     }
                 }
-                .duo3DStyle(Color.accentBlack, isDisabled: isDisabled)
+                .duo3DStyle(themeStore.buttonAccent, isDisabled: isDisabled)
             }
             .disabled(isDisabled || isLoading)
             .buttonStyle(Duo3DButtonStyle())

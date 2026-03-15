@@ -72,7 +72,7 @@ struct AddTagView: View {
 
                 Button(action: { saveTag() }) {
                     Text(isSaving ? "Adding..." : "Add")
-                        .duo3DStyle(Color.accentBlack, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .duo3DStyle(themeStore.buttonAccent, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

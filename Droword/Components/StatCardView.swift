@@ -1,5 +1,34 @@
 import SwiftUI
 
+struct AnimatedCounter: View {
+    let value: Int
+
+    @State private var displayedValue: Int = 0
+
+    var body: some View {
+        Text("\(displayedValue)")
+            .onAppear {
+                guard displayedValue != value else { return }
+                animateCount(to: value)
+            }
+            .onChange(of: value) { _, newValue in
+                animateCount(to: newValue)
+            }
+    }
+
+    private func animateCount(to target: Int) {
+        let steps = 20
+        let stepDuration = 0.035
+        for i in 0...steps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * stepDuration) {
+                let progress = Double(i) / Double(steps)
+                let eased = 1.0 - pow(1.0 - progress, 3)
+                displayedValue = Int(Double(target) * eased)
+            }
+        }
+    }
+}
+
 struct StatCardView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -19,9 +48,15 @@ struct StatCardView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Text(value)
-                .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(textColor)
+            Group {
+                if let num = Int(value) {
+                    AnimatedCounter(value: num)
+                } else {
+                    Text(value)
+                }
+            }
+            .font(.custom("Poppins-Bold", size: 22))
+            .foregroundColor(textColor)
 
             Text(title)
                 .font(.custom("Poppins-Medium", size: 13))

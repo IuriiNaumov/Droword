@@ -18,8 +18,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return val == 0 ? 1.0 : Float(val)
     }
 
-    private let openAITTSEndpoint = URL(string: "https://api.openai.com/v1/audio/speech")!
-
+    private let ttsEndpoint = URL(string: "https://droword-api.droword-api.workers.dev/tts")!
 
     private var playbackContinuation: CheckedContinuation<Void, Never>?
 
@@ -52,7 +51,6 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         try await playAudioSync(data: data, rate: rate)
     }
 
-    /// Fetches TTS audio data without playing it
     func fetchTTS(for text: String) async throws -> Data {
         return try await fetchAudioData(for: text)
     }
@@ -76,15 +74,12 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     }
     
     private func fetchAudioData(for text: String, voice: String) async throws -> Data {
-        var request = URLRequest(url: openAITTSEndpoint)
+        var request = URLRequest(url: ttsEndpoint)
         request.httpMethod = "POST"
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("audio/mpeg", forHTTPHeaderField: "Accept")
 
         let body: [String: Any] = [
-            "model": "gpt-4o-mini-tts",
-            "input": text,
+            "text": text,
             "voice": voice,
             "format": "mp3"
         ]
@@ -92,43 +87,19 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
-            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
+            throw NSError(domain: "TTS", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
         }
         if http.statusCode != 200 {
             let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            print("OpenAI HTTP error", http.statusCode, errorText)
-            throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
+            print("TTS HTTP error", http.statusCode, errorText)
+            throw NSError(domain: "TTS", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
         }
 
         return data
     }
 
     private func fetchAudioData(for text: String) async throws -> Data {
-        var request = URLRequest(url: openAITTSEndpoint)
-        request.httpMethod = "POST"
-        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("audio/mpeg", forHTTPHeaderField: "Accept")
-
-        let body: [String: Any] = [
-            "model": "gpt-4o-mini-tts",
-            "input": text,
-            "voice": currentVoice,
-            "format": "mp3"
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
-        }
-        if http.statusCode != 200 {
-            let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            print("OpenAI HTTP error", http.statusCode, errorText)
-            throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
-        }
-
-        return data
+        return try await fetchAudioData(for: text, voice: currentVoice)
     }
 
     private func playAudio(data: Data) throws {

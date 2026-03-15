@@ -47,30 +47,12 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
     }
 }
 
-struct ClaudeSuggestionsResponse: Codable {
-    struct Content: Codable {
-        let type: String
-        let text: String?
-    }
-
-    struct ClaudeError: Codable {
-        let type: String
-        let message: String
-    }
-
-    let id: String?
-    let type: String?
-    let role: String?
-    let content: [Content]?
-    let model: String?
-    let stop_reason: String?
-    let error: ClaudeError?
-}
-
 struct SuggestionsContainer: Codable {
     let topic: String?
     let suggestions: [SuggestedWord]
 }
+
+private let suggestWorkerURL = "https://droword-api.droword-api.workers.dev"
 
 @MainActor
 func fetchSuggestionsWithTopic(
@@ -80,76 +62,16 @@ func fetchSuggestionsWithTopic(
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
+    let url = URL(string: "\(suggestWorkerURL)/suggest")!
 
-    let url = URL(string: "https://api.anthropic.com/v1/messages")!
-    let wordsList = words.joined(separator: ", ")
-
-
-    let prompt = """
-    You are a vocabulary assistant.
-
-    Learning language: \(learningLanguage)
-    Native language: \(nativeLanguage)
-
-    Current words:
-    \(wordsList)
-
-    TASK:
-    1. Detect the main topic (one short phrase).
-    2. Add exactly TWO new words in \(learningLanguage):
-       - related to the topic
-       - not in the list
-       - suitable for A2–B1
-       - common in daily use
-    - Provide a short example sentence in the learning language.
-    - Provide a short one‑sentence explanation in the native language.
-    - Provide a brief breakdown/etymology in the native language if relevant (optional).
-    - Provide transcription in IPA or a common transcription if relevant (optional).
-
-    STRICT:
-    - word and example → only \(learningLanguage)
-    - translation, explanation, breakdown → only \(nativeLanguage)
-    - transcription → standard IPA or common Latin transcription
-    - valid JSON only
-
-    {
-      "topic": "string",
-      "suggestions": [
-        {
-          "word": "string",
-          "translation": "string",
-          "type": "string",
-          "example": "string",
-          "explanation": "string",
-          "breakdown": "string",
-          "transcription": "string"
-        },
-        {
-          "word": "string",
-          "translation": "string",
-          "type": "string",
-          "example": "string",
-          "explanation": "string",
-          "breakdown": "string",
-          "transcription": "string"
-        }
-      ]
-    }
-    """
-    
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
-    request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
     let body: [String: Any] = [
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": 1024,
-        "system": "You always return strictly valid JSON without explanations.",
-        "messages": [
-            ["role": "user", "content": prompt]
-        ]
+        "words": words,
+        "learningLanguage": learningLanguage,
+        "nativeLanguage": nativeLanguage
     ]
 
     request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -158,26 +80,9 @@ func fetchSuggestionsWithTopic(
 
     guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
         let raw = String(data: data, encoding: .utf8) ?? "No body"
-        throw NSError(domain: "Claude", code: -1, userInfo: [NSLocalizedDescriptionKey: raw])
+        throw NSError(domain: "Worker", code: -1, userInfo: [NSLocalizedDescriptionKey: raw])
     }
 
-    let decoded = try JSONDecoder().decode(ClaudeSuggestionsResponse.self, from: data)
-    guard let content = decoded.content?.first(where: { $0.type == "text" })?.text else {
-        throw NSError(domain: "Claude", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
-    }
-
-    let cleaned = sanitizeJSONObject(content)
-    guard let jsonData = cleaned.data(using: .utf8) else {
-        throw NSError(domain: "Claude", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
-    }
-
-    let container = try JSONDecoder().decode(SuggestionsContainer.self, from: jsonData)
+    let container = try JSONDecoder().decode(SuggestionsContainer.self, from: data)
     return (topic: container.topic, suggestions: container.suggestions)
-}
-
-private func sanitizeJSONObject(_ text: String) -> String {
-    if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
-        return String(text[start...end])
-    }
-    return text
 }

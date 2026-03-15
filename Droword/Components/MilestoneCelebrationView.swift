@@ -65,6 +65,7 @@ enum MilestoneType: Identifiable, Equatable {
 }
 
 struct MilestoneCelebrationView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     let milestone: MilestoneType
     let onDismiss: () -> Void
 
@@ -77,6 +78,9 @@ struct MilestoneCelebrationView: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
                 .onTapGesture { onDismiss() }
+
+            ConfettiView()
+                .ignoresSafeArea()
 
             VStack(spacing: 24) {
                 Text(milestone.emoji)
@@ -103,7 +107,7 @@ struct MilestoneCelebrationView: View {
                         .font(.custom("Poppins-Bold", size: 17))
                         .foregroundColor(.white)
                 }
-                .duo3DStyle(Color.accentBlack)
+                .duo3DStyle(themeStore.buttonAccent)
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
             }

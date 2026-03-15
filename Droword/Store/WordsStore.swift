@@ -65,6 +65,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
     }
 }
 
+let appGroupID = "group.com.droword.shared"
 
 @MainActor
 final class WordsStore: ObservableObject {
@@ -78,10 +79,18 @@ final class WordsStore: ObservableObject {
 
     private let storageKey = "WordsStore.words"
     private let totalKey = "WordsStore.totalWordsAdded"
+    private static let migrationKey = "WordsStore.migratedToAppGroup"
     private var hasLoaded = false
     private var saveTask: Task<Void, Never>?
 
-    init() { load() }
+    private var sharedDefaults: UserDefaults {
+        UserDefaults(suiteName: appGroupID) ?? UserDefaults.standard
+    }
+
+    init() {
+        migrateIfNeeded()
+        load()
+    }
 
     func add(_ word: StoredWord) {
         words.append(word)
@@ -100,8 +109,26 @@ final class WordsStore: ObservableObject {
         words.removeAll()
     }
 
+    private func migrateIfNeeded() {
+        let shared = sharedDefaults
+        guard !shared.bool(forKey: Self.migrationKey) else { return }
+
+        let standard = UserDefaults.standard
+
+        if let data = standard.data(forKey: storageKey) {
+            shared.set(data, forKey: storageKey)
+        }
+
+        let total = standard.integer(forKey: totalKey)
+        if total > 0 {
+            shared.set(total, forKey: totalKey)
+        }
+
+        shared.set(true, forKey: Self.migrationKey)
+    }
+
     private func load() {
-        let defaults = UserDefaults.standard
+        let defaults = sharedDefaults
 
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
@@ -112,24 +139,37 @@ final class WordsStore: ObservableObject {
         hasLoaded = true
     }
 
-    /// Debounced save — coalesces rapid changes into a single write after 0.3s
+    func reloadFromDisk() {
+        let defaults = sharedDefaults
+        if let data = defaults.data(forKey: storageKey),
+           let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
+            if decoded != words {
+                hasLoaded = false
+                words = decoded
+                totalWordsAdded = defaults.integer(forKey: totalKey)
+                hasLoaded = true
+            }
+        }
+    }
+
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
+            try? await Task.sleep(nanoseconds: 300_000_000)
             guard !Task.isCancelled, let self else { return }
             let copy = self.words
             let total = self.totalWordsAdded
             let storageKey = self.storageKey
             let totalKey = self.totalKey
+            let defaults = self.sharedDefaults
             Task.detached(priority: .utility) {
                 if let data = try? JSONEncoder().encode(copy) {
                     await MainActor.run {
-                        UserDefaults.standard.set(data, forKey: storageKey)
+                        defaults.set(data, forKey: storageKey)
                     }
                 }
                 await MainActor.run {
-                    UserDefaults.standard.set(total, forKey: totalKey)
+                    defaults.set(total, forKey: totalKey)
                 }
             }
         }

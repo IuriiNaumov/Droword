@@ -6,14 +6,21 @@ struct HomeView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var badgeStore: BadgeStore
     @StateObject private var golden = GoldenWordsStore()
 
     @State private var showAddWordView = false
+    @State private var sharedWord: String = ""
     @State private var selectedTab: Tab = .home
     @State private var lastGoldenTrigger = 0
     @State private var activeMilestone: MilestoneType?
     @AppStorage("lastCelebratedWordCount") private var lastCelebratedWordCount: Int = 0
     @AppStorage("lastCelebratedDailyGoal") private var lastCelebratedDailyGoalDate: String = ""
+    @AppStorage("hasSeenGoldenIntro") private var hasSeenGoldenIntro: Bool = false
+    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
+    @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
+    @AppStorage("dailyGoalDismissedDate") private var dailyGoalDismissedDate: String = ""
+    @State private var showGoldenIntro = false
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -54,6 +61,13 @@ struct HomeView: View {
 
     private var isGoalCompleted: Bool {
         wordsAddedToday >= max(1, dailyGoalTarget)
+    }
+
+    private var isDailyGoalDismissedToday: Bool {
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.dateFormat = "yyyy-MM-dd"
+        return dailyGoalDismissedDate == df.string(from: Date())
     }
 
     private func refreshDailyGoalIfNeeded() {
@@ -112,11 +126,19 @@ struct HomeView: View {
                 }
             }
             .fullScreenCover(isPresented: $showAddWordView) {
-                AddWordView(store: store)
+                sharedWord = ""
+            } content: {
+                AddWordView(initialWord: sharedWord, store: store)
                     .environmentObject(themeStore)
                     .transaction { $0.disablesAnimations = true }
             }
             .environmentObject(golden)
+            .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
+                if let word = notification.userInfo?["word"] as? String {
+                    sharedWord = word
+                    showAddWordView = true
+                }
+            }
             .overlay {
                 if let milestone = activeMilestone {
                     MilestoneCelebrationView(milestone: milestone) {
@@ -126,6 +148,26 @@ struct HomeView: View {
                     }
                     .transition(.opacity)
                     .zIndex(100)
+                }
+
+                if showGoldenIntro {
+                    GoldenWordsIntroView {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            showGoldenIntro = false
+                        }
+                    }
+                    .transition(.opacity)
+                    .zIndex(101)
+                }
+            }
+        }
+        .onChange(of: golden.goldenWords.count) { _, newCount in
+            if newCount > 0 && !hasSeenGoldenIntro {
+                hasSeenGoldenIntro = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showGoldenIntro = true
+                    }
                 }
             }
         }
@@ -145,6 +187,7 @@ struct HomeView: View {
                 if lastCelebratedDailyGoalDate != todayStr {
                     lastCelebratedDailyGoalDate = todayStr
                     activeMilestone = .dailyGoal
+                    badgeStore.recordDailyGoalCompletion()
                 }
             }
 
@@ -165,8 +208,10 @@ struct HomeView: View {
                 ProfileHeaderView()
                 StatsView()
 
-                dailyGoalWidget
-                    .padding(.horizontal, 20)
+                if !isDailyGoalDismissedToday {
+                    dailyGoalWidget
+                        .padding(.horizontal, 20)
+                }
 
                 if dueWordCount > 0 {
                     Button {
@@ -183,7 +228,7 @@ struct HomeView: View {
                         }
                         .foregroundColor(.white)
                     }
-                    .duo3DStyle(Color.accentBlack)
+                    .duo3DStyle(themeStore.buttonAccent)
                     .buttonStyle(Duo3DButtonStyle())
                     .padding(.horizontal, 20)
                 }
@@ -225,7 +270,16 @@ struct HomeView: View {
             }
             .padding(.bottom, 60)
         }
-        .background(Color.appBackground)
+        .background {
+            ZStack {
+                Color.appBackground
+                if seasonalEffectsEnabled {
+                    SeasonalOverlayView(animated: seasonalAnimationEnabled)
+                        .allowsHitTesting(false)
+                }
+            }
+            .ignoresSafeArea()
+        }
         .onAppear { refreshDailyGoalIfNeeded() }
     }
 
@@ -253,14 +307,44 @@ struct HomeView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Daily goal")
-                    .font(.custom("Poppins-Bold", size: 16))
-                    .foregroundColor(.mainBlack)
-                Text("\(wordsAddedToday)/\(dailyGoalTarget) words today")
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey)
+                if isGoalCompleted {
+                    Text("Goal reached!")
+                        .font(.custom("Poppins-Bold", size: 16))
+                        .foregroundColor(.mainBlack)
+                    Text("Great job, you did it today!")
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                } else {
+                    Text("Daily goal")
+                        .font(.custom("Poppins-Bold", size: 16))
+                        .foregroundColor(.mainBlack)
+                    Text("\(wordsAddedToday)/\(dailyGoalTarget) words today")
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(.mainGrey)
+                }
             }
             Spacer()
+
+            if isGoalCompleted {
+                Button {
+                    Haptics.lightImpact()
+                    let df = DateFormatter()
+                    df.calendar = Calendar(identifier: .gregorian)
+                    df.dateFormat = "yyyy-MM-dd"
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        dailyGoalDismissedDate = df.string(from: Date())
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.mainGrey)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            Circle()
+                                .fill(Color.mainGrey.opacity(0.1))
+                        )
+                }
+            }
         }
         .padding(16)
         .background(

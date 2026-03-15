@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ListeningPlayerView: View {
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @StateObject private var session = ListeningSessionManager()
     @State private var selectedTag: String? = nil
     @State private var showSettings = false
@@ -127,7 +128,7 @@ struct ListeningPlayerView: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: unifiedCornerRadius, style: .continuous)
-                        .fill(filteredWords.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlack)
+                        .fill(filteredWords.isEmpty ? Color.mainGrey.opacity(0.3) : themeStore.buttonAccent)
                 )
             }
             .buttonStyle(.plain)
@@ -248,6 +249,7 @@ struct ListeningPlayerView: View {
 }
 
 struct ListeningSettingsSheet: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Binding var settings: ListeningSettings
     var onSave: () -> Void
 
@@ -386,7 +388,7 @@ struct ListeningSettingsSheet: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: unifiedCornerRadius - 4)
-                                .fill(isSelected ? Color.accentBlack : Color.clear)
+                                .fill(isSelected ? themeStore.buttonAccent : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)

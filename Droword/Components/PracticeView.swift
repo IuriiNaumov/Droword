@@ -18,9 +18,8 @@ struct WordCard: Identifiable {
 }
 
 enum PracticeMode: String, CaseIterable {
+    case practice = "Practice"
     case review = "Review"
-    case quiz = "Quiz"
-    case typing = "Typing"
     case listening = "Listening"
 }
 
@@ -29,36 +28,14 @@ struct PracticeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
 
-    @State private var selectedMode: PracticeMode = .review
+    @State private var selectedMode: PracticeMode = .practice
     @State private var currentIndex: Int = 0
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
     @State private var showListeningPlayer = false
 
-    @State private var quizSessionSize: Int = 10
-    @State private var quizFilterTag: String? = nil
-    @State private var quizStarted = false
-    @State private var cachedCards: [WordCard] = []
-
-    private var cards: [WordCard] { cachedCards }
-
-    private func rebuildCards() {
-        cachedCards = store.words.map { word in
-            WordCard(
-                id: word.id,
-                word: word.word,
-                partOfSpeech: word.type.isEmpty ? "word" : word.type,
-                example: word.example ?? "Add an example later",
-                translation: word.translation ?? "No translation yet",
-                explanation: word.explanation,
-                breakdown: word.breakdown,
-                transcription: word.transcription,
-                tag: word.tag,
-                fromLanguage: word.fromLanguage,
-                toLanguage: word.toLanguage,
-                comment: word.comment
-            )
-        }
+    private var hasEnoughWordsForPractice: Bool {
+        store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count >= 4
     }
 
     private func dueWords(from words: [StoredWord]) -> [StoredWord] {
@@ -180,24 +157,14 @@ struct PracticeView: View {
 
                 Group {
                     switch selectedMode {
+                    case .practice:
+                        if !hasEnoughWordsForPractice {
+                            practiceEmptyState
+                        } else {
+                            QuizMixedView(sessionSize: 15, filterTag: nil)
+                        }
                     case .review:
                         reviewContent
-                    case .quiz:
-                        if store.words.isEmpty {
-                            emptyState
-                        } else if quizStarted {
-                            QuizMultipleChoiceView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
-                        } else {
-                            quizSetupView
-                        }
-                    case .typing:
-                        if store.words.isEmpty {
-                            emptyState
-                        } else if quizStarted {
-                            QuizTypingView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
-                        } else {
-                            quizSetupView
-                        }
                     case .listening:
                         listeningEntryView
                     }
@@ -206,15 +173,10 @@ struct PracticeView: View {
             }
         }
         .onAppear {
-            rebuildCards()
             if selectedMode == .review { prepareSession() }
-        }
-        .onChange(of: store.words) { _ in
-            rebuildCards()
         }
         .onChange(of: selectedMode) { _ in
             if selectedMode == .review { prepareSession() }
-            quizStarted = false
         }
         .fullScreenCover(isPresented: $showListeningPlayer) {
             ListeningPlayerView()
@@ -227,52 +189,46 @@ struct PracticeView: View {
         Group {
             if learningQueue.isEmpty {
                 emptyState
-            } else {
+            } else if currentIndex < learningQueue.count && !showCompletion {
                 ScrollView(showsIndicators: false) {
                     VStack {
-                        if currentIndex < learningQueue.count && !showCompletion {
-                            WordCardPracticeView(
-                                card: learningQueue[currentIndex],
-                                onAgain: { scheduleNext(for: learningQueue[currentIndex], rating: .again) },
-                                onHard:  { scheduleNext(for: learningQueue[currentIndex], rating: .hard) },
-                                onGood:  { scheduleNext(for: learningQueue[currentIndex], rating: .good) },
-                                onEasy:  { scheduleNext(for: learningQueue[currentIndex], rating: .easy) }
-                            )
-                            .id(learningQueue[currentIndex].id)
-                            .padding(.horizontal, 24)
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
-                            .animation(.spring(response: 0.35, dampingFraction: 0.8),
-                                       value: currentIndex)
-                        } else {
-                            completionScreen
-                        }
+                        WordCardPracticeView(
+                            card: learningQueue[currentIndex],
+                            onAgain: { scheduleNext(for: learningQueue[currentIndex], rating: .again) },
+                            onHard:  { scheduleNext(for: learningQueue[currentIndex], rating: .hard) },
+                            onGood:  { scheduleNext(for: learningQueue[currentIndex], rating: .good) },
+                            onEasy:  { scheduleNext(for: learningQueue[currentIndex], rating: .easy) }
+                        )
+                        .id(learningQueue[currentIndex].id)
+                        .padding(.horizontal, 24)
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                        .animation(.spring(response: 0.35, dampingFraction: 0.8),
+                                   value: currentIndex)
                     }
                     .padding(.vertical, 8)
                 }
+            } else {
+                completionScreen
             }
         }
     }
 
+    private var practiceEmptyState: some View {
+        PracticeEmptyContent(
+            icon: "rectangle.stack.badge.plus",
+            title: "Not enough words yet",
+            subtitle: "Add at least 4 words with translations to start practicing.",
+            tip: "Tip: grab words from movies, chats, or walks — learning feels alive that way."
+        )
+    }
+
     private var emptyState: some View {
-        VStack(spacing: 18) {
-            Text("Nothing to review yet ✨")
-                .font(.title3.weight(.medium))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            Text("Add a few words — I’ll prepare your first mini‑session. Start small and show up daily. That’s how progress sticks.")
-                .font(.subheadline)
-                .foregroundColor(.secondary.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            Text("Tip: grab words from movies, chats, or walks — learning feels alive that way.")
-                .font(.footnote)
-                .foregroundColor(.secondary.opacity(0.7))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-        }
-        .frame(maxWidth: .infinity)
+        PracticeEmptyContent(
+            icon: "clock.badge.checkmark",
+            title: "Nothing to review yet",
+            subtitle: "Add a few words — I'll prepare your first mini‑session. Start small and show up daily. That's how progress sticks.",
+            tip: "Tip: grab words from movies, chats, or walks — learning feels alive that way."
+        )
     }
 
     private var header: some View {
@@ -304,7 +260,7 @@ struct PracticeView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(selectedMode == mode ? Color.accentBlack : Color.clear)
+                                .fill(selectedMode == mode ? themeStore.buttonAccent : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)
@@ -317,120 +273,9 @@ struct PracticeView: View {
         )
     }
 
-    private var availableTags: [String] {
-        Set(cachedCards.compactMap { $0.tag }).sorted()
-    }
-
-    private var quizSetupView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            VStack(spacing: 8) {
-                Text(selectedMode == .quiz ? "Quiz Setup" : "Typing Setup")
-                    .font(.custom("Poppins-Bold", size: 24))
-                    .foregroundColor(.mainBlack)
-
-                Text("Choose how many words and which tags to include")
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Session size")
-                    .font(.custom("Poppins-Medium", size: 15))
-                    .foregroundColor(.mainBlack)
-
-                HStack(spacing: 10) {
-                    ForEach([5, 10, 15, 20], id: \.self) { size in
-                        Button {
-                            Haptics.selection()
-                            quizSessionSize = size
-                        } label: {
-                            Text("\(size)")
-                                .font(.custom("Poppins-Medium", size: 15))
-                                .foregroundColor(quizSessionSize == size ? .white : .mainBlack)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(quizSessionSize == size ? Color.accentBlack : Color.cardBackground)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-
-            if !availableTags.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Filter by tag")
-                        .font(.custom("Poppins-Medium", size: 15))
-                        .foregroundColor(.mainBlack)
-
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            tagChip(title: "All words", tag: nil)
-                            ForEach(availableTags, id: \.self) { tag in
-                                tagChip(title: tag, tag: tag)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
-            }
-
-            Button {
-                Haptics.mediumImpact()
-                quizStarted = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 14))
-                    Text("Start \(selectedMode == .quiz ? "Quiz" : "Typing")")
-                        .font(.custom("Poppins-Bold", size: 17))
-                }
-                .foregroundColor(.white)
-            }
-            .duo3DStyle(Color.accentBlack)
-            .buttonStyle(Duo3DButtonStyle())
-            .padding(.horizontal, 24)
-
-            Spacer()
-            Spacer()
-        }
-    }
-
-    private func tagChip(title: String, tag: String?) -> some View {
-        let isSelected = quizFilterTag == tag
-        return Button {
-            Haptics.selection()
-            quizFilterTag = tag
-        } label: {
-            Text(title)
-                .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(isSelected ? .white : .mainBlack)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(isSelected ? Color.accentBlack : Color.cardBackground)
-                )
-        }
-        .buttonStyle(.plain)
-    }
 
     private var completionScreen: some View {
-        VStack(spacing: 12) {
-            Text("Session complete ✨")
-                .font(.title2.bold())
-            Text("You’ve reviewed all scheduled words for now.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .padding()
+        ReviewCompletionContent()
     }
 
     private var listeningEntryView: some View {
@@ -468,11 +313,18 @@ struct PracticeView: View {
                 .padding(.horizontal, 40)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(store.words.isEmpty ? Color.mainGrey.opacity(0.3) : Color.accentBlack)
+                        .fill(store.words.isEmpty ? Color.mainGrey.opacity(0.3) : themeStore.buttonAccent)
                 )
             }
             .buttonStyle(.plain)
             .disabled(store.words.isEmpty)
+
+            if store.words.isEmpty {
+                Text("Add some words first")
+                    .font(.custom("Poppins-Regular", size: 13))
+                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .padding(.top, 6)
+            }
 
             Spacer()
             Spacer()
@@ -481,6 +333,103 @@ struct PracticeView: View {
 
     private func showNextCard() {
         currentIndex += 1
+    }
+}
+
+private struct PracticeEmptyContent: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let tip: String
+
+    @State private var iconScale: CGFloat = 0.4
+    @State private var titleOpacity: Double = 0
+    @State private var subtitleOpacity: Double = 0
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: icon)
+                .font(.system(size: 44))
+                .foregroundColor(.mainGrey.opacity(0.35))
+                .scaleEffect(iconScale)
+
+            Text(title)
+                .font(.custom("Poppins-Medium", size: 18))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .opacity(titleOpacity)
+
+            Text(subtitle)
+                .font(.custom("Poppins-Regular", size: 14))
+                .foregroundColor(.secondary.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .opacity(subtitleOpacity)
+
+            Text(tip)
+                .font(.custom("Poppins-Regular", size: 13))
+                .foregroundColor(.secondary.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .opacity(subtitleOpacity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                iconScale = 1.0
+            }
+            withAnimation(.easeOut(duration: 0.35).delay(0.1)) {
+                titleOpacity = 1.0
+            }
+            withAnimation(.easeOut(duration: 0.35).delay(0.2)) {
+                subtitleOpacity = 1.0
+            }
+        }
+    }
+}
+
+private struct ReviewCompletionContent: View {
+    @State private var emojiScale: CGFloat = 0.3
+    @State private var textOpacity: Double = 0
+
+    var body: some View {
+        ZStack {
+            VStack(spacing: 16) {
+                Spacer()
+
+                Text("🎉")
+                    .font(.system(size: 56))
+                    .scaleEffect(emojiScale)
+
+                Text("Session complete!")
+                    .font(.custom("Poppins-Bold", size: 24))
+                    .foregroundColor(.mainBlack)
+                    .opacity(textOpacity)
+
+                Text("You've reviewed all scheduled words for now.")
+                    .font(.custom("Poppins-Regular", size: 15))
+                    .foregroundColor(.mainGrey)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .opacity(textOpacity)
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            ConfettiView()
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        }
+        .onAppear {
+            Haptics.success()
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                emojiScale = 1.0
+            }
+            withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
+                textOpacity = 1.0
+            }
+        }
     }
 }
 
@@ -604,7 +553,7 @@ struct WordCardPracticeView: View {
                 Text(tag)
                     .font(.custom("Poppins-Medium", size: 15))
                     .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 6)
                     .padding(.horizontal, 28)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)

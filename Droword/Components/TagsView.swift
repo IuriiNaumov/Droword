@@ -113,7 +113,6 @@ struct TagsView: View {
                 }
 
                 if showManagementControls {
-                    // Sort button (only when sortOption binding is provided)
                     if let sortBinding = sortOption {
                         Menu {
                             ForEach(DictionarySortOption.allCases, id: \.self) { option in
@@ -140,7 +139,6 @@ struct TagsView: View {
                         .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
                     }
 
-                    // Edit tags button
                     if hasCustomTags {
                         Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")

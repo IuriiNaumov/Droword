@@ -9,6 +9,7 @@ struct VoiceOption: Identifiable, Equatable {
 }
 
 struct VoicePickerView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Binding var selectedKey: String
     var options: [VoiceOption]
     @State private var previewingKey: String? = nil
@@ -23,7 +24,7 @@ struct VoicePickerView: View {
                             .frame(width: 22, height: 22)
                         if option.key == selectedKey {
                             Circle()
-                                .fill(Color.accentBlack)
+                                .fill(themeStore.buttonAccent)
                                 .frame(width: 22, height: 22)
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))

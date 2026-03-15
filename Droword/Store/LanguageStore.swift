@@ -8,24 +8,36 @@ final class LanguageStore: ObservableObject {
     private static let learningScoreKey = "learningScore"
 
     @Published var nativeLanguage: String {
-        didSet { UserDefaults.standard.set(nativeLanguage, forKey: Self.nativeKey) }
+        didSet {
+            UserDefaults.standard.set(nativeLanguage, forKey: Self.nativeKey)
+            Self.shared?.set(nativeLanguage, forKey: Self.nativeKey)
+        }
     }
 
     @Published var learningLanguage: String {
-        didSet { UserDefaults.standard.set(learningLanguage, forKey: Self.learningKey) }
+        didSet {
+            UserDefaults.standard.set(learningLanguage, forKey: Self.learningKey)
+            Self.shared?.set(learningLanguage, forKey: Self.learningKey)
+        }
     }
     
     @Published var learningLevel: String {
-        didSet { UserDefaults.standard.set(learningLevel, forKey: Self.learningLevelKey) }
+        didSet {
+            UserDefaults.standard.set(learningLevel, forKey: Self.learningLevelKey)
+            Self.shared?.set(learningLevel, forKey: Self.learningLevelKey)
+        }
     }
 
     @Published var learningScore: Double {
         didSet {
             UserDefaults.standard.set(learningScore, forKey: Self.learningScoreKey)
+            Self.shared?.set(learningScore, forKey: Self.learningScoreKey)
             let newLevel = Self.mapScoreToLevel(learningScore)
             if learningLevel != newLevel { learningLevel = newLevel }
         }
     }
+
+    private static let shared = UserDefaults(suiteName: appGroupID)
 
     init() {
         let defaults = UserDefaults.standard
@@ -41,6 +53,9 @@ final class LanguageStore: ObservableObject {
         self.learningLanguage = savedLearning ?? "Español"
         self.learningLevel = initialLevel
         self.learningScore = initialScore
+
+        Self.shared?.set(nativeLanguage, forKey: Self.nativeKey)
+        Self.shared?.set(learningLanguage, forKey: Self.learningKey)
     }
 }
 

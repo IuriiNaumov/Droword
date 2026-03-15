@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AppearancePickerView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
 
@@ -46,13 +47,12 @@ struct AppearancePickerView: View {
     private func appearanceBlock(option: AppAppearance, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 12) {
-                // Mini phone preview
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(previewBg(option))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? Color.accentBlack : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
                         )
 
                     if option == .system {
@@ -63,11 +63,10 @@ struct AppearancePickerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? Color.accentBlack : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
                         )
                     }
 
-                    // Mock UI elements
                     VStack(alignment: .leading, spacing: 6) {
                         Circle()
                             .fill(mockAccent(option))
@@ -100,15 +99,14 @@ struct AppearancePickerView: View {
                     .font(.custom("Poppins-Medium", size: 15))
                     .foregroundColor(.primary)
 
-                // Checkmark
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.accentBlack : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
+                        .stroke(isSelected ? themeStore.buttonAccent : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
                         .frame(width: 26, height: 26)
 
                     if isSelected {
                         Circle()
-                            .fill(Color.accentBlack)
+                            .fill(themeStore.buttonAccent)
                             .frame(width: 26, height: 26)
 
                         Image(systemName: "checkmark")
@@ -122,8 +120,6 @@ struct AppearancePickerView: View {
         }
         .buttonStyle(.plain)
     }
-
-    // MARK: - Preview colors
 
     private func previewBg(_ style: AppAppearance) -> Color {
         switch style {

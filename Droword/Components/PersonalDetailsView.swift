@@ -109,7 +109,7 @@ struct PersonalDetailsView: View {
                     }
                 }) {
                     Text("Save")
-                        .duo3DStyle(Color.accentBlack, isDisabled: !canSave)
+                        .duo3DStyle(themeStore.buttonAccent, isDisabled: !canSave)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(!canSave)

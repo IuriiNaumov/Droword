@@ -9,18 +9,7 @@ struct GPTTranslationResult: Codable {
     let transcription: String?
 }
 
-struct ClaudeTranslateResponse: Codable {
-    struct Content: Codable {
-        let type: String
-        let text: String?
-    }
-    struct ClaudeError: Codable {
-        let type: String
-        let message: String
-    }
-    let content: [Content]?
-    let error: ClaudeError?
-}
+private let workerBaseURL = "https://droword-api.droword-api.workers.dev"
 
 @MainActor
 func translateWithGPT(
@@ -30,52 +19,16 @@ func translateWithGPT(
     
     let learningLanguage = languageStore.learningLanguage
     let nativeLanguage = languageStore.nativeLanguage
-
-    let url = URL(string: "https://api.anthropic.com/v1/messages")!
-
+    let url = URL(string: "\(workerBaseURL)/translate")!
 
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue(apiKey, forHTTPHeaderField: "x-api-key")
-    request.addValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-
-    let prompt = """
-    You are a linguist.
-
-    Translate and explain the word "\(word)".
-
-    Source language: \(learningLanguage)
-    Target language: \(nativeLanguage)
-
-    STRICT RULES:
-    - translation → only \(nativeLanguage)
-    - type → only \(nativeLanguage)
-    - explanation → short and clear, only \(nativeLanguage)
-    - breakdown → only \(nativeLanguage) or null
-    - example → only \(learningLanguage)
-    - transcription → IPA or phonetic transcription using Latin letters only (ASCII), e.g., /…/ or […], or null
-    - Do not mix languages inside fields.
-
-    Return ONLY valid JSON:
-
-    {
-      "translation": "...",
-      "example": "...",
-      "type": "...",
-      "explanation": "...",
-      "breakdown": null or "...",
-      "transcription": null or "..."
-    }
-    """
 
     let body: [String: Any] = [
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": 1024,
-        "system": "You always return strictly valid JSON without explanations.",
-        "messages": [
-            ["role": "user", "content": prompt]
-        ]
+        "word": word,
+        "learningLanguage": learningLanguage,
+        "nativeLanguage": nativeLanguage
     ]
 
     request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -84,31 +37,9 @@ func translateWithGPT(
 
     if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
         let raw = String(data: data, encoding: .utf8) ?? "No body"
-        throw NSError(domain: "Claude", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: raw])
+        throw NSError(domain: "Worker", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: raw])
     }
 
-    let decoded = try JSONDecoder().decode(ClaudeTranslateResponse.self, from: data)
-
-    if let err = decoded.error {
-        throw NSError(domain: "Claude", code: -1, userInfo: [NSLocalizedDescriptionKey: err.message])
-    }
-
-    guard let message = decoded.content?.first(where: { $0.type == "text" })?.text else {
-        throw NSError(domain: "Claude", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty content"])
-    }
-
-    let cleaned = sanitizeJSON(message)
-    guard let jsonData = cleaned.data(using: .utf8) else {
-        throw NSError(domain: "Claude", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid UTF8"])
-    }
-
-    return try JSONDecoder().decode(GPTTranslationResult.self, from: jsonData)
+    return try JSONDecoder().decode(GPTTranslationResult.self, from: data)
 }
 
-private func sanitizeJSON(_ text: String) -> String {
-    if let start = text.firstIndex(of: "{"),
-       let end = text.lastIndex(of: "}") {
-        return String(text[start...end])
-    }
-    return text
-}

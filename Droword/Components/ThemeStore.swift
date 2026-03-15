@@ -10,7 +10,7 @@ final class ThemeStore: ObservableObject {
         var title: String {
             switch self {
             case .colorful: return "Droword"
-            case .duolingo: return "Duolingo"
+            case .duolingo: return "Green Owl"
             case .monochrome: return "Monochrome"
             }
         }
@@ -31,12 +31,10 @@ final class ThemeStore: ObservableObject {
     var isDuolingo: Bool { palette == .duolingo }
     var title: String { palette.title }
 
-    // MARK: - Resolved accent colors
-
     var accentBlue: Color {
         switch palette {
         case .colorful: return Color("AccentBlue")
-        case .duolingo: return Color(hex: "#1CB0F6")
+        case .duolingo: return Color(hex: "#5DC8F7")
         case .monochrome: return Color("MonoMedium")
         }
     }
@@ -44,7 +42,7 @@ final class ThemeStore: ObservableObject {
     var accentGreen: Color {
         switch palette {
         case .colorful: return Color("AccentGreen")
-        case .duolingo: return Color(hex: "#58CC02")
+        case .duolingo: return Color(hex: "#7ED957")
         case .monochrome: return Color("MonoMedium")
         }
     }
@@ -52,7 +50,7 @@ final class ThemeStore: ObservableObject {
     var accentPurple: Color {
         switch palette {
         case .colorful: return Color("AccentPurple")
-        case .duolingo: return Color(hex: "#CE82FF")
+        case .duolingo: return Color(hex: "#D9A3FF")
         case .monochrome: return Color("MonoMedium")
         }
     }
@@ -60,7 +58,7 @@ final class ThemeStore: ObservableObject {
     var accentPink: Color {
         switch palette {
         case .colorful: return Color("AccentPink")
-        case .duolingo: return Color(hex: "#FF4B4B")
+        case .duolingo: return Color(hex: "#FF7E7E")
         case .monochrome: return Color("MonoMedium")
         }
     }
@@ -68,7 +66,7 @@ final class ThemeStore: ObservableObject {
     var accentGold: Color {
         switch palette {
         case .colorful: return Color("AccentGold")
-        case .duolingo: return Color(hex: "#FFC800")
+        case .duolingo: return Color(hex: "#FFD84D")
         case .monochrome: return Color("MonoMedium")
         }
     }
@@ -76,15 +74,60 @@ final class ThemeStore: ObservableObject {
     var accentRed: Color {
         switch palette {
         case .colorful: return Color("AccentRed")
-        case .duolingo: return Color(hex: "#FF9600")
+        case .duolingo: return Color(hex: "#FFB347")
         case .monochrome: return Color("MonoMedium")
         }
     }
 
-    /// Darker mono accent — used for selected tags, stat cards, etc.
+    var buttonAccent: Color {
+        switch palette {
+        case .duolingo: return Color(hex: "#58CC02")
+        default: return Color.accentBlack
+        }
+    }
+
     var monoDark: Color { Color("MonoMedium") }
 
-    /// For tag hex colors — returns mono gray when monochrome is active
+    var iconGreen: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#78C47C")
+        case .duolingo: return Color(hex: "#58CC02")
+        case .monochrome: return monoDark
+        }
+    }
+
+    var iconGold: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#E8BC5E")
+        case .duolingo: return Color(hex: "#FFC800")
+        case .monochrome: return monoDark
+        }
+    }
+
+    var iconPurple: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#A98DC8")
+        case .duolingo: return Color(hex: "#CE82FF")
+        case .monochrome: return monoDark
+        }
+    }
+
+    var iconPink: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#D4789A")
+        case .duolingo: return Color(hex: "#FF7E7E")
+        case .monochrome: return monoDark
+        }
+    }
+
+    var iconBlue: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#7BADC8")
+        case .duolingo: return Color(hex: "#1CB0F6")
+        case .monochrome: return monoDark
+        }
+    }
+
     func resolvedTagColor(_ hex: String?) -> Color {
         guard !isMonochrome else { return Color("MonoMedium") }
         guard let hex = hex, !hex.isEmpty else { return accentBlue }
