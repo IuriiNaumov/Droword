@@ -154,13 +154,12 @@ struct TagsView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // Add tag button
                     Button(action: { onAddTag?() }) {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(.mainGrey)
                             .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.accentBlack))
+                            .background(Circle().fill(Color.mainGrey.opacity(0.15)))
                     }
                     .buttonStyle(.plain)
                     .opacity(isDeleteMode ? 0 : 1)
