@@ -16,6 +16,8 @@ struct DictionaryView: View {
     @State private var isLoading = true
 
     @State private var searchText = ""
+    @State private var debouncedSearch = ""
+    @State private var searchDebounceTask: Task<Void, Never>?
     @State private var sortOption: DictionarySortOption = .newestFirst
 
     @State private var cachedTag: String? = nil
@@ -241,14 +243,22 @@ struct DictionaryView: View {
         }
         .onChange(of: selectedTag) { _ in recalculateFiltered() }
         .onChange(of: store.words) { _ in recalculateFiltered() }
-        .onChange(of: searchText) { _ in recalculateFiltered() }
+        .onChange(of: searchText) { _ in
+            searchDebounceTask?.cancel()
+            searchDebounceTask = Task {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                guard !Task.isCancelled else { return }
+                debouncedSearch = searchText
+            }
+        }
+        .onChange(of: debouncedSearch) { _ in recalculateFiltered() }
         .onChange(of: sortOption) { _ in recalculateFiltered() }
         .animation(.spring(), value: store.words.count)
     }
 
     private func recalculateFiltered() {
         let tag = selectedTag?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let search = debouncedSearch.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         if tag == cachedTag, search == cachedSearch, sortOption == cachedSort, store.words == cachedWords { return }
 

@@ -38,9 +38,12 @@ struct PracticeView: View {
     @State private var quizSessionSize: Int = 10
     @State private var quizFilterTag: String? = nil
     @State private var quizStarted = false
+    @State private var cachedCards: [WordCard] = []
 
-    private var cards: [WordCard] {
-        store.words.map { word in
+    private var cards: [WordCard] { cachedCards }
+
+    private func rebuildCards() {
+        cachedCards = store.words.map { word in
             WordCard(
                 id: word.id,
                 word: word.word,
@@ -180,13 +183,17 @@ struct PracticeView: View {
                     case .review:
                         reviewContent
                     case .quiz:
-                        if quizStarted {
+                        if store.words.isEmpty {
+                            emptyState
+                        } else if quizStarted {
                             QuizMultipleChoiceView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
                         } else {
                             quizSetupView
                         }
                     case .typing:
-                        if quizStarted {
+                        if store.words.isEmpty {
+                            emptyState
+                        } else if quizStarted {
                             QuizTypingView(sessionSize: quizSessionSize, filterTag: quizFilterTag)
                         } else {
                             quizSetupView
@@ -199,7 +206,11 @@ struct PracticeView: View {
             }
         }
         .onAppear {
+            rebuildCards()
             if selectedMode == .review { prepareSession() }
+        }
+        .onChange(of: store.words) { _ in
+            rebuildCards()
         }
         .onChange(of: selectedMode) { _ in
             if selectedMode == .review { prepareSession() }
@@ -307,8 +318,7 @@ struct PracticeView: View {
     }
 
     private var availableTags: [String] {
-        let tags = Set(store.words.compactMap { $0.tag }).sorted()
-        return tags
+        Set(cachedCards.compactMap { $0.tag }).sorted()
     }
 
     private var quizSetupView: some View {
@@ -602,7 +612,7 @@ struct WordCardPracticeView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(backgroundColor.opacity(isDarkBackground ? 0.6 : 0.45), lineWidth: 1)
+                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
                     )
                     .padding(.bottom, 2)
             }

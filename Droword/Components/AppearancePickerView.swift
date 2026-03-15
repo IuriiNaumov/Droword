@@ -1,11 +1,5 @@
 import SwiftUI
 
-private struct NoHighlightButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-    }
-}
-
 struct AppearancePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
@@ -18,26 +12,21 @@ struct AppearancePickerView: View {
         VStack {
             Spacer()
 
-            VStack(spacing: 18) {
+            VStack(spacing: 24) {
                 Text("Appearance")
                     .font(.custom("Poppins-Bold", size: 26))
                     .foregroundColor(.primary)
 
                 HStack(spacing: 12) {
                     ForEach(AppAppearance.allCases, id: \.self) { option in
-                        AppearanceCard(
-                            title: option.title,
-                            style: option,
-                            isSelected: selected == option
-                        ) {
+                        appearanceBlock(option: option, isSelected: selected == option) {
                             storedAppearance = option.rawValue
+                            Haptics.selection()
                         }
                     }
                 }
                 .padding(.horizontal, 20)
             }
-            .animation(nil, value: storedAppearance)
-            .padding(.bottom, 14)
 
             Spacer()
         }
@@ -53,136 +42,121 @@ struct AppearancePickerView: View {
             }
         }
     }
-}
 
+    private func appearanceBlock(option: AppAppearance, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                // Mini phone preview
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(previewBg(option))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(isSelected ? Color.accentBlack : Color.divider, lineWidth: isSelected ? 2 : 1)
+                        )
 
-private struct AppearanceCard: View {
-    let title: String
-    let style: AppAppearance
-    let isSelected: Bool
-    let onTap: () -> Void
+                    if option == .system {
+                        HStack(spacing: 0) {
+                            Color(red: 0.93, green: 0.93, blue: 0.93)
+                            Color(red: 0.11, green: 0.11, blue: 0.12)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(isSelected ? Color.accentBlack : Color.divider, lineWidth: isSelected ? 2 : 1)
+                        )
+                    }
 
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 14) {
-                preview
-                    .frame(width: 90, height: 160)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    // Mock UI elements
+                    VStack(alignment: .leading, spacing: 6) {
+                        Circle()
+                            .fill(mockAccent(option))
+                            .frame(width: 16, height: 16)
 
-                Text(title)
-                    .font(.custom("Poppins-Regular", size: 18))
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(mockLine(option))
+                            .frame(width: 50, height: 8)
+
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(mockLine(option).opacity(0.7))
+                            .frame(width: 36, height: 8)
+
+                        Spacer().frame(height: 4)
+
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(mockCard(option))
+                            .frame(width: 58, height: 28)
+
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(mockCard(option).opacity(0.85))
+                            .frame(width: 58, height: 28)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
+                .frame(height: 160)
+
+                Text(option.title)
+                    .font(.custom("Poppins-Medium", size: 15))
                     .foregroundColor(.primary)
 
+                // Checkmark
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.accentBlack : Color.mainGrey, lineWidth: 1)
-                        .frame(width: 28, height: 28)
+                        .stroke(isSelected ? Color.accentBlack : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
+                        .frame(width: 26, height: 26)
 
                     if isSelected {
                         Circle()
                             .fill(Color.accentBlack)
-                            .frame(width: 28, height: 28)
-                            .transition(.scale(scale: 0.8).combined(with: .opacity))
+                            .frame(width: 26, height: 26)
 
                         Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))
                             .foregroundColor(.white)
                     }
                 }
-                .padding(.top, 2)
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isSelected)
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
             }
             .frame(maxWidth: .infinity)
-            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isSelected)
         }
-        .buttonStyle(NoHighlightButtonStyle())
+        .buttonStyle(.plain)
     }
 
-    private var preview: some View {
-        ZStack {
-            if style == .system {
-                HStack(spacing: 0) {
-                    Color("#EEEEEE")
-                    Color("#1C1C1E")
-                }
-            } else {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(previewBackground)
-            }
+    // MARK: - Preview colors
 
-            VStack(alignment: .leading, spacing: 8) {
-                Circle()
-                    .fill(previewAvatar)
-                    .frame(width: 18, height: 18)
-                    .padding(.top, 12)
-
-                VStack(alignment: .leading, spacing: 7) {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(previewLine)
-                        .frame(width: 54, height: 10)
-
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(previewLine.opacity(0.9))
-                        .frame(width: 42, height: 10)
-
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(previewBlock)
-                        .frame(width: 60, height: 34)
-                        .padding(.top, 6)
-
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(previewBlock.opacity(0.95))
-                        .frame(width: 60, height: 34)
-                }
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .animation(nil, value: isSelected)
-    }
-
-    private var previewBackground: Color {
+    private func previewBg(_ style: AppAppearance) -> Color {
         switch style {
-        case .system: return Color("#EEEEEE")
-        case .light: return Color("#EEEEEE")
-        case .dark: return Color("#1C1C1E")
+        case .system: return .clear
+        case .light: return Color(red: 0.93, green: 0.93, blue: 0.93)
+        case .dark: return Color(red: 0.11, green: 0.11, blue: 0.12)
         }
     }
 
-    private var previewAvatar: Color {
+    private func mockAccent(_ style: AppAppearance) -> Color {
         switch style {
-        case .system: return Color("#C9CBD1")
-        case .light: return Color("#C9CBD1")
-        case .dark: return Color("#2B2E34")
+        case .system, .light: return Color(red: 0.78, green: 0.78, blue: 0.82)
+        case .dark: return Color(red: 0.22, green: 0.24, blue: 0.28)
         }
     }
 
-    private var previewLine: Color {
+    private func mockLine(_ style: AppAppearance) -> Color {
         switch style {
-        case .system: return Color("#B7BAC1")
-        case .light: return Color("#B7BAC1")
-        case .dark: return Color("#2C3139")
+        case .system, .light: return Color(red: 0.72, green: 0.73, blue: 0.76)
+        case .dark: return Color(red: 0.20, green: 0.22, blue: 0.26)
         }
     }
 
-    private var previewBlock: Color {
+    private func mockCard(_ style: AppAppearance) -> Color {
         switch style {
-        case .system: return Color("#C9CBD1")
-        case .light: return Color("#C9CBD1")
-        case .dark: return Color("#2262D")
+        case .system, .light: return Color(red: 0.82, green: 0.82, blue: 0.85)
+        case .dark: return Color(red: 0.17, green: 0.18, blue: 0.21)
         }
     }
 }
 
 #Preview {
-    AppearancePickerView()
-}
-
-#Preview("Light") {
-    AppearancePickerView()
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark") {
-    AppearancePickerView()
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        AppearancePickerView()
+    }
 }

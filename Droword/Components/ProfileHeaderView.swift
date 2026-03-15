@@ -173,7 +173,10 @@ struct ProfileHeaderView: View {
                 currentStreak = 1
             }
 
-            avatarImage = loadAvatarFromDisk()
+            Task.detached(priority: .userInitiated) {
+                let loaded = self.loadAvatarFromDisk()
+                await MainActor.run { avatarImage = loaded }
+            }
             displayProgress = progressRatio
 
             let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
@@ -193,7 +196,10 @@ struct ProfileHeaderView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .avatarDidChange)) { _ in
-            avatarImage = loadAvatarFromDisk()
+            Task.detached(priority: .userInitiated) {
+                let loaded = self.loadAvatarFromDisk()
+                await MainActor.run { avatarImage = loaded }
+            }
         }
         .fullScreenCover(isPresented: $showSettings) {
             SettingsView()
@@ -232,7 +238,7 @@ struct ProfileHeaderView: View {
         }
     }
 
-    private func loadAvatarFromDisk() -> UIImage? {
+    private nonisolated func loadAvatarFromDisk() -> UIImage? {
         let url = avatarFileURL()
         guard let data = try? Data(contentsOf: url),
               let image = UIImage(data: data) else { return nil }

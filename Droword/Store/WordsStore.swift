@@ -20,6 +20,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var repetitions: Int = 0
     var lapses: Int = 0
     var dueDate: Date? = nil
+    var needsEnrichment: Bool = false
 
     init(
         id: UUID = UUID(),
@@ -39,7 +40,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
         intervalDays: Int = 0,
         repetitions: Int = 0,
         lapses: Int = 0,
-        dueDate: Date? = nil
+        dueDate: Date? = nil,
+        needsEnrichment: Bool = false
     ) {
         self.id = id
         self.word = word
@@ -59,22 +61,25 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.repetitions = repetitions
         self.lapses = lapses
         self.dueDate = dueDate
+        self.needsEnrichment = needsEnrichment
     }
 }
 
 
+@MainActor
 final class WordsStore: ObservableObject {
     @Published private(set) var words: [StoredWord] = [] {
-        didSet { if hasLoaded { saveAsync() } }
+        didSet { if hasLoaded { scheduleSave() } }
     }
 
     @Published private(set) var totalWordsAdded: Int = 0 {
-        didSet { if hasLoaded { saveAsync() } }
+        didSet { if hasLoaded { scheduleSave() } }
     }
 
     private let storageKey = "WordsStore.words"
     private let totalKey = "WordsStore.totalWordsAdded"
     private var hasLoaded = false
+    private var saveTask: Task<Void, Never>?
 
     init() { load() }
 
@@ -107,19 +112,42 @@ final class WordsStore: ObservableObject {
         hasLoaded = true
     }
 
-    private func saveAsync() {
-        let copy = words
-        let total = totalWordsAdded
-
-        DispatchQueue.global(qos: .background).async {
-            let defaults = UserDefaults.standard
-            if let data = try? JSONEncoder().encode(copy) {
-                defaults.set(data, forKey: self.storageKey)
+    /// Debounced save — coalesces rapid changes into a single write after 0.3s
+    private func scheduleSave() {
+        saveTask?.cancel()
+        saveTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3s
+            guard !Task.isCancelled, let self else { return }
+            let copy = self.words
+            let total = self.totalWordsAdded
+            let storageKey = self.storageKey
+            let totalKey = self.totalKey
+            Task.detached(priority: .utility) {
+                if let data = try? JSONEncoder().encode(copy) {
+                    await MainActor.run {
+                        UserDefaults.standard.set(data, forKey: storageKey)
+                    }
+                }
+                await MainActor.run {
+                    UserDefaults.standard.set(total, forKey: totalKey)
+                }
             }
-            defaults.set(total, forKey: self.totalKey)
         }
     }
     
+    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?) {
+        guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
+        var w = words[idx]
+        w.translation = translation
+        w.example = example
+        w.type = type
+        w.explanation = explanation
+        w.breakdown = breakdown
+        w.transcription = transcription
+        w.needsEnrichment = false
+        words[idx] = w
+    }
+
     func updateScheduling(for id: UUID,
                           easeFactor: Double,
                           intervalDays: Int,

@@ -136,7 +136,7 @@ struct DetailedStatsView: View {
                 .padding(.bottom, 40)
             }
             .background(Color.appBackground.ignoresSafeArea())
-            .navigationTitle("Statistics")
+            .navigationTitle("Stats")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -180,7 +180,7 @@ struct DetailedStatsView: View {
         let data = last14Days
         let maxCount = max(data.map(\.count).max() ?? 1, 1)
 
-        return sectionCard(title: "Activity", icon: "chart.bar.fill") {
+        return sectionCard(title: "Activity") {
             VStack(spacing: 8) {
                 HStack(alignment: .bottom, spacing: 4) {
                     ForEach(Array(data.enumerated()), id: \.offset) { _, item in
@@ -209,7 +209,7 @@ struct DetailedStatsView: View {
         let m = masteryBreakdown
         let total = max(store.words.count, 1)
 
-        return sectionCard(title: "Mastery", icon: "brain.fill") {
+        return sectionCard(title: "Mastery") {
             VStack(spacing: 12) {
                 GeometryReader { geo in
                     HStack(spacing: 2) {
@@ -248,7 +248,7 @@ struct DetailedStatsView: View {
     }
 
     private var reviewSection: some View {
-        sectionCard(title: "Review", icon: "arrow.clockwise") {
+        sectionCard(title: "Review") {
             HStack(spacing: 16) {
                 VStack(spacing: 4) {
                     Text("\(dueToday)")
@@ -288,7 +288,7 @@ struct DetailedStatsView: View {
 
         return Group {
             if !tags.isEmpty {
-                sectionCard(title: "By tags", icon: "tag.fill") {
+                sectionCard(title: "By tags") {
                     VStack(spacing: 8) {
                         ForEach(Array(tags.prefix(6).enumerated()), id: \.offset) { _, item in
                             HStack {
@@ -312,7 +312,7 @@ struct DetailedStatsView: View {
 
         return Group {
             if !types.isEmpty {
-                sectionCard(title: "Parts of speech", icon: "textformat.abc") {
+                sectionCard(title: "Parts of speech") {
                     VStack(spacing: 8) {
                         ForEach(Array(types.prefix(6).enumerated()), id: \.offset) { _, item in
                             HStack {
@@ -332,26 +332,17 @@ struct DetailedStatsView: View {
     }
 
     private var factsSection: some View {
-        sectionCard(title: "Fun facts", icon: "sparkles") {
+        sectionCard(title: "Fun facts") {
             VStack(alignment: .leading, spacing: 10) {
                 if let best = bestDay {
-                    factRow(
-                        icon: "flame.fill",
-                        text: "Best day: \(dateFormatter.string(from: best.date)) (\(best.count) words)"
-                    )
+                    factRow(text: "Best day: \(dateFormatter.string(from: best.date)) (\(best.count) words)")
                 }
 
-                factRow(
-                    icon: "graduationcap.fill",
-                    text: "Level: \(languageStore.learningLevel)"
-                )
+                factRow(text: "Level: \(languageStore.learningLevel)")
 
                 if let first = store.words.map({ $0.dateAdded }).min() {
                     let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
-                    factRow(
-                        icon: "calendar",
-                        text: "Learning for \(days) day\(days == 1 ? "" : "s")"
-                    )
+                    factRow(text: "Learning for \(days) day\(days == 1 ? "" : "s")")
                 }
 
                 let avgPerDay: Double = {
@@ -360,37 +351,23 @@ struct DetailedStatsView: View {
                     return Double(store.words.count) / Double(days)
                 }()
                 if avgPerDay > 0 {
-                    factRow(
-                        icon: "chart.line.uptrend.xyaxis",
-                        text: "Average: \(String(format: "%.1f", avgPerDay)) words/day"
-                    )
+                    factRow(text: "Average: \(String(format: "%.1f", avgPerDay)) words/day")
                 }
             }
         }
     }
 
-    private func factRow(icon: String, text: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundColor(themeStore.accentBlue)
-                .frame(width: 20)
-            Text(text)
-                .font(.custom("Poppins-Regular", size: 14))
-                .foregroundColor(.primary)
-        }
+    private func factRow(text: String) -> some View {
+        Text(text)
+            .font(.custom("Poppins-Regular", size: 14))
+            .foregroundColor(.primary)
     }
 
-    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+    private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeStore.accentBlue)
-                Text(title)
-                    .font(.custom("Poppins-Bold", size: 18))
-                    .foregroundColor(.primary)
-            }
+            Text(title)
+                .font(.custom("Poppins-Bold", size: 18))
+                .foregroundColor(.primary)
 
             content()
         }

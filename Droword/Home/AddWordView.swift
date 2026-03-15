@@ -57,6 +57,7 @@ struct AddWordView: View {
                         Button {
                             Haptics.lightImpact()
                             word = clip
+                            UIPasteboard.general.string = ""
                             clipboardText = nil
                         } label: {
                             HStack(spacing: 10) {
@@ -254,7 +255,8 @@ struct AddWordView: View {
                     comment: comment.isEmpty ? nil : comment,
                     tag: selectedTag,
                     fromLanguage: languageStore.learningLanguage,
-                    toLanguage: languageStore.nativeLanguage
+                    toLanguage: languageStore.nativeLanguage,
+                    needsEnrichment: true
                 )
                 store.add(newWord)
                 dismiss()

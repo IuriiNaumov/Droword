@@ -4,6 +4,7 @@ import AVFoundation
 struct HomeView: View {
     @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @StateObject private var golden = GoldenWordsStore()
 
@@ -45,9 +46,23 @@ struct HomeView: View {
     }
 
     @AppStorage("dailyGoalTarget") private var dailyGoalTarget: Int = 5
+    @AppStorage("dailyGoalDate") private var dailyGoalDate: String = ""
 
     private var wordsAddedToday: Int {
         store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
+    }
+
+    private var isGoalCompleted: Bool {
+        wordsAddedToday >= max(1, dailyGoalTarget)
+    }
+
+    private func refreshDailyGoalIfNeeded() {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd"
+        let today = df.string(from: Date())
+        guard dailyGoalDate != today else { return }
+        dailyGoalDate = today
+        dailyGoalTarget = Int.random(in: 3...10)
     }
 
     private var dueWordCount: Int {
@@ -117,14 +132,13 @@ struct HomeView: View {
         .onChange(of: store.words.count) { _, newValue in
             if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
                 Task {
-                    await golden.fetchSuggestions(basedOn: store.words, languageStore: LanguageStore())
+                    await golden.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
                 }
                 lastGoldenTrigger = newValue
             }
 
             let todayCount = store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
-            let target = UserDefaults.standard.integer(forKey: "dailyGoalTarget")
-            let effectiveTarget = target > 0 ? target : 5
+            let effectiveTarget = max(1, dailyGoalTarget)
             if todayCount == effectiveTarget {
                 NotificationManager.shared.scheduleDailyGoalCompletion()
                 let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
@@ -150,9 +164,6 @@ struct HomeView: View {
             VStack(spacing: 28) {
                 ProfileHeaderView()
                 StatsView()
-
-                StreakCalendarView()
-                    .padding(.horizontal, 20)
 
                 dailyGoalWidget
                     .padding(.horizontal, 20)
@@ -215,6 +226,7 @@ struct HomeView: View {
             .padding(.bottom, 60)
         }
         .background(Color.appBackground)
+        .onAppear { refreshDailyGoalIfNeeded() }
     }
 
     private var dailyGoalWidget: some View {
@@ -230,8 +242,14 @@ struct HomeView: View {
                     .frame(width: 56, height: 56)
                     .rotationEffect(.degrees(-90))
                     .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
-                Text("🔥")
-                    .font(.system(size: 22))
+                if isGoalCompleted {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundColor(themeStore.accentGreen)
+                } else {
+                    Text("🔥")
+                        .font(.system(size: 22))
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {

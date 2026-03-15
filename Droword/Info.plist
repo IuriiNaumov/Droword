@@ -10,5 +10,7 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your profile avatar</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photo from your library for your profile avatar</string>
 </dict>
 </plist>

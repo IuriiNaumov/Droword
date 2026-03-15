@@ -59,11 +59,13 @@ struct WordCardView: View, Equatable {
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var highlightedExample: AttributedString = ""
-    @State private var showDeleteConfirmation = false
+    @State private var cachedBgColor: Color?
+    @State private var cachedIsDark: Bool?
 
     private var isGolden: Bool { tag == "Golden" }
 
     private var backgroundColor: Color {
+        if let cached = cachedBgColor { return cached }
         if let tag = tag, !tag.isEmpty {
             return colorForTag(tag)
         }
@@ -71,7 +73,8 @@ struct WordCardView: View, Equatable {
     }
 
     private var isDarkBackground: Bool {
-        backgroundColor.isDarkColor
+        if let cached = cachedIsDark { return cached }
+        return backgroundColor.isDarkColor
     }
 
     private var primaryTextColor: Color {
@@ -91,7 +94,7 @@ struct WordCardView: View, Equatable {
                     Text(tag)
                         .font(.custom("Poppins-Medium", size: 15))
                         .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 6)
                         .padding(.horizontal, 28)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -99,7 +102,7 @@ struct WordCardView: View, Equatable {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(colorForTag(tag).opacity(isDarkBackground ? 0.6 : 0.45), lineWidth: 1)
+                                .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
                         )
                         .padding(.bottom, 2)
                 }
@@ -161,13 +164,7 @@ struct WordCardView: View, Equatable {
 
                 HStack {
                     Spacer()
-                    Button(action: { shareWord() }) {
-                        Image(systemName: "square.and.arrow.up")
-                            .foregroundColor(secondaryTextColor.opacity(0.6))
-                            .padding(.top, 8)
-                    }
-                    .buttonStyle(.plain)
-                    Button(action: { Haptics.warning(); showDeleteConfirmation = true }) {
+                    Button(action: { Haptics.warning(); onDelete() }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -193,7 +190,7 @@ struct WordCardView: View, Equatable {
 
                 HStack {
                     Spacer()
-                    Button(action: { Haptics.warning(); showDeleteConfirmation = true }) {
+                    Button(action: { Haptics.warning(); onDelete() }) {
                         Image(systemName: "trash.fill")
                             .foregroundColor(.red)
                             .padding(.top, 8)
@@ -224,13 +221,17 @@ struct WordCardView: View, Equatable {
                 isExpanded.toggle()
             }
         }
-        .alert("Delete word?", isPresented: $showDeleteConfirmation) {
-            Button("Delete", role: .destructive) { onDelete() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Are you sure you want to delete \"\(word)\"?")
-        }
         .onAppear {
+            // Cache expensive color computations once
+            let bg: Color
+            if let tag = tag, !tag.isEmpty {
+                bg = colorForTag(tag)
+            } else {
+                bg = Color.cardBackground
+            }
+            cachedBgColor = bg
+            cachedIsDark = bg.isDarkColor
+
             if let example = example {
                 highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
             } else {
@@ -264,27 +265,6 @@ struct WordCardView: View, Equatable {
             .padding(.top, 6)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private func shareWord() {
-        Haptics.lightImpact()
-        var text = "\(word)"
-        if let translation = translation { text += " — \(translation)" }
-        if let example = example, !example.isEmpty { text += "\n\"\(example)\"" }
-        UIPasteboard.general.string = text
-
-        let av = UIActivityViewController(activityItems: [text], applicationActivities: nil)
-        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let root = scene.windows.first?.rootViewController {
-            var topVC = root
-            while let presented = topVC.presentedViewController { topVC = presented }
-            if let popover = av.popoverPresentationController {
-                popover.sourceView = topVC.view
-                popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
-                popover.permittedArrowDirections = []
-            }
-            topVC.present(av, animated: true)
-        }
     }
 
     private func playAudio() {

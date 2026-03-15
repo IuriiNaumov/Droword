@@ -77,16 +77,6 @@ struct StreakCalendarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(themeStore.accentGold)
-                Text("\(currentStreak) day streak")
-                    .font(.custom("Poppins-Bold", size: 18))
-                    .foregroundColor(.mainBlack)
-                Spacer()
-            }
-
             VStack(alignment: .leading, spacing: 2) {
                 // Month labels
                 GeometryReader { geo in
@@ -144,15 +134,6 @@ struct StreakCalendarView: View {
                     .foregroundColor(.mainGrey)
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.cardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.divider, lineWidth: 1)
-                )
-        )
     }
 }
 
