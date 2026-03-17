@@ -51,7 +51,7 @@ struct GoldenWordsView: View {
                                     } label: {
                                         HStack(spacing: 6) {
                                             Image(systemName: "plus.circle.fill")
-                                            Text("Add (+20 XP)")
+                                            Text("Add")
                                         }
                                         .font(.custom("Poppins-Medium", size: 13))
                                         .foregroundColor(.white)

@@ -33,6 +33,8 @@ struct PracticeView: View {
     @State private var learningQueue: [WordCard] = []
     @State private var showCompletion = false
     @State private var showListeningPlayer = false
+    @State private var showPremiumWall = false
+    @AppStorage("isPremium") private var isPremium: Bool = false
 
     private var hasEnoughWordsForPractice: Bool {
         store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count >= 4
@@ -183,6 +185,10 @@ struct PracticeView: View {
                 .environmentObject(store)
                 .environmentObject(themeStore)
         }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+        }
     }
 
     private var reviewContent: some View {
@@ -300,7 +306,11 @@ struct PracticeView: View {
 
             Button(action: {
                 Haptics.mediumImpact()
-                showListeningPlayer = true
+                if isPremium || DailyLimitsManager.canPlayTTS {
+                    showListeningPlayer = true
+                } else {
+                    showPremiumWall = true
+                }
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "play.fill")
@@ -469,6 +479,8 @@ struct WordCardPracticeView: View {
 
     @State private var isPlaying = false
     @State private var showTranslation = false
+    @State private var showPremiumWall = false
+    @AppStorage("isPremium") private var isPremium: Bool = false
 
     private var backgroundColor: Color {
         if let tag = card.tag {
@@ -677,9 +689,20 @@ struct WordCardPracticeView: View {
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+        }
     }
 
     private func playAudio() {
+        guard isPremium || DailyLimitsManager.canPlayTTS else {
+            showPremiumWall = true
+            return
+        }
+        if !isPremium {
+            DailyLimitsManager.recordTTS()
+        }
         Task {
             isPlaying = true
             await AudioManager.shared.play(word: card.word)

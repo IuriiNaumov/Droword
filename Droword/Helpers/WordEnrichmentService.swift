@@ -1,10 +1,15 @@
 import Foundation
+import SwiftUI
 
 @MainActor
 final class WordEnrichmentService {
     private let store: WordsStore
     private let languageStore: LanguageStore
     private var observeTask: Task<Void, Never>?
+
+    private var isPremium: Bool {
+        UserDefaults.standard.bool(forKey: "isPremium")
+    }
 
     init(store: WordsStore, languageStore: LanguageStore) {
         self.store = store
@@ -38,8 +43,15 @@ final class WordEnrichmentService {
         for word in pending {
             guard NetworkMonitor.shared.isConnected else { break }
 
+            // Free users can only enrich within their daily translation limit
+            if !isPremium && !DailyLimitsManager.canTranslate { break }
+
             do {
                 let result = try await translateWithGPT(word: word.word, languageStore: languageStore)
+
+                if !isPremium {
+                    DailyLimitsManager.recordTranslation()
+                }
 
                 store.enrichWord(
                     id: word.id,

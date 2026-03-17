@@ -14,7 +14,16 @@ final class GoldenWordsStore: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let baseWords = words.map { $0.word }
+            // Filter words by current learning language and take the most recent ones
+            let currentLanguage = languageStore.learningLanguage
+            let relevantWords = words
+                .filter { $0.toLanguage == currentLanguage }
+                .sorted { $0.dateAdded > $1.dateAdded }
+                .prefix(30)
+            
+            guard !relevantWords.isEmpty else { return }
+            
+            let baseWords = relevantWords.map { $0.word }
             let result = try await fetchSuggestionsWithTopic(words: baseWords, languageStore: languageStore)
             self.topic = result.topic
             self.goldenWords = result.suggestions

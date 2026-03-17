@@ -184,6 +184,17 @@ final class ListeningSessionManager: ObservableObject {
                 currentPhase = .word
                 try Task.checkCancellation()
                 try await waitIfPaused()
+
+                // Check TTS limit for free users
+                let premium = UserDefaults.standard.bool(forKey: "isPremium")
+                if !premium && !DailyLimitsManager.canPlayTTS {
+                    await MainActor.run {
+                        stop()
+                    }
+                    break
+                }
+                if !premium { DailyLimitsManager.recordTTS() }
+
                 try await AudioManager.shared.playAndWait(text: firstText)
 
                 currentPhase = .pause

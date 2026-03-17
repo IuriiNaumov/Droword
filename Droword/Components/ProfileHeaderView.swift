@@ -27,6 +27,7 @@ struct ProfileHeaderView: View {
     @AppStorage("lastActiveDay") private var lastActiveDay: String = ""
     @AppStorage("firstUseDate") private var firstUseDate: String = ""
     @AppStorage("currentStreak") private var currentStreak: Int = 0
+    @AppStorage("isPremium") private var isPremium: Bool = false
 
     private let xpPerWord = 10
     private let maxLevel = 50
@@ -115,17 +116,16 @@ struct ProfileHeaderView: View {
                             Image(uiImage: avatarImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: 72, height: 72)
+                                .frame(width: 56, height: 56)
                                 .clipped()
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(levelBackground, lineWidth: 3))
                         } else {
                             Circle()
                                 .fill(levelBackground.opacity(0.25))
-                                .frame(width: 72, height: 72)
+                                .frame(width: 56, height: 56)
                                 .overlay(
                                     Image(systemName: "person.fill")
-                                        .font(.system(size: 34, weight: .semibold))
+                                        .font(.system(size: 26, weight: .semibold))
                                         .foregroundColor(.mainBlack)
                                 )
                         }
@@ -135,9 +135,23 @@ struct ProfileHeaderView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(displayName)
-                        .font(.custom("Poppins-Bold", size: 22))
-                        .foregroundColor(.mainBlack)
+                    HStack(spacing: 8) {
+                        Text(displayName)
+                            .font(.custom("Poppins-Bold", size: 22))
+                            .foregroundColor(.mainBlack)
+
+                        if isPremium {
+                            Text("PRO")
+                                .font(.custom("Poppins-Bold", size: 10))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.accentBlack)
+                                )
+                        }
+                    }
 
                     Text("\(usageDurationString()) with Droword")
                         .font(.custom("Poppins-Regular", size: 14))

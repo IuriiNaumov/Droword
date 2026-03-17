@@ -15,6 +15,7 @@ enum SettingsDestination: Hashable {
     case privacyPolicy
     case achievements
     case seasonalEffects
+    case premium
 }
 
 struct SettingsView: View {
@@ -29,6 +30,7 @@ struct SettingsView: View {
     @AppStorage("userName") private var storedUserName: String = ""
     @AppStorage("firstUseDate") private var firstUseDate: String = ""
     @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
+    @AppStorage("isPremium") private var isPremium: Bool = false
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
     @State private var path = NavigationPath()
@@ -97,6 +99,12 @@ struct SettingsView: View {
                             SettingItem(icon: "person.circle", color: themeStore.iconGreen, title: "Personal details"),
                         ]) { item in
                             if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "crown.fill", color: themeStore.iconGold, title: "Premium", value: isPremium ? "Active" : "Upgrade"),
+                        ]) { _ in
+                            path.append(SettingsDestination.premium)
                         }
 
                         groupedSettingsSection([
@@ -185,6 +193,8 @@ struct SettingsView: View {
                     AchievementsView()
                 case .seasonalEffects:
                     SeasonalEffectsSettingsView()
+                case .premium:
+                    PremiumView()
                 }
             }
         }
@@ -337,10 +347,10 @@ struct DictionarySettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
 
                 VStack(spacing: 0) {
-                    settingsRow(icon: "square.and.arrow.up", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentBlue, title: "Export Dictionary") {
+                    settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Dictionary") {
                         exportCSV()
                     }
-                    settingsRow(icon: "square.and.arrow.down", color: themeStore.isMonochrome ? themeStore.monoDark : themeStore.accentGreen, title: "Import Dictionary") {
+                    settingsRow(icon: "square.and.arrow.down", color: themeStore.iconGreen, title: "Import Dictionary") {
                         showImportPicker = true
                     }
                 }
@@ -737,16 +747,38 @@ private struct RadioButtonRow: View {
 }
 
 struct FeatureFlagsView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+    @AppStorage("isPremium") private var isPremium: Bool = false
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
-                Text("No active flags")
-                    .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 40)
+                VStack(spacing: 0) {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(themeStore.iconGold.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeStore.iconGold)
+                        }
+                        Text("Premium")
+                            .font(.custom("Poppins-Regular", size: 16))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Toggle("", isOn: $isPremium)
+                            .labelsHidden()
+                            .tint(themeStore.accentGold)
+                    }
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 20)
+                    .background(Color.cardBackground)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
-            .padding()
+            .padding(.vertical, 20)
+            .padding(.horizontal, 20)
         }
         .background(Color.appBackground.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
@@ -941,6 +973,8 @@ struct SeasonalEffectsSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
     @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
+    @AppStorage("isPremium") private var isPremium: Bool = false
+    @State private var showPremiumWall = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -962,10 +996,13 @@ struct SeasonalEffectsSettingsView: View {
                         icon: "sparkles",
                         color: themeStore.iconPink,
                         title: "Show effects",
-                        isOn: $seasonalEffectsEnabled
+                        isOn: isPremium ? $seasonalEffectsEnabled : .constant(false)
                     )
+                    .onTapGesture {
+                        if !isPremium { showPremiumWall = true }
+                    }
 
-                    if seasonalEffectsEnabled {
+                    if seasonalEffectsEnabled && isPremium {
                         Divider().padding(.leading, 68)
 
                         toggleRow(
@@ -1018,6 +1055,10 @@ struct SeasonalEffectsSettingsView: View {
             ToolbarItem(placement: .navigationBarLeading) {
                 SettingsBackButton()
             }
+        }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
         }
     }
 

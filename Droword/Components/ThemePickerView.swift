@@ -4,6 +4,8 @@ struct ThemePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("isPremium") private var isPremium: Bool = false
+    @State private var showPremiumWall = false
 
     var body: some View {
         VStack {
@@ -35,6 +37,10 @@ struct ThemePickerView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+        }
     }
 
     private func themeBlock(palette: ThemeStore.Palette) -> some View {
@@ -42,6 +48,10 @@ struct ThemePickerView: View {
         let colors = previewColors(for: palette)
 
         return Button {
+            guard isPremium else {
+                showPremiumWall = true
+                return
+            }
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 themeStore.set(palette)
             }

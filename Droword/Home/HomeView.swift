@@ -171,23 +171,30 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: store.words.count) { _, newValue in
+        .onChange(of: store.words.count) { oldValue, newValue in
+            // Only react to additions, not deletions
+            guard newValue > oldValue else { return }
+
             if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
-                Task {
-                    await golden.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
+                let isPremium = UserDefaults.standard.bool(forKey: "isPremium")
+                if isPremium || DailyLimitsManager.canFetchGolden {
+                    if !isPremium { DailyLimitsManager.recordGoldenFetch() }
+                    Task {
+                        await golden.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
+                    }
                 }
                 lastGoldenTrigger = newValue
             }
 
-            let todayCount = store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
-            let effectiveTarget = max(1, dailyGoalTarget)
-            if todayCount == effectiveTarget {
-                NotificationManager.shared.scheduleDailyGoalCompletion()
-                let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
-                if lastCelebratedDailyGoalDate != todayStr {
+            let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
+            if lastCelebratedDailyGoalDate != todayStr {
+                let todayCount = store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
+                let effectiveTarget = max(1, dailyGoalTarget)
+                if todayCount >= effectiveTarget {
                     lastCelebratedDailyGoalDate = todayStr
                     activeMilestone = .dailyGoal
                     badgeStore.recordDailyGoalCompletion()
+                    NotificationManager.shared.scheduleDailyGoalCompletion()
                 }
             }
 

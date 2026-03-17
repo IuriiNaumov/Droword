@@ -11,14 +11,14 @@ struct AddWordView: View {
     @State private var comment = ""
     @State private var selectedTag: String? = nil
     @State private var isAdding = false
+    @State private var showOfflineAlert = false
+    @AppStorage("isPremium") private var isPremium: Bool = false
     @FocusState private var focusedField: Field?
     @State private var didAppear = false
 
     @State private var wordPlaceholder = ""
     @State private var translationPlaceholder = ""
     @State private var commentPlaceholder = ""
-    @State private var clipboardText: String? = nil
-
     enum Field { case word, translation, comment }
 
     private let wordPlaceholders = [
@@ -54,45 +54,6 @@ struct AddWordView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     header
 
-                    if let clip = clipboardText, word.isEmpty {
-                        Button {
-                            Haptics.lightImpact()
-                            word = clip
-                            UIPasteboard.general.string = ""
-                            clipboardText = nil
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "doc.on.clipboard")
-                                    .font(.system(size: 15, weight: .medium))
-                                    .foregroundColor(.mainBlack)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Paste from clipboard")
-                                        .font(.custom("Poppins-Medium", size: 14))
-                                        .foregroundColor(.mainBlack)
-                                    Text(clip)
-                                        .font(.custom("Poppins-Regular", size: 13))
-                                        .foregroundColor(.mainGrey)
-                                        .lineLimit(1)
-                                }
-                                Spacer()
-                                Image(systemName: "arrow.down.doc.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.mainGrey)
-                            }
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.cardBackground)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                            .stroke(Color.divider, lineWidth: 1)
-                                    )
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
-
                     wordSection
                     translationSection
                     commentSection
@@ -117,8 +78,18 @@ struct AddWordView: View {
                 .padding(.top, 28)
             }
             .scrollDismissesKeyboard(.interactively)
+            .disabled(isAdding)
         }
         .transaction { tx in tx.disablesAnimations = true }
+        .alert("No internet connection", isPresented: $showOfflineAlert) {
+            Button("Add anyway") {
+                let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
+                addWordOffline(trimmedWord)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The word will be saved and enriched with translation and examples once you're back online.")
+        }
         .onAppear {
             wordPlaceholder = wordPlaceholders.randomElement() ?? "Enter a word"
             translationPlaceholder = translationPlaceholders.randomElement() ?? "Enter translation"
@@ -126,13 +97,6 @@ struct AddWordView: View {
 
             if !initialWord.isEmpty && word.isEmpty {
                 word = initialWord
-            }
-
-            if let pasteString = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !pasteString.isEmpty,
-               pasteString.count <= 60,
-               !pasteString.contains("\n") {
-                clipboardText = pasteString
             }
 
             if !didAppear { didAppear = true }
@@ -224,10 +188,29 @@ struct AddWordView: View {
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty else { return }
 
+        // Determine if AI translation is available
+        let canUseAI = isPremium || DailyLimitsManager.canTranslate
+
+        // Without AI — save offline
+        guard canUseAI else {
+            addWordOffline(trimmedWord)
+            return
+        }
+
+        // Check network before trying API
+        guard NetworkMonitor.shared.isConnected else {
+            showOfflineAlert = true
+            return
+        }
+
         isAdding = true
 
         do {
             let result = try await translateWithGPT(word: trimmedWord, languageStore: languageStore)
+
+            if !isPremium {
+                DailyLimitsManager.recordTranslation()
+            }
 
             await MainActor.run {
                 let newWord = StoredWord(
@@ -249,23 +232,27 @@ struct AddWordView: View {
         } catch {
             print("⚠️ Translation error: \(error.localizedDescription)")
             await MainActor.run {
-                let newWord = StoredWord(
-                    word: trimmedWord,
-                    type: "",
-                    translation: translation.isEmpty ? nil : translation,
-                    example: nil,
-                    comment: comment.isEmpty ? nil : comment,
-                    tag: selectedTag,
-                    fromLanguage: languageStore.learningLanguage,
-                    toLanguage: languageStore.nativeLanguage,
-                    needsEnrichment: true
-                )
-                store.add(newWord)
-                dismiss()
+                addWordOffline(trimmedWord)
             }
         }
 
         await MainActor.run { isAdding = false }
+    }
+
+    private func addWordOffline(_ trimmedWord: String) {
+        let newWord = StoredWord(
+            word: trimmedWord,
+            type: "",
+            translation: translation.isEmpty ? nil : translation,
+            example: nil,
+            comment: comment.isEmpty ? nil : comment,
+            tag: selectedTag,
+            fromLanguage: languageStore.learningLanguage,
+            toLanguage: languageStore.nativeLanguage,
+            needsEnrichment: true
+        )
+        store.add(newWord)
+        dismiss()
     }
 
 

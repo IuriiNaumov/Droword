@@ -102,6 +102,8 @@ struct DrowordApp: App {
     }
 
     private func warmUpGPT() {
+        let premium = UserDefaults.standard.bool(forKey: "isPremium")
+        guard premium else { return }
         Task.detached(priority: .background) {
             let languageStore = LanguageStore()
             _ = try? await translateWithGPT(word: "hola", languageStore: languageStore)

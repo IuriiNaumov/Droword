@@ -178,6 +178,7 @@ struct DictionaryView: View {
                 }
                 .padding(.horizontal, horizontalPadding)
                 .padding(.bottom, 40)
+                .id(themeStore.palette)
             }
         }
         .overlay(alignment: .bottom) {

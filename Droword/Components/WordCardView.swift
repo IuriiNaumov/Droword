@@ -61,6 +61,8 @@ struct WordCardView: View {
 
     @State private var isExpanded = true
     @State private var isPlaying = false
+    @State private var showPremiumWall = false
+    @AppStorage("isPremium") private var isPremium: Bool = false
     @State private var highlightedExample: AttributedString = ""
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
@@ -252,6 +254,10 @@ struct WordCardView: View {
                 highlightedExample = ""
             }
         }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+        }
     }
 
     private var headerRow: some View {
@@ -275,6 +281,13 @@ struct WordCardView: View {
     }
 
     private func playAudio() {
+        guard isPremium || DailyLimitsManager.canPlayTTS else {
+            showPremiumWall = true
+            return
+        }
+        if !isPremium {
+            DailyLimitsManager.recordTTS()
+        }
         Task {
             Haptics.selection()
             isPlaying = true
