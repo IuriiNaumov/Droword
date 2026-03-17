@@ -352,7 +352,7 @@ struct HomeView: View {
                         .background(
                             Circle()
                                 .fill(Color.mainGrey.opacity(0.1))
-                        )
+                        ).padding(.bottom, 22)
                 }
             }
         }

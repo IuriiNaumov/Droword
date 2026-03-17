@@ -102,14 +102,14 @@ struct SettingsView: View {
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "crown.fill", color: themeStore.iconGold, title: "Premium", value: isPremium ? "Active" : "Upgrade"),
+                            SettingItem(icon: "crown.fill", color: themeStore.iconGold, title: "PRO", value: isPremium ? "Active" : "Upgrade"),
                         ]) { _ in
                             path.append(SettingsDestination.premium)
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "moon.fill", color: themeStore.iconGold, title: "Appearance", value: appearanceTitle),
-                            SettingItem(icon: "textformat.size", color: themeStore.iconGold, title: "Language", value: languageStore.learningLanguage),
+                            SettingItem(icon: "moon.fill", color: themeStore.monoDark, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language", value: languageStore.learningLanguage),
                             SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
                             SettingItem(icon: "mic.fill", color: themeStore.iconBlue, title: "Voice & Speech"),
                             SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
@@ -763,7 +763,7 @@ struct FeatureFlagsView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(themeStore.iconGold)
                         }
-                        Text("Premium")
+                        Text("PRO")
                             .font(.custom("Poppins-Regular", size: 16))
                             .foregroundColor(.primary)
                         Spacer()
