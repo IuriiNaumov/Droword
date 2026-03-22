@@ -1,18 +1,19 @@
 import SwiftUI
+import Charts
 
 struct DetailedStatsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-
     private var statColor: Color {
         themeStore.accentBlue
     }
 
     private var statTextColor: Color {
-        darkerShade(of: statColor, by: colorScheme == .dark ? 0.3 : 0.4)
+        themeStore.mainText
     }
 
     private var wordsAddedToday: Int {
@@ -78,16 +79,7 @@ struct DetailedStatsView: View {
         return (best.key, best.value.count)
     }
 
-    private var last14Days: [(date: Date, count: Int)] {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
 
-        return (0..<14).reversed().compactMap { offset in
-            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { return nil }
-            return (day, grouped[day]?.count ?? 0)
-        }
-    }
 
     private var tagDistribution: [(tag: String, count: Int)] {
         var dict: [String: Int] = [:]
@@ -113,29 +105,44 @@ struct DetailedStatsView: View {
         return f
     }
 
-    private var shortDayFormatter: DateFormatter {
-        let f = DateFormatter()
-        f.dateFormat = "EE"
-        return f
+    // MARK: - Chart Data
+
+    private var wordsPerDay: [(date: Date, count: Int)] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
+
+        return (0..<30).reversed().compactMap { daysAgo in
+            guard let date = cal.date(byAdding: .day, value: -daysAgo, to: today) else { return nil }
+            let count = grouped[date]?.count ?? 0
+            return (date: date, count: count)
+        }
     }
+
+    private static let pieColors: [Color] = [
+        .blue, .green, .orange, .purple, .pink, .cyan, .yellow, .red, .indigo, .mint
+    ]
 
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     overviewSection
-                    activitySection
+                    studyTimeSection
+                    calendarSection
+                    wordsPerDayChartSection
                     masterySection
                     reviewSection
-                    tagSection
+                    tagChartSection
                     typeSection
                     factsSection
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
                 .padding(.bottom, 40)
+                .iPadContentWidth()
             }
-            .background(Color.appBackground.ignoresSafeArea())
+            .background(themeStore.appBg.ignoresSafeArea())
             .navigationTitle("Stats")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -176,32 +183,75 @@ struct DetailedStatsView: View {
         )
     }
 
-    private var activitySection: some View {
-        let data = last14Days
-        let maxCount = max(data.map(\.count).max() ?? 1, 1)
+    // MARK: - Study Time
 
-        return sectionCard(title: "Activity") {
-            VStack(spacing: 8) {
-                HStack(alignment: .bottom, spacing: 4) {
-                    ForEach(Array(data.enumerated()), id: \.offset) { _, item in
-                        VStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(item.count > 0 ? themeStore.accentGreen : Color.mainGrey.opacity(0.2))
-                                .frame(height: max(4, CGFloat(item.count) / CGFloat(maxCount) * 80))
+    private var studyTimeSection: some View {
+        let data = studyTimeTracker.minutesPerDay(last: 14)
+        let maxMin = data.map { $0.minutes }.max() ?? 1
 
-                            Text(shortDayFormatter.string(from: item.date).prefix(1))
-                                .font(.system(size: 9))
-                                .foregroundColor(.mainGrey)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
+        return sectionCard(title: "Study time") {
+            VStack(spacing: 14) {
+                HStack(spacing: 12) {
+                    studyTimeStat(value: studyTimeTracker.todayFormatted, label: "Today")
+                    studyTimeStat(value: studyTimeTracker.weekFormatted, label: "This week")
+                    studyTimeStat(value: "\(studyTimeTracker.averageDailyMinutes)m", label: "Avg/day")
                 }
-                .frame(height: 100)
 
-                Text("Last 14 days")
-                    .font(.custom("Poppins-Regular", size: 12))
-                    .foregroundColor(.mainGrey)
+                if data.contains(where: { $0.minutes > 0 }) {
+                    Chart {
+                        ForEach(data, id: \.date) { item in
+                            BarMark(
+                                x: .value("Date", item.date, unit: .day),
+                                y: .value("Minutes", item.minutes)
+                            )
+                            .foregroundStyle(themeStore.accentBlue.gradient)
+                            .cornerRadius(3)
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { _ in
+                            AxisValueLabel()
+                                .font(.custom("Poppins-Regular", size: 10))
+                                .foregroundStyle(themeStore.secondaryText)
+                            AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                                .foregroundStyle(themeStore.dividerColor)
+                        }
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: .day, count: 3)) { _ in
+                            AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                                .font(.custom("Poppins-Regular", size: 10))
+                                .foregroundStyle(themeStore.secondaryText)
+                        }
+                    }
+                    .chartYScale(domain: 0...(max(maxMin, 1)))
+                    .frame(height: 120)
+                } else {
+                    Text("Start learning to see your time chart")
+                        .font(.custom("Poppins-Regular", size: 13))
+                        .foregroundColor(themeStore.secondaryText)
+                        .frame(height: 80)
+                        .frame(maxWidth: .infinity)
+                }
             }
+        }
+    }
+
+    private func studyTimeStat(value: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.custom("Poppins-Bold", size: 18))
+                .foregroundColor(.primary)
+            Text(label)
+                .font(.custom("Poppins-Regular", size: 12))
+                .foregroundColor(themeStore.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var calendarSection: some View {
+        sectionCard(title: "Activity") {
+            StreakCalendarView()
         }
     }
 
@@ -256,7 +306,7 @@ struct DetailedStatsView: View {
                         .foregroundColor(.primary)
                     Text("Due today")
                         .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
                 .frame(maxWidth: .infinity)
 
@@ -266,7 +316,7 @@ struct DetailedStatsView: View {
                         .foregroundColor(.primary)
                     Text("Total lapses")
                         .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
                 .frame(maxWidth: .infinity)
 
@@ -276,29 +326,105 @@ struct DetailedStatsView: View {
                         .foregroundColor(.primary)
                     Text("Avg ease")
                         .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
                 .frame(maxWidth: .infinity)
             }
         }
     }
 
-    private var tagSection: some View {
+    // MARK: - Words Per Day Bar Chart
+
+    private var wordsPerDayChartSection: some View {
+        let data = wordsPerDay
+        let maxCount = data.map(\.count).max() ?? 1
+
+        return sectionCard(title: "Words per day") {
+            VStack(alignment: .leading, spacing: 8) {
+                if data.allSatisfy({ $0.count == 0 }) {
+                    Text("No data yet — add words to see your chart")
+                        .font(.custom("Poppins-Regular", size: 13))
+                        .foregroundColor(themeStore.secondaryText)
+                        .frame(height: 160)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    Chart {
+                        ForEach(data, id: \.date) { item in
+                            BarMark(
+                                x: .value("Date", item.date, unit: .day),
+                                y: .value("Words", item.count)
+                            )
+                            .foregroundStyle(themeStore.accentGreen.gradient)
+                            .cornerRadius(3)
+                        }
+                    }
+                    .chartYAxis {
+                        AxisMarks(position: .leading) { value in
+                            AxisValueLabel()
+                                .font(.custom("Poppins-Regular", size: 10))
+                                .foregroundStyle(themeStore.secondaryText)
+                            AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                                .foregroundStyle(themeStore.dividerColor)
+                        }
+                    }
+                    .chartXAxis {
+                        AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                            AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                                .font(.custom("Poppins-Regular", size: 10))
+                                .foregroundStyle(themeStore.secondaryText)
+                        }
+                    }
+                    .chartYScale(domain: 0...(max(maxCount, 1)))
+                    .frame(height: 160)
+                }
+            }
+        }
+    }
+
+    // MARK: - Tag Pie Chart
+
+    private var tagChartSection: some View {
         let tags = tagDistribution
 
         return Group {
             if !tags.isEmpty {
                 sectionCard(title: "By tags") {
-                    VStack(spacing: 8) {
-                        ForEach(Array(tags.prefix(6).enumerated()), id: \.offset) { _, item in
-                            HStack {
-                                Text(item.tag)
-                                    .font(.custom("Poppins-Regular", size: 14))
-                                    .foregroundColor(.primary)
-                                Spacer()
-                                Text("\(item.count)")
-                                    .font(.custom("Poppins-Bold", size: 14))
-                                    .foregroundColor(.mainGrey)
+                    HStack(spacing: 16) {
+                        // Pie chart
+                        Chart {
+                            ForEach(Array(tags.prefix(8).enumerated()), id: \.offset) { index, item in
+                                SectorMark(
+                                    angle: .value("Count", item.count),
+                                    innerRadius: .ratio(0.55),
+                                    angularInset: 1.5
+                                )
+                                .foregroundStyle(Self.pieColors[index % Self.pieColors.count])
+                                .cornerRadius(4)
+                            }
+                        }
+                        .frame(width: 120, height: 120)
+
+                        // Legend
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(Array(tags.prefix(6).enumerated()), id: \.offset) { index, item in
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(Self.pieColors[index % Self.pieColors.count])
+                                        .frame(width: 8, height: 8)
+                                    Text(item.tag)
+                                        .font(.custom("Poppins-Regular", size: 13))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Text("\(item.count)")
+                                        .font(.custom("Poppins-Bold", size: 13))
+                                        .foregroundColor(themeStore.secondaryText)
+                                }
+                            }
+                            if tags.count > 6 {
+                                Text("+\(tags.count - 6) more")
+                                    .font(.custom("Poppins-Regular", size: 12))
+                                    .foregroundColor(themeStore.secondaryText)
                             }
                         }
                     }
@@ -322,7 +448,7 @@ struct DetailedStatsView: View {
                                 Spacer()
                                 Text("\(item.count)")
                                     .font(.custom("Poppins-Bold", size: 14))
-                                    .foregroundColor(.mainGrey)
+                                    .foregroundColor(themeStore.secondaryText)
                             }
                         }
                     }
@@ -343,6 +469,11 @@ struct DetailedStatsView: View {
                 if let first = store.words.map({ $0.dateAdded }).min() {
                     let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
                     factRow(text: "Learning for \(days) day\(days == 1 ? "" : "s")")
+                }
+
+                let totalMinutes = studyTimeTracker.totalAllTimeMinutes
+                if totalMinutes > 0 {
+                    factRow(text: "Total study time: \(StudyTimeTracker.format(seconds: totalMinutes * 60))")
                 }
 
                 let avgPerDay: Double = {
@@ -375,10 +506,10 @@ struct DetailedStatsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.cardBackground)
+                .fill(themeStore.cardBg)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.divider, lineWidth: 1)
+                        .stroke(themeStore.dividerColor, lineWidth: 1)
                 )
         )
     }

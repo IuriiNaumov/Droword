@@ -1,51 +1,67 @@
 import Foundation
 import UserNotifications
 
-private let friendlyBodies: [String] = [
-    "Let's grow your vocab — five minutes is all it takes ✨",
-    "Time to refresh a few words. Quick and simple!",
-    "I prepared a mini‑session for you. Jump in?",
-    "Your words miss you. Ready to review?",
+// MARK: - Content pools
+
+private let morningTitles = [
+    "Good morning!",
+    "Rise and learn",
+    "Fresh start"
+]
+
+private let morningBodies = [
+    "Start your day with a quick word review ✨",
+    "A few minutes now — your future self will thank you!",
+    "Your words are waiting. A quick session?"
+]
+
+private let afternoonTitles = [
+    "Words waiting for you",
+    "Quick refresh",
+    "Do you remember?"
+]
+
+private let eveningTitles = [
+    "Wind down with words",
+    "Evening review",
+    "Don't break your streak!"
+]
+
+private let eveningBodies = [
+    "End the day stronger — review a few words before bed.",
+    "A mini-session keeps your streak alive!",
     "One small step today — closer to your goal."
 ]
 
-private let friendlyTitles: [String] = [
-    "Time to review",
-    "Language minute",
-    "Your vocab calls",
-    "Quick refresh",
-    "Small step today"
-]
-
-private let inactivityBodies: [String] = [
+private let inactivityBodies = [
     "It's been a while — your words are waiting!",
     "A quick review keeps words fresh. Come back?",
     "Don't let your progress fade — even 2 minutes help.",
     "Your vocabulary misses you. Let's pick up where you left off!"
 ]
 
-private var rotatingIndex: Int {
-    get { UserDefaults.standard.integer(forKey: "notif.rotate.index") }
-    set { UserDefaults.standard.set(newValue, forKey: "notif.rotate.index") }
+struct DueWordInfo {
+    let word: String
+    let translation: String
 }
 
-private func randomContent(tagName: String?) -> (title: String, body: String) {
-    var idx = rotatingIndex
-    let title = friendlyTitles[idx % friendlyTitles.count]
-    let baseBody = friendlyBodies[idx % friendlyBodies.count]
-    idx = (idx + 1) % max(friendlyTitles.count, friendlyBodies.count)
-    rotatingIndex = idx
-
-    var body = baseBody
-    if let tagName, !tagName.isEmpty {
-        body += " for \"\(tagName)\""
-    }
-    return (title, body)
-}
+// MARK: - NotificationManager
 
 final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
+
+    /// The three daily notification slot identifiers
+    private static let morningID   = "daily.slot.morning"     // 9:00
+    private static let afternoonID = "daily.slot.afternoon"    // 14:00
+    private static let eveningID   = "daily.slot.evening"      // 20:00
+
+    /// One-off identifiers
+    private static let streakMilestonePrefix = "streak.milestone"
+    private static let dailyGoalID = "daily.goal.done"
+    private static let inactivityPrefix = "inactive"
+
+    // MARK: - Authorization
 
     func requestAuthorization(completion: ((Bool) -> Void)? = nil) {
         let center = UNUserNotificationCenter.current()
@@ -54,166 +70,161 @@ final class NotificationManager {
         }
     }
 
-    func scheduleDailyReminder(hour: Int, minute: Int, tagName: String? = nil, identifier: String? = nil) {
+    // MARK: - Main scheduling entry point
+
+    /// Schedules exactly 3 daily notifications (morning, afternoon, evening).
+    /// Call this on every `.active` scene phase.
+    func scheduleDaily(
+        dueCount: Int,
+        currentStreak: Int,
+        hasPracticedToday: Bool,
+        dueWords: [DueWordInfo]
+    ) {
         let center = UNUserNotificationCenter.current()
 
-        let content = UNMutableNotificationContent()
-        let pair = randomContent(tagName: tagName)
-        content.title = pair.title
-        content.body = pair.body
-        content.sound = .default
-
-        var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = minute
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-
-        let id = identifier ?? "daily.reminder.\(hour).\(minute).\(tagName ?? "")"
-        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-
-        center.add(request)
-    }
-
-    func scheduleTwiceDaily(tagName: String? = nil) {
-        let center = UNUserNotificationCenter.current()
+        // Remove all previous daily slots
         center.removePendingNotificationRequests(withIdentifiers: [
-            "daily.reminder.morning",
-            "daily.reminder.evening"
+            Self.morningID, Self.afternoonID, Self.eveningID
         ])
 
-        scheduleDailyReminder(hour: 9, minute: 0, tagName: tagName, identifier: "daily.reminder.morning")
-        scheduleDailyReminder(hour: 19, minute: 0, tagName: tagName, identifier: "daily.reminder.evening")
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+
+        // --- Morning (9:00) — motivational, mentions due count if any ---
+        if !hasPracticedToday {
+            let title = morningTitles[dayOfYear % morningTitles.count]
+            let body: String
+            if dueCount > 0 {
+                let unit = dueCount == 1 ? "word" : "words"
+                body = "You have \(dueCount) \(unit) to review. \(morningBodies[dayOfYear % morningBodies.count])"
+            } else {
+                body = morningBodies[dayOfYear % morningBodies.count]
+            }
+            scheduleAt(hour: 9, minute: 0, id: Self.morningID, title: title, body: body)
+        }
+
+        // --- Afternoon (14:00) — word quiz if available, else due reminder ---
+        if !dueWords.isEmpty {
+            let picked = dueWords[dayOfYear % dueWords.count]
+            scheduleAt(
+                hour: 14, minute: 0,
+                id: Self.afternoonID,
+                title: "Do you remember?",
+                body: "What does \"\(picked.word)\" mean? → \(picked.translation)"
+            )
+        } else if dueCount > 0 {
+            let unit = dueCount == 1 ? "word" : "words"
+            scheduleAt(
+                hour: 14, minute: 0,
+                id: Self.afternoonID,
+                title: afternoonTitles[dayOfYear % afternoonTitles.count],
+                body: "\(dueCount) \(unit) ready for review. A quick session keeps them fresh!"
+            )
+        }
+
+        // --- Evening (20:00) — streak-focused if streak ≥ 2, else general ---
+        if !hasPracticedToday && currentStreak >= 2 {
+            scheduleAt(
+                hour: 20, minute: 0,
+                id: Self.eveningID,
+                title: "Don't break your streak!",
+                body: "You're on a \(currentStreak)-day streak. Practice today to keep it going!"
+            )
+        } else if !hasPracticedToday {
+            let title = eveningTitles[dayOfYear % eveningTitles.count]
+            let body = eveningBodies[dayOfYear % eveningBodies.count]
+            scheduleAt(hour: 20, minute: 0, id: Self.eveningID, title: title, body: body)
+        }
     }
 
-    func scheduleDueWordsReminder(dueCount: Int, hour: Int = 12, minute: Int = 0) {
+    // MARK: - Inactivity reminders (for users gone 3+ days)
+
+    func scheduleInactivityReminders(lastActive: Date) {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["smart.due.words"])
+        let ids = [3, 7, 14, 30].map { "\(Self.inactivityPrefix).\($0)d" }
+        center.removePendingNotificationRequests(withIdentifiers: ids)
 
-        guard dueCount > 0 else { return }
+        let daysOffsets = [3, 7, 14, 30]
+        for (i, d) in daysOffsets.enumerated() {
+            let id = "\(Self.inactivityPrefix).\(d)d"
+            let fire = Calendar.current.date(byAdding: .day, value: d, to: lastActive)
+                ?? Date().addingTimeInterval(Double(d) * 86400)
+            guard fire > Date() else { continue }
 
-        let content = UNMutableNotificationContent()
-        content.title = "Words waiting for you"
-        let wordUnit = dueCount == 1 ? "word" : "words"
-        content.body = "You have \(dueCount) \(wordUnit) ready for review. A quick session keeps them fresh!"
-        content.sound = .default
+            let content = UNMutableNotificationContent()
+            content.title = "We miss you!"
+            content.body = inactivityBodies[i % inactivityBodies.count]
+            content.sound = .default
 
-        var dateComponents = DateComponents()
-        dateComponents.hour = hour
-        dateComponents.minute = minute
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-        let request = UNNotificationRequest(identifier: "smart.due.words", content: content, trigger: trigger)
-        center.add(request)
+            let trigger = UNTimeIntervalNotificationTrigger(
+                timeInterval: max(5, fire.timeIntervalSinceNow),
+                repeats: false
+            )
+            center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
+        }
     }
 
-    func scheduleStreakAtRiskReminder(currentStreak: Int) {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["streak.at.risk"])
-
-        guard currentStreak >= 2 else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = "Don't break your streak!"
-        content.body = "You're on a \(currentStreak)-day streak. Practice today to keep it going!"
-        content.sound = .default
-
-        var dateComponents = DateComponents()
-        dateComponents.hour = 20
-        dateComponents.minute = 30
-
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-        let request = UNNotificationRequest(identifier: "streak.at.risk", content: content, trigger: trigger)
-        center.add(request)
-    }
-
-    func cancelStreakAtRiskReminder() {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["streak.at.risk"])
-    }
-
-    func scheduleWordQuizReminder(word: String, translation: String, after seconds: TimeInterval = 14400) {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: ["word.quiz.contextual"])
-
-        let content = UNMutableNotificationContent()
-        content.title = "Do you remember?"
-        content.body = "What does \"\(word)\" mean? Tap to check → \(translation)"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(60, seconds), repeats: false)
-        let request = UNNotificationRequest(identifier: "word.quiz.contextual", content: content, trigger: trigger)
-        center.add(request)
-    }
-
-    func scheduleOneTimeReminder(after seconds: TimeInterval, tagName: String? = nil, identifier: String = UUID().uuidString) {
-        let center = UNUserNotificationCenter.current()
-
-        let content = UNMutableNotificationContent()
-        let pair = randomContent(tagName: tagName)
-        content.title = pair.title
-        content.body = pair.body
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(5, seconds), repeats: false)
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-        center.add(request)
-    }
+    // MARK: - Instant milestone notifications
 
     func scheduleStreakMilestone(streak: Int) {
         let milestones = [7, 30, 100, 365]
         guard milestones.contains(streak) else { return }
         guard UserDefaults.standard.bool(forKey: "notifStreakMilestones") else { return }
 
-        let center = UNUserNotificationCenter.current()
         let content = UNMutableNotificationContent()
         content.title = "Streak milestone!"
         content.body = "You've been learning for \(streak) days in a row. Keep going!"
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        let request = UNNotificationRequest(identifier: "streak.milestone.\(streak)", content: content, trigger: trigger)
-        center.add(request)
+        let id = "\(Self.streakMilestonePrefix).\(streak)"
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        )
     }
 
     func scheduleDailyGoalCompletion() {
-        let center = UNUserNotificationCenter.current()
         let content = UNMutableNotificationContent()
         content.title = "Daily goal reached!"
         content.body = "Awesome, you've hit your word goal for today."
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        let request = UNNotificationRequest(identifier: "daily.goal.done.\(Date().timeIntervalSince1970)", content: content, trigger: trigger)
-        center.add(request)
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: Self.dailyGoalID, content: content, trigger: trigger)
+        )
     }
+
+    // MARK: - Cancel
 
     func cancelAll() {
-        let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
 
-    func scheduleInactivityReminders(lastActive: Date) {
-        let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [
-            "inactive.3d", "inactive.7d", "inactive.14d", "inactive.30d"
-        ])
+    // MARK: - Private
 
-        let daysOffsets = [3, 7, 14, 30]
-        for (i, d) in daysOffsets.enumerated() {
-            let id = "inactive.\(d)d"
-            let fire = Calendar.current.date(byAdding: .day, value: d, to: lastActive) ?? Date().addingTimeInterval(Double(d) * 86400)
-            if fire < Date() { continue }
+    private func scheduleAt(hour: Int, minute: Int, id: String, title: String, body: String) {
+        let now = Date()
+        let cal = Calendar.current
 
-            let content = UNMutableNotificationContent()
-            let pair = randomContent(tagName: nil)
-            content.title = pair.title
-            content.body = inactivityBodies[i % inactivityBodies.count]
-            content.sound = .default
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = minute
 
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(5, fire.timeIntervalSinceNow), repeats: false)
-            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-            center.add(request)
+        // If the time already passed today, don't schedule (it would fire tomorrow,
+        // but we re-schedule every .active anyway)
+        if let fireDate = cal.nextDate(after: now, matching: dateComponents, matchingPolicy: .nextTime),
+           !cal.isDateInToday(fireDate) {
+            // Already past this slot today — skip, will be rescheduled tomorrow
+            // But still schedule it for tomorrow in case user doesn't open the app
         }
+
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
+        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
     }
 }

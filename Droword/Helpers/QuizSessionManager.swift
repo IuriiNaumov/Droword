@@ -180,9 +180,9 @@ final class QuizSessionManager: ObservableObject {
         if !correct {
             quality = 0.0
         } else if isAlmostCorrect {
-            quality = 0.35
+            quality = 0.5
         } else {
-            quality = 0.7
+            quality = 1.0
         }
 
         let alpha = 0.06

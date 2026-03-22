@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SoundWavesView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @State private var barHeights: [CGFloat] = [8, 12, 8]
     let isPlaying: Bool
 
@@ -12,13 +13,13 @@ struct SoundWavesView: View {
         HStack(spacing: 4) {
             ForEach(0..<3, id: \.self) { index in
                 Rectangle()
-                    .fill(Color.mainBlack)
+                    .fill(themeStore.mainText)
                     .frame(width: barWidth, height: barHeights[index])
                     .cornerRadius(2)
             }
         }
         .onAppear { if isPlaying { startAnimation() } }
-        .onChange(of: isPlaying) { animating in
+        .onChange(of: isPlaying) { _, animating in
             if animating {
                 startAnimation()
             } else {

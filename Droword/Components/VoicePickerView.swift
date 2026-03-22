@@ -20,7 +20,7 @@ struct VoicePickerView: View {
                 HStack(spacing: 14) {
                     ZStack {
                         Circle()
-                            .stroke(Color.mainGrey.opacity(0.4), lineWidth: 1)
+                            .stroke(themeStore.secondaryText.opacity(0.4), lineWidth: 1)
                             .frame(width: 22, height: 22)
                         if option.key == selectedKey {
                             Circle()
@@ -38,14 +38,14 @@ struct VoicePickerView: View {
                             .foregroundColor(.primary)
                         Text(option.description)
                             .font(.custom("Poppins-Regular", size: 13))
-                            .foregroundColor(.mainGrey)
+                            .foregroundColor(themeStore.secondaryText)
                     }
                     Spacer()
 
                     Button(action: { preview(option) }) {
                         SoundWavesView(isPlaying: previewingKey == option.key)
                             .frame(width: 24, height: 24)
-                            .tint(.mainBlack)
+                            .tint(themeStore.mainText)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Preview voice \(option.title)")
@@ -54,7 +54,7 @@ struct VoicePickerView: View {
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.cardBackground)
+                        .fill(themeStore.cardBg)
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { select(option) }

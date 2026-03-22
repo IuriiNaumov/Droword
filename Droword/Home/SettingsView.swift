@@ -1,22 +1,5 @@
 import SwiftUI
 import PhotosUI
-import UserNotifications
-import UniformTypeIdentifiers
-
-enum SettingsDestination: Hashable {
-    case personalDetails
-    case language
-    case appearance
-    case theme
-    case voiceAndSpeech
-    case notifications
-    case dictionary
-    case featureFlags
-    case privacyPolicy
-    case achievements
-    case seasonalEffects
-    case premium
-}
 
 struct SettingsView: View {
     @EnvironmentObject private var store: WordsStore
@@ -29,13 +12,17 @@ struct SettingsView: View {
     @AppStorage("ttsRate") private var ttsRate: Double = 1.0
     @AppStorage("userName") private var storedUserName: String = ""
     @AppStorage("firstUseDate") private var firstUseDate: String = ""
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
+    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
     @AppStorage("isPremium") private var isPremium: Bool = false
+    @AppStorage("hasUsedTrial") private var hasUsedTrial: Bool = false
+    @AppStorage("trialStartDate") private var trialStartDate: String = ""
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
     @State private var path = NavigationPath()
+    #if DEBUG
     @State private var devTapCount = 0
     @State private var showFeatureFlags = false
+    #endif
 
 
     private var appearance: AppAppearance {
@@ -50,6 +37,14 @@ struct SettingsView: View {
         storedUserName.isEmpty ? "User" : storedUserName
     }
 
+    private var trialDaysRemaining: Int? {
+        guard hasUsedTrial, !trialStartDate.isEmpty,
+              let start = settingsDayFormatter.date(from: trialStartDate) else { return nil }
+        let daysPassed = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
+        let remaining = 7 - daysPassed
+        return remaining > 0 ? remaining : nil
+    }
+
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(showsIndicators: false) {
@@ -62,16 +57,16 @@ struct SettingsView: View {
                                     .scaledToFill()
                                     .frame(width: 92, height: 92)
                                     .clipShape(Circle())
-                                    .overlay(Circle().stroke(Color.mainBlack.opacity(0.1), lineWidth: 1))
+                                    .overlay(Circle().stroke(themeStore.mainText.opacity(0.1), lineWidth: 1))
                                     
                             } else {
                                 Circle()
-                                    .fill(Color.mainGrey.opacity(0.15))
+                                    .fill(themeStore.secondaryText.opacity(0.15))
                                     .frame(width: 92, height: 92)
                                     .overlay(
                                         Image(systemName: "person.fill")
                                             .font(.system(size: 40, weight: .medium))
-                                            .foregroundColor(Color.mainBlack.opacity(0.7))
+                                            .foregroundColor(themeStore.mainText.opacity(0.7))
                                     )
                                     
                             }
@@ -83,28 +78,28 @@ struct SettingsView: View {
                         Text(displayName)
                             .font(.custom("Poppins-Bold", size: 22))
                             .foregroundColor(.primary)
+                            #if DEBUG
                             .onTapGesture(count: 5) {
                                 showFeatureFlags.toggle()
                                 Haptics.lightImpact()
                             }
+                            #endif
 
                         Text("\(usageDurationString()) with Droword")
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(.mainGrey)
+                            .foregroundColor(themeStore.secondaryText)
                     }
                     .padding(.top, 32)
+
+                    // PRO banner under avatar
+                    premiumBanner
+                        .padding(.horizontal, 20)
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
                             SettingItem(icon: "person.circle", color: themeStore.iconGreen, title: "Personal details"),
                         ]) { item in
                             if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
-                        }
-
-                        groupedSettingsSection([
-                            SettingItem(icon: "crown.fill", color: themeStore.iconGold, title: "PRO", value: isPremium ? "Active" : "Upgrade"),
-                        ]) { _ in
-                            path.append(SettingsDestination.premium)
                         }
 
                         groupedSettingsSection([
@@ -121,17 +116,19 @@ struct SettingsView: View {
                             if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
                         }
 
+                        #if DEBUG
                         if showFeatureFlags {
                             groupedSettingsSection([
-                                SettingItem(icon: "flag.checkered", color: Color.mainBlack, title: "Feature Flags", value: nil)
+                                SettingItem(icon: "flag.checkered", color: themeStore.mainText, title: "Feature Flags", value: nil)
                             ]) { item in
                                 path.append(SettingsDestination.featureFlags)
                             }
                         }
+                        #endif
 
                         groupedSettingsSection([
-                            SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title),
-                            SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off")
+                            SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title, showProBadge: !isPremium),
+                            SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off", showProBadge: !isPremium)
                         ]) { item in
                             if item.title == "Theme" { path.append(SettingsDestination.theme) }
                             if item.title == "Seasonal effects" { path.append(SettingsDestination.seasonalEffects) }
@@ -153,8 +150,9 @@ struct SettingsView: View {
                     Spacer()
                 }
                 .padding(.bottom, 40)
+                .iPadContentWidth(600)
             }
-            .background(Color.appBackground.ignoresSafeArea())
+            .background(themeStore.appBg.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
@@ -214,6 +212,59 @@ struct SettingsView: View {
         }
     }
 
+    private var premiumBanner: some View {
+        Button {
+            Haptics.selection()
+            path.append(SettingsDestination.premium)
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(isPremium ? Color(hex: "#34C759") : .white)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    if let days = trialDaysRemaining, isPremium {
+                        Text("PRO Trial")
+                            .font(.custom("Poppins-Bold", size: 16))
+                            .foregroundColor(.white)
+                        Text("\(days) \(days == 1 ? "day" : "days") remaining")
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(.orange)
+                    } else {
+                        Text(isPremium ? "PRO Active" : "Get Droword PRO")
+                            .font(.custom("Poppins-Bold", size: 16))
+                            .foregroundColor(.white)
+                        Text(isPremium ? "Unlimited access" : "Unlock unlimited AI features")
+                            .font(.custom("Poppins-Regular", size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+
+                Spacer()
+
+                if !isPremium {
+                    Text("Upgrade")
+                        .font(.custom("Poppins-Bold", size: 13))
+                        .foregroundColor(Color.accentBlack)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(Color.white))
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundColor(Color(hex: "#34C759"))
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color.accentBlack)
+            )
+        }
+        .buttonStyle(Duo3DButtonStyle())
+    }
+
     private func groupedSettingsSection(
         _ items: [SettingItem],
         onTap: ((SettingItem) -> Void)? = nil
@@ -238,21 +289,30 @@ struct SettingsView: View {
                             .font(.custom("Poppins-Regular", size: 16))
                             .foregroundColor(.primary)
 
+                        if item.showProBadge {
+                            Text("PRO")
+                                .font(.custom("Poppins-Bold", size: 9))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Capsule().fill(Color.accentBlack))
+                        }
+
                         Spacer()
 
                         if let value = item.value {
                             Text(value)
                                 .font(.custom("Poppins-Regular", size: 14))
-                                .foregroundColor(.mainGrey)
+                                .foregroundColor(themeStore.secondaryText)
                         }
 
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.mainGrey.opacity(0.6))
+                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 20)
-                    .background(Color.cardBackground)
+                    .background(themeStore.cardBg)
                 }
                 .buttonStyle(.plain)
             }
@@ -262,9 +322,7 @@ struct SettingsView: View {
     }
 
     private func usageDurationString() -> String {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
+        let df = settingsDayFormatter
         guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
             return "0 days"
         }
@@ -297,7 +355,9 @@ struct SettingsView: View {
             try data.write(to: url)
             NotificationCenter.default.post(name: .avatarDidChange, object: nil)
         } catch {
+            #if DEBUG
             print("⚠️ Failed to save avatar:", error.localizedDescription)
+            #endif
         }
     }
 
@@ -305,7 +365,12 @@ struct SettingsView: View {
         let url = avatarFileURL()
         guard let data = try? Data(contentsOf: url),
               let image = UIImage(data: data) else { return nil }
-        return image
+        // Downscale to 2x display size (184x184) to save memory
+        let targetSize = CGSize(width: 184, height: 184)
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
     }
 
     private func deleteAvatarFromDisk() {
@@ -316,7 +381,9 @@ struct SettingsView: View {
                 NotificationCenter.default.post(name: .avatarDidChange, object: nil)
             }
         } catch {
+            #if DEBUG
             print("⚠️ Failed to delete avatar:", error.localizedDescription)
+            #endif
         }
     }
 
@@ -327,772 +394,11 @@ struct SettingsView: View {
 
 }
 
-struct DictionarySettingsView: View {
-    @EnvironmentObject private var store: WordsStore
-    @EnvironmentObject private var languageStore: LanguageStore
-    @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var csvFileURL: URL?
-    @State private var showImportPicker = false
-    @State private var importedCount: Int?
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Dictionary")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                VStack(spacing: 0) {
-                    settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Dictionary") {
-                        exportCSV()
-                    }
-                    settingsRow(icon: "square.and.arrow.down", color: themeStore.iconGreen, title: "Import Dictionary") {
-                        showImportPicker = true
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                VStack(spacing: 0) {
-                    settingsRow(icon: "trash.fill", color: .red, title: "Clear All Words") {
-                        store.clear()
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Words in dictionary: \(store.words.count)")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainGrey)
-                    Text("Total words added: \(store.totalWordsAdded)")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainGrey)
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-        .onChange(of: csvFileURL) { _, newURL in
-            guard let url = newURL else { return }
-            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-            if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = scene.windows.first?.rootViewController {
-                var topVC = root
-                while let presented = topVC.presentedViewController { topVC = presented }
-                if let popover = av.popoverPresentationController {
-                    popover.sourceView = topVC.view
-                    popover.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
-                    popover.permittedArrowDirections = []
-                }
-                topVC.present(av, animated: true)
-            }
-            csvFileURL = nil
-        }
-        .fileImporter(
-            isPresented: $showImportPicker,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            if case .success(let urls) = result, let url = urls.first {
-                importCSV(from: url)
-            }
-        }
-        .alert("Import Complete", isPresented: .init(
-            get: { importedCount != nil },
-            set: { if !$0 { importedCount = nil } }
-        )) {
-            Button("OK") { importedCount = nil }
-        } message: {
-            if let count = importedCount {
-                Text("\(count) word\(count == 1 ? "" : "s") imported successfully.")
-            }
-        }
-    }
-
-    private func settingsRow(icon: String, color: Color, title: String, action: @escaping () -> Void) -> some View {
-        Button {
-            Haptics.selection()
-            action()
-        } label: {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(color)
-                }
-
-                Text(title)
-                    .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(title == "Clear All Words" ? .red : .primary)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mainGrey.opacity(0.6))
-            }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 20)
-            .background(Color.cardBackground)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func exportCSV() {
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
-
-        var csv = "Word,Translation,Type,Tag,Comment,Example,Explanation,Breakdown,Transcription,From Language,To Language,Date Added\n"
-        for w in store.words {
-            let fields: [String] = [
-                csvEscape(w.word),
-                csvEscape(w.translation ?? ""),
-                csvEscape(w.type),
-                csvEscape(w.tag ?? ""),
-                csvEscape(w.comment ?? ""),
-                csvEscape(w.example ?? ""),
-                csvEscape(w.explanation ?? ""),
-                csvEscape(w.breakdown ?? ""),
-                csvEscape(w.transcription ?? ""),
-                csvEscape(w.fromLanguage),
-                csvEscape(w.toLanguage),
-                df.string(from: w.dateAdded)
-            ]
-            csv += fields.joined(separator: ",") + "\n"
-        }
-
-        let tempDir = FileManager.default.temporaryDirectory
-        let fileURL = tempDir.appendingPathComponent("Droword_Dictionary.csv")
-        do {
-            try csv.write(to: fileURL, atomically: true, encoding: .utf8)
-            csvFileURL = fileURL
-        } catch {
-            print("Failed to write CSV:", error.localizedDescription)
-        }
-    }
-
-    private func csvEscape(_ field: String) -> String {
-        let needsQuoting = field.contains(",") || field.contains("\"") || field.contains("\n")
-        if needsQuoting {
-            return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
-        }
-        return field
-    }
-
-    private func importCSV(from url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return }
-        defer { url.stopAccessingSecurityScopedResource() }
-
-        guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
-
-        let rows = parseCSVRows(content)
-        guard rows.count > 1 else { return }
-
-        let header = rows[0].map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-
-        let colWord = header.firstIndex(of: "word")
-        let colTranslation = header.firstIndex(of: "translation")
-        let colType = header.firstIndex(of: "type")
-        let colTag = header.firstIndex(of: "tag")
-        let colComment = header.firstIndex(of: "comment")
-        let colExample = header.firstIndex(of: "example")
-        let colExplanation = header.firstIndex(of: "explanation")
-        let colBreakdown = header.firstIndex(of: "breakdown")
-        let colTranscription = header.firstIndex(of: "transcription")
-        let colFromLang = header.firstIndex(of: "from language")
-        let colToLang = header.firstIndex(of: "to language")
-        let colDate = header.firstIndex(of: "date added")
-
-        guard let colWord else { return }
-
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
-
-        let existingWords = Set(store.words.map { $0.word.lowercased() })
-        var count = 0
-
-        func field(at col: Int?, in row: [String]) -> String? {
-            guard let col, col < row.count else { return nil }
-            let value = row[col].trimmingCharacters(in: .whitespaces)
-            return value.isEmpty ? nil : value
-        }
-
-        for row in rows.dropFirst() {
-            guard row.count > colWord else { continue }
-            let wordText = row[colWord].trimmingCharacters(in: .whitespaces)
-            guard !wordText.isEmpty else { continue }
-            guard !existingWords.contains(wordText.lowercased()) else { continue }
-
-            let date: Date = {
-                if let ci = colDate, ci < row.count {
-                    return df.date(from: row[ci].trimmingCharacters(in: .whitespaces)) ?? Date()
-                }
-                return Date()
-            }()
-
-            let newWord = StoredWord(
-                word: wordText,
-                type: field(at: colType, in: row) ?? "word",
-                translation: field(at: colTranslation, in: row),
-                example: field(at: colExample, in: row),
-                explanation: field(at: colExplanation, in: row),
-                breakdown: field(at: colBreakdown, in: row),
-                transcription: field(at: colTranscription, in: row),
-                comment: field(at: colComment, in: row),
-                tag: field(at: colTag, in: row),
-                dateAdded: date,
-                fromLanguage: field(at: colFromLang, in: row) ?? languageStore.nativeLanguage,
-                toLanguage: field(at: colToLang, in: row) ?? languageStore.learningLanguage
-            )
-            store.add(newWord)
-            count += 1
-        }
-
-        importedCount = count
-    }
-
-    private func parseCSVRows(_ text: String) -> [[String]] {
-        var rows: [[String]] = []
-        var currentField = ""
-        var currentRow: [String] = []
-        var inQuotes = false
-        var i = text.startIndex
-
-        while i < text.endIndex {
-            let ch = text[i]
-
-            if inQuotes {
-                if ch == "\"" {
-                    let next = text.index(after: i)
-                    if next < text.endIndex && text[next] == "\"" {
-                        currentField.append("\"")
-                        i = text.index(after: next)
-                    } else {
-                        inQuotes = false
-                        i = text.index(after: i)
-                    }
-                } else {
-                    currentField.append(ch)
-                    i = text.index(after: i)
-                }
-            } else {
-                if ch == "\"" {
-                    inQuotes = true
-                    i = text.index(after: i)
-                } else if ch == "," {
-                    currentRow.append(currentField)
-                    currentField = ""
-                    i = text.index(after: i)
-                } else if ch == "\r" || ch == "\n" {
-                    if ch == "\r" {
-                        let next = text.index(after: i)
-                        if next < text.endIndex && text[next] == "\n" {
-                            i = text.index(after: next)
-                        } else {
-                            i = text.index(after: i)
-                        }
-                    } else {
-                        i = text.index(after: i)
-                    }
-                    currentRow.append(currentField)
-                    currentField = ""
-                    if !currentRow.allSatisfy({ $0.isEmpty }) {
-                        rows.append(currentRow)
-                    }
-                    currentRow = []
-                } else {
-                    currentField.append(ch)
-                    i = text.index(after: i)
-                }
-            }
-        }
-
-        currentRow.append(currentField)
-        if !currentRow.allSatisfy({ $0.isEmpty }) {
-            rows.append(currentRow)
-        }
-
-        return rows
-    }
-}
-
-private struct SettingsBackButton: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        Button { dismiss() } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.primary)
-        }
-    }
-}
-
-struct VoiceAndSpeechSettingsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
-    @AppStorage("ttsRate") private var ttsRate: Double = 1.0
-
-    private let speedOptions: [Double] = [0.75, 0.9, 1.0, 1.25, 1.5]
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Voice & Speech")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                Text("Voice")
-                    .font(.custom("Poppins-Medium", size: 16))
-                    .foregroundColor(.primary)
-                    .padding(.horizontal)
-
-                VoicePickerView(
-                    selectedKey: $ttsVoice,
-                    options: [
-                        VoiceOption(key: "coral", title: "Coral", description: "soft, neutral"),
-                        VoiceOption(key: "alloy", title: "Alloy", description: "friendly, warm"),
-                        VoiceOption(key: "verse", title: "Verse", description: "energetic, expressive"),
-                        VoiceOption(key: "sage", title: "Sage", description: "calm, confident")
-                    ]
-                )
-                .padding(.horizontal)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Speed")
-                        .font(.custom("Poppins-Medium", size: 16))
-                        .foregroundColor(.primary)
-                        .padding(.horizontal)
-
-                    VStack(spacing: 8) {
-                        ForEach(speedOptions, id: \.self) { option in
-                            RadioButtonRow(
-                                title: String(format: "%.2fx", option),
-                                isSelected: ttsRate == option
-                            ) {
-                                withAnimation(.easeInOut(duration: 0.15)) { ttsRate = option }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-            }
-            .padding(.vertical, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-    }
-}
-
-private struct RadioButtonRow: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.mainGrey.opacity(0.4), lineWidth: 1)
-                        .frame(width: 22, height: 22)
-                    if isSelected {
-                        Circle()
-                            .fill(themeStore.buttonAccent)
-                            .frame(width: 22, height: 22)
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-
-                Text(title)
-                    .font(.custom("Poppins-Regular", size: 15))
-                    .foregroundColor(.primary)
-
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.cardBackground)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-struct FeatureFlagsView: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    @AppStorage("isPremium") private var isPremium: Bool = false
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                VStack(spacing: 0) {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(themeStore.iconGold.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.iconGold)
-                        }
-                        Text("PRO")
-                            .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.primary)
-                        Spacer()
-                        Toggle("", isOn: $isPremium)
-                            .labelsHidden()
-                            .tint(themeStore.accentGold)
-                    }
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 20)
-                    .background(Color.cardBackground)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-        .navigationTitle("Feature Flags")
-        .navigationBarTitleDisplayMode(.large)
-    }
-}
-
-struct NotificationSettingsView: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.dismiss) private var dismiss
-    @AppStorage("notifDailyReminders") private var dailyReminders: Bool = true
-    @AppStorage("notifStreakMilestones") private var streakMilestones: Bool = true
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Notifications")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                VStack(spacing: 12) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Daily reminders")
-                                .font(.custom("Poppins-Medium", size: 16))
-                                .foregroundColor(.primary)
-                            Text("Morning & evening practice nudges")
-                                .font(.custom("Poppins-Regular", size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        Toggle("", isOn: $dailyReminders)
-                            .labelsHidden()
-                            .tint(themeStore.buttonAccent)
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Streak milestones")
-                                .font(.custom("Poppins-Medium", size: 16))
-                                .foregroundColor(.primary)
-                            Text("Celebrate 7, 30, 100 day streaks")
-                                .font(.custom("Poppins-Regular", size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        Toggle("", isOn: $streakMilestones)
-                            .labelsHidden()
-                            .tint(themeStore.buttonAccent)
-                    }
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
-                }
-                .padding(.horizontal)
-            }
-            .padding(.vertical, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-        .onChange(of: dailyReminders) { _, enabled in
-            if enabled {
-                NotificationManager.shared.requestAuthorization { granted in
-                    if granted {
-                        NotificationManager.shared.scheduleTwiceDaily()
-                    }
-                }
-            } else {
-                let center = UNUserNotificationCenter.current()
-                center.removePendingNotificationRequests(withIdentifiers: [
-                    "daily.reminder.morning",
-                    "daily.reminder.evening"
-                ])
-            }
-        }
-    }
-}
-
-struct SettingItem: Identifiable {
-    let id = UUID()
-    let icon: String
-    let color: Color
-    let title: String
-    var value: String? = nil
-}
-
-struct PrivacyPolicyView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Privacy Policy")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                Group {
-                    policySection(
-                        title: "Data Storage",
-                        body: "All your data — words, progress, settings and preferences — is stored locally on your device. Droword does not collect, transmit or store any personal data on external servers."
-                    )
-
-                    policySection(
-                        title: "AI Translation",
-                        body: "When you add or translate a word, the text is sent to a third-party AI service (Anthropic Claude) to generate translations, explanations and examples. No personal information is included in these requests."
-                    )
-
-                    policySection(
-                        title: "Text-to-Speech",
-                        body: "Audio pronunciation is generated using the OpenAI Text-to-Speech API. Only the word or phrase text is sent — no personal data is transmitted."
-                    )
-
-                    policySection(
-                        title: "Photos & Camera",
-                        body: "If you choose to set a profile photo, the image is stored only on your device. Droword does not upload your photos anywhere."
-                    )
-
-                    policySection(
-                        title: "Notifications",
-                        body: "Droword may send local notifications to remind you to practice. These are scheduled entirely on your device and do not involve any external service."
-                    )
-
-                    policySection(
-                        title: "Analytics & Tracking",
-                        body: "Droword does not use any analytics, tracking or advertising SDKs. Your usage data stays on your device."
-                    )
-
-                    policySection(
-                        title: "Data Deletion",
-                        body: "You can delete all your data at any time from Settings → Dictionary → Clear All Words. Removing the app from your device deletes all stored data permanently."
-                    )
-
-                    policySection(
-                        title: "Contact",
-                        body: "If you have questions about this privacy policy, please reach out via the App Store support link."
-                    )
-                }
-                .padding(.horizontal)
-            }
-            .padding(.vertical, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-    }
-
-    private func policySection(title: String, body: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.custom("Poppins-Medium", size: 17))
-                .foregroundColor(.primary)
-            Text(body)
-                .font(.custom("Poppins-Regular", size: 14))
-                .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.cardBackground))
-    }
-}
-
 #Preview {
     SettingsView()
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
         .environmentObject(ThemeStore())
-}
-
-struct SeasonalEffectsSettingsView: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.dismiss) private var dismiss
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
-    @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @State private var showPremiumWall = false
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Seasonal effects")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-
-                VStack(spacing: 0) {
-                    toggleRow(
-                        icon: "sparkles",
-                        color: themeStore.iconPink,
-                        title: "Show effects",
-                        isOn: isPremium ? $seasonalEffectsEnabled : .constant(false)
-                    )
-                    .onTapGesture {
-                        if !isPremium { showPremiumWall = true }
-                    }
-
-                    if seasonalEffectsEnabled && isPremium {
-                        Divider().padding(.leading, 68)
-
-                        toggleRow(
-                            icon: "wind",
-                            color: themeStore.iconBlue,
-                            title: "Animate",
-                            isOn: $seasonalAnimationEnabled
-                        )
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .animation(.easeInOut(duration: 0.25), value: seasonalEffectsEnabled)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Current season")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainGrey)
-
-                    let season = Season.current
-                    HStack(spacing: 8) {
-                        Text(season.shapes.first?.emoji ?? "")
-                            .font(.system(size: 28))
-                        Text(seasonName(season))
-                            .font(.custom("Poppins-Medium", size: 16))
-                            .foregroundColor(.primary)
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.top, 4)
-
-                if seasonalEffectsEnabled {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.cardBackground)
-                            .frame(height: 180)
-                        SeasonalOverlayView(animated: seasonalAnimationEnabled)
-                            .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .allowsHitTesting(false)
-                    }
-                    .transition(.opacity)
-                }
-            }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 20)
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-        .fullScreenCover(isPresented: $showPremiumWall) {
-            PremiumView(asWall: true)
-                .environmentObject(themeStore)
-        }
-    }
-
-    private func toggleRow(icon: String, color: Color, title: String, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(color)
-            }
-            Text(title)
-                .font(.custom("Poppins-Regular", size: 16))
-                .foregroundColor(.primary)
-            Spacer()
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(themeStore.buttonAccent)
-        }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 20)
-        .background(Color.cardBackground)
-    }
-
-    private func seasonName(_ season: Season) -> String {
-        switch season {
-        case .spring: return "Spring"
-        case .summer: return "Summer"
-        case .fall: return "Fall"
-        case .winter: return "Winter"
-        }
-    }
 }
 
 #Preview("Light") {
@@ -1110,4 +416,3 @@ struct SeasonalEffectsSettingsView: View {
         .environmentObject(ThemeStore())
         .preferredColorScheme(.dark)
 }
-

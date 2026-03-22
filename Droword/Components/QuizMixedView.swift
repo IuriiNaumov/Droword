@@ -9,6 +9,7 @@ struct QuizMixedView: View {
 
     var sessionSize: Int = 10
     var filterTag: String? = nil
+    var direction: QuizDirection = .mixed
 
     @State private var hasAnswered = false
     @State private var isCorrect = false
@@ -58,7 +59,13 @@ struct QuizMixedView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
         .onAppear { startSession() }
         .onChange(of: session.isComplete) { _, isComplete in
-            if isComplete { badgeStore.recordQuizCompletion() }
+            if isComplete {
+                badgeStore.recordQuizCompletion()
+                DailyChallengeManager.shared.recordQuizCompleted(
+                    score: session.correctCount,
+                    total: session.total
+                )
+            }
         }
         .onTapGesture { isInputFocused = false }
     }
@@ -66,7 +73,7 @@ struct QuizMixedView: View {
     private var progressCounter: some View {
         Text("\(session.currentIndex + 1) / \(session.total)")
             .font(.custom("Poppins-Medium", size: 14))
-            .foregroundColor(.mainGrey)
+            .foregroundColor(themeStore.secondaryText)
             .padding(.top, 8)
     }
 
@@ -84,7 +91,7 @@ struct QuizMixedView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(typingInput.trimmingCharacters(in: .whitespaces).isEmpty
-                                    ? Color.mainGrey.opacity(0.3)
+                                    ? themeStore.secondaryText.opacity(0.3)
                                     : themeStore.buttonAccent)
                         )
                 }
@@ -135,7 +142,11 @@ struct QuizMixedView: View {
 
         switch exerciseType {
         case .multipleChoice:
-            mcReversed = Bool.random()
+            switch direction {
+            case .normal: mcReversed = false
+            case .reversed: mcReversed = true
+            case .mixed: mcReversed = Bool.random()
+            }
             let distractors = session.distractors(for: item, from: store.words, reversed: mcReversed)
             let answer = mcReversed ? item.word : item.translation
             var all = distractors + [answer]
@@ -143,7 +154,11 @@ struct QuizMixedView: View {
             options = all
 
         case .typing:
-            typingReversed = Bool.random()
+            switch direction {
+            case .normal: typingReversed = false
+            case .reversed: typingReversed = true
+            case .mixed: typingReversed = Bool.random()
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isInputFocused = true
             }
@@ -172,18 +187,18 @@ struct QuizMixedView: View {
             VStack(spacing: 8) {
                 Text(prompt)
                     .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(.mainBlack)
+                    .foregroundColor(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !mcReversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
 
                 Text(mcReversed ? "Choose the correct word" : "Choose the correct translation")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -204,17 +219,17 @@ struct QuizMixedView: View {
         let isSelected = selectedOption == option
 
         var bgColor: Color {
-            if !hasAnswered { return Color.cardBackground }
+            if !hasAnswered { return themeStore.cardBg }
             if isThisCorrect { return themeStore.accentGreen }
             if isSelected && !isThisCorrect { return themeStore.accentRed }
-            return Color.cardBackground
+            return themeStore.cardBg
         }
 
         var textColor: Color {
-            if !hasAnswered { return Color.mainBlack }
+            if !hasAnswered { return themeStore.mainText }
             if isThisCorrect { return darkerShade(of: themeStore.accentGreen, by: 0.4) }
             if isSelected && !isThisCorrect { return darkerShade(of: themeStore.accentRed, by: 0.4) }
-            return Color.mainBlack.opacity(0.4)
+            return themeStore.mainText.opacity(0.4)
         }
 
         return Button {
@@ -278,18 +293,18 @@ struct QuizMixedView: View {
             VStack(spacing: 8) {
                 Text(prompt)
                     .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(.mainBlack)
+                    .foregroundColor(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !typingReversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
 
                 Text(typingReversed ? "Type the word" : "Type the translation")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -300,8 +315,8 @@ struct QuizMixedView: View {
                     .font(.custom("Poppins-Regular", size: 16))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
-                    .background(Color.cardBackground)
-                    .foregroundColor(.mainBlack)
+                    .background(themeStore.cardBg)
+                    .foregroundColor(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(typingBorderColor, lineWidth: hasAnswered ? 2 : 1.5)
@@ -330,19 +345,19 @@ struct QuizMixedView: View {
             VStack(spacing: 12) {
                 Text("Fill in the blank")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
 
                 if let parts = clozeSentence(for: item) {
                     HStack(spacing: 0) {
                         Text(parts.before)
                             .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(themeStore.mainText)
                         Text(" _____ ")
                             .font(.custom("Poppins-Bold", size: 18))
                             .foregroundColor(themeStore.accentBlue)
                         Text(parts.after)
                             .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(themeStore.mainText)
                     }
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -351,7 +366,7 @@ struct QuizMixedView: View {
                 if !item.translation.isEmpty {
                     Text("(\(item.translation))")
                         .font(.custom("Poppins-Medium", size: 16))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                         .padding(.top, 4)
                 }
             }
@@ -363,8 +378,8 @@ struct QuizMixedView: View {
                     .font(.custom("Poppins-Regular", size: 16))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
-                    .background(Color.cardBackground)
-                    .foregroundColor(.mainBlack)
+                    .background(themeStore.cardBg)
+                    .foregroundColor(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(typingBorderColor, lineWidth: hasAnswered ? 2 : 1.5)
@@ -396,7 +411,7 @@ struct QuizMixedView: View {
 
     private var typingBorderColor: Color {
         if !hasAnswered {
-            return isInputFocused ? Color.mainBlack : Color.divider
+            return isInputFocused ? themeStore.mainText : themeStore.dividerColor
         }
         if isAlmostCorrect { return themeStore.accentGold }
         return isCorrect ? themeStore.accentGreen : themeStore.accentRed
@@ -416,8 +431,7 @@ struct QuizMixedView: View {
                 feedbackBadge(
                     icon: "xmark.circle.fill",
                     text: "Correct: \(expected)",
-                    iconColor: themeStore.accentRed,
-                    color: themeStore.accentGreen
+                    color: themeStore.accentRed
                 )
             }
 
@@ -445,8 +459,7 @@ struct QuizMixedView: View {
                 feedbackBadge(
                     icon: "xmark.circle.fill",
                     text: "Correct: \(item.word)",
-                    iconColor: themeStore.accentRed,
-                    color: themeStore.accentGreen
+                    color: themeStore.accentRed
                 )
             }
 

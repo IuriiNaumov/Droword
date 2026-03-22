@@ -1,5 +1,35 @@
 import Foundation
 import AVFoundation
+import CryptoKit
+
+private final class TTSCache {
+    static let shared = TTSCache()
+
+    private let cacheDir: URL = {
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let dir = caches.appendingPathComponent("TTSAudioCache", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
+    private func cacheKey(text: String, voice: String) -> String {
+        let raw = "\(text)_\(voice)"
+        let digest = SHA256.hash(data: Data(raw.utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    func cachedData(for text: String, voice: String) -> Data? {
+        let key = cacheKey(text: text, voice: voice)
+        let fileURL = cacheDir.appendingPathComponent(key + ".mp3")
+        return try? Data(contentsOf: fileURL)
+    }
+
+    func store(data: Data, for text: String, voice: String) {
+        let key = cacheKey(text: text, voice: voice)
+        let fileURL = cacheDir.appendingPathComponent(key + ".mp3")
+        try? data.write(to: fileURL)
+    }
+}
 
 @MainActor
 final class AudioManager: NSObject, AVAudioPlayerDelegate {
@@ -18,32 +48,29 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return val == 0 ? 1.0 : Float(val)
     }
 
+    var overrideRate: Float? = nil
+
+    var effectiveRate: Float {
+        overrideRate ?? currentRate
+    }
+
     private let ttsEndpoint = URL(string: "https://droword-api.droword-api.workers.dev/tts")!
+    private let appKey = "drw_live_28f9a1c7e5d34b6"
 
     private var playbackContinuation: CheckedContinuation<Void, Never>?
 
     func play(word: String) async {
-        print("AudioManager.play called with:", word)
         do {
             let data = try await fetchAudioData(for: word)
-            print("AudioManager fetched data bytes:", data.count)
             try playAudio(data: data)
-            print("AudioManager playback started")
-        } catch {
-            print("AudioManager error:", error)
-        }
+        } catch { }
     }
-  
+
     func play(text: String, voiceKey: String) async {
-        print("AudioManager.preview called with:", text, "voice:", voiceKey)
         do {
             let data = try await fetchAudioData(for: text, voice: voiceKey)
-            print("AudioManager preview fetched data bytes:", data.count)
             try playAudio(data: data)
-            print("AudioManager preview playback started")
-        } catch {
-            print("AudioManager preview error:", error)
-        }
+        } catch { }
     }
 
     func playAndWait(text: String, rate: Float? = nil) async throws {
@@ -74,9 +101,14 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     }
     
     private func fetchAudioData(for text: String, voice: String) async throws -> Data {
+        if let cached = TTSCache.shared.cachedData(for: text, voice: voice) {
+            return cached
+        }
+
         var request = URLRequest(url: ttsEndpoint)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue(appKey, forHTTPHeaderField: "X-App-Key")
 
         let body: [String: Any] = [
             "text": text,
@@ -91,9 +123,10 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         }
         if http.statusCode != 200 {
             let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            print("TTS HTTP error", http.statusCode, errorText)
             throw NSError(domain: "TTS", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
         }
+
+        TTSCache.shared.store(data: data, for: text, voice: voice)
 
         return data
     }
@@ -107,20 +140,11 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
         try session.setActive(true)
 
-        do {
-            player = try AVAudioPlayer(data: data)
-            player?.prepareToPlay()
-            player?.enableRate = true
-            player?.rate = currentRate
-            let ok = player?.play() ?? false
-            print("AVAudioPlayer started:", ok)
-            if !ok {
-                print("AVAudioPlayer failed to start playback")
-            }
-        } catch {
-            print("AVAudioPlayer init/play error:", error)
-            throw error
-        }
+        player = try AVAudioPlayer(data: data)
+        player?.prepareToPlay()
+        player?.enableRate = true
+        player?.rate = effectiveRate
+        player?.play()
     }
 
     private func playAudioSync(data: Data, rate: Float? = nil) async throws {
@@ -132,7 +156,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         player?.delegate = self
         player?.prepareToPlay()
         player?.enableRate = true
-        player?.rate = rate ?? currentRate
+        player?.rate = rate ?? effectiveRate
         
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             self.playbackContinuation = cont
@@ -144,4 +168,3 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         }
     }
 }
-

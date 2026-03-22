@@ -4,19 +4,9 @@ struct PersonalDetailsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("userName") private var userName: String = ""
-    @AppStorage("userEmail") private var userEmail: String = ""
 
     @State private var tempName: String = ""
-    @State private var tempEmail: String = ""
-    @State private var showEmailError = false
     @State private var showToast = false
-
-    private var isEmailValid: Bool {
-        let email = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-        if email.isEmpty { return true }
-        let pattern = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
-        return NSPredicate(format: "SELF MATCHES %@", pattern).evaluate(with: email)
-    }
 
     private var isNameValid: Bool {
         let trimmed = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -24,7 +14,7 @@ struct PersonalDetailsView: View {
     }
 
     private var canSave: Bool {
-        isNameValid && isEmailValid
+        isNameValid
     }
 
     private var nameCounterText: String {
@@ -33,7 +23,7 @@ struct PersonalDetailsView: View {
 
     var body: some View {
         ZStack {
-            Color.appBackground.ignoresSafeArea()
+            themeStore.appBg.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 24) {
                 Text("Personal details")
@@ -44,68 +34,37 @@ struct PersonalDetailsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Name *")
                         .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
 
                     FormTextField(
                         title: "Your name",
                         text: $tempName,
-                        focusedColor: .mainGrey
+                        focusedColor: themeStore.secondaryText
                     )
                     .overlay(alignment: .trailing) {
                         Text(nameCounterText)
                             .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(Color.mainGrey.opacity(0.6))
+                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
                             .padding(.trailing, 16)
                             .allowsHitTesting(false)
                     }
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
-                    .onChange(of: tempName) { newValue in
+                    .onChange(of: tempName) { _, newValue in
                         if newValue.count > 40 {
                             tempName = String(newValue.prefix(40))
                         }
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Email")
-                        .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color.mainGrey)
-
-                    FormTextField(
-                        title: "Email",
-                        text: $tempEmail,
-                        focusedColor: .mainGrey
-                    )
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.emailAddress)
-                    .onChange(of: tempEmail) { _ in
-                        let trimmed = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-                        showEmailError = !isEmailValid && !trimmed.isEmpty
-                    }
-
-                    if showEmailError {
-                        Text("Please enter a valid email")
-                            .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(themeStore.accentRed)
-                            .padding(.top, 4)
-                    }
-                }
-
                 Button(action: {
                     let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let trimmedEmail = tempEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                    if !trimmedName.isEmpty && trimmedName.count <= 40 && isEmailValid {
+                    if !trimmedName.isEmpty && trimmedName.count <= 40 {
                         userName = trimmedName
-                        userEmail = trimmedEmail.lowercased()
                         showToast = true
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                             dismiss()
                         }
-                    } else {
-                        showEmailError = !isEmailValid && !trimmedEmail.isEmpty
                     }
                 }) {
                     Text("Save")
@@ -134,7 +93,6 @@ struct PersonalDetailsView: View {
         }
         .onAppear {
             tempName = userName
-            tempEmail = userEmail
         }
     }
 }

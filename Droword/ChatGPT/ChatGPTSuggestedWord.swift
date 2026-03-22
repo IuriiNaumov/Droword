@@ -53,6 +53,7 @@ struct SuggestionsContainer: Codable {
 }
 
 private let suggestWorkerURL = "https://droword-api.droword-api.workers.dev"
+private let suggestWorkerAppKey = "drw_live_28f9a1c7e5d34b6"
 
 @MainActor
 func fetchSuggestionsWithTopic(
@@ -67,11 +68,13 @@ func fetchSuggestionsWithTopic(
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.addValue(suggestWorkerAppKey, forHTTPHeaderField: "X-App-Key")
 
     let body: [String: Any] = [
         "words": words,
         "learningLanguage": learningLanguage,
-        "nativeLanguage": nativeLanguage
+        "nativeLanguage": nativeLanguage,
+        "level": languageStore.learningLevel
     ]
 
     request.httpBody = try JSONSerialization.data(withJSONObject: body)

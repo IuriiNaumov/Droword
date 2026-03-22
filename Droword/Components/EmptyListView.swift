@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct EmptyListView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     var icon: String = "text.badge.plus"
     var title: String = "Your word garden is waiting"
     var subtitle: String = "Add a couple of words — and we'll begin the journey."
@@ -14,17 +16,17 @@ struct EmptyListView: View {
         VStack(spacing: 18) {
             Image(systemName: icon)
                 .font(.system(size: 44))
-                .foregroundColor(.mainGrey.opacity(0.35))
+                .foregroundColor(themeStore.secondaryText.opacity(0.35))
                 .scaleEffect(iconScale)
 
             Text(title)
-                .font(.custom("Poppins-Medium", size: 18))
+                .font(themeStore.medium(18))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(.secondary.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -32,7 +34,7 @@ struct EmptyListView: View {
 
             if let tip {
                 Text(tip)
-                    .font(.custom("Poppins-Regular", size: 13))
+                    .font(themeStore.regular(13))
                     .foregroundColor(.secondary.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)

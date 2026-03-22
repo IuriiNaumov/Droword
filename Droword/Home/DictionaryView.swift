@@ -11,11 +11,10 @@ enum DictionarySortOption: String, CaseIterable {
 }
 
 struct DictionaryView: View {
+    @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
     @State private var selectedTag: String? = nil
-    @State private var isLoading = true
-
     @State private var searchText = ""
     @State private var debouncedSearch = ""
     @State private var searchDebounceTask: Task<Void, Never>?
@@ -34,13 +33,19 @@ struct DictionaryView: View {
     private var filteredWords: [StoredWord] { cachedFiltered }
     private let horizontalPadding: CGFloat = 20
 
+    private var gridColumns: [GridItem] {
+        hSize == .regular
+            ? [GridItem(.flexible()), GridItem(.flexible())]
+            : [GridItem(.flexible())]
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Text("Dictionary")
-                        .font(.custom("Poppins-Bold", size: 38))
-                        .foregroundColor(.mainBlack)
+                        .font(themeStore.bold(38))
+                        .foregroundColor(themeStore.mainText)
                     Spacer()
                     if !store.words.isEmpty {
                         Button {
@@ -51,13 +56,13 @@ struct DictionaryView: View {
                             }
                         } label: {
                             Text(isSelectMode ? "Done" : "Select")
-                                .font(.custom("Poppins-Medium", size: 15))
-                                .foregroundColor(isSelectMode ? .white : .mainBlack)
+                                .font(themeStore.medium(15))
+                                .foregroundColor(isSelectMode ? .white : themeStore.mainText)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(isSelectMode ? themeStore.buttonAccent : Color.cardBackground)
+                                        .fill(isSelectMode ? themeStore.buttonAccent : themeStore.cardBg)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -68,15 +73,15 @@ struct DictionaryView: View {
 
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(.mainGrey)
-                    TextField("Search words...", text: $searchText)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(themeStore.secondaryText)
+                    TextField("Search words, translations, examples...", text: $searchText)
+                        .font(themeStore.regular(16))
+                        .foregroundColor(themeStore.mainText)
                         .disableAutocorrection(true)
                     if !searchText.isEmpty {
                         Button(action: { Haptics.lightImpact(intensity: 0.4); searchText = "" }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.mainGrey)
+                                .foregroundColor(themeStore.secondaryText)
                         }
                         .buttonStyle(.plain)
                     }
@@ -85,10 +90,10 @@ struct DictionaryView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.cardBackground)
+                        .fill(themeStore.cardBg)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(Color.divider, lineWidth: 1)
+                                .stroke(themeStore.dividerColor, lineWidth: 1)
                         )
                 )
                 .padding(.horizontal, horizontalPadding)
@@ -96,22 +101,27 @@ struct DictionaryView: View {
                 TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
                     .padding(.horizontal, horizontalPadding)
 
-                LazyVStack(spacing: 8) {
-                    if isLoading {
-                        Skeleton()
-                    } else if filteredWords.isEmpty {
-                        if searchText.isEmpty {
+                LazyVGrid(columns: gridColumns, spacing: 12) {
+                    if filteredWords.isEmpty {
+                        if let tag = selectedTag, !tag.isEmpty {
                             EmptyListView(
-                                icon: "book.closed",
-                                title: "Your word garden is waiting",
-                                subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
+                                icon: "tag",
+                                title: "No words in «\(tag)»",
+                                subtitle: "Add words with this tag and they'll appear here."
                             )
                             .frame(minHeight: 300)
-                        } else {
+                        } else if !searchText.isEmpty {
                             EmptyListView(
                                 icon: "magnifyingglass",
                                 title: "No words found",
                                 subtitle: "Try a different search or remove the filter."
+                            )
+                            .frame(minHeight: 300)
+                        } else {
+                            EmptyListView(
+                                icon: "book.closed",
+                                title: "Your word garden is waiting",
+                                subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
                             )
                             .frame(minHeight: 300)
                         }
@@ -128,10 +138,10 @@ struct DictionaryView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
-                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.buttonAccent : .mainGrey)
+                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.buttonAccent : themeStore.secondaryText)
                                     Text("Select all (\(filteredWords.count))")
-                                        .font(.custom("Poppins-Medium", size: 15))
-                                        .foregroundColor(.mainBlack)
+                                        .font(themeStore.medium(15))
+                                        .foregroundColor(themeStore.mainText)
                                     Spacer()
                                 }
                                 .padding(.vertical, 8)
@@ -152,7 +162,7 @@ struct DictionaryView: View {
                                     } label: {
                                         Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
                                             .font(.system(size: 22))
-                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.buttonAccent : .mainGrey)
+                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.buttonAccent : themeStore.secondaryText)
                                     }
                                     .buttonStyle(.plain)
                                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -180,6 +190,7 @@ struct DictionaryView: View {
                 .padding(.bottom, 40)
                 .id(themeStore.palette)
             }
+            .iPadContentWidth(1000)
         }
         .overlay(alignment: .bottom) {
             if isSelectMode && !selectedWordIDs.isEmpty {
@@ -191,7 +202,7 @@ struct DictionaryView: View {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 15, weight: .semibold))
                         Text("Delete \(selectedWordIDs.count) word\(selectedWordIDs.count == 1 ? "" : "s")")
-                            .font(.custom("Poppins-Bold", size: 16))
+                            .font(themeStore.bold(16))
                     }
                     .foregroundColor(.white)
                     .padding(.vertical, 14)
@@ -207,17 +218,28 @@ struct DictionaryView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .alert("Delete \(selectedWordIDs.count) word\(selectedWordIDs.count == 1 ? "" : "s")?", isPresented: $showBulkDeleteConfirmation) {
-            Button("Delete", role: .destructive) {
-                store.removeMultiple(ids: selectedWordIDs)
-                selectedWordIDs.removeAll()
-                isSelectMode = false
+        .overlay {
+            if showBulkDeleteConfirmation {
+                CustomAlertView(
+                    icon: "trash.fill",
+                    iconColor: themeStore.accentRed,
+                    title: "Delete \(selectedWordIDs.count) word\(selectedWordIDs.count == 1 ? "" : "s")?",
+                    message: "This action cannot be undone.",
+                    primaryButton: .init(title: "Delete", style: .destructive) {
+                        store.removeMultiple(ids: selectedWordIDs)
+                        selectedWordIDs.removeAll()
+                        isSelectMode = false
+                        showBulkDeleteConfirmation = false
+                    },
+                    secondaryButton: .init(title: "Cancel", style: .cancel) {
+                        showBulkDeleteConfirmation = false
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(999)
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This action cannot be undone.")
         }
-        .background(Color.appBackground)
+        .background(themeStore.appBg)
         .sheet(isPresented: $showAddTag) {
             AddTagView()
                 .presentationDetents([.fraction(0.5)])
@@ -225,15 +247,10 @@ struct DictionaryView: View {
         }
         .onAppear {
             recalculateFiltered()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    isLoading = false
-                }
-            }
         }
-        .onChange(of: selectedTag) { _ in recalculateFiltered() }
-        .onChange(of: store.words) { _ in recalculateFiltered() }
-        .onChange(of: searchText) { _ in
+        .onChange(of: selectedTag) { recalculateFiltered() }
+        .onChange(of: store.words) { recalculateFiltered() }
+        .onChange(of: searchText) {
             searchDebounceTask?.cancel()
             searchDebounceTask = Task {
                 try? await Task.sleep(nanoseconds: 200_000_000)
@@ -241,8 +258,8 @@ struct DictionaryView: View {
                 debouncedSearch = searchText
             }
         }
-        .onChange(of: debouncedSearch) { _ in recalculateFiltered() }
-        .onChange(of: sortOption) { _ in recalculateFiltered() }
+        .onChange(of: debouncedSearch) { recalculateFiltered() }
+        .onChange(of: sortOption) { recalculateFiltered() }
         .animation(.spring(), value: store.words.count)
     }
 
@@ -263,8 +280,13 @@ struct DictionaryView: View {
 
         if !search.isEmpty {
             result = result.filter { w in
-                w.word.lowercased().contains(search) ||
-                (w.translation ?? "").lowercased().contains(search)
+                if w.word.lowercased().contains(search) { return true }
+                if (w.translation ?? "").lowercased().contains(search) { return true }
+                if (w.example ?? "").lowercased().contains(search) { return true }
+                if (w.explanation ?? "").lowercased().contains(search) { return true }
+                if (w.comment ?? "").lowercased().contains(search) { return true }
+                if (w.transcription ?? "").lowercased().contains(search) { return true }
+                return false
             }
         }
 

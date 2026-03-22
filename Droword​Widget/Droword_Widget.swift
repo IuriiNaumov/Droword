@@ -1,23 +1,109 @@
 import WidgetKit
 import SwiftUI
 
-struct SimpleEntry: TimelineEntry {
-    let date: Date
+// MARK: - Data Model
+
+private struct WidgetWord: Codable {
+    let word: String
+    let translation: String?
+    let dueDate: Date?
+    let dateAdded: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case word, translation, dueDate, dateAdded
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        word = try c.decode(String.self, forKey: .word)
+        translation = try c.decodeIfPresent(String.self, forKey: .translation)
+        dueDate = try c.decodeIfPresent(Date.self, forKey: .dueDate)
+        dateAdded = (try? c.decode(Date.self, forKey: .dateAdded)) ?? Date()
+    }
 }
 
+struct SimpleEntry: TimelineEntry {
+    let date: Date
+    let dueCount: Int
+    let totalWords: Int
+    let currentStreak: Int
+    let featuredWord: String?
+    let featuredTranslation: String?
+}
+
+// MARK: - Provider
+
 struct Provider: TimelineProvider {
+    private static let appGroupID = "group.com.droword.shared"
+    private static let storageKey = "WordsStore.words"
+
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date())
+        SimpleEntry(date: Date(), dueCount: 3, totalWords: 12, currentStreak: 5,
+                    featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
-        completion(SimpleEntry(date: Date()))
+        completion(buildEntry())
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
-        let entry = SimpleEntry(date: Date())
-        let timeline = Timeline(entries: [entry], policy: .never)
-        completion(timeline)
+        let entry = buildEntry()
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+    }
+
+    private func buildEntry() -> SimpleEntry {
+        guard let defaults = UserDefaults(suiteName: Self.appGroupID) else {
+            return SimpleEntry(date: Date(), dueCount: 0, totalWords: 0, currentStreak: 0,
+                               featuredWord: nil, featuredTranslation: nil)
+        }
+
+        let streak = defaults.integer(forKey: "currentStreak")
+        let words = Self.readWords(defaults: defaults)
+        let now = Date()
+        let dueWords = words.filter { w in
+            if let due = w.dueDate { return due <= now }
+            return true
+        }
+        let dueCount = dueWords.count
+        let picked = Self.pickWordOfTheDay(dueWords: dueWords, allWords: words)
+
+        return SimpleEntry(date: Date(), dueCount: dueCount, totalWords: words.count,
+                           currentStreak: streak,
+                           featuredWord: picked?.word,
+                           featuredTranslation: picked?.translation)
+    }
+
+    private static func readWords(defaults: UserDefaults) -> [WidgetWord] {
+        guard let data = defaults.data(forKey: storageKey),
+              let words = try? JSONDecoder().decode([WidgetWord].self, from: data) else {
+            return []
+        }
+        return words
+    }
+
+    /// Deterministic daily word pick: prefers due words with translations, falls back to recent words
+    private static func pickWordOfTheDay(dueWords: [WidgetWord], allWords: [WidgetWord]) -> WidgetWord? {
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+
+        // Prefer due words that have a translation
+        let dueWithTranslation = dueWords.filter { $0.translation != nil && !($0.translation?.isEmpty ?? true) }
+        if !dueWithTranslation.isEmpty {
+            return dueWithTranslation[dayOfYear % dueWithTranslation.count]
+        }
+
+        // Fall back to any word with a translation
+        let withTranslation = allWords.filter { $0.translation != nil && !($0.translation?.isEmpty ?? true) }
+        if !withTranslation.isEmpty {
+            return withTranslation[dayOfYear % withTranslation.count]
+        }
+
+        // Fall back to any word
+        if !allWords.isEmpty {
+            return allWords[dayOfYear % allWords.count]
+        }
+
+        return nil
     }
 }
 
@@ -55,7 +141,6 @@ private enum WidgetSeason {
     }
 }
 
-// Mini sakura for widget
 private struct MiniSakura: View {
     let size: CGFloat
     var body: some View {
@@ -75,7 +160,6 @@ private struct MiniSakura: View {
     }
 }
 
-// Mini sun for widget
 private struct MiniSun: View {
     let size: CGFloat
     var body: some View {
@@ -95,7 +179,6 @@ private struct MiniSun: View {
     }
 }
 
-// Mini snowflake for widget
 private struct MiniSnowflake: View {
     let size: CGFloat
     var body: some View {
@@ -114,7 +197,6 @@ private struct MiniSnowflake: View {
     }
 }
 
-// Mini leaf for widget
 private struct MiniLeaf: View {
     let size: CGFloat
     var body: some View {
@@ -151,60 +233,275 @@ struct DrowordWidgetEntryView: View {
             // Decorative seasonal elements
             VStack {
                 HStack {
-                    seasonalDecoration(season: season, size: 32)
+                    seasonalDecoration(season: season, size: 28)
                         .rotationEffect(.degrees(-15))
                         .offset(x: -4, y: -4)
                     Spacer()
+                    if entry.currentStreak > 0 {
+                        HStack(spacing: 2) {
+                            Text("🔥")
+                                .font(.system(size: 11))
+                            Text("\(entry.currentStreak)")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color(red: 1.0, green: 0.55, blue: 0.0).opacity(0.15))
+                        )
+                    }
                 }
                 Spacer()
                 HStack {
                     Spacer()
-                    seasonalDecoration(season: season, size: 24)
+                    seasonalDecoration(season: season, size: 20)
                         .rotationEffect(.degrees(25))
                         .offset(x: 4, y: 4)
                 }
             }
 
             // Main content
-            VStack(spacing: 10) {
-                ZStack {
-                    // Glow
-                    Circle()
-                        .fill(season.accentColor.opacity(0.2))
-                        .frame(width: 64, height: 64)
-                        .blur(radius: 4)
+            VStack(spacing: 6) {
+                if entry.dueCount > 0 {
+                    // Due words mode
+                    ZStack {
+                        Circle()
+                            .fill(season.accentColor.opacity(0.2))
+                            .frame(width: 48, height: 48)
+                            .blur(radius: 4)
 
-                    // Button circle
-                    Circle()
-                        .fill(
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [season.accentColor, season.accentColor.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                            .shadow(color: season.accentColor.opacity(0.4), radius: 6, y: 3)
+
+                        Text("\(entry.dueCount)")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+
+                    Text("\(entry.dueCount == 1 ? "word" : "words") to review")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(
                             LinearGradient(
-                                colors: [season.accentColor, season.accentColor.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+                                colors: [Color(.label), Color(.label).opacity(0.7)],
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
                         )
-                        .frame(width: 52, height: 52)
-                        .shadow(color: season.accentColor.opacity(0.4), radius: 6, y: 3)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
-                    Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                    // Featured word
+                    if let word = entry.featuredWord {
+                        VStack(spacing: 1) {
+                            Text(word)
+                                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(.label))
+                                .lineLimit(1)
+                            if let tr = entry.featuredTranslation {
+                                Text(tr)
+                                    .font(.system(size: 9, weight: .regular, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                } else if entry.totalWords > 0 {
+                    // All caught up
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.15))
+                            .frame(width: 48, height: 48)
+                            .blur(radius: 4)
+
+                        Circle()
+                            .fill(Color.green.opacity(0.8))
+                            .frame(width: 40, height: 40)
+
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+
+                    Text("All caught up!")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    if let word = entry.featuredWord {
+                        VStack(spacing: 1) {
+                            Text(word)
+                                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(.label))
+                                .lineLimit(1)
+                            if let tr = entry.featuredTranslation {
+                                Text(tr)
+                                    .font(.system(size: 9, weight: .regular, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                } else {
+                    // No words — show Add Word button
+                    ZStack {
+                        Circle()
+                            .fill(season.accentColor.opacity(0.2))
+                            .frame(width: 48, height: 48)
+                            .blur(radius: 4)
+
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [season.accentColor, season.accentColor.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                            .shadow(color: season.accentColor.opacity(0.4), radius: 6, y: 3)
+
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+
+                    Text("Add Word")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(.label), Color(.label).opacity(0.7)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                 }
 
-                Text("Add Word")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color(.label), Color(.label).opacity(0.7)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-
                 Text("Droword")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary.opacity(0.6))
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary.opacity(0.5))
             }
+        }
+    }
+}
+
+// MARK: - Home Screen Widget View (systemMedium)
+
+struct DrowordMediumWidgetView: View {
+    var entry: Provider.Entry
+    private let season = WidgetSeason.current
+
+    var body: some View {
+        ZStack {
+            // Seasonal decorations
+            VStack {
+                HStack {
+                    seasonalDecoration(season: season, size: 24)
+                        .rotationEffect(.degrees(-15))
+                        .offset(x: -2, y: -2)
+                    Spacer()
+                }
+                Spacer()
+                HStack {
+                    Spacer()
+                    seasonalDecoration(season: season, size: 20)
+                        .rotationEffect(.degrees(25))
+                        .offset(x: 2, y: 2)
+                }
+            }
+
+            HStack(spacing: 16) {
+                // Left column: streak + due count
+                VStack(spacing: 10) {
+                    // Streak
+                    VStack(spacing: 2) {
+                        Text("🔥")
+                            .font(.system(size: 22))
+                        Text("\(entry.currentStreak)")
+                            .font(.system(size: 24, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
+                        Text(entry.currentStreak == 1 ? "day" : "days")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Due badge
+                    if entry.dueCount > 0 {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(season.accentColor)
+                                .frame(width: 8, height: 8)
+                            Text("\(entry.dueCount) due")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundColor(Color(.label))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(season.accentColor.opacity(0.15))
+                        )
+                    } else if entry.totalWords > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.green)
+                            Text("All done")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                // Divider
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(Color(.separator).opacity(0.3))
+                    .frame(width: 1, height: 70)
+
+                // Right column: word of the day
+                VStack(spacing: 6) {
+                    Text("Word of the Day")
+                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .textCase(.uppercase)
+
+                    if let word = entry.featuredWord {
+                        Text(word)
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(Color(.label))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+
+                        if let translation = entry.featuredTranslation {
+                            Text(translation)
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.8)
+                                .multilineTextAlignment(.center)
+                        }
+                    } else {
+                        Text("Add your first word!")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Text("Droword")
+                        .font(.system(size: 9, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary.opacity(0.4))
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 4)
         }
     }
 }
@@ -224,21 +521,42 @@ struct DrowordCircularWidgetView: View {
 // MARK: - Lock Screen Rectangular Widget (accessoryRectangular)
 
 struct DrowordRectangularWidgetView: View {
+    var entry: Provider.Entry
+
     var body: some View {
         HStack(spacing: 8) {
             ZStack {
                 Circle()
                     .fill(.white.opacity(0.15))
                     .frame(width: 32, height: 32)
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                if entry.dueCount > 0 {
+                    Text("\(entry.dueCount)")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                } else {
+                    Image(systemName: entry.totalWords > 0 ? "checkmark" : "plus")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                }
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text("Add Word")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                Text("Droword")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
-                    .opacity(0.6)
+                if entry.dueCount > 0 {
+                    Text("\(entry.dueCount) to review")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                } else if entry.totalWords > 0 {
+                    Text("All caught up!")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                } else {
+                    Text("Add Word")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                }
+                if entry.currentStreak > 0 {
+                    Text("🔥 \(entry.currentStreak) day streak")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .opacity(0.8)
+                } else {
+                    Text("Droword")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .opacity(0.6)
+                }
             }
             Spacer()
         }
@@ -256,7 +574,9 @@ struct DrowordAdaptiveWidgetView: View {
         case .accessoryCircular:
             DrowordCircularWidgetView()
         case .accessoryRectangular:
-            DrowordRectangularWidgetView()
+            DrowordRectangularWidgetView(entry: entry)
+        case .systemMedium:
+            DrowordMediumWidgetView(entry: entry)
         default:
             DrowordWidgetEntryView(entry: entry)
         }
@@ -279,26 +599,42 @@ struct Droword_Widget: Widget {
                 }
                 .widgetURL(URL(string: "droword://add"))
         }
-        .configurationDisplayName("Add Word")
-        .description("Quickly add a new word to Droword")
-        .supportedFamilies([.systemSmall, .accessoryCircular, .accessoryRectangular])
+        .configurationDisplayName("Droword")
+        .description("Track your streak, see words to review, and word of the day")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
 
 #Preview(as: .systemSmall) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
+                featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
+                featuredWord: "ephemeral", featuredTranslation: "мимолётный")
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 0, currentStreak: 0,
+                featuredWord: nil, featuredTranslation: nil)
+}
+
+#Preview(as: .systemMedium) {
+    Droword_Widget()
+} timeline: {
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
+                featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
+                featuredWord: "ephemeral", featuredTranslation: "мимолётный")
 }
 
 #Preview(as: .accessoryCircular) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(date: .now, dueCount: 3, totalWords: 20, currentStreak: 5,
+                featuredWord: nil, featuredTranslation: nil)
 }
 
 #Preview(as: .accessoryRectangular) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now)
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 7,
+                featuredWord: nil, featuredTranslation: nil)
 }

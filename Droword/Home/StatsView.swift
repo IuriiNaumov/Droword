@@ -3,6 +3,7 @@ import SwiftUI
 struct StatsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
     @State private var showDetailedStats = false
 
     private var totalWordsEver: Int {
@@ -24,32 +25,32 @@ struct StatsView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Stats")
-                    .font(.custom("Poppins-Bold", size: 24))
-                    .foregroundColor(.mainBlack)
+                    .font(themeStore.bold(24))
+                    .foregroundColor(themeStore.mainText)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mainGrey.opacity(0.6))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
             }
 
             HStack(spacing: 12) {
                 StatCardView(title: "Total", value: "\(totalWordsEver)")
                 StatCardView(title: "Today", value: "\(wordsAddedToday)")
-                StatCardView(title: "Last 7 days", value: "\(wordsAddedLastWeek)")
+                StatCardView(title: "Time", value: studyTimeTracker.todayFormatted)
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.cardBackground)
+                .fill(themeStore.cardBg)
                 .overlay(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.divider, lineWidth: 1)
+                        .stroke(themeStore.dividerColor, lineWidth: 1)
                 )
         )
-        .foregroundColor(.mainBlack)
+        .foregroundColor(themeStore.mainText)
         .padding(.horizontal, 20)
         .onTapGesture { showDetailedStats = true }
         .fullScreenCover(isPresented: $showDetailedStats) {

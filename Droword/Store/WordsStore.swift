@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import WidgetKit
 
 struct StoredWord: Identifiable, Codable, Equatable {
     let id: UUID
@@ -171,7 +172,9 @@ final class WordsStore: ObservableObject {
                 await MainActor.run {
                     defaults.set(total, forKey: totalKey)
                 }
+                WidgetCenter.shared.reloadAllTimelines()
             }
+            self.syncStreakToAppGroup()
         }
     }
     
@@ -186,6 +189,29 @@ final class WordsStore: ObservableObject {
         w.transcription = transcription
         w.needsEnrichment = false
         words[idx] = w
+    }
+
+    // MARK: - Streak
+
+    static func computeCurrentStreak(from words: [StoredWord]) -> Int {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let dates = Set(words.map { cal.startOfDay(for: $0.dateAdded) })
+
+        var streak = 0
+        var day = today
+        while dates.contains(day) {
+            streak += 1
+            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
+            day = prev
+        }
+        return streak
+    }
+
+    func syncStreakToAppGroup() {
+        let streak = Self.computeCurrentStreak(from: words)
+        sharedDefaults.set(streak, forKey: "currentStreak")
+        UserDefaults.standard.set(streak, forKey: "currentStreak")
     }
 
     func updateScheduling(for id: UUID,

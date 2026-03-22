@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct Loader: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @State private var phase: CGFloat = 0
     private let dotCount = 3
     private let dotSize: CGFloat = 10
@@ -10,7 +11,7 @@ struct Loader: View {
         HStack(spacing: spacing) {
             ForEach(0..<dotCount, id: \.self) { i in
                 Circle()
-                    .fill(Color.mainBlack)
+                    .fill(themeStore.mainText)
                     .frame(width: dotSize, height: dotSize)
                     .scaleEffect(scale(for: i))
                     .opacity(Double(scale(for: i)))

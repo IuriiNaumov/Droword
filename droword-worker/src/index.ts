@@ -1,13 +1,14 @@
 export interface Env {
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY: string;
+  APP_KEY: string;
 }
 
 // CORS headers for iOS app
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, X-App-Key",
 };
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -23,15 +24,29 @@ function errorResponse(message: string, status = 500): Response {
 
 // ─── /translate ───
 async function handleTranslate(request: Request, env: Env): Promise<Response> {
-  const { word, learningLanguage, nativeLanguage } = await request.json<{
+  const { word, learningLanguage, nativeLanguage, level } = await request.json<{
     word: string;
     learningLanguage: string;
     nativeLanguage: string;
+    level?: string;
   }>();
 
   if (!word || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: word, learningLanguage, nativeLanguage", 400);
   }
+
+  const cefrLevel = level || "A1";
+
+  const levelGuidelines: Record<string, string> = {
+    A1: "Use only the most basic vocabulary and very short sentences (3–5 words). Present tense only. No idioms or complex grammar.",
+    A2: "Use simple everyday vocabulary and short sentences (5–8 words). Simple past and present tenses. No idioms.",
+    B1: "Use intermediate vocabulary with compound sentences. Common tenses including future. Simple connectors (because, but, so).",
+    B2: "Use varied vocabulary with natural, fluent sentences. All common tenses. Idiomatic expressions are OK.",
+    C1: "Use advanced vocabulary, complex sentence structures, and natural idiomatic expressions.",
+    C2: "Use sophisticated, native-level language with nuanced vocabulary, idioms, and complex grammar.",
+  };
+
+  const exampleGuideline = levelGuidelines[cefrLevel] || levelGuidelines["A1"];
 
   const prompt = `You are a linguist.
 
@@ -39,14 +54,15 @@ Translate and explain the word "${word}".
 
 Source language: ${learningLanguage}
 Target language: ${nativeLanguage}
+Learner's CEFR level: ${cefrLevel}
 
 STRICT RULES:
 - translation → only ${nativeLanguage}
 - type → only ${nativeLanguage}
-- explanation → short and clear, only ${nativeLanguage}
+- explanation → short and clear, only ${nativeLanguage}. Adapt complexity to ${cefrLevel} level.
 - breakdown → only ${nativeLanguage} or null
-- example → only ${learningLanguage}
-- transcription → IPA or phonetic transcription using Latin letters only (ASCII), e.g., /…/ or […], or null
+- example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match CEFR ${cefrLevel} level. ${exampleGuideline}
+- transcription → IPA phonemic transcription in slashes, e.g., /paˈlaβɾa/. Always use /…/ format (never square brackets). Use only standard IPA symbols. Return null if not applicable.
 - Do not mix languages inside fields.
 
 Return ONLY valid JSON:
@@ -110,22 +126,25 @@ Return ONLY valid JSON:
 
 // ─── /suggest ───
 async function handleSuggest(request: Request, env: Env): Promise<Response> {
-  const { words, learningLanguage, nativeLanguage } = await request.json<{
+  const { words, learningLanguage, nativeLanguage, level } = await request.json<{
     words: string[];
     learningLanguage: string;
     nativeLanguage: string;
+    level?: string;
   }>();
 
   if (!words || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: words, learningLanguage, nativeLanguage", 400);
   }
 
+  const cefrLevel = level || "A1";
   const wordsList = words.join(", ");
 
   const prompt = `You are a vocabulary assistant.
 
 Learning language: ${learningLanguage}
 Native language: ${nativeLanguage}
+Learner's CEFR level: ${cefrLevel}
 
 Current words:
 ${wordsList}
@@ -135,17 +154,17 @@ TASK:
 2. Add exactly TWO new words in ${learningLanguage}:
    - related to the topic
    - not in the list
-   - suitable for A2–B1
+   - suitable for ${cefrLevel} level
    - common in daily use
-- Provide a short example sentence in the learning language.
+- Provide a short example sentence in the learning language, appropriate for ${cefrLevel} level.
 - Provide a short one‑sentence explanation in the native language.
 - Provide a brief breakdown/etymology in the native language if relevant (optional).
-- Provide transcription in IPA or a common transcription if relevant (optional).
+- Provide transcription in IPA using /…/ slashes if relevant (optional).
 
 STRICT:
 - word and example → only ${learningLanguage}
 - translation, explanation, breakdown → only ${nativeLanguage}
-- transcription → standard IPA or common Latin transcription
+- transcription → IPA phonemic transcription in slashes /…/ format only (never square brackets)
 - valid JSON only
 
 {
@@ -271,6 +290,12 @@ export default {
 
     if (request.method !== "POST") {
       return errorResponse("Method not allowed", 405);
+    }
+
+    // Validate app key
+    const appKey = request.headers.get("X-App-Key");
+    if (!env.APP_KEY || appKey !== env.APP_KEY) {
+      return errorResponse("Unauthorized", 401);
     }
 
     const url = new URL(request.url);

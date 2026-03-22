@@ -10,6 +10,7 @@ struct ListeningSettings {
     var shuffle: Bool = true
     var repeatCount: Int = 1
     var sleepTimerMinutes: Int = 0
+    var hardWordsOnly: Bool = false
 
     private static let pauseKey = "listening.pauseDuration"
     private static let examplesKey = "listening.includeExamples"
@@ -17,6 +18,7 @@ struct ListeningSettings {
     private static let shuffleKey = "listening.shuffle"
     private static let repeatKey = "listening.repeatCount"
     private static let sleepKey = "listening.sleepTimerMinutes"
+    private static let hardWordsKey = "listening.hardWordsOnly"
 
     func save() {
         let d = UserDefaults.standard
@@ -26,6 +28,7 @@ struct ListeningSettings {
         d.set(shuffle, forKey: Self.shuffleKey)
         d.set(repeatCount, forKey: Self.repeatKey)
         d.set(sleepTimerMinutes, forKey: Self.sleepKey)
+        d.set(hardWordsOnly, forKey: Self.hardWordsKey)
     }
 
     static func load() -> ListeningSettings {
@@ -37,6 +40,7 @@ struct ListeningSettings {
         s.shuffle = d.object(forKey: shuffleKey) != nil ? d.bool(forKey: shuffleKey) : true
         if d.object(forKey: repeatKey) != nil { s.repeatCount = max(1, d.integer(forKey: repeatKey)) }
         s.sleepTimerMinutes = d.integer(forKey: sleepKey)
+        s.hardWordsOnly = d.bool(forKey: hardWordsKey)
         return s
     }
 }
@@ -61,6 +65,17 @@ final class ListeningSessionManager: ObservableObject {
     @Published var sleepTimerRemaining: Int = 0
     @Published var isSessionComplete = false
 
+    // New state for upgraded player
+    @Published var isAudioPlaying = false
+    @Published var sessionStartDate: Date? = nil
+    @Published var wordsListened: Int = 0
+    @Published var translationRevealed = false
+    @Published var playbackSpeed: Float = 1.0
+
+    // SRS callbacks
+    var onWordCompleted: ((StoredWord) -> Void)?
+    var onWordMarkedKnown: ((StoredWord) -> Void)?
+
     private var queue: [StoredWord] = []
     private var sessionTask: Task<Void, Never>?
     private var sleepTimerTask: Task<Void, Never>?
@@ -77,6 +92,10 @@ final class ListeningSessionManager: ObservableObject {
                 ($0.tag ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                     .caseInsensitiveCompare(tag) == .orderedSame
             }
+        }
+
+        if settings.hardWordsOnly {
+            filtered = filtered.filter { $0.easeFactor < 2.0 }
         }
 
         guard !filtered.isEmpty else { return }
@@ -109,8 +128,10 @@ final class ListeningSessionManager: ObservableObject {
         sleepTimerTask?.cancel()
         sleepTimerTask = nil
         AudioManager.shared.stopPlayback()
+        AudioManager.shared.overrideRate = nil
         isPlaying = false
         isPaused = false
+        isAudioPlaying = false
         currentWord = nil
         sleepTimerRemaining = 0
         resumeIfPaused()
@@ -124,6 +145,7 @@ final class ListeningSessionManager: ObservableObject {
         } else {
             isPaused = true
             AudioManager.shared.stopPlayback()
+            isAudioPlaying = false
         }
     }
 
@@ -147,10 +169,31 @@ final class ListeningSessionManager: ObservableObject {
         settings.save()
     }
 
+    func replayCurrentWord() {
+        guard let word = currentWord else { return }
+        Task {
+            isAudioPlaying = true
+            AudioManager.shared.overrideRate = playbackSpeed
+            try? await AudioManager.shared.playAndWait(text: word.word)
+            isAudioPlaying = false
+        }
+    }
+
+    func markCurrentWordKnown() {
+        guard let word = currentWord else { return }
+        onWordMarkedKnown?(word)
+        skipForward()
+    }
+
+    func revealTranslation() {
+        translationRevealed = true
+    }
+
     private func restartSession(at index: Int) {
         sessionTask?.cancel()
         sessionTask = nil
         AudioManager.shared.stopPlayback()
+        isAudioPlaying = false
         resumeIfPaused()
         isPaused = false
 
@@ -159,11 +202,15 @@ final class ListeningSessionManager: ObservableObject {
     }
 
     private func runSession() async {
+        sessionStartDate = Date()
+        wordsListened = 0
+
         while currentWordIndex < queue.count {
             if Task.isCancelled { break }
 
             let word = queue[currentWordIndex]
             currentWord = word
+            translationRevealed = false
             updateNowPlaying(word: word)
 
             do {
@@ -181,11 +228,11 @@ final class ListeningSessionManager: ObservableObject {
                     secondText = nativeText
                 }
 
+                // --- .word phase ---
                 currentPhase = .word
                 try Task.checkCancellation()
                 try await waitIfPaused()
 
-                // Check TTS limit for free users
                 let premium = UserDefaults.standard.bool(forKey: "isPremium")
                 if !premium && !DailyLimitsManager.canPlayTTS {
                     await MainActor.run {
@@ -195,43 +242,64 @@ final class ListeningSessionManager: ObservableObject {
                 }
                 if !premium { DailyLimitsManager.recordTTS() }
 
+                isAudioPlaying = true
+                AudioManager.shared.overrideRate = playbackSpeed
                 try await AudioManager.shared.playAndWait(text: firstText)
+                isAudioPlaying = false
 
+                // --- .pause phase ---
                 currentPhase = .pause
                 try Task.checkCancellation()
                 try await waitIfPaused()
                 try await sleepFor(settings.pauseDuration)
 
+                // --- .translation phase ---
                 currentPhase = .translation
+                translationRevealed = true
                 try Task.checkCancellation()
                 try await waitIfPaused()
                 if !secondText.isEmpty {
+                    isAudioPlaying = true
                     try await AudioManager.shared.playAndWait(text: secondText)
+                    isAudioPlaying = false
                 }
 
+                // --- .example phase ---
                 if settings.includeExamples, let example = word.example, !example.isEmpty {
                     currentPhase = .example
                     try Task.checkCancellation()
                     try await waitIfPaused()
                     try await sleepFor(0.8)
+                    isAudioPlaying = true
                     try await AudioManager.shared.playAndWait(text: example)
+                    isAudioPlaying = false
                 }
 
+                // --- .gap phase ---
                 currentPhase = .gap
                 try Task.checkCancellation()
                 try await sleepFor(1.5)
 
+                wordsListened += 1
+                onWordCompleted?(word)
+
             } catch is CancellationError {
+                isAudioPlaying = false
                 break
             } catch {
+                isAudioPlaying = false
+                #if DEBUG
                 print("ListeningSession error:", error)
+                #endif
             }
 
             currentWordIndex += 1
+            updateNowPlayingProgress()
         }
 
         if !Task.isCancelled {
             AudioManager.shared.stopPlayback()
+            AudioManager.shared.overrideRate = nil
             isPlaying = false
             currentWord = nil
             isSessionComplete = true
@@ -337,8 +405,26 @@ final class ListeningSessionManager: ObservableObject {
         var info = [String: Any]()
         info[MPMediaItemPropertyTitle] = word.word
         info[MPMediaItemPropertyArtist] = word.translation ?? "Droword"
-        info[MPMediaItemPropertyAlbumTitle] = "Droword Listening"
+        info[MPMediaItemPropertyAlbumTitle] = "Droword Listening (\(currentWordIndex + 1)/\(totalWords))"
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPaused ? 0.0 : 1.0
+
+        let elapsed = sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        let estimatedTotal = Double(totalWords) * (settings.pauseDuration + 5.0)
+        info[MPMediaItemPropertyPlaybackDuration] = estimatedTotal
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    private func updateNowPlayingProgress() {
+        guard var info = MPNowPlayingInfoCenter.default().nowPlayingInfo else { return }
+
+        let elapsed = sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        let estimatedTotal = Double(totalWords) * (settings.pauseDuration + 5.0)
+        info[MPMediaItemPropertyPlaybackDuration] = estimatedTotal
+        info[MPNowPlayingInfoPropertyPlaybackRate] = isPaused ? 0.0 : 1.0
+
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 

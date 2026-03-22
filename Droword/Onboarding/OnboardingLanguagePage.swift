@@ -2,10 +2,11 @@ import SwiftUI
 
 struct OnboardingLanguagePage: View {
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
         ZStack {
-            Color.appBackground.ignoresSafeArea()
+            themeStore.appBg.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     LanguageCubePicker(

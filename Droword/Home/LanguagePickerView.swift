@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LanguageSelectionView: View {
     @EnvironmentObject var languageStore: LanguageStore
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     
     @State private var showToast = false
@@ -27,23 +28,23 @@ struct LanguageSelectionView: View {
                         languages: LanguageCatalog.availableLanguages,
                         blockedLanguage: languageStore.learningLanguage
                     )
-                    .onChange(of: languageStore.nativeLanguage) { _ in
+                    .onChange(of: languageStore.nativeLanguage) {
                         showToastForChange()
                     }
                     
                     LanguageCubePicker(
                         selectedLanguage: $languageStore.learningLanguage,
-                        title: "I’m learning",
+                        title: "I'm learning",
                         languages: LanguageCatalog.availableLanguages,
                         blockedLanguage: languageStore.nativeLanguage
                     )
-                    .onChange(of: languageStore.learningLanguage) { _ in
+                    .onChange(of: languageStore.learningLanguage) {
                         showToastForChange()
                     }
                 }
                 .padding(.bottom, 50)
             }
-            .background(Color.appBackground.ignoresSafeArea())
+            .background(themeStore.appBg.ignoresSafeArea())
             
             if showToast {
                 BannerToastView(

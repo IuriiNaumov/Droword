@@ -2,12 +2,12 @@ import SwiftUI
 import AVFoundation
 
 struct HomeView: View {
-    @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
     @StateObject private var golden = GoldenWordsStore()
+    @StateObject private var challengeManager = DailyChallengeManager.shared
 
     @State private var showAddWordView = false
     @State private var sharedWord: String = ""
@@ -17,10 +17,22 @@ struct HomeView: View {
     @AppStorage("lastCelebratedWordCount") private var lastCelebratedWordCount: Int = 0
     @AppStorage("lastCelebratedDailyGoal") private var lastCelebratedDailyGoalDate: String = ""
     @AppStorage("hasSeenGoldenIntro") private var hasSeenGoldenIntro: Bool = false
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = true
+    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
     @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
-    @AppStorage("dailyGoalDismissedDate") private var dailyGoalDismissedDate: String = ""
+    @AppStorage("hasSeenCoachMarks") private var hasSeenCoachMarks: Bool = false
     @State private var showGoldenIntro = false
+    @State private var showChallenges = false
+    @State private var showCoachMarks = false
+    @State private var enrichmentToast: String?
+    @State private var cachedRecentWords: [StoredWord] = []
+    @State private var previousWordCount: Int?
+
+    private static let dayFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.dateFormat = "yyyy-MM-dd"
+        return df
+    }()
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -30,9 +42,6 @@ struct HomeView: View {
 
         var id: String { rawValue }
     }
-
-    private var isCompact: Bool { hSize == .compact }
-    private var horizontalPadding: CGFloat { isCompact ? 16 : 20 }
 
     private var level: (name: String, min: Int, max: Int) {
         let total = store.words.count
@@ -52,47 +61,36 @@ struct HomeView: View {
         return min(1.0, (total - minVal) / (maxVal - minVal))
     }
 
-    @AppStorage("dailyGoalTarget") private var dailyGoalTarget: Int = 5
-    @AppStorage("dailyGoalDate") private var dailyGoalDate: String = ""
+    private let coachMarkSteps: [CoachMarkStep] = [
+        CoachMarkStep(
+            title: "Add Words",
+            message: "Tap the + tab to add new words. I'll translate them, find examples, and create flashcards automatically.",
+            icon: "plus.circle.fill"
+        ),
+        CoachMarkStep(
+            title: "Review Cards",
+            message: "Words appear on the home screen when it's time to review. Swipe through them to keep your memory fresh.",
+            icon: "rectangle.portrait.on.rectangle.portrait"
+        ),
+        CoachMarkStep(
+            title: "Practice Quizzes",
+            message: "Go to Practice for multiple choice, typing, and fill-in-the-blank quizzes. Choose your preferred direction — word to translation or vice versa.",
+            icon: "brain.head.profile"
+        ),
+        CoachMarkStep(
+            title: "Listening Mode",
+            message: "Put on headphones and learn while doing other things. Audio flashcards with customizable pauses and speed.",
+            icon: "headphones"
+        ),
+        CoachMarkStep(
+            title: "Track Your Progress",
+            message: "Tap your stats to see detailed charts, streaks, and achievements. Every word counts toward your goals.",
+            icon: "chart.bar.fill"
+        ),
+    ]
 
-    private var wordsAddedToday: Int {
-        store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
-    }
-
-    private var isGoalCompleted: Bool {
-        wordsAddedToday >= max(1, dailyGoalTarget)
-    }
-
-    private var isDailyGoalDismissedToday: Bool {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        return dailyGoalDismissedDate == df.string(from: Date())
-    }
-
-    private func refreshDailyGoalIfNeeded() {
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
-        let today = df.string(from: Date())
-        guard dailyGoalDate != today else { return }
-        dailyGoalDate = today
-        dailyGoalTarget = Int.random(in: 3...10)
-    }
-
-    private var dueWordCount: Int {
-        let now = Date()
-        return store.words.filter { w in
-            guard let due = w.dueDate else { return true }
-            return due <= now
-        }.count
-    }
-    
-    private var dueWordUnit: String {
-        dueWordCount == 1 ? "word" : "words"
-    }
-
-    private var recentWords: [StoredWord] {
-        Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
+    private func refreshCachedWordData() {
+        cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
     }
 
     var body: some View {
@@ -114,8 +112,8 @@ struct HomeView: View {
                     .tabItem { Label("Add", systemImage: "plus.circle.fill") }
                     .tag(Tab.add)
             }
-            .tint(Color.mainBlack)
-            .background(Color.appBackground.ignoresSafeArea())
+            .tint(themeStore.tabTint)
+            .background(themeStore.appBg.ignoresSafeArea())
             .onChange(of: selectedTab) { _, newValue in
                 Haptics.selection()
                 if newValue == .add {
@@ -133,6 +131,10 @@ struct HomeView: View {
                     .transaction { $0.disablesAnimations = true }
             }
             .environmentObject(golden)
+            .fullScreenCover(isPresented: $showChallenges) {
+                DailyChallengeDetailView(manager: challengeManager)
+                    .environmentObject(themeStore)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
                 if let word = notification.userInfo?["word"] as? String {
                     sharedWord = word
@@ -159,6 +161,41 @@ struct HomeView: View {
                     .transition(.opacity)
                     .zIndex(101)
                 }
+
+                if showCoachMarks {
+                    CoachMarkView(steps: coachMarkSteps) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showCoachMarks = false
+                            hasSeenCoachMarks = true
+                        }
+                    }
+                    .transition(.opacity)
+                    .zIndex(102)
+                }
+            }
+            .overlay(alignment: .top) {
+                if let toast = enrichmentToast {
+                    BannerToastView(type: .success, message: toast)
+                        .zIndex(200)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .wordsEnriched)) { notification in
+                if let words = notification.userInfo?["words"] as? [String], !words.isEmpty {
+                    let message: String
+                    if words.count == 1 {
+                        message = "\"\(words[0])\" updated with translation"
+                    } else {
+                        message = "\(words.count) words updated with translations"
+                    }
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        enrichmentToast = message
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            enrichmentToast = nil
+                        }
+                    }
+                }
             }
         }
         .onChange(of: golden.goldenWords.count) { _, newCount in
@@ -171,9 +208,19 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: store.words.count) { oldValue, newValue in
+        .onChange(of: store.words.count) { _, newValue in
             // Only react to additions, not deletions
-            guard newValue > oldValue else { return }
+            let oldCount = previousWordCount ?? 0
+            guard newValue > oldCount else {
+                previousWordCount = newValue
+                return
+            }
+
+            // Update daily challenges for word additions
+            let addedCount = newValue - oldCount
+            challengeManager.recordWordsAdded(count: addedCount)
+
+            previousWordCount = newValue
 
             if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
                 let isPremium = UserDefaults.standard.bool(forKey: "isPremium")
@@ -188,9 +235,7 @@ struct HomeView: View {
 
             let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
             if lastCelebratedDailyGoalDate != todayStr {
-                let todayCount = store.words.filter { Calendar.current.isDateInToday($0.dateAdded) }.count
-                let effectiveTarget = max(1, dailyGoalTarget)
-                if todayCount >= effectiveTarget {
+                if let goal = challengeManager.dailyGoalChallenge, goal.isCompleted {
                     lastCelebratedDailyGoalDate = todayStr
                     activeMilestone = .dailyGoal
                     badgeStore.recordDailyGoalCompletion()
@@ -213,45 +258,33 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
                 ProfileHeaderView()
+                    .padding(.bottom, 20)
                 StatsView()
 
-                if !isDailyGoalDismissedToday {
-                    dailyGoalWidget
-                        .padding(.horizontal, 20)
+                Button {
+                    Haptics.lightImpact()
+                    showChallenges = true
+                } label: {
+                    DailyChallengeButton(manager: challengeManager)
                 }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 20)
 
-                if dueWordCount > 0 {
-                    Button {
-                        Haptics.mediumImpact()
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            selectedTab = .practice
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "rectangle.portrait.on.rectangle.portrait.fill")
-                                .font(.system(size: 20, weight: .bold))
-                            Text("Practice \(dueWordCount) \(dueWordUnit)")
-                                .font(.custom("Poppins-Bold", size: 17))
-                        }
-                        .foregroundColor(.white)
-                    }
-                    .duo3DStyle(themeStore.buttonAccent)
-                    .buttonStyle(Duo3DButtonStyle())
+                ReviewSectionView()
                     .padding(.horizontal, 20)
-                }
 
                 GoldenWordsView()
                     .environmentObject(golden)
                     .padding(.horizontal, 20)
 
-                if !recentWords.isEmpty {
+                if !cachedRecentWords.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recently added")
-                            .font(.custom("Poppins-Bold", size: 24))
-                            .foregroundColor(.mainBlack)
+                            .font(themeStore.bold(24))
+                            .foregroundColor(themeStore.mainText)
                             .padding(.horizontal, 20)
 
-                        ForEach(recentWords) { word in
+                        ForEach(cachedRecentWords) { word in
                             WordCardView(
                                 word: word.word,
                                 translation: word.translation,
@@ -272,17 +305,18 @@ struct HomeView: View {
                 } else {
                     EmptyListView(
                         icon: "heart.fill",
-                        title: "Add your first word",
-                        subtitle: "That's all it takes to start learning."
+                        title: store.words.isEmpty ? "Add your first word" : "Add a word",
+                        subtitle: store.words.isEmpty ? "That's all it takes to start learning." : "Your recent words will appear here."
                     )
                     .padding(.top, 40)
                 }
             }
             .padding(.bottom, 60)
+            .iPadContentWidth()
         }
         .background {
             ZStack {
-                Color.appBackground
+                themeStore.appBg
                 if seasonalEffectsEnabled {
                     SeasonalOverlayView(animated: seasonalAnimationEnabled)
                         .allowsHitTesting(false)
@@ -290,82 +324,21 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
         }
-        .onAppear { refreshDailyGoalIfNeeded() }
-    }
+        .onAppear {
+            refreshCachedWordData()
+            challengeManager.refreshIfNeeded()
 
-    private var dailyGoalWidget: some View {
-        let progress = min(1.0, Double(wordsAddedToday) / Double(max(1, dailyGoalTarget)))
-        return HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .stroke(themeStore.accentGreen.opacity(0.2), lineWidth: 6)
-                    .frame(width: 56, height: 56)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(themeStore.accentGreen, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                    .frame(width: 56, height: 56)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
-                if isGoalCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 26))
-                        .foregroundColor(themeStore.accentGreen)
-                } else {
-                    Text("🔥")
-                        .font(.system(size: 22))
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                if isGoalCompleted {
-                    Text("Goal reached!")
-                        .font(.custom("Poppins-Bold", size: 16))
-                        .foregroundColor(.mainBlack)
-                    Text("Great job, you did it today!")
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
-                } else {
-                    Text("Daily goal")
-                        .font(.custom("Poppins-Bold", size: 16))
-                        .foregroundColor(.mainBlack)
-                    Text("\(wordsAddedToday)/\(dailyGoalTarget) words today")
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
-                }
-            }
-            Spacer()
-
-            if isGoalCompleted {
-                Button {
-                    Haptics.lightImpact()
-                    let df = DateFormatter()
-                    df.calendar = Calendar(identifier: .gregorian)
-                    df.dateFormat = "yyyy-MM-dd"
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        dailyGoalDismissedDate = df.string(from: Date())
+            if !hasSeenCoachMarks {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showCoachMarks = true
                     }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.mainGrey)
-                        .frame(width: 28, height: 28)
-                        .background(
-                            Circle()
-                                .fill(Color.mainGrey.opacity(0.1))
-                        ).padding(.bottom, 22)
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.cardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.divider, lineWidth: 1)
-                )
-        )
+        .onChange(of: store.words.count) { refreshCachedWordData() }
     }
+
 }
 
 #Preview {

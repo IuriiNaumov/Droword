@@ -54,7 +54,7 @@ struct QuizMultipleChoiceView: View {
         VStack(spacing: 0) {
             Text("\(session.currentIndex + 1) / \(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(.mainGrey)
+                .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
 
             Spacer()
@@ -62,18 +62,18 @@ struct QuizMultipleChoiceView: View {
             VStack(spacing: 8) {
                 Text(promptText)
                     .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(.mainBlack)
+                    .foregroundColor(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !reversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
 
                 Text(reversed ? "Choose the correct word" : "Choose the correct translation")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -116,7 +116,7 @@ struct QuizMultipleChoiceView: View {
 
         var bgColor: Color {
             if !hasAnswered {
-                return Color.cardBackground
+                return themeStore.cardBg
             }
             if isThisCorrect {
                 return themeStore.accentGreen
@@ -124,12 +124,12 @@ struct QuizMultipleChoiceView: View {
             if isSelected && !isThisCorrect {
                 return themeStore.accentRed
             }
-            return Color.cardBackground
+            return themeStore.cardBg
         }
 
         var textColor: Color {
             if !hasAnswered {
-                return Color.mainBlack
+                return themeStore.mainText
             }
             if isThisCorrect {
                 return darkerShade(of: themeStore.accentGreen, by: 0.4)
@@ -137,7 +137,7 @@ struct QuizMultipleChoiceView: View {
             if isSelected && !isThisCorrect {
                 return darkerShade(of: themeStore.accentRed, by: 0.4)
             }
-            return Color.mainBlack.opacity(0.4)
+            return themeStore.mainText.opacity(0.4)
         }
 
         return Button {
@@ -240,81 +240,6 @@ struct QuizMultipleChoiceView: View {
                 .padding(.horizontal, 32)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-struct QuizCompletionView: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-
-    let correct: Int
-    let total: Int
-    let onRestart: () -> Void
-
-    private var percentage: Int {
-        total > 0 ? Int(round(Double(correct) / Double(total) * 100)) : 0
-    }
-
-    private var scoreColor: Color {
-        switch percentage {
-        case 70...100: return themeStore.accentGreen
-        case 40..<70: return themeStore.isMonochrome ? Color("MonoMedium") : Color(red: 1.0, green: 0.902, blue: 0.655)
-        default: return themeStore.accentRed
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            VStack(spacing: 24) {
-                Spacer()
-
-                Text("Session Complete!")
-                    .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(.mainBlack)
-
-                ZStack {
-                    Circle()
-                        .stroke(scoreColor.opacity(0.3), lineWidth: 8)
-                        .frame(width: 120, height: 120)
-                    Circle()
-                        .trim(from: 0, to: Double(percentage) / 100.0)
-                        .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .frame(width: 120, height: 120)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeOut(duration: 0.8), value: percentage)
-
-                    VStack(spacing: 2) {
-                        Text("\(correct)/\(total)")
-                            .font(.custom("Poppins-Bold", size: 24))
-                            .foregroundColor(.mainBlack)
-                        Text("\(percentage)%")
-                            .font(.custom("Poppins-Medium", size: 14))
-                            .foregroundColor(.mainGrey)
-                    }
-                }
-
-                Button(action: { Haptics.mediumImpact(); onRestart() }) {
-                    Text("Try Again")
-                        .font(.custom("Poppins-Bold", size: 16))
-                        .foregroundColor(.white)
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.buttonAccent)
-                        )
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 40)
-
-                Spacer()
-            }
-
-            if percentage >= 70 {
-                ConfettiView()
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-            }
-        }
     }
 }
 

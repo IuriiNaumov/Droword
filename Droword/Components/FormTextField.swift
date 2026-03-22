@@ -2,9 +2,11 @@ import SwiftUI
 import Combine
 
 struct FormTextField: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     let title: String
     @Binding var text: String
-    var focusedColor: Color = Color.mainBlack
+    var focusedColor: Color = Color("MainBlack")
     var maxLength: Int? = nil
     var showCounter: Bool = false
 
@@ -23,18 +25,18 @@ struct FormTextField: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 19)
-                .background(Color.cardBackground)
-                .foregroundColor(.mainBlack)
+                .background(themeStore.cardBg)
+                .foregroundColor(themeStore.mainText)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(isFocused ? focusedColor : Color.divider, lineWidth: isFocused ? 3 : 2)
+                        .stroke(isFocused ? focusedColor : themeStore.dividerColor, lineWidth: isFocused ? 3 : 2)
                 )
                 .cornerRadius(20)
 
             if showCounter, let limit = maxLength {
                 Text("\(text.count)/\(limit)")
                     .font(counterFont)
-                    .foregroundColor(Color.mainGrey)
+                    .foregroundColor(themeStore.secondaryText)
                     .padding(.trailing, 14)
             }
         }
@@ -56,7 +58,7 @@ struct FormTextField: View {
         }
     }
     .padding()
-    .background(Color.cardBackground)
+    .background(Color("CardBackground"))
 }
 
 

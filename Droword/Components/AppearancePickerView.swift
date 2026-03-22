@@ -31,7 +31,7 @@ struct AppearancePickerView: View {
 
             Spacer()
         }
-        .background(Color.appBackground.ignoresSafeArea())
+        .background(themeStore.appBg.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -52,7 +52,7 @@ struct AppearancePickerView: View {
                         .fill(previewBg(option))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : themeStore.dividerColor, lineWidth: isSelected ? 2 : 1)
                         )
 
                     if option == .system {
@@ -63,7 +63,7 @@ struct AppearancePickerView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : themeStore.dividerColor, lineWidth: isSelected ? 2 : 1)
                         )
                     }
 
@@ -101,7 +101,7 @@ struct AppearancePickerView: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? themeStore.buttonAccent : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
+                        .stroke(isSelected ? themeStore.buttonAccent : themeStore.secondaryText.opacity(0.4), lineWidth: 1.5)
                         .frame(width: 26, height: 26)
 
                     if isSelected {

@@ -21,10 +21,14 @@ struct DrowordApp: App {
 
     @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
     @AppStorage("notifDailyReminders") private var dailyReminders: Bool = true
+    @AppStorage("isPremium") private var isPremium: Bool = false
+    @AppStorage("hasUsedTrial") private var hasUsedTrial: Bool = false
+    @AppStorage("trialStartDate") private var trialStartDate: String = ""
     @Environment(\.scenePhase) private var scenePhase
 
     private let notificationDelegate = NotificationDelegate()
     @State private var enrichmentService: WordEnrichmentService?
+    @StateObject private var studyTimeTracker = StudyTimeTracker.shared
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
@@ -36,6 +40,7 @@ struct DrowordApp: App {
         warmUpGPT()
         preloadFonts()
         setupNotifications()
+        checkTrialPeriod()
     }
 
     var body: some Scene {
@@ -48,15 +53,31 @@ struct DrowordApp: App {
                 .environmentObject(languageStore)
                 .environmentObject(themeStore)
                 .environmentObject(badgeStore)
+                .environmentObject(studyTimeTracker)
                 .task {
                     if enrichmentService == nil {
                         enrichmentService = WordEnrichmentService(store: store, languageStore: languageStore)
                     }
                 }
                 .onChange(of: scenePhase) { _, newPhase in
-                    if newPhase == .active {
+                    switch newPhase {
+                    case .active:
                         store.reloadFromDisk()
+                        enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()
+                        checkTrialPeriod()
+                        // Sync theme if PRO was revoked
+                        if !isPremium && themeStore.palette == .duolingo {
+                            themeStore.set(.colorful)
+                        }
+                        studyTimeTracker.resumeSession()
+                    case .inactive, .background:
+                        // Update study time challenge with today's total
+                        let todayMins = studyTimeTracker.todaySeconds / 60
+                        DailyChallengeManager.shared.updateStudyMinutes(todayMins)
+                        studyTimeTracker.pauseSession()
+                    @unknown default:
+                        break
                     }
                 }
                 .onOpenURL { url in
@@ -70,9 +91,6 @@ struct DrowordApp: App {
 
         NotificationManager.shared.requestAuthorization { granted in
             guard granted else { return }
-            if self.dailyReminders {
-                NotificationManager.shared.scheduleTwiceDaily()
-            }
             let lastActiveDay = UserDefaults.standard.string(forKey: "lastActiveDay") ?? ""
             if !lastActiveDay.isEmpty {
                 let df = DateFormatter()
@@ -88,7 +106,9 @@ struct DrowordApp: App {
     private func warmUpKeyboard() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             let textField = UITextField()
-            UIApplication.shared.windows.first?.addSubview(textField)
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first?.windows.first?.addSubview(textField)
             textField.becomeFirstResponder()
             textField.resignFirstResponder()
             textField.removeFromSuperview()
@@ -104,9 +124,9 @@ struct DrowordApp: App {
     private func warmUpGPT() {
         let premium = UserDefaults.standard.bool(forKey: "isPremium")
         guard premium else { return }
+        let langStore = LanguageStore()
         Task.detached(priority: .background) {
-            let languageStore = LanguageStore()
-            _ = try? await translateWithGPT(word: "hola", languageStore: languageStore)
+            _ = try? await translateWithGPT(word: "hola", languageStore: langStore)
         }
     }
 
@@ -116,11 +136,12 @@ struct DrowordApp: App {
     }
 
     private func scheduleSmartNotifications() {
+        guard dailyReminders else { return }
+
         let today = Calendar.current.startOfDay(for: Date())
         let dueCount = store.words.filter { w in
             if let due = w.dueDate { return due <= today } else { return true }
         }.count
-        NotificationManager.shared.scheduleDueWordsReminder(dueCount: dueCount)
 
         let df = DateFormatter()
         df.calendar = Calendar(identifier: .gregorian)
@@ -130,22 +151,59 @@ struct DrowordApp: App {
         let hasPracticedToday = lastActiveDay == todayStr
         let currentStreak = UserDefaults.standard.integer(forKey: "currentStreak")
 
-        if hasPracticedToday {
-            NotificationManager.shared.cancelStreakAtRiskReminder()
-        } else if currentStreak >= 2 {
-            NotificationManager.shared.scheduleStreakAtRiskReminder(currentStreak: currentStreak)
+        let dueWordInfos = store.words
+            .filter { w in
+                guard let due = w.dueDate, due <= today else { return false }
+                guard let tr = w.translation, !tr.isEmpty else { return false }
+                return true
+            }
+            .map { DueWordInfo(word: $0.word, translation: $0.translation!) }
+
+        NotificationManager.shared.scheduleDaily(
+            dueCount: dueCount,
+            currentStreak: currentStreak,
+            hasPracticedToday: hasPracticedToday,
+            dueWords: dueWordInfos
+        )
+    }
+
+    private static let trialDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.calendar = Calendar(identifier: .gregorian)
+        df.dateFormat = "yyyy-MM-dd"
+        return df
+    }()
+
+    private func checkTrialPeriod() {
+        let df = Self.trialDateFormatter
+
+        if !hasUsedTrial {
+            // First launch — activate 7-day trial
+            hasUsedTrial = true
+            trialStartDate = df.string(from: Date())
+            isPremium = true
+            return
         }
 
-        if let randomDue = store.words.filter({ w in
-            guard let due = w.dueDate else { return false }
-            return due <= today
-        }).randomElement(),
-           let translation = randomDue.translation, !translation.isEmpty {
-            NotificationManager.shared.scheduleWordQuizReminder(
-                word: randomDue.word,
-                translation: translation,
-                after: 4 * 3600
-            )
+        // Already used trial — check if it expired
+        guard !trialStartDate.isEmpty,
+              let start = df.date(from: trialStartDate) else { return }
+
+        let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
+        if daysSinceStart > 7 && isPremium {
+            // Only expire if user hasn't purchased a real subscription
+            // For now, we expire the trial. Real StoreKit purchases should
+            // set a separate flag to distinguish from trial.
+            let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
+            if !hasPurchased {
+                isPremium = false
+                // Revoke PRO-only features
+                UserDefaults.standard.set(false, forKey: "seasonalEffectsEnabled")
+                if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),
+                   savedPalette == ThemeStore.Palette.duolingo.rawValue {
+                    UserDefaults.standard.set(ThemeStore.Palette.colorful.rawValue, forKey: "appThemePalette")
+                }
+            }
         }
     }
 

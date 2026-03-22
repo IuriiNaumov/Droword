@@ -5,19 +5,20 @@ struct GoldenWordsView: View {
     @EnvironmentObject private var golden: GoldenWordsStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
+    @EnvironmentObject private var languageStore: LanguageStore
 
-    private var gold: Color { themeStore.accentGold }
-    private var darkGold: Color { darkerShade(of: themeStore.accentGold, by: 0.15) }
-    private var midTextGold: Color { darkerShade(of: themeStore.accentGold, by: 0.35) }
-    private var titleGold: Color { darkerShade(of: themeStore.accentGold, by: 0.5) }
+    private var gold: Color { themeStore.goldenColor }
+    private var darkGold: Color { darkerShade(of: themeStore.goldenColor, by: 0.15) }
+    private var midTextGold: Color { darkerShade(of: themeStore.goldenColor, by: 0.35) }
+    private var titleGold: Color { darkerShade(of: themeStore.goldenColor, by: 0.5) }
 
     var body: some View {
         if golden.isLoading || !golden.goldenWords.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
-                if let topic = golden.topic {
+                if golden.topic != nil {
                     Text("Suggestions")
-                        .font(.custom("Poppins-Bold", size: 24))
-                        .foregroundColor(.mainBlack)
+                        .font(themeStore.bold(24))
+                        .foregroundColor(themeStore.mainText)
                         .padding(.top, 8)
                 }
 
@@ -29,23 +30,23 @@ struct GoldenWordsView: View {
                         ForEach(golden.goldenWords) { word in
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(word.word.capitalized)
-                                    .font(.custom("Poppins-Bold", size: 24))
-                                    .foregroundColor(.mainBlack)
+                                    .font(themeStore.bold(24))
+                                    .foregroundColor(themeStore.mainText)
 
                                 Text(word.translation)
-                                    .font(.custom("Poppins-Regular", size: 16))
-                                    .foregroundColor(.mainGrey)
+                                    .font(themeStore.regular(16))
+                                    .foregroundColor(themeStore.secondaryText)
 
                                 if let example = word.example {
                                     Text(example)
-                                        .font(.custom("Poppins-Regular", size: 16))
-                                        .foregroundColor(.mainBlack)
+                                        .font(themeStore.regular(16))
+                                        .foregroundColor(themeStore.mainText)
                                 }
 
                                 HStack {
                                     Button {
                                         withAnimation(.spring()) {
-                                            golden.accept(word, store: store, languageStore: LanguageStore())
+                                            golden.accept(word, store: store, languageStore: languageStore)
                                             badgeStore.recordGoldenWordAccepted()
                                         }
                                     } label: {
@@ -53,7 +54,7 @@ struct GoldenWordsView: View {
                                             Image(systemName: "plus.circle.fill")
                                             Text("Add")
                                         }
-                                        .font(.custom("Poppins-Medium", size: 13))
+                                        .font(themeStore.medium(13))
                                         .foregroundColor(.white)
                                         .padding(.vertical, 6)
                                         .padding(.horizontal, 12)
@@ -73,7 +74,7 @@ struct GoldenWordsView: View {
                                             Image(systemName: "checkmark.circle")
                                             Text("Already know")
                                         }
-                                        .font(.custom("Poppins-Regular", size: 13))
+                                        .font(themeStore.regular(13))
                                         .foregroundColor(midTextGold)
                                     }
                                 }
@@ -86,7 +87,7 @@ struct GoldenWordsView: View {
                                     .fill(gold)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                            .stroke(Color.divider, lineWidth: 1)
+                                            .stroke(themeStore.dividerColor, lineWidth: 1)
                                     )
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -116,35 +117,46 @@ extension Color {
 
         self.init(red: red, green: green, blue: blue)
     }
+
+    /// Dynamic color that adapts to light/dark mode from hex strings
+    init(light: String, dark: String) {
+        self.init(UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
+        })
+    }
 }
 
 #Preview {
     let mockStore = WordsStore()
-    let golden = GoldenWordsStore()
-    golden.topic = "Everyday life"
-    golden.goldenWords = [
-        SuggestedWord(
-            word: "cabeza",
-            translation: "голова",
-            type: "noun",
-            example: "Me duele la cabeza después de estudiar mucho."
-        ),
-        SuggestedWord(
-            word: "corazón",
-            translation: "сердце",
-            type: "noun",
-            example: "El corazón es un órgano muy importante para el cuerpo."
-        )
-    ]
+    let golden: GoldenWordsStore = {
+        let g = GoldenWordsStore()
+        g.topic = "Everyday life"
+        g.goldenWords = [
+            SuggestedWord(
+                word: "cabeza",
+                translation: "голова",
+                type: "noun",
+                example: "Me duele la cabeza después de estudiar mucho."
+            ),
+            SuggestedWord(
+                word: "corazón",
+                translation: "сердце",
+                type: "noun",
+                example: "El corazón es un órgano muy importante para el cuerpo."
+            )
+        ]
+        return g
+    }()
 
-    return ScrollView {
+    ScrollView {
         VStack(alignment: .leading, spacing: 24) {
             GoldenWordsView()
                 .environmentObject(mockStore)
                 .environmentObject(golden)
+                .environmentObject(LanguageStore())
                 .padding(.horizontal, 20)
         }
         .padding(.vertical, 40)
     }
-    .background(Color.appBackground)
+    .background(Color("AppBackground"))
 }

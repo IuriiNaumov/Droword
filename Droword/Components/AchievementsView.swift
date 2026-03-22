@@ -25,11 +25,11 @@ struct AchievementsView: View {
                 VStack(spacing: 6) {
                     Text("\(unlockedCount)/\(BadgeStore.allBadges.count)")
                         .font(.custom("Poppins-Bold", size: 32))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(themeStore.mainText)
 
                     Text("achievements unlocked")
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
                 .padding(.top, 12)
 
@@ -39,7 +39,7 @@ struct AchievementsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category.title)
                                 .font(.custom("Poppins-Bold", size: 18))
-                                .foregroundColor(.mainBlack)
+                                .foregroundColor(themeStore.mainText)
                                 .padding(.horizontal, 20)
 
                             LazyVGrid(columns: columns, spacing: 12) {
@@ -59,7 +59,7 @@ struct AchievementsView: View {
             .padding(.vertical, 20)
             .padding(.bottom, 40)
         }
-        .background(Color.appBackground.ignoresSafeArea())
+        .background(themeStore.appBg.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -77,70 +77,4 @@ struct AchievementsView: View {
     }
 }
 
-private struct BadgeCardView: View {
-    let badge: BadgeDefinition
-    let currentProgress: Int
-    let isUnlocked: Bool
-    @EnvironmentObject private var themeStore: ThemeStore
-    @State private var appeared = false
 
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(badge.emoji)
-                .font(.system(size: 32))
-                .grayscale(isUnlocked ? 0 : 1.0)
-                .opacity(isUnlocked ? 1.0 : 0.4)
-                .shadow(color: isUnlocked ? themeStore.accentGold.opacity(0.5) : .clear, radius: 8)
-                .scaleEffect(appeared ? 1.0 : 0.6)
-
-            Text(badge.title)
-                .font(.custom("Poppins-Medium", size: 11))
-                .foregroundColor(isUnlocked ? .mainBlack : .mainGrey)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-
-            if isUnlocked {
-                Text(badge.description)
-                    .font(.custom("Poppins-Regular", size: 9))
-                    .foregroundColor(.mainGrey)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-            } else {
-                let ratio = min(1.0, Double(currentProgress) / Double(max(1, badge.requiredCount)))
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.mainGrey.opacity(0.15))
-                            .frame(height: 4)
-                        Capsule()
-                            .fill(themeStore.accentBlue)
-                            .frame(width: geo.size.width * ratio, height: 4)
-                    }
-                }
-                .frame(height: 4)
-                .padding(.horizontal, 4)
-
-                Text("\(currentProgress)/\(badge.requiredCount)")
-                    .font(.custom("Poppins-Regular", size: 9))
-                    .foregroundColor(.mainGrey)
-            }
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.cardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(isUnlocked ? themeStore.accentGold.opacity(0.3) : Color.divider, lineWidth: 1)
-                )
-        )
-        .onAppear {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7).delay(Double.random(in: 0...0.3))) {
-                appeared = true
-            }
-        }
-    }
-}

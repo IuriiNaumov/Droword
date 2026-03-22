@@ -138,7 +138,7 @@ extension ShareWordCardView {
         case "Travel": return themeStore.accentGreen
         case "Street": return themeStore.accentPink
         case "Movies": return themeStore.accentPurple
-        case "Golden": return themeStore.accentGold
+        case "Golden": return themeStore.goldenColor
         default:
             if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
                 return themeStore.resolvedTagColor(custom.colorHex)

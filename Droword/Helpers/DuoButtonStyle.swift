@@ -1,28 +1,44 @@
 import SwiftUI
 
 struct Duo3DStyle: ViewModifier {
+    @EnvironmentObject private var themeStore: ThemeStore
     let bgColor: Color
     var isDisabled: Bool = false
 
     func body(content: Content) -> some View {
         content
-            .font(.custom("Poppins-Bold", size: 17))
+            .font(themeStore.bold(17))
             .foregroundColor(.white)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isDisabled ? Color.mainGrey.opacity(0.4) : bgColor)
+                ZStack {
+                    if themeStore.isDuolingo && !isDisabled {
+                        // 3D bottom shadow (Duolingo style)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(themeStore.buttonShadow)
+                            .offset(y: 4)
+
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(bgColor)
+                    } else {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isDisabled ? themeStore.secondaryText.opacity(0.4) : bgColor)
+                    }
+                }
             )
     }
 }
 
 struct Duo3DButtonStyle: ButtonStyle {
+    var isDuolingo: Bool = false
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .opacity(configuration.isPressed ? 0.85 : 1.0)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .offset(y: isDuolingo && configuration.isPressed ? 4 : 0)
+            .scaleEffect(isDuolingo ? 1.0 : (configuration.isPressed ? 0.97 : 1.0))
+            .opacity(configuration.isPressed ? (isDuolingo ? 0.95 : 0.85) : 1.0)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

@@ -1,32 +1,5 @@
 import SwiftUI
 
-private struct BouncingDotsView: View {
-    @State private var offsets: [CGFloat] = [0, 0, 0]
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 8, height: 8)
-                    .offset(y: offsets[index])
-            }
-        }
-        .onAppear {
-            for i in 0..<3 {
-                withAnimation(
-                    .easeInOut(duration: 0.4)
-                    .repeatForever(autoreverses: true)
-                    .delay(Double(i) * 0.15)
-                ) {
-                    offsets[i] = -8
-                }
-            }
-            Haptics.selection()
-        }
-    }
-}
-
 struct AddWordButton: View {
     let title: String
     let isDisabled: Bool
@@ -52,7 +25,7 @@ struct AddWordButton: View {
                         .foregroundColor(.clear)
 
                     if isLoading {
-                        BouncingDotsView()
+                        LoadingStagesView()
                             .transition(.opacity)
                     } else {
                         Text(title)
@@ -69,7 +42,7 @@ struct AddWordButton: View {
             if let message = errorMessage {
                 Text(message)
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(Color.mainGrey)
+                    .foregroundColor(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .transition(.opacity)
             }
@@ -137,5 +110,5 @@ struct AddWordButton: View {
         ) { }
     }
     .padding()
-    .background(Color.appBackground)
+    .background(Color("AppBackground"))
 }

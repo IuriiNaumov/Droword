@@ -57,7 +57,7 @@ struct QuizClozeView: View {
         VStack(spacing: 0) {
             Text("\(session.currentIndex + 1) / \(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(.mainGrey)
+                .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
 
             Spacer()
@@ -65,13 +65,13 @@ struct QuizClozeView: View {
             VStack(spacing: 12) {
                 Text("Fill in the blank")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
 
                 if let parts = clozeSentence(for: item) {
                     HStack(spacing: 0) {
                         Text(parts.before)
                             .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(themeStore.mainText)
 
                         if hasSubmitted && isCorrect {
                             Text(" \(item.word) ")
@@ -93,7 +93,7 @@ struct QuizClozeView: View {
 
                         Text(parts.after)
                             .font(.custom("Poppins-Regular", size: 18))
-                            .foregroundColor(.mainBlack)
+                            .foregroundColor(themeStore.mainText)
                     }
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -103,7 +103,7 @@ struct QuizClozeView: View {
                 if let translation = item.translation.nilIfEmpty {
                     Text("(\(translation))")
                         .font(.custom("Poppins-Medium", size: 16))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                         .padding(.top, 4)
                 }
             }
@@ -115,8 +115,8 @@ struct QuizClozeView: View {
                     .font(.custom("Poppins-Regular", size: 16))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
-                    .background(Color.cardBackground)
-                    .foregroundColor(.mainBlack)
+                    .background(themeStore.cardBg)
+                    .foregroundColor(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(borderColor, lineWidth: hasSubmitted ? 2 : 1.5)
@@ -142,8 +142,7 @@ struct QuizClozeView: View {
                     feedbackBadge(
                         icon: "xmark.circle.fill",
                         text: "Correct: \(item.word)",
-                        iconColor: themeStore.accentRed,
-                        color: themeStore.accentGreen
+                        color: themeStore.accentRed
                     )
                 }
 
@@ -171,7 +170,7 @@ struct QuizClozeView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
-                                    ? Color.mainGrey.opacity(0.3)
+                                    ? themeStore.secondaryText.opacity(0.3)
                                     : themeStore.buttonAccent)
                         )
                 }
@@ -221,7 +220,7 @@ struct QuizClozeView: View {
 
     private var borderColor: Color {
         if !hasSubmitted {
-            return isInputFocused ? Color.mainBlack : Color.divider
+            return isInputFocused ? themeStore.mainText : themeStore.dividerColor
         }
         if isAlmostCorrect { return themeStore.accentGold }
         return isCorrect ? themeStore.accentGreen : themeStore.accentRed

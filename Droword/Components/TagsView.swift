@@ -19,7 +19,7 @@ struct TagsView: View {
             ($0.name, themeStore.resolvedTagColor($0.colorHex), true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
-            ("Golden", themeStore.accentGold, false),
+            ("Golden", themeStore.goldenColor, false),
             ("Chat",   themeStore.accentBlue, false),
             ("Travel", themeStore.accentGreen, false),
             ("Street", themeStore.accentPink, false),
@@ -79,7 +79,7 @@ struct TagsView: View {
                             }
 
                             Text(tag.name)
-                                .font(.custom("Poppins-Medium", size: compact ? 13 : 15))
+                                .font(themeStore.medium(compact ? 13 : 15))
                                 .foregroundColor(textColor)
 
                             if isDeleteMode && !tag.isCustom {
@@ -95,7 +95,7 @@ struct TagsView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(
                                     themeStore.isMonochrome && isSelected && !dimmed
-                                        ? Color.mainBlack.opacity(0.85)
+                                        ? themeStore.mainText.opacity(0.85)
                                         : baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32))
                                 )
                         )
@@ -131,9 +131,9 @@ struct TagsView: View {
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.mainGrey)
+                                .foregroundColor(themeStore.secondaryText)
                                 .frame(width: 32, height: 32)
-                                .background(Circle().fill(Color.mainGrey.opacity(0.15)))
+                                .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
                         }
                         .opacity(isDeleteMode ? 0 : 1)
                         .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
@@ -143,10 +143,10 @@ struct TagsView: View {
                         Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(isDeleteMode ? .white : .mainGrey)
+                                .foregroundColor(isDeleteMode ? .white : themeStore.secondaryText)
                                 .frame(width: 32, height: 32)
                                 .background(
-                                    Circle().fill(isDeleteMode ? Color.red : Color.mainGrey.opacity(0.15))
+                                    Circle().fill(isDeleteMode ? Color.red : themeStore.secondaryText.opacity(0.15))
                                 )
                         }
                         .buttonStyle(.plain)
@@ -155,9 +155,9 @@ struct TagsView: View {
                     Button(action: { onAddTag?() }) {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.mainGrey)
+                            .foregroundColor(themeStore.secondaryText)
                             .frame(width: 32, height: 32)
-                            .background(Circle().fill(Color.mainGrey.opacity(0.15)))
+                            .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
                     }
                     .buttonStyle(.plain)
                     .opacity(isDeleteMode ? 0 : 1)
@@ -167,7 +167,7 @@ struct TagsView: View {
             .padding(.horizontal, compact ? 10 : 0)
             .padding(.vertical, compact ? 16 : 10)
         }
-        .onChange(of: tagStore.tags.count) { newCount in
+        .onChange(of: tagStore.tags.count) { _, newCount in
             if newCount == 0 && isDeleteMode {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     isDeleteMode = false
@@ -185,7 +185,7 @@ private struct WiggleEffect: ViewModifier {
             .rotationEffect(.degrees(isActive ? sin(angle) * 2.0 : 0))
             .animation(.linear(duration: 0.12).repeatForever(autoreverses: true), value: isActive ? angle : 0)
             .onAppear { if isActive { start() } }
-            .onChange(of: isActive) { newValue in
+            .onChange(of: isActive) { _, newValue in
                 if newValue { start() }
             }
     }
@@ -202,7 +202,7 @@ private struct WiggleEffect: ViewModifier {
         VStack(alignment: .leading, spacing: 20) {
             Text("Light Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(Color.mainBlack)
+                .foregroundColor(Color("MainBlack"))
                 .padding(.horizontal)
 
             TagsView(selectedTag: .constant(nil), hasGoldenWords: true)

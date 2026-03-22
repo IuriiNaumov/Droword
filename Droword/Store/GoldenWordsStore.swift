@@ -19,7 +19,7 @@ final class GoldenWordsStore: ObservableObject {
             let relevantWords = words
                 .filter { $0.toLanguage == currentLanguage }
                 .sorted { $0.dateAdded > $1.dateAdded }
-                .prefix(30)
+                .prefix(50)
             
             guard !relevantWords.isEmpty else { return }
             

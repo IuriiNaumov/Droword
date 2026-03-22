@@ -3,6 +3,7 @@ import PhotosUI
 import UIKit
 
 struct AvatarPickerView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
 
     let currentImage: UIImage?
@@ -42,7 +43,7 @@ struct AvatarPickerView: View {
         VStack(spacing: 0) {
             Text("Change photo")
                 .font(.custom("Poppins-Bold", size: 20))
-                .foregroundColor(.mainBlack)
+                .foregroundColor(themeStore.mainText)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
 
@@ -81,7 +82,7 @@ struct AvatarPickerView: View {
             } label: {
                 Text("Cancel")
                     .font(.custom("Poppins-Medium", size: 16))
-                    .foregroundColor(.mainGrey)
+                    .foregroundColor(themeStore.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
             }
@@ -104,61 +105,23 @@ struct AvatarPickerView: View {
 
                 Text(title)
                     .font(.custom("Poppins-Medium", size: 16))
-                    .foregroundColor(.mainBlack)
+                    .foregroundColor(themeStore.mainText)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.mainGrey.opacity(0.5))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.5))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.cardBackground)
+                    .fill(themeStore.cardBg)
             )
         }
         .buttonStyle(.plain)
     }
 }
 
-struct CameraView: UIViewControllerRepresentable {
-    let onCapture: (UIImage?) -> Void
 
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.cameraCaptureMode = .photo
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onCapture: onCapture)
-    }
-
-    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let onCapture: (UIImage?) -> Void
-        private var didFinish = false
-
-        init(onCapture: @escaping (UIImage?) -> Void) {
-            self.onCapture = onCapture
-        }
-
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            guard !didFinish else { return }
-            didFinish = true
-            let image = info[.originalImage] as? UIImage
-            onCapture(image)
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            guard !didFinish else { return }
-            didFinish = true
-            onCapture(nil)
-        }
-    }
-}

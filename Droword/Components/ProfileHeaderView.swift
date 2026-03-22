@@ -6,7 +6,6 @@ struct ProfileHeaderView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
-    @State private var displayProgress: Double = 0.0
     @State private var showStats = false
     private let cuteTags: [String] = [
         "keep it up",
@@ -29,45 +28,6 @@ struct ProfileHeaderView: View {
     @AppStorage("currentStreak") private var currentStreak: Int = 0
     @AppStorage("isPremium") private var isPremium: Bool = false
 
-    private let xpPerWord = 10
-    private let maxLevel = 50
-
-    private var totalWords: Int { store.totalWordsAdded }
-    private var totalXP: Int { totalWords * xpPerWord }
-
-    private var level: Int {
-        var currentLevel = 1
-        var wordsAccumulated = 0
-        while currentLevel < maxLevel {
-            let wordsNeeded = 3 + (currentLevel - 1) * 2
-            if totalWords < wordsAccumulated + wordsNeeded { break }
-            wordsAccumulated += wordsNeeded
-            currentLevel += 1
-        }
-        return currentLevel
-    }
-
-    private var wordsForCurrentLevel: Int {
-        3 + (level - 1) * 2
-    }
-
-    private var wordsBeforeCurrentLevel: Int {
-        (1..<level).reduce(0) { $0 + (3 + ($1 - 1) * 2) }
-    }
-
-    private var wordsProgressInLevel: Int {
-        max(0, totalWords - wordsBeforeCurrentLevel)
-    }
-
-    private var progressRatio: Double {
-        guard wordsForCurrentLevel > 0 else { return 0 }
-        return min(Double(wordsProgressInLevel) / Double(wordsForCurrentLevel), 1.0)
-    }
-
-    private var wordsToNextLevel: Int {
-        max(0, wordsForCurrentLevel - wordsProgressInLevel)
-    }
-
     private var overdueCount: Int {
         let cal = Calendar.current
         let startOfToday = cal.startOfDay(for: Date())
@@ -89,23 +49,17 @@ struct ProfileHeaderView: View {
         storedUserName.isEmpty ? "Cool guy" : storedUserName
     }
 
-    private var levelBackground: Color { themeStore.accentBlue }
-    private var levelText: Color { themeStore.accentBlue }
-
-    private var xpBackground: Color { themeStore.accentGold }
-    private var xpText: Color { themeStore.accentGold }
-
     private var cuteTagPalettes: [(bg: Color, text: Color)] {[
-        (themeStore.accentGold.opacity(0.3), Color.mainBlack),
-        (themeStore.accentGreen.opacity(0.3), Color.mainBlack),
-        (themeStore.accentBlue.opacity(0.3), Color.mainBlack),
-        (themeStore.accentPink.opacity(0.3), Color.mainBlack),
-        (themeStore.accentPurple.opacity(0.3), Color.mainBlack),
-        (themeStore.accentBlue.opacity(0.25), Color.mainBlack)
+        (themeStore.accentGold.opacity(0.3), themeStore.mainText),
+        (themeStore.accentGreen.opacity(0.3), themeStore.mainText),
+        (themeStore.accentBlue.opacity(0.3), themeStore.mainText),
+        (themeStore.accentPink.opacity(0.3), themeStore.mainText),
+        (themeStore.accentPurple.opacity(0.3), themeStore.mainText),
+        (themeStore.accentBlue.opacity(0.25), themeStore.mainText)
     ]}
 
     @State private var cuteTagBackground: Color = Color("MonoLight").opacity(0.3)
-    @State private var cuteTagTextColor: Color = Color.mainBlack
+    @State private var cuteTagTextColor: Color = Color("MainBlack")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -116,17 +70,17 @@ struct ProfileHeaderView: View {
                             Image(uiImage: avatarImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: 56, height: 56)
+                                .frame(width: 64, height: 64)
                                 .clipped()
                                 .clipShape(Circle())
                         } else {
                             Circle()
-                                .fill(levelBackground.opacity(0.25))
-                                .frame(width: 56, height: 56)
+                                .fill(themeStore.accentBlue.opacity(0.25))
+                                .frame(width: 64, height: 64)
                                 .overlay(
                                     Image(systemName: "person.fill")
                                         .font(.system(size: 26, weight: .semibold))
-                                        .foregroundColor(.mainBlack)
+                                        .foregroundColor(themeStore.mainText)
                                 )
                         }
                     }
@@ -137,12 +91,12 @@ struct ProfileHeaderView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         Text(displayName)
-                            .font(.custom("Poppins-Bold", size: 22))
-                            .foregroundColor(.mainBlack)
+                            .font(themeStore.bold(18))
+                            .foregroundColor(themeStore.mainText)
 
                         if isPremium {
                             Text("PRO")
-                                .font(.custom("Poppins-Bold", size: 10))
+                                .font(themeStore.bold(10))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -154,17 +108,17 @@ struct ProfileHeaderView: View {
                     }
 
                     Text("\(usageDurationString()) with Droword")
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .font(themeStore.regular(14))
+                        .foregroundColor(themeStore.secondaryText)
 
                 }
 
                 Spacer()
-            }
+            }.padding(.top, 20)
 
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 36)
+        .padding(.vertical, 20)
         .onAppear {
             let df = DateFormatter()
             df.calendar = Calendar(identifier: .gregorian)
@@ -172,27 +126,21 @@ struct ProfileHeaderView: View {
             let today = df.string(from: Date())
             if firstUseDate.isEmpty { firstUseDate = today }
 
+            let computed = WordsStore.computeCurrentStreak(from: store.words)
+            currentStreak = max(computed, 1)
+
             if lastActiveDay != today {
-                let calendar = Calendar(identifier: .gregorian)
-                if let yesterdayDate = calendar.date(byAdding: .day, value: -1, to: df.date(from: today) ?? Date()),
-                   df.string(from: yesterdayDate) == lastActiveDay {
-                    currentStreak = max(1, currentStreak + 1)
-                } else {
-                    currentStreak = 1
-                }
                 daysUsedCount += 1
                 lastActiveDay = today
                 NotificationManager.shared.scheduleStreakMilestone(streak: currentStreak)
-            } else if currentStreak == 0 {
-                currentStreak = 1
             }
+
+            store.syncStreakToAppGroup()
 
             Task.detached(priority: .userInitiated) {
                 let loaded = self.loadAvatarFromDisk()
                 await MainActor.run { avatarImage = loaded }
             }
-            displayProgress = progressRatio
-
             let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
             let colorIndex = dayOfYear % cuteTagPalettes.count
             cuteTagBackground = cuteTagPalettes[colorIndex].bg
@@ -202,11 +150,6 @@ struct ProfileHeaderView: View {
                 let index = dayOfYear % cuteTags.count
                 storedCuteTag = cuteTags[index]
                 storedCuteTagDate = today
-            }
-        }
-        .onChange(of: progressRatio) { _, newValue in
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                displayProgress = newValue
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .avatarDidChange)) { _ in
@@ -259,7 +202,7 @@ struct ProfileHeaderView: View {
         return image
     }
 
-    private func avatarFileURL() -> URL {
+    private nonisolated func avatarFileURL() -> URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         return docs.appendingPathComponent("user_avatar.jpg")
     }

@@ -90,11 +90,11 @@ struct MilestoneCelebrationView: View {
                 VStack(spacing: 8) {
                     Text(milestone.title)
                         .font(.custom("Poppins-Bold", size: 28))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(themeStore.mainText)
 
                     Text(milestone.message)
                         .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .opacity(textOpacity)
@@ -114,7 +114,7 @@ struct MilestoneCelebrationView: View {
             .padding(32)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.appBackground)
+                    .fill(themeStore.appBg)
             )
             .padding(.horizontal, 32)
         }

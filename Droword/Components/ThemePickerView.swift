@@ -26,7 +26,7 @@ struct ThemePickerView: View {
 
             Spacer()
         }
-        .background(Color.appBackground.ignoresSafeArea())
+        .background(themeStore.appBg.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -63,7 +63,7 @@ struct ThemePickerView: View {
                         .fill(previewBg)
                         .overlay(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(isSelected ? themeStore.buttonAccent : Color.divider, lineWidth: isSelected ? 2 : 1)
+                                .stroke(isSelected ? themeStore.buttonAccent : themeStore.dividerColor, lineWidth: isSelected ? 2 : 1)
                         )
 
                     VStack(alignment: .leading, spacing: 6) {
@@ -100,7 +100,7 @@ struct ThemePickerView: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? themeStore.buttonAccent : Color.mainGrey.opacity(0.4), lineWidth: 1.5)
+                        .stroke(isSelected ? themeStore.buttonAccent : themeStore.secondaryText.opacity(0.4), lineWidth: 1.5)
                         .frame(width: 26, height: 26)
 
                     if isSelected {
@@ -133,8 +133,8 @@ struct ThemePickerView: View {
         case .duolingo:
             return (
                 Color(hex: "#58CC02"),
-                Color(hex: "#1CB0F6"),
-                Color(hex: "#FFC800"),
+                Color(hex: "#89E219"),
+                Color(hex: "#2EC4B6"),
                 Color(hex: "#58CC02"),
                 Color(hex: "#CE82FF")
             )

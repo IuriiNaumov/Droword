@@ -37,25 +37,12 @@ struct WordCardView: View {
         case "Travel": return themeStore.accentGreen
         case "Street": return themeStore.accentPink
         case "Movies": return themeStore.accentPurple
-        case "Golden": return themeStore.accentGold
+        case "Golden": return themeStore.goldenColor
         default:
             if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
                 return themeStore.resolvedTagColor(custom.colorHex)
             }
-            return Color.cardBackground
-        }
-    }
-
-    private struct TagBadge: View {
-        let text: String
-        var body: some View {
-            Text(text)
-                .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(.mainBlack)
-                .padding(.vertical, 4)
-                .padding(.horizontal, 8)
-                .background(Color.white.opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            return themeStore.cardBg
         }
     }
 
@@ -73,19 +60,31 @@ struct WordCardView: View {
         if let tag = tag, !tag.isEmpty {
             return colorForTag(tag)
         }
-        return Color.cardBackground
+        return themeStore.cardBg
     }
 
     private var isDarkBackground: Bool {
         backgroundColor.isDarkColor
     }
 
+    private var hasTagColor: Bool {
+        tag != nil && !tag!.isEmpty
+    }
+
     private var primaryTextColor: Color {
-        isDarkBackground ? .white : .mainBlack
+        if isDarkBackground { return .white }
+        if themeStore.isDuolingo && hasTagColor {
+            return darkerShade(of: backgroundColor, by: 0.45)
+        }
+        return themeStore.mainText
     }
 
     private var secondaryTextColor: Color {
-        isDarkBackground ? Color.white.opacity(0.85) : .mainBlack.opacity(0.8)
+        if isDarkBackground { return Color.white.opacity(0.85) }
+        if themeStore.isDuolingo && hasTagColor {
+            return darkerShade(of: backgroundColor, by: 0.35)
+        }
+        return themeStore.mainText.opacity(0.8)
     }
 
     var body: some View {
@@ -95,7 +94,7 @@ struct WordCardView: View {
 
                 if let tag = tag, !tag.isEmpty {
                     Text(tag)
-                        .font(.custom("Poppins-Medium", size: 15))
+                        .font(themeStore.medium(15))
                         .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 28)
@@ -114,13 +113,13 @@ struct WordCardView: View {
 
                 if let transcription = transcription, !transcription.isEmpty {
                     Text(transcription)
-                        .font(.custom("Poppins-Regular", size: 14))
+                        .font(themeStore.regular(14))
                         .foregroundColor(secondaryTextColor)
                 }
 
                 if let type = type, !type.isEmpty {
                     Text(type.capitalized)
-                        .font(.custom("Poppins-Regular", size: 14))
+                        .font(themeStore.regular(14))
                         .foregroundColor(secondaryTextColor)
                         .padding(.bottom, 2)
                 }
@@ -128,7 +127,7 @@ struct WordCardView: View {
                 if let translation = translation {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(translation)
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(primaryTextColor)
                     }
                 }
@@ -136,7 +135,7 @@ struct WordCardView: View {
                 if let _ = example {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(highlightedExample)
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(primaryTextColor)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -145,7 +144,7 @@ struct WordCardView: View {
                 if let explanation = explanation {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(explanation)
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(primaryTextColor)
                     }
                 }
@@ -153,16 +152,22 @@ struct WordCardView: View {
                 if let breakdown = breakdown {
                     VStack(alignment: .leading, spacing: 6) {
                         Text(breakdown)
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(primaryTextColor)
                     }
                 }
 
                 if let comment = comment, !comment.isEmpty {
-                    Text(comment)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : Color.mainGrey)
-                        .padding(.top, 4)
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "brain.head.profile")
+                            .font(.system(size: 14))
+                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.6) : themeStore.secondaryText.opacity(0.7))
+                            .padding(.top, 2)
+                        Text(comment)
+                            .font(themeStore.regular(16))
+                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : themeStore.secondaryText)
+                    }
+                    .padding(.top, 4)
                 }
 
                 HStack {
@@ -189,13 +194,13 @@ struct WordCardView: View {
 
                 if let transcription = transcription, !transcription.isEmpty {
                     Text(transcription)
-                        .font(.custom("Poppins-Regular", size: 14))
+                        .font(themeStore.regular(14))
                         .foregroundColor(secondaryTextColor)
                 }
 
                 if let translation = translation {
                     Text(translation)
-                        .font(.custom("Poppins-Regular", size: 16))
+                        .font(themeStore.regular(16))
                         .foregroundColor(primaryTextColor)
                 }
 
@@ -225,7 +230,7 @@ struct WordCardView: View {
                 .fill(backgroundColor)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.divider, lineWidth: 1)
+                        .stroke(themeStore.dividerColor, lineWidth: 1)
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -247,7 +252,7 @@ struct WordCardView: View {
                 highlightedExample = ""
             }
         }
-        .onChange(of: example) { newValue in
+        .onChange(of: example) { _, newValue in
             if let example = newValue {
                 highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
             } else {
@@ -264,7 +269,7 @@ struct WordCardView: View {
         HStack(alignment: .top, spacing: 8) {
 
             Text(word)
-                .font(.custom("Poppins-Bold", size: 24))
+                .font(themeStore.bold(24))
                 .foregroundColor(primaryTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 

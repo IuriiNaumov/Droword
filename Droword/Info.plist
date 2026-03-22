@@ -2,26 +2,26 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.droword.share</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>droword</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Poppins-Medium.ttf</string>
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-Bold.ttf</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Take a photo for your profile avatar</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo from your library for your profile avatar</string>
-	<key>CFBundleURLTypes</key>
+	<key>UIBackgroundModes</key>
 	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>droword</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>com.droword.share</string>
-		</dict>
+		<string>audio</string>
 	</array>
 </dict>
 </plist>

@@ -25,11 +25,11 @@ struct GoldenWordsIntroView: View {
                 VStack(spacing: 8) {
                     Text("Golden Words")
                         .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.mainBlack)
+                        .foregroundColor(themeStore.mainText)
 
                     Text("Smart suggestions just for you")
                         .font(.custom("Poppins-Regular", size: 15))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .opacity(textOpacity)
@@ -65,7 +65,7 @@ struct GoldenWordsIntroView: View {
             .padding(28)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.appBackground)
+                    .fill(themeStore.appBg)
             )
             .padding(.horizontal, 32)
         }
@@ -96,7 +96,7 @@ struct GoldenWordsIntroView: View {
 
             Text(text)
                 .font(.custom("Poppins-Regular", size: 14))
-                .foregroundColor(.mainBlack.opacity(0.85))
+                .foregroundColor(themeStore.mainText.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

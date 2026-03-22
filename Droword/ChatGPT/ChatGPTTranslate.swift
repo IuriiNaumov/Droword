@@ -10,6 +10,7 @@ struct GPTTranslationResult: Codable {
 }
 
 private let workerBaseURL = "https://droword-api.droword-api.workers.dev"
+private let workerAppKey = "drw_live_28f9a1c7e5d34b6"
 
 @MainActor
 func translateWithGPT(
@@ -24,11 +25,13 @@ func translateWithGPT(
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.addValue(workerAppKey, forHTTPHeaderField: "X-App-Key")
 
     let body: [String: Any] = [
         "word": word,
         "learningLanguage": learningLanguage,
-        "nativeLanguage": nativeLanguage
+        "nativeLanguage": nativeLanguage,
+        "level": languageStore.learningLevel
     ]
 
     request.httpBody = try JSONSerialization.data(withJSONObject: body)

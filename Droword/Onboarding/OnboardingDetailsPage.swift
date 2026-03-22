@@ -1,17 +1,11 @@
 import SwiftUI
 
 struct OnboardingDetailsPage: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
     @AppStorage("userName") private var userName: String = ""
-    @AppStorage("userEmail") private var userEmail: String = ""
     
     @State private var tempName: String = ""
-    @State private var tempEmail: String = ""
-    @State private var showEmailError = false
-    
-    private var isEmailValid: Bool {
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", #"^\S+@\S+\.\S+$"#)
-        return emailPredicate.evaluate(with: tempEmail)
-    }
     
     private var isNameValid: Bool {
         !tempName.isEmpty && tempName.count <= 40
@@ -28,7 +22,7 @@ struct OnboardingDetailsPage: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Name")
                         .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainBlack.opacity(0.75))
+                        .foregroundColor(themeStore.mainText.opacity(0.75))
                         .padding(.horizontal, 4)
 
                     ZStack(alignment: .trailing) {
@@ -41,70 +35,32 @@ struct OnboardingDetailsPage: View {
                             .padding(.vertical, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .fill(Color.cardBackground)
+                                    .fill(themeStore.cardBg)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(tempName.count > 40 ? Color.red : Color.divider, lineWidth: 2)
+                                    .stroke(tempName.count > 40 ? Color.red : themeStore.dividerColor, lineWidth: 2)
                             )
 
                         Text(nameCounterText)
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(tempName.count > 40 ? Color.red : Color.mainGrey)
+                            .foregroundColor(tempName.count > 40 ? Color.red : themeStore.secondaryText)
                             .padding(.trailing, 16)
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Email")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(.mainBlack.opacity(0.75))
-                        .padding(.horizontal, 4)
-
-                    if showEmailError {
-                        Text("Please enter a valid email address")
-                            .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(.red)
-                            .padding(.horizontal, 4)
-                    }
-
-                    TextField("Enter your email (optional)", text: $tempEmail)
-                        .font(.custom("Poppins-Regular", size: 16))
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(Color.cardBackground)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(showEmailError ? Color.red : Color.divider, lineWidth: 2)
-                        )
-                }
             }
             .padding(.horizontal, 20)
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.appBackground)
+        .background(themeStore.appBg)
         .onAppear {
             tempName = userName
-            tempEmail = userEmail
-            showEmailError = !(tempEmail.isEmpty || isEmailValid)
         }
-        .onChange(of: tempName) { newValue in
+        .onChange(of: tempName) { _, newValue in
             if !newValue.isEmpty && newValue.count <= 40 {
                 userName = newValue
-            }
-        }
-        .onChange(of: tempEmail) { newValue in
-            showEmailError = !(newValue.isEmpty || isEmailValid)
-            if isEmailValid || newValue.isEmpty {
-                userEmail = newValue
             }
         }
     }

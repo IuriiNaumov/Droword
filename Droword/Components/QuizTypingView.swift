@@ -50,7 +50,7 @@ struct QuizTypingView: View {
         VStack(spacing: 0) {
             Text("\(session.currentIndex + 1) / \(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(.mainGrey)
+                .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
 
             Spacer()
@@ -58,18 +58,18 @@ struct QuizTypingView: View {
             VStack(spacing: 8) {
                 Text(promptText(for: item))
                     .font(.custom("Poppins-Bold", size: 28))
-                    .foregroundColor(.mainBlack)
+                    .foregroundColor(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !reversed, let tr = item.transcription, !tr.isEmpty {
                     Text(tr)
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
                 }
 
                 Text(reversed ? "Type the word" : "Type the translation")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(.mainGrey.opacity(0.7))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -80,8 +80,8 @@ struct QuizTypingView: View {
                     .font(.custom("Poppins-Regular", size: 16))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
-                    .background(Color.cardBackground)
-                    .foregroundColor(.mainBlack)
+                    .background(themeStore.cardBg)
+                    .foregroundColor(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(borderColor, lineWidth: hasSubmitted ? 2 : 1.5)
@@ -126,14 +126,14 @@ struct QuizTypingView: View {
                         if let item = session.currentItem {
                             Text("Correct: \(expectedAnswer(for: item))")
                                 .font(.custom("Poppins-Medium", size: 14))
-                                .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                                .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
                         }
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(themeStore.accentGreen.opacity(0.3))
+                            .fill(themeStore.accentRed.opacity(0.3))
                     )
                     .transition(.scale.combined(with: .opacity))
                 }
@@ -171,7 +171,7 @@ struct QuizTypingView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
-                                    ? Color.mainGrey.opacity(0.3)
+                                    ? themeStore.secondaryText.opacity(0.3)
                                     : themeStore.buttonAccent)
                         )
                 }
@@ -204,7 +204,7 @@ struct QuizTypingView: View {
 
     private var borderColor: Color {
         if !hasSubmitted {
-            return isInputFocused ? Color.mainBlack : Color.divider
+            return isInputFocused ? themeStore.mainText : themeStore.dividerColor
         }
         if isAlmostCorrect { return themeStore.accentGold }
         return isCorrect ? themeStore.accentGreen : themeStore.accentRed

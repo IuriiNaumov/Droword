@@ -12,7 +12,7 @@ struct AddTagView: View {
 
     var body: some View {
         ZStack {
-            Color.appBackground.ignoresSafeArea()
+            themeStore.appBg.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 24) {
                 ZStack {
@@ -25,9 +25,9 @@ struct AddTagView: View {
                         Button { dismiss() } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.mainGrey)
+                                .foregroundColor(themeStore.secondaryText)
                                 .padding(8)
-                                .background(Color.mainGrey.opacity(0.12))
+                                .background(themeStore.secondaryText.opacity(0.12))
                                 .clipShape(Circle())
                         }
                         Spacer()
@@ -37,7 +37,7 @@ struct AddTagView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Name")
                         .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
 
                     FormTextField(
                         title: "Enter tag name",
@@ -50,7 +50,7 @@ struct AddTagView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Color")
                         .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(Color.mainGrey)
+                        .foregroundColor(themeStore.secondaryText)
 
                     FormTextField(
                         title: "e.g. #FFAA33",
@@ -100,7 +100,6 @@ struct AddTagView: View {
         guard !trimmedName.isEmpty else { return }
         let normalized = TagStore.shared.normalizeHex(colorHex)
         TagStore.shared.addTag(name: trimmedName, colorHex: normalized)
-        NotificationManager.shared.scheduleDailyReminder(hour: 20, minute: 0, tagName: trimmedName)
         Haptics.success()
         dismiss()
     }
