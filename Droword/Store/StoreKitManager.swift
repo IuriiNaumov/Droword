@@ -91,7 +91,7 @@ final class StoreKitManager: ObservableObject {
         if hasPurchase {
             UserDefaults.standard.set(true, forKey: "isPremium")
         } else if UserDefaults.standard.bool(forKey: "hasRealPurchase") == false {
-            // Only revoke premium if there's no active trial period
+            
             let hasUsedTrial = UserDefaults.standard.bool(forKey: "hasUsedTrial")
             let trialStart = UserDefaults.standard.string(forKey: "trialStartDate") ?? ""
             let df = DateFormatter()
@@ -102,7 +102,6 @@ final class StoreKitManager: ObservableObject {
                 if daysSince > 7 {
                     UserDefaults.standard.set(false, forKey: "isPremium")
                 }
-                // If trial is still active (≤ 7 days), don't touch isPremium
             }
         }
     }

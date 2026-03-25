@@ -1,20 +1,15 @@
 import Foundation
 
-/// Tracks daily usage counters for free users.
-/// Premium users bypass all limits.
 struct DailyLimitsManager {
     static let maxFreeTranslations = 3
     static let maxFreeTTS = 10
-    static let maxFreeGoldenFetches = 2  // 2 fetches × 2 words = 4 golden words
+    static let maxFreeGoldenFetches = 2
 
-    // MARK: - Keys
 
     private static let dateKey = "dailyLimits.date"
     private static let translationsKey = "dailyLimits.translations"
     private static let ttsKey = "dailyLimits.tts"
     private static let goldenKey = "dailyLimits.goldenFetches"
-
-    // MARK: - Reset if new day
 
     private static func resetIfNeeded() {
         let df = DateFormatter()
@@ -29,8 +24,6 @@ struct DailyLimitsManager {
             UserDefaults.standard.set(0, forKey: goldenKey)
         }
     }
-
-    // MARK: - Translations (AI word additions)
 
     static var translationsUsedToday: Int {
         resetIfNeeded()
@@ -51,8 +44,6 @@ struct DailyLimitsManager {
         UserDefaults.standard.set(current + 1, forKey: translationsKey)
     }
 
-    // MARK: - TTS (play audio)
-
     static var ttsUsedToday: Int {
         resetIfNeeded()
         return UserDefaults.standard.integer(forKey: ttsKey)
@@ -71,8 +62,6 @@ struct DailyLimitsManager {
         let current = UserDefaults.standard.integer(forKey: ttsKey)
         UserDefaults.standard.set(current + 1, forKey: ttsKey)
     }
-
-    // MARK: - Golden Words (suggestion fetches)
 
     static var goldenFetchesToday: Int {
         resetIfNeeded()

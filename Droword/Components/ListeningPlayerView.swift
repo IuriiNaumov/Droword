@@ -74,8 +74,6 @@ struct ListeningPlayerView: View {
         }
     }
 
-    // MARK: - Setup View
-
     private var setupView: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -116,7 +114,6 @@ struct ListeningPlayerView: View {
                 .padding(.horizontal, 20)
             }
 
-            // Hard words filter
             HStack {
                 Text("Hard words only")
                     .font(.custom("Poppins-Medium", size: 14))
@@ -166,32 +163,26 @@ struct ListeningPlayerView: View {
         .padding(.horizontal, 0)
     }
 
-    // MARK: - Player View
-
     private var playerView: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Word display area
             VStack(spacing: 16) {
                 if let word = session.currentWord {
                     VStack(spacing: 12) {
 
-                        // Sound waves during audio playback
                         if session.isAudioPlaying {
                             SoundWavesView(isPlaying: session.isAudioPlaying)
                                 .frame(height: 24)
                                 .transition(.opacity)
                         }
 
-                        // Word text
                         Text(word.word)
                             .font(.custom("Poppins-Bold", size: 30))
                             .foregroundColor(themeStore.mainText)
                             .multilineTextAlignment(.center)
                             .animation(.easeInOut(duration: 0.3), value: word.id)
 
-                        // Transcription below word
                         if session.currentPhase == .word || session.currentPhase == .pause,
                            let transcription = word.transcription, !transcription.isEmpty {
                             Text(transcription)
@@ -200,7 +191,6 @@ struct ListeningPlayerView: View {
                                 .transition(.opacity)
                         }
 
-                        // Tap to reveal during pause
                         if session.currentPhase == .pause && !session.translationRevealed {
                             Button(action: {
                                 Haptics.lightImpact()
@@ -224,7 +214,6 @@ struct ListeningPlayerView: View {
                             .transition(.opacity.combined(with: .scale))
                         }
 
-                        // Translation when revealed or in later phases
                         if session.currentPhase == .translation
                             || session.currentPhase == .gap
                             || session.currentPhase == .example
@@ -237,7 +226,6 @@ struct ListeningPlayerView: View {
                             }
                         }
 
-                        // Collapsible details (explanation + breakdown)
                         if word.explanation != nil || word.breakdown != nil {
                             Button(action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -285,9 +273,7 @@ struct ListeningPlayerView: View {
 
             Spacer()
 
-            // Controls area
             VStack(spacing: 20) {
-                // Progress bar
                 VStack(spacing: 8) {
                     ProgressView(value: Double(session.currentWordIndex), total: max(1, Double(session.totalWords)))
                         .tint(themeStore.mainText)
@@ -297,7 +283,6 @@ struct ListeningPlayerView: View {
                         .foregroundColor(themeStore.secondaryText)
                 }
 
-                // Sleep timer
                 if session.sleepTimerRemaining > 0 {
                     let mins = session.sleepTimerRemaining / 60
                     let secs = session.sleepTimerRemaining % 60
@@ -306,7 +291,6 @@ struct ListeningPlayerView: View {
                         .foregroundColor(themeStore.secondaryText)
                 }
 
-                // Playback speed selector
                 HStack(spacing: 0) {
                     ForEach([("0.75x", Float(0.75)), ("1x", Float(1.0)), ("1.25x", Float(1.25))], id: \.0) { label, speed in
                         let isSelected = session.playbackSpeed == speed
@@ -337,7 +321,6 @@ struct ListeningPlayerView: View {
                 )
                 .padding(.horizontal, 20)
 
-                // Repeat + I Know This buttons
                 HStack(spacing: 16) {
                     Button(action: {
                         session.replayCurrentWord()
@@ -371,7 +354,6 @@ struct ListeningPlayerView: View {
                 }
                 .padding(.horizontal, 12)
 
-                // Main playback controls
                 HStack(spacing: 40) {
                     Button(action: { session.skipBackward(); Haptics.lightImpact() }) {
                         Image(systemName: "backward.fill")
@@ -411,8 +393,6 @@ struct ListeningPlayerView: View {
             showInfoExpanded = false
         }
     }
-
-    // MARK: - Completion View
 
     private var listeningCompletionView: some View {
         VStack(spacing: 24) {
@@ -472,8 +452,6 @@ struct ListeningPlayerView: View {
         }
     }
 
-    // MARK: - Helpers
-
     private var sessionDurationString: String {
         guard let start = session.sessionStartDate else { return "0:00" }
         let elapsed = Int(Date().timeIntervalSince(start))
@@ -526,3 +504,4 @@ struct ListeningPlayerView: View {
     ListeningPlayerView()
         .environmentObject(WordsStore())
 }
+

@@ -14,7 +14,7 @@ final class GoldenWordsStore: ObservableObject {
         defer { isLoading = false }
 
         do {
-            // Filter words by current learning language and take the most recent ones
+
             let currentLanguage = languageStore.learningLanguage
             let relevantWords = words
                 .filter { $0.toLanguage == currentLanguage }

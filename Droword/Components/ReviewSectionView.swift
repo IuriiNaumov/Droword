@@ -195,7 +195,6 @@ struct ReviewSectionView: View {
                 .buttonStyle(.plain)
             }
 
-            // Rating buttons
             HStack(spacing: 12) {
                 Button {
                     Haptics.warning()
@@ -374,7 +373,6 @@ struct ReviewSectionView: View {
         allCaughtUp = false
     }
 
-    // MARK: - SM-2 Scheduling
 
     private func scheduleNext(for card: WordCard, isGotIt: Bool) {
         guard let w = store.words.first(where: { $0.id == card.id }) else { return }
@@ -387,12 +385,10 @@ struct ReviewSectionView: View {
         let q: Double = isGotIt ? 4 : 1
         let quality: Double = isGotIt ? 1.0 : 0.0
 
-        // Update learning score
         let alpha = 0.06
         let prev = languageStore.learningScore
         languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
 
-        // Update ease factor
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
         ef = max(1.3, ef)
 
@@ -400,7 +396,6 @@ struct ReviewSectionView: View {
         let cal = Calendar.current
 
         if !isGotIt {
-            // Again: reinsert, due in 10 min
             lapses += 1
             reps = 0
             ivl = 0
@@ -413,7 +408,6 @@ struct ReviewSectionView: View {
                                    lapses: lapses,
                                    dueDate: due)
         } else {
-            // Got it: schedule next interval
             reps += 1
             if reps == 1 {
                 ivl = 1
@@ -443,8 +437,6 @@ struct ReviewSectionView: View {
         showTranslation = false
         DailyChallengeManager.shared.recordWordsReviewed(count: 1)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-            // "Again" reinserts card — currentIndex already points to next card
-            // "Got it" needs to increment currentIndex
             if !didReinsert {
                 currentIndex += 1
             }
@@ -455,7 +447,6 @@ struct ReviewSectionView: View {
         }
     }
 
-    // MARK: - Audio
 
     private func playAudio() {
         guard isPremium || DailyLimitsManager.canPlayTTS else {
@@ -470,8 +461,6 @@ struct ReviewSectionView: View {
             withAnimation { isPlaying = false }
         }
     }
-
-    // MARK: - Helpers
 
     private func highlightedExample(example: String, target: String) -> AttributedString {
         var attr = AttributedString(example)
@@ -500,7 +489,6 @@ struct ReviewSectionView: View {
     }
 }
 
-// Color darkness check (local to this file)
 private extension Color {
     var reviewIsDark: Bool {
         let ui = UIColor(self)

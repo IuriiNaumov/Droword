@@ -14,7 +14,6 @@ struct Duo3DStyle: ViewModifier {
             .background(
                 ZStack {
                     if themeStore.isDuolingo && !isDisabled {
-                        // 3D bottom shadow (Duolingo style)
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(themeStore.buttonShadow)
                             .offset(y: 4)

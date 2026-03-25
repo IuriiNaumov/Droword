@@ -2,12 +2,12 @@ import Foundation
 import Combine
 
 enum ChallengeType: String, Codable, CaseIterable {
-    case addWords       // "Add N words today"
-    case perfectQuiz    // "Complete a quiz with 100% score"
-    case practiceQuiz   // "Complete N quizzes"
-    case reviewWords    // "Review N due words"
-    case studyTime      // "Study for N minutes"
-    case addTaggedWords // "Add N words with a tag"
+    case addWords
+    case perfectQuiz
+    case practiceQuiz
+    case reviewWords
+    case studyTime
+    case addTaggedWords
 
     var icon: String {
         switch self {
@@ -28,7 +28,7 @@ struct DailyChallenge: Codable, Identifiable {
     let description: String
     let targetValue: Int
     var currentValue: Int
-    let date: String // "yyyy-MM-dd"
+    let date: String
 
     var isCompleted: Bool { currentValue >= targetValue }
     var progress: Double { min(1.0, Double(currentValue) / Double(max(1, targetValue))) }
@@ -70,11 +70,9 @@ final class DailyChallengeManager: ObservableObject {
         challenges.filter { $0.isCompleted }.count
     }
 
-    // MARK: - Progress updates
-
     func recordWordsAdded(count: Int) {
         updateChallenge(of: .addWords, increment: count)
-        updateChallenge(of: .addTaggedWords, increment: 0) // handled separately
+        updateChallenge(of: .addTaggedWords, increment: 0)
     }
 
     func recordTaggedWordAdded() {
@@ -102,8 +100,6 @@ final class DailyChallengeManager: ObservableObject {
         }
         save()
     }
-
-    // MARK: - Internal
 
     private func updateChallenge(of type: ChallengeType, increment: Int) {
         guard let idx = challenges.firstIndex(where: { $0.type == type && !$0.isCompleted }) else { return }
@@ -146,15 +142,11 @@ final class DailyChallengeManager: ObservableObject {
         }
     }
 
-    /// The daily word goal challenge (always first)
     var dailyGoalChallenge: DailyChallenge? {
         challenges.first(where: { $0.type == .addWords })
     }
 
-    // MARK: - Challenge generation
-
     private func generateChallenges(for date: String) -> [DailyChallenge] {
-        // Always include addWords as the daily goal
         let goalConfig = challengeConfig(for: .addWords)
         let goalChallenge = DailyChallenge(
             id: UUID(),
@@ -166,7 +158,6 @@ final class DailyChallengeManager: ObservableObject {
             date: date
         )
 
-        // Pick 2 more random challenge types (excluding addWords)
         let otherTypes = ChallengeType.allCases.filter { $0 != .addWords }.shuffled()
         let extras = Array(otherTypes.prefix(2)).map { type in
             let config = challengeConfig(for: type)

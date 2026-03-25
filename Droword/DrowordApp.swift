@@ -66,13 +66,11 @@ struct DrowordApp: App {
                         enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()
                         checkTrialPeriod()
-                        // Sync theme if PRO was revoked
                         if !isPremium && themeStore.palette == .duolingo {
                             themeStore.set(.colorful)
                         }
                         studyTimeTracker.resumeSession()
                     case .inactive, .background:
-                        // Update study time challenge with today's total
                         let todayMins = studyTimeTracker.todaySeconds / 60
                         DailyChallengeManager.shared.updateStudyMinutes(todayMins)
                         studyTimeTracker.pauseSession()
@@ -178,26 +176,20 @@ struct DrowordApp: App {
         let df = Self.trialDateFormatter
 
         if !hasUsedTrial {
-            // First launch — activate 7-day trial
             hasUsedTrial = true
             trialStartDate = df.string(from: Date())
             isPremium = true
             return
         }
 
-        // Already used trial — check if it expired
         guard !trialStartDate.isEmpty,
               let start = df.date(from: trialStartDate) else { return }
 
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         if daysSinceStart > 7 && isPremium {
-            // Only expire if user hasn't purchased a real subscription
-            // For now, we expire the trial. Real StoreKit purchases should
-            // set a separate flag to distinguish from trial.
             let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
             if !hasPurchased {
                 isPremium = false
-                // Revoke PRO-only features
                 UserDefaults.standard.set(false, forKey: "seasonalEffectsEnabled")
                 if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),
                    savedPalette == ThemeStore.Palette.duolingo.rawValue {

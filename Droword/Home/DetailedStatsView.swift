@@ -105,8 +105,6 @@ struct DetailedStatsView: View {
         return f
     }
 
-    // MARK: - Chart Data
-
     private var wordsPerDay: [(date: Date, count: Int)] {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
@@ -182,8 +180,6 @@ struct DetailedStatsView: View {
                 .fill(statColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
         )
     }
-
-    // MARK: - Study Time
 
     private var studyTimeSection: some View {
         let data = studyTimeTracker.minutesPerDay(last: 14)
@@ -333,8 +329,6 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Words Per Day Bar Chart
-
     private var wordsPerDayChartSection: some View {
         let data = wordsPerDay
         let maxCount = data.map(\.count).max() ?? 1
@@ -381,8 +375,6 @@ struct DetailedStatsView: View {
         }
     }
 
-    // MARK: - Tag Pie Chart
-
     private var tagChartSection: some View {
         let tags = tagDistribution
 
@@ -390,7 +382,6 @@ struct DetailedStatsView: View {
             if !tags.isEmpty {
                 sectionCard(title: "By tags") {
                     HStack(spacing: 16) {
-                        // Pie chart
                         Chart {
                             ForEach(Array(tags.prefix(8).enumerated()), id: \.offset) { index, item in
                                 SectorMark(
@@ -404,7 +395,6 @@ struct DetailedStatsView: View {
                         }
                         .frame(width: 120, height: 120)
 
-                        // Legend
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(Array(tags.prefix(6).enumerated()), id: \.offset) { index, item in
                                 HStack(spacing: 8) {

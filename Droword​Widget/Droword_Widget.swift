@@ -1,7 +1,6 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Data Model
 
 private struct WidgetWord: Codable {
     let word: String
@@ -31,7 +30,6 @@ struct SimpleEntry: TimelineEntry {
     let featuredTranslation: String?
 }
 
-// MARK: - Provider
 
 struct Provider: TimelineProvider {
     private static let appGroupID = "group.com.droword.shared"
@@ -82,23 +80,19 @@ struct Provider: TimelineProvider {
         return words
     }
 
-    /// Deterministic daily word pick: prefers due words with translations, falls back to recent words
     private static func pickWordOfTheDay(dueWords: [WidgetWord], allWords: [WidgetWord]) -> WidgetWord? {
         let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
 
-        // Prefer due words that have a translation
         let dueWithTranslation = dueWords.filter { $0.translation != nil && !($0.translation?.isEmpty ?? true) }
         if !dueWithTranslation.isEmpty {
             return dueWithTranslation[dayOfYear % dueWithTranslation.count]
         }
 
-        // Fall back to any word with a translation
         let withTranslation = allWords.filter { $0.translation != nil && !($0.translation?.isEmpty ?? true) }
         if !withTranslation.isEmpty {
             return withTranslation[dayOfYear % withTranslation.count]
         }
 
-        // Fall back to any word
         if !allWords.isEmpty {
             return allWords[dayOfYear % allWords.count]
         }
@@ -107,7 +101,6 @@ struct Provider: TimelineProvider {
     }
 }
 
-// MARK: - Seasonal decorations for widget
 
 private enum WidgetSeason {
     case winter, spring, summer, fall
@@ -222,15 +215,12 @@ private func seasonalDecoration(season: WidgetSeason, size: CGFloat) -> some Vie
     }
 }
 
-// MARK: - Home Screen Widget View (systemSmall)
-
 struct DrowordWidgetEntryView: View {
     var entry: Provider.Entry
     private let season = WidgetSeason.current
 
     var body: some View {
         ZStack {
-            // Decorative seasonal elements
             VStack {
                 HStack {
                     seasonalDecoration(season: season, size: 28)
@@ -262,10 +252,8 @@ struct DrowordWidgetEntryView: View {
                 }
             }
 
-            // Main content
             VStack(spacing: 6) {
                 if entry.dueCount > 0 {
-                    // Due words mode
                     ZStack {
                         Circle()
                             .fill(season.accentColor.opacity(0.2))
@@ -300,7 +288,6 @@ struct DrowordWidgetEntryView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
-                    // Featured word
                     if let word = entry.featuredWord {
                         VStack(spacing: 1) {
                             Text(word)
@@ -316,7 +303,6 @@ struct DrowordWidgetEntryView: View {
                         }
                     }
                 } else if entry.totalWords > 0 {
-                    // All caught up
                     ZStack {
                         Circle()
                             .fill(Color.green.opacity(0.15))
@@ -351,7 +337,6 @@ struct DrowordWidgetEntryView: View {
                         }
                     }
                 } else {
-                    // No words — show Add Word button
                     ZStack {
                         Circle()
                             .fill(season.accentColor.opacity(0.2))
@@ -393,15 +378,12 @@ struct DrowordWidgetEntryView: View {
     }
 }
 
-// MARK: - Home Screen Widget View (systemMedium)
-
 struct DrowordMediumWidgetView: View {
     var entry: Provider.Entry
     private let season = WidgetSeason.current
 
     var body: some View {
         ZStack {
-            // Seasonal decorations
             VStack {
                 HStack {
                     seasonalDecoration(season: season, size: 24)
@@ -419,9 +401,7 @@ struct DrowordMediumWidgetView: View {
             }
 
             HStack(spacing: 16) {
-                // Left column: streak + due count
                 VStack(spacing: 10) {
-                    // Streak
                     VStack(spacing: 2) {
                         Text("🔥")
                             .font(.system(size: 22))
@@ -433,7 +413,6 @@ struct DrowordMediumWidgetView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    // Due badge
                     if entry.dueCount > 0 {
                         HStack(spacing: 4) {
                             Circle()
@@ -462,12 +441,10 @@ struct DrowordMediumWidgetView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                // Divider
                 RoundedRectangle(cornerRadius: 1)
                     .fill(Color(.separator).opacity(0.3))
                     .frame(width: 1, height: 70)
 
-                // Right column: word of the day
                 VStack(spacing: 6) {
                     Text("Word of the Day")
                         .font(.system(size: 10, weight: .medium, design: .rounded))
@@ -506,7 +483,6 @@ struct DrowordMediumWidgetView: View {
     }
 }
 
-// MARK: - Lock Screen Circular Widget (accessoryCircular)
 
 struct DrowordCircularWidgetView: View {
     var body: some View {
@@ -517,8 +493,6 @@ struct DrowordCircularWidgetView: View {
         }
     }
 }
-
-// MARK: - Lock Screen Rectangular Widget (accessoryRectangular)
 
 struct DrowordRectangularWidgetView: View {
     var entry: Provider.Entry
@@ -562,8 +536,6 @@ struct DrowordRectangularWidgetView: View {
         }
     }
 }
-
-// MARK: - Adaptive Widget View (selects layout by family)
 
 struct DrowordAdaptiveWidgetView: View {
     var entry: Provider.Entry

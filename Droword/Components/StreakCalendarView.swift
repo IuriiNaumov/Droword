@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Models
-
 private struct DayActivity: Identifiable {
     let id = UUID()
     let date: Date
@@ -28,7 +26,6 @@ private struct MonthData {
     let perfectWeeks: Set<Int>
 }
 
-// MARK: - StreakCalendarView
 
 struct StreakCalendarView: View {
     @EnvironmentObject private var store: WordsStore
@@ -43,20 +40,17 @@ struct StreakCalendarView: View {
     @State private var cachedMilestones: Set<Date> = []
     @State private var currentStreakDates: Set<Date> = []
 
-    // Month mode
     @State private var displayedMonth: Date = Date()
     @State private var cachedMonthData: MonthData? = nil
 
     private let weekdaySymbols = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Stats row
+
             statsRow
 
-            // Selected day detail card
             if let day = selectedDay, !day.isFuture {
                 selectedDayCard(day: day)
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -81,7 +75,6 @@ struct StreakCalendarView: View {
         }
     }
 
-    // MARK: - Stats Row
 
     private var statsRow: some View {
         HStack(spacing: 0) {
@@ -105,8 +98,6 @@ struct StreakCalendarView: View {
         }
         .frame(maxWidth: .infinity)
     }
-
-    // MARK: - Month Calendar View
 
     private var monthCalendarView: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -220,26 +211,22 @@ struct StreakCalendarView: View {
 
         return VStack(spacing: 1) {
             ZStack {
-                // Activity circle
                 Circle()
                     .fill(monthCellColor(for: day))
                     .frame(width: 34, height: 34)
 
-                // Today ring
                 if day.isToday {
                     Circle()
                         .stroke(themeStore.mainText, lineWidth: 2)
                         .frame(width: 34, height: 34)
                 }
 
-                // Selected ring
                 if isSelected {
                     Circle()
                         .stroke(themeStore.mainText, lineWidth: 2)
                         .frame(width: 38, height: 38)
                 }
 
-                // Day number
                 Text("\(dayNum)")
                     .font(.custom("Poppins-Medium", size: 13))
                     .foregroundColor(day.isFuture
@@ -247,7 +234,6 @@ struct StreakCalendarView: View {
                         : themeStore.mainText)
             }
 
-            // Streak / milestone indicator
             if day.isStreakMilestone {
                 Text("⭐")
                     .font(.system(size: 8))
@@ -282,7 +268,6 @@ struct StreakCalendarView: View {
         return themeStore.accentGreen.opacity(0.3 + intensity * 0.7)
     }
 
-    // MARK: - Selected Day Card
 
     private static let selectedDayFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -292,7 +277,6 @@ struct StreakCalendarView: View {
 
     private func selectedDayCard(day: DayActivity) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Date + Today badge
             HStack {
                 Text(Self.selectedDayFormatter.string(from: day.date))
                     .font(.custom("Poppins-Medium", size: 14))
@@ -311,7 +295,6 @@ struct StreakCalendarView: View {
                 }
             }
 
-            // Stats chips
             HStack(spacing: 12) {
                 if day.count > 0 {
                     Label("\(day.count) \(day.count == 1 ? "word" : "words")", systemImage: "text.book.closed")
@@ -343,8 +326,6 @@ struct StreakCalendarView: View {
         )
     }
 
-    // MARK: - Data Building
-
     private func rebuildMonthCalendar() {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
@@ -356,18 +337,14 @@ struct StreakCalendarView: View {
 
         let daysInMonth = daysRange.count
 
-        // Weekday of first: convert to Mon=0 ... Sun=6
         let firstWeekday = cal.component(.weekday, from: firstOfMonth)
         let dayOffset = (firstWeekday + 5) % 7
 
-        // Group words by day
         let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
 
-        // Study minutes
         let lastOfMonth = cal.date(byAdding: .day, value: daysInMonth - 1, to: firstOfMonth) ?? firstOfMonth
         let studyMinutes = studyTimeTracker.minutesForDateRange(from: firstOfMonth, to: lastOfMonth)
 
-        // Build days
         var allDays: [DayActivity] = []
         var maxCount = 0
         for dayNum in 1...daysInMonth {
@@ -392,7 +369,6 @@ struct StreakCalendarView: View {
 
         cachedMaxCount = max(maxCount, 1)
 
-        // Build week rows
         var weekRows: [[DayActivity?]] = []
         var currentRow: [DayActivity?] = Array(repeating: nil, count: dayOffset)
         for day in allDays {
@@ -407,7 +383,6 @@ struct StreakCalendarView: View {
             weekRows.append(currentRow)
         }
 
-        // Perfect weeks
         var perfectWeeks: Set<Int> = []
         for (index, row) in weekRows.enumerated() {
             let nonNilDays = row.compactMap { $0 }
@@ -416,7 +391,6 @@ struct StreakCalendarView: View {
             }
         }
 
-        // Title
         let df = DateFormatter()
         df.dateFormat = "LLLL yyyy"
         let title = df.string(from: firstOfMonth)
@@ -434,7 +408,6 @@ struct StreakCalendarView: View {
 
         var stats = CalendarStats()
 
-        // Range start based on displayed month
         let rangeStart: Date
         if let md = cachedMonthData {
             rangeStart = cal.date(from: DateComponents(year: md.year, month: md.month, day: 1)) ?? today
@@ -446,7 +419,6 @@ struct StreakCalendarView: View {
         let activeDates = Set(rangeGrouped.keys.filter { (rangeGrouped[$0]?.count ?? 0) > 0 })
         stats.totalActiveDays = activeDates.count
 
-        // Current streak (always from today)
         let allActiveDates = Set(grouped.keys.filter { (grouped[$0]?.count ?? 0) > 0 })
         var day = today
         var streak = 0
@@ -457,7 +429,6 @@ struct StreakCalendarView: View {
         }
         stats.currentStreak = streak
 
-        // Longest streak within range
         let sortedDates = activeDates.sorted()
         var longest = 0
         var current = 0
@@ -473,7 +444,6 @@ struct StreakCalendarView: View {
         }
         stats.longestStreak = longest
 
-        // Best day within range
         if let best = rangeGrouped.max(by: { $0.value.count < $1.value.count }) {
             stats.bestDay = (best.key, best.value.count)
         }

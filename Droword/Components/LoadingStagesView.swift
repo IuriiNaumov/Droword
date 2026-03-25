@@ -12,7 +12,6 @@ struct LoadingStagesView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            // Progress bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
@@ -27,7 +26,6 @@ struct LoadingStagesView: View {
             }
             .frame(height: 4)
 
-            // Stage text
             Text(stages[currentStage])
                 .font(.custom("Poppins-Bold", size: 15))
                 .foregroundColor(.white)
@@ -41,13 +39,11 @@ struct LoadingStagesView: View {
     }
 
     private func advanceStages() {
-        // Stage 0: Translating (0% → 40%)
         withAnimation { progress = 0.15 }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             withAnimation { progress = 0.4 }
         }
 
-        // Stage 1: Adding examples (40% → 75%)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             currentStage = min(1, stages.count - 1)
             withAnimation { progress = 0.55 }
@@ -56,7 +52,6 @@ struct LoadingStagesView: View {
             withAnimation { progress = 0.75 }
         }
 
-        // Stage 2: Almost done (75% → 90%)
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             currentStage = min(2, stages.count - 1)
             withAnimation { progress = 0.9 }

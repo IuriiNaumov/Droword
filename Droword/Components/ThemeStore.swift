@@ -25,8 +25,6 @@ final class ThemeStore: ObservableObject {
 
     static private let storageKey = "appThemePalette"
 
-    // MARK: - Cached colors
-
     private struct Colors {
         let accentBlue: Color
         let accentGreen: Color
@@ -199,8 +197,6 @@ final class ThemeStore: ObservableObject {
     var isDuolingo: Bool { palette == .duolingo }
     var title: String { palette.title }
 
-    // MARK: - Color accessors (cached)
-
     var accentBlue: Color { cached.accentBlue }
     var accentGreen: Color { cached.accentGreen }
     var accentPurple: Color { cached.accentPurple }
@@ -223,8 +219,6 @@ final class ThemeStore: ObservableObject {
     var iconBlue: Color { cached.iconBlue }
 
     var monoDark: Color { Color("MonoMedium") }
-
-    // MARK: - Fonts
 
     var fontBold: String {
         isDuolingo ? ".AppleSystemUIFontRounded-Bold" : "Poppins-Bold"
@@ -255,8 +249,6 @@ final class ThemeStore: ObservableObject {
             ? .system(size: size, weight: .regular, design: .rounded)
             : .custom("Poppins-Regular", size: size)
     }
-
-    // MARK: - Helpers
 
     func resolvedTagColor(_ hex: String?) -> Color {
         guard !isMonochrome else { return Color("MonoMedium") }

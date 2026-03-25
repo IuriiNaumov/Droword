@@ -65,14 +65,12 @@ final class ListeningSessionManager: ObservableObject {
     @Published var sleepTimerRemaining: Int = 0
     @Published var isSessionComplete = false
 
-    // New state for upgraded player
     @Published var isAudioPlaying = false
     @Published var sessionStartDate: Date? = nil
     @Published var wordsListened: Int = 0
     @Published var translationRevealed = false
     @Published var playbackSpeed: Float = 1.0
 
-    // SRS callbacks
     var onWordCompleted: ((StoredWord) -> Void)?
     var onWordMarkedKnown: ((StoredWord) -> Void)?
 
@@ -228,7 +226,6 @@ final class ListeningSessionManager: ObservableObject {
                     secondText = nativeText
                 }
 
-                // --- .word phase ---
                 currentPhase = .word
                 try Task.checkCancellation()
                 try await waitIfPaused()
@@ -247,13 +244,11 @@ final class ListeningSessionManager: ObservableObject {
                 try await AudioManager.shared.playAndWait(text: firstText)
                 isAudioPlaying = false
 
-                // --- .pause phase ---
                 currentPhase = .pause
                 try Task.checkCancellation()
                 try await waitIfPaused()
                 try await sleepFor(settings.pauseDuration)
 
-                // --- .translation phase ---
                 currentPhase = .translation
                 translationRevealed = true
                 try Task.checkCancellation()
@@ -264,7 +259,6 @@ final class ListeningSessionManager: ObservableObject {
                     isAudioPlaying = false
                 }
 
-                // --- .example phase ---
                 if settings.includeExamples, let example = word.example, !example.isEmpty {
                     currentPhase = .example
                     try Task.checkCancellation()
@@ -275,7 +269,6 @@ final class ListeningSessionManager: ObservableObject {
                     isAudioPlaying = false
                 }
 
-                // --- .gap phase ---
                 currentPhase = .gap
                 try Task.checkCancellation()
                 try await sleepFor(1.5)

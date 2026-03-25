@@ -209,14 +209,12 @@ struct HomeView: View {
             }
         }
         .onChange(of: store.words.count) { _, newValue in
-            // Only react to additions, not deletions
             let oldCount = previousWordCount ?? 0
             guard newValue > oldCount else {
                 previousWordCount = newValue
                 return
             }
-
-            // Update daily challenges for word additions
+            
             let addedCount = newValue - oldCount
             challengeManager.recordWordsAdded(count: addedCount)
 

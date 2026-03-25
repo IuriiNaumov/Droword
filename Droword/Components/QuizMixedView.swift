@@ -25,25 +25,20 @@ struct QuizMixedView: View {
     @State private var feedbackBounce: CGFloat = 0.6
     @State private var clozeRevealed = false
 
-    // Shake animation for wrong answers
     @State private var shakeOffset: CGFloat = 0
 
-    // Hint system for typing/cloze
     @State private var hintShown = false
     @State private var hintText: String = ""
 
-    // Matching mode
     @State private var matchingPairs: [(word: String, translation: String)] = []
-    @State private var matchedPairs: Set<String> = []  // matched word keys
+    @State private var matchedPairs: Set<String> = []
     @State private var selectedMatchWord: String? = nil
     @State private var matchingWrongPair: (String, String)? = nil
 
-    // Sentence building
-    @State private var sentenceWords: [String] = []  // shuffled words
-    @State private var selectedSentenceWords: [String] = []  // user's built sentence
-    @State private var correctSentenceWords: [String] = []  // correct order
+    @State private var sentenceWords: [String] = []
+    @State private var selectedSentenceWords: [String] = []
+    @State private var correctSentenceWords: [String] = []
 
-    // Streak animation
     @State private var streakScale: CGFloat = 1.0
     @State private var streakMilestone: Int? = nil
     @State private var streakMilestoneOpacity: Double = 0
@@ -114,8 +109,6 @@ struct QuizMixedView: View {
         .onTapGesture { isInputFocused = false }
     }
 
-    // MARK: - Progress Header with Streak
-
     private var progressHeader: some View {
         VStack(spacing: 6) {
             HStack {
@@ -125,7 +118,6 @@ struct QuizMixedView: View {
 
                 Spacer()
 
-                // Streak counter
                 if session.currentStreak >= 2 {
                     HStack(spacing: 4) {
                         Image(systemName: "flame.fill")
@@ -141,7 +133,6 @@ struct QuizMixedView: View {
             }
             .padding(.horizontal, 24)
 
-            // Segmented progress bar
             segmentedProgressBar
         }
         .padding(.top, 8)
@@ -183,12 +174,9 @@ struct QuizMixedView: View {
         return themeStore.dividerColor.opacity(0.4)
     }
 
-    // MARK: - Bottom Button
-
     private func bottomButton(exerciseType: QuizSessionManager.ExerciseType) -> some View {
         Group {
             if exerciseType == .matching && !hasAnswered {
-                // Matching auto-advances, no button needed
                 EmptyView()
             } else if exerciseType == .sentenceBuilding && !hasAnswered {
                 VStack(spacing: 10) {
@@ -356,7 +344,6 @@ struct QuizMixedView: View {
             if let example = item.example {
                 correctSentenceWords = example.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
                 sentenceWords = correctSentenceWords.shuffled()
-                // Reshuffle if accidentally in correct order
                 if sentenceWords == correctSentenceWords && sentenceWords.count > 1 {
                     sentenceWords.shuffle()
                 }
@@ -375,8 +362,6 @@ struct QuizMixedView: View {
         prepareCurrentQuestion()
     }
 
-    // MARK: - Shake Animation
-
     private func triggerShake() {
         withAnimation(.default) {
             shakeOffset = 12
@@ -394,8 +379,6 @@ struct QuizMixedView: View {
             withAnimation(.default) { shakeOffset = 0 }
         }
     }
-
-    // MARK: - Multiple Choice
 
     private func multipleChoiceContent(item: QuizSessionManager.QuizItem) -> some View {
         let prompt = mcReversed ? item.translation : item.word
@@ -512,8 +495,6 @@ struct QuizMixedView: View {
         )
     }
 
-    // MARK: - Matching
-
     private func matchingContent(item: QuizSessionManager.QuizItem) -> some View {
         let words = matchingPairs.map(\.word)
         let translations = matchingPairs.map(\.translation).shuffled()
@@ -527,14 +508,12 @@ struct QuizMixedView: View {
                 .padding(.bottom, 24)
 
             HStack(spacing: 12) {
-                // Words column
                 VStack(spacing: 10) {
                     ForEach(words, id: \.self) { word in
                         matchingWordCell(text: word, isWord: true)
                     }
                 }
 
-                // Translations column
                 VStack(spacing: 10) {
                     ForEach(translations, id: \.self) { translation in
                         matchingWordCell(text: translation, isWord: false)
@@ -597,7 +576,6 @@ struct QuizMixedView: View {
         guard !hasAnswered else { return }
 
         if isWord {
-            // Select/deselect a word
             if selectedMatchWord == text {
                 selectedMatchWord = nil
             } else {
@@ -605,11 +583,9 @@ struct QuizMixedView: View {
             }
             Haptics.selection()
         } else {
-            // Tapped a translation — check if a word is selected
             guard let word = selectedMatchWord else { return }
             let translation = text
 
-            // Find if this is a correct pair
             let isCorrectPair = matchingPairs.contains { $0.word == word && $0.translation == translation }
 
             if isCorrectPair {
@@ -620,7 +596,6 @@ struct QuizMixedView: View {
                     selectedMatchWord = nil
                 }
 
-                // Check if all matched
                 if matchedPairs.count == matchingPairs.count * 2 {
                     hasAnswered = true
                     isCorrect = true
@@ -648,8 +623,6 @@ struct QuizMixedView: View {
         }
     }
 
-    // MARK: - Sentence Building
-
     private func sentenceBuildingContent(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
             Spacer()
@@ -667,12 +640,10 @@ struct QuizMixedView: View {
             }
             .padding(.bottom, 24)
 
-            // Built sentence area
             sentenceBuiltArea
                 .padding(.horizontal, 24)
                 .padding(.bottom, 16)
 
-            // Available words
             sentenceWordBank
                 .padding(.horizontal, 24)
 
@@ -801,8 +772,6 @@ struct QuizMixedView: View {
         )
     }
 
-    // MARK: - Typing
-
     private func typingContent(item: QuizSessionManager.QuizItem) -> some View {
         let prompt = typingReversed ? item.translation : item.word
         let expected = typingReversed ? item.word : item.translation
@@ -867,8 +836,6 @@ struct QuizMixedView: View {
         if isCorrect { return themeStore.accentGreen.opacity(0.08) }
         return themeStore.accentRed.opacity(0.08)
     }
-
-    // MARK: - Cloze
 
     private func clozeContent(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
@@ -954,7 +921,6 @@ struct QuizMixedView: View {
                         removal: .opacity
                     ))
             } else {
-                // Show first letter as a hint
                 clozeBlank(for: item)
             }
 
@@ -992,8 +958,6 @@ struct QuizMixedView: View {
         let after = String(example[range.upperBound..<example.endIndex])
         return (before, after)
     }
-
-    // MARK: - Typing Helpers
 
     private var typingBorderColor: Color {
         if !hasAnswered {
@@ -1099,16 +1063,13 @@ struct QuizMixedView: View {
         }
     }
 
-    // MARK: - Streak Pulse & Milestones
-
     private func animateStreakPulse() {
         guard session.currentStreak >= 2 else { return }
         streakScale = 1.4
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
             streakScale = 1.0
         }
-
-        // Show milestone banner at key thresholds
+        
         let streak = session.currentStreak
         if streak == 3 || streak == 5 || streak == 7 || streak == 10 || (streak > 10 && streak % 5 == 0) {
             Haptics.success()
@@ -1164,9 +1125,7 @@ struct QuizMixedView: View {
                 .shadow(color: .orange.opacity(0.4), radius: 8, y: 4)
         )
     }
-
-    // MARK: - Answer Checking
-
+    
     private func checkTypingAnswer() {
         guard let item = session.currentItem,
               let exerciseType = session.currentExerciseType else { return }
@@ -1186,7 +1145,6 @@ struct QuizMixedView: View {
 
         let input = trimmed.lowercased()
 
-        // Support multiple valid answers separated by , or ;
         let variants = rawAnswer
             .components(separatedBy: CharacterSet(charactersIn: ",;"))
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
@@ -1195,7 +1153,6 @@ struct QuizMixedView: View {
         var correct = false
         var almostCorrect = false
 
-        // Check exact match against any variant
         for variant in variants {
             if input == variant {
                 correct = true
@@ -1203,7 +1160,6 @@ struct QuizMixedView: View {
             }
         }
 
-        // Check fuzzy match against any variant
         if !correct {
             for variant in variants {
                 let dist = levenshteinDistance(input, variant)
@@ -1217,7 +1173,6 @@ struct QuizMixedView: View {
         }
 
         if correct {
-            // Correct or almost correct — finalize
             hasAnswered = true
             isCorrect = true
             isAlmostCorrect = almostCorrect
@@ -1240,7 +1195,6 @@ struct QuizMixedView: View {
             )
             isInputFocused = false
         } else if !hintShown {
-            // First wrong attempt — show hint, let user retry
             Haptics.error()
             triggerShake()
 
@@ -1254,7 +1208,6 @@ struct QuizMixedView: View {
             typingInput = ""
             isInputFocused = true
         } else {
-            // Second wrong attempt — finalize as incorrect
             hasAnswered = true
             isCorrect = false
             isAlmostCorrect = false

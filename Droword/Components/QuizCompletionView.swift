@@ -42,7 +42,6 @@ struct QuizCompletionView: View {
                         .font(.custom("Poppins-Bold", size: 28))
                         .foregroundColor(themeStore.mainText)
 
-                    // Score ring
                     ZStack {
                         Circle()
                             .stroke(scoreColor.opacity(0.2), lineWidth: 10)
@@ -63,7 +62,6 @@ struct QuizCompletionView: View {
                         }
                     }
 
-                    // Stats row
                     if bestStreak > 0 {
                         HStack(spacing: 24) {
                             statBubble(
@@ -88,7 +86,6 @@ struct QuizCompletionView: View {
                         .padding(.top, 4)
                     }
 
-                    // Missed words section
                     if !missedWords.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Words to review")

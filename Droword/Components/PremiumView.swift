@@ -9,7 +9,6 @@ struct PremiumView: View {
     @AppStorage("trialStartDate") private var trialStartDate: String = ""
     @StateObject private var storeKit = StoreKitManager.shared
 
-    /// When shown as a premium wall (fullScreenCover), show X button
     var asWall: Bool = false
 
     @State private var selectedPlan: Plan = .yearly
@@ -35,7 +34,6 @@ struct PremiumView: View {
         case monthly, yearly
     }
 
-    // Fallback pricing (shown while StoreKit loads)
     private var monthlyPrice: String {
         storeKit.monthlyProduct?.displayPrice ?? "$4.99"
     }
@@ -56,8 +54,8 @@ struct PremiumView: View {
     private struct FeatureRow: Identifiable {
         let id = UUID()
         let title: String
-        let free: String    // what free users get
-        let pro: String     // what PRO users get
+        let free: String
+        let pro: String
     }
 
     private let featureRows: [FeatureRow] = [
@@ -112,7 +110,6 @@ struct PremiumView: View {
                 .iPadContentWidth(600)
             }
 
-            // Close button (wall mode)
             if asWall {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
@@ -145,8 +142,6 @@ struct PremiumView: View {
         }
     }
 
-    // MARK: - Header
-
     private var headerSection: some View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
@@ -172,11 +167,8 @@ struct PremiumView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Comparison table (free users)
-
     private var comparisonSection: some View {
         VStack(spacing: 0) {
-            // Column headers
             HStack {
                 Text("")
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -191,8 +183,7 @@ struct PremiumView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
-
-            // Rows
+            
             ForEach(featureRows) { row in
                 VStack(spacing: 0) {
                     Divider()
@@ -221,8 +212,6 @@ struct PremiumView: View {
         .offset(y: appeared ? 0 : 12)
     }
 
-    // MARK: - PRO active features (centered checkmarks)
-
     private var proActiveFeatures: some View {
         VStack(spacing: 14) {
             ForEach(featureRows) { row in
@@ -240,8 +229,6 @@ struct PremiumView: View {
         .frame(maxWidth: .infinity)
         .opacity(appeared ? 1.0 : 0)
     }
-
-    // MARK: - Plans
 
     private var plansSection: some View {
         VStack(spacing: 12) {
@@ -324,8 +311,6 @@ struct PremiumView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Subscribe Button
-
     private var subscribeButton: some View {
         VStack(spacing: 8) {
             Button {
@@ -362,11 +347,8 @@ struct PremiumView: View {
         .opacity(appeared ? 1.0 : 0)
     }
 
-    // MARK: - Active
-
     private var activeSection: some View {
         VStack(spacing: 16) {
-            // Status card
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
@@ -387,7 +369,6 @@ struct PremiumView: View {
 
                 Divider()
 
-                // Subscription details
                 VStack(spacing: 10) {
                     subscriptionDetailRow(label: "Plan", value: activePlanName)
                     subscriptionDetailRow(label: "Price", value: activePriceString)
@@ -401,7 +382,6 @@ struct PremiumView: View {
             )
             .padding(.horizontal, 20)
 
-            // Manage subscription button
             Button {
                 openSubscriptionManagement()
             } label: {
@@ -422,7 +402,6 @@ struct PremiumView: View {
             .buttonStyle(.plain)
             .padding(.horizontal, 20)
 
-            // Fine print
             Text("Subscription renews automatically. You can cancel anytime in Settings → Apple ID → Subscriptions.")
                 .font(.custom("Poppins-Regular", size: 12))
                 .foregroundColor(.secondary)
@@ -431,8 +410,6 @@ struct PremiumView: View {
                 .padding(.top, 4)
         }
     }
-
-    // MARK: - Purchase
 
     private func handlePurchase() async {
         purchaseError = nil
@@ -456,8 +433,6 @@ struct PremiumView: View {
             purchaseError = error.localizedDescription
         }
     }
-
-    // MARK: - Helpers
 
     private func subscriptionDetailRow(label: String, value: String) -> some View {
         HStack {
@@ -492,8 +467,6 @@ struct PremiumView: View {
     }
 
     private var nextRenewalDateString: String {
-        // Real renewal info requires Transaction.currentEntitlements;
-        // show "Manage in Settings" to avoid fabricating a date.
         return "See Apple Settings"
     }
 

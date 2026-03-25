@@ -41,7 +41,6 @@ final class WordEnrichmentService {
         }
     }
 
-    /// Call this when the app becomes active or words are reloaded to retry enrichment.
     func retryEnrichment() {
         guard NetworkMonitor.shared.isConnected else { return }
         Task { await enrichPendingWords() }
@@ -60,7 +59,6 @@ final class WordEnrichmentService {
         for word in pending {
             guard NetworkMonitor.shared.isConnected else { break }
 
-            // Free users can only enrich within their daily translation limit
             if !isPremium && !DailyLimitsManager.canTranslate { break }
 
             do {

@@ -191,7 +191,6 @@ final class WordsStore: ObservableObject {
         words[idx] = w
     }
 
-    // MARK: - Streak
 
     static func computeCurrentStreak(from words: [StoredWord]) -> Int {
         let cal = Calendar.current

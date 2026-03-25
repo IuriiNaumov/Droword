@@ -214,16 +214,13 @@ struct AddWordView: View {
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty else { return }
 
-        // Determine if AI translation is available
         let canUseAI = isPremium || DailyLimitsManager.canTranslate
 
-        // Without AI — save offline
         guard canUseAI else {
             addWordOffline(trimmedWord)
             return
         }
 
-        // Check network before trying API
         guard NetworkMonitor.shared.isConnected else {
             if hasSeenOfflineAlert {
                 addWordOfflineWithToast(trimmedWord)

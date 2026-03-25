@@ -5,9 +5,7 @@ import Combine
 final class StudyTimeTracker: ObservableObject {
     static let shared = StudyTimeTracker()
 
-    /// Total seconds studied today
     @Published private(set) var todaySeconds: Int = 0
-    /// Total seconds studied this week
     @Published private(set) var weekSeconds: Int = 0
 
     private let sessionsKey = "StudyTimeTracker.sessions"
@@ -22,8 +20,6 @@ final class StudyTimeTracker: ObservableObject {
     private init() {
         recalculate()
     }
-
-    // MARK: - Session lifecycle
 
     func startSession() {
         guard sessionStart == nil else { return }
@@ -61,8 +57,6 @@ final class StudyTimeTracker: ObservableObject {
         recalculate()
     }
 
-    // MARK: - Formatted output
-
     var todayFormatted: String {
         let active = activeSeconds()
         return Self.format(seconds: todaySeconds + active)
@@ -82,7 +76,6 @@ final class StudyTimeTracker: ObservableObject {
         return "\(max(minutes, 0))m"
     }
 
-    // MARK: - History
 
     func minutesPerDay(last days: Int) -> [(date: Date, minutes: Int)] {
         let cal = Calendar.current
@@ -100,7 +93,6 @@ final class StudyTimeTracker: ObservableObject {
         }
     }
 
-    /// Returns a dictionary of [startOfDay -> total minutes] for all days in the given range.
     func minutesForDateRange(from startDate: Date, to endDate: Date) -> [Date: Int] {
         let cal = Calendar.current
         let start = cal.startOfDay(for: startDate)
@@ -133,8 +125,6 @@ final class StudyTimeTracker: ObservableObject {
         return totalSecs / max(1, days.count) / 60
     }
 
-    // MARK: - Internal
-
     private func activeSeconds() -> Int {
         guard let start = sessionStart else { return 0 }
         return Int(Date().timeIntervalSince(start))
@@ -160,7 +150,6 @@ final class StudyTimeTracker: ObservableObject {
         var sessions = loadSessions()
         sessions.append(Session(date: Date(), seconds: seconds))
 
-        // Keep last 90 days only
         let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
         sessions = sessions.filter { $0.date >= cutoff }
 

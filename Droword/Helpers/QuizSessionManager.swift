@@ -28,8 +28,8 @@ final class QuizSessionManager: ObservableObject {
     @Published var currentStreak: Int = 0
     @Published var bestStreak: Int = 0
     @Published var answerResults: [UUID: Bool] = [:]
-    @Published var directionMap: [UUID: Bool] = [:]  // true = reversed
-
+    @Published var directionMap: [UUID: Bool] = [:]
+    
     var maxSessionSize = 10
 
     var currentItem: QuizItem? {
@@ -117,7 +117,6 @@ final class QuizSessionManager: ObservableObject {
             )
         }
 
-        // Build a lookup for adaptive difficulty
         let wordReps: [UUID: Int] = Dictionary(
             uniqueKeysWithValues: selected.map { ($0.id, $0.repetitions) }
         )
@@ -132,10 +131,8 @@ final class QuizSessionManager: ObservableObject {
 
         exerciseTypes = [:]
 
-        // Pick one item for matching round if session has 4+ items
         let matchingCandidateIndex: Int? = queue.count >= 4 ? Int.random(in: 0..<queue.count) : nil
 
-        // Pick one item for sentence building if eligible
         let sentenceCandidates = queue.indices.filter { i in
             let item = queue[i]
             guard let ex = item.example, !ex.isEmpty else { return false }
@@ -160,7 +157,6 @@ final class QuizSessionManager: ObservableObject {
                 && item.example!.localizedCaseInsensitiveContains(item.word)
 
             if reps >= 2 {
-                // Adaptive: words answered correctly multiple times get harder exercises
                 if isClozeEligible {
                     exerciseTypes[item.id] = Bool.random() ? .typing : .cloze
                 } else {
@@ -173,7 +169,6 @@ final class QuizSessionManager: ObservableObject {
             }
         }
 
-        // Build balanced direction map: roughly half normal, half reversed
         let nonCloze = queue.filter { exerciseTypes[$0.id] != .cloze }
         let halfReversed = nonCloze.count / 2
         var reversedFlags = Array(repeating: true, count: halfReversed)
@@ -185,10 +180,8 @@ final class QuizSessionManager: ObservableObject {
         }
     }
 
-    /// Returns 4 word-translation pairs for matching exercise, including the current item
     func matchingPairs(for item: QuizItem) -> [(word: String, translation: String)] {
         var pairs: [(word: String, translation: String)] = [(item.word, item.translation)]
-        // Grab other items from queue as additional pairs
         let others = queue.filter { $0.id != item.id }.shuffled().prefix(3)
         for other in others {
             pairs.append((other.word, other.translation))

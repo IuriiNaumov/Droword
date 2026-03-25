@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Compact button for HomeView
-
 struct DailyChallengeButton: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @ObservedObject var manager: DailyChallengeManager

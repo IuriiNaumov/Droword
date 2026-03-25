@@ -91,7 +91,6 @@ struct SettingsView: View {
                     }
                     .padding(.top, 32)
 
-                    // PRO banner under avatar
                     premiumBanner
                         .padding(.horizontal, 20)
 
@@ -365,7 +364,6 @@ struct SettingsView: View {
         let url = avatarFileURL()
         guard let data = try? Data(contentsOf: url),
               let image = UIImage(data: data) else { return nil }
-        // Downscale to 2x display size (184x184) to save memory
         let targetSize = CGSize(width: 184, height: 184)
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in

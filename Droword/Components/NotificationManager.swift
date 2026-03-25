@@ -1,7 +1,6 @@
 import Foundation
 import UserNotifications
 
-// MARK: - Content pools
 
 private let morningTitles = [
     "Good morning!",
@@ -45,23 +44,19 @@ struct DueWordInfo {
     let translation: String
 }
 
-// MARK: - NotificationManager
 
 final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
 
-    /// The three daily notification slot identifiers
-    private static let morningID   = "daily.slot.morning"     // 9:00
-    private static let afternoonID = "daily.slot.afternoon"    // 14:00
-    private static let eveningID   = "daily.slot.evening"      // 20:00
+    private static let morningID   = "daily.slot.morning"
+    private static let afternoonID = "daily.slot.afternoon"
+    private static let eveningID   = "daily.slot.evening"
 
-    /// One-off identifiers
     private static let streakMilestonePrefix = "streak.milestone"
     private static let dailyGoalID = "daily.goal.done"
     private static let inactivityPrefix = "inactive"
 
-    // MARK: - Authorization
 
     func requestAuthorization(completion: ((Bool) -> Void)? = nil) {
         let center = UNUserNotificationCenter.current()
@@ -70,10 +65,6 @@ final class NotificationManager {
         }
     }
 
-    // MARK: - Main scheduling entry point
-
-    /// Schedules exactly 3 daily notifications (morning, afternoon, evening).
-    /// Call this on every `.active` scene phase.
     func scheduleDaily(
         dueCount: Int,
         currentStreak: Int,
@@ -82,14 +73,12 @@ final class NotificationManager {
     ) {
         let center = UNUserNotificationCenter.current()
 
-        // Remove all previous daily slots
         center.removePendingNotificationRequests(withIdentifiers: [
             Self.morningID, Self.afternoonID, Self.eveningID
         ])
 
         let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
 
-        // --- Morning (9:00) — motivational, mentions due count if any ---
         if !hasPracticedToday {
             let title = morningTitles[dayOfYear % morningTitles.count]
             let body: String
@@ -102,7 +91,6 @@ final class NotificationManager {
             scheduleAt(hour: 9, minute: 0, id: Self.morningID, title: title, body: body)
         }
 
-        // --- Afternoon (14:00) — word quiz if available, else due reminder ---
         if !dueWords.isEmpty {
             let picked = dueWords[dayOfYear % dueWords.count]
             scheduleAt(
@@ -121,7 +109,6 @@ final class NotificationManager {
             )
         }
 
-        // --- Evening (20:00) — streak-focused if streak ≥ 2, else general ---
         if !hasPracticedToday && currentStreak >= 2 {
             scheduleAt(
                 hour: 20, minute: 0,
@@ -135,8 +122,6 @@ final class NotificationManager {
             scheduleAt(hour: 20, minute: 0, id: Self.eveningID, title: title, body: body)
         }
     }
-
-    // MARK: - Inactivity reminders (for users gone 3+ days)
 
     func scheduleInactivityReminders(lastActive: Date) {
         let center = UNUserNotificationCenter.current()
@@ -163,7 +148,6 @@ final class NotificationManager {
         }
     }
 
-    // MARK: - Instant milestone notifications
 
     func scheduleStreakMilestone(streak: Int) {
         let milestones = [7, 30, 100, 365]
@@ -194,13 +178,9 @@ final class NotificationManager {
         )
     }
 
-    // MARK: - Cancel
-
     func cancelAll() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
-
-    // MARK: - Private
 
     private func scheduleAt(hour: Int, minute: Int, id: String, title: String, body: String) {
         let now = Date()
@@ -210,12 +190,8 @@ final class NotificationManager {
         dateComponents.hour = hour
         dateComponents.minute = minute
 
-        // If the time already passed today, don't schedule (it would fire tomorrow,
-        // but we re-schedule every .active anyway)
         if let fireDate = cal.nextDate(after: now, matching: dateComponents, matchingPolicy: .nextTime),
            !cal.isDateInToday(fireDate) {
-            // Already past this slot today — skip, will be rescheduled tomorrow
-            // But still schedule it for tomorrow in case user doesn't open the app
         }
 
         let content = UNMutableNotificationContent()

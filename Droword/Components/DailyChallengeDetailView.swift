@@ -33,7 +33,6 @@ struct DailyChallengeDetailView: View {
 
     private var summaryHeader: some View {
         VStack(spacing: 16) {
-            // Big progress ring
             ZStack {
                 Circle()
                     .stroke(themeStore.accentGreen.opacity(0.15), lineWidth: 8)
