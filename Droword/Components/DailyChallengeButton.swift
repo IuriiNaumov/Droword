@@ -12,7 +12,6 @@ struct DailyChallengeButton: View {
         let goalDone = goal?.isCompleted ?? false
 
         HStack(spacing: 14) {
-            // Progress ring
             ZStack {
                 Circle()
                     .stroke(themeStore.accentGreen.opacity(0.2), lineWidth: 5)

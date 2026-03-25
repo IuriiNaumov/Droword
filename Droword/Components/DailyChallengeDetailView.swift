@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Full-screen challenges detail
-
 struct DailyChallengeDetailView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @ObservedObject var manager: DailyChallengeManager
@@ -124,7 +122,6 @@ struct DailyChallengeDetailView: View {
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(themeStore.secondaryText)
 
-                // Progress bar
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)

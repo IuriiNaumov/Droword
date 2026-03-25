@@ -1,34 +1,5 @@
 import SwiftUI
 
-// MARK: - Enums
-
-enum CalendarViewMode: String, CaseIterable {
-    case month = "Month"
-    case heatmap = "Heatmap"
-}
-
-enum CalendarTimeRange: String, CaseIterable, Identifiable {
-    case week = "Week"
-    case month = "Month"
-    case threeMonths = "3 Months"
-    case sixMonths = "6 Months"
-    case year = "Year"
-    case all = "All"
-
-    var id: String { rawValue }
-
-    var weeksToShow: Int {
-        switch self {
-        case .week: return 1
-        case .month: return 5
-        case .threeMonths: return 13
-        case .sixMonths: return 26
-        case .year: return 52
-        case .all: return 0
-        }
-    }
-}
-
 // MARK: - Models
 
 private struct DayActivity: Identifiable {
@@ -66,10 +37,6 @@ struct StreakCalendarView: View {
 
     private let daysInWeek = 7
 
-    // Mode
-    @State private var selectedMode: CalendarViewMode = .month
-
-    // Shared
     @State private var selectedDay: DayActivity? = nil
     @State private var cachedStats = CalendarStats()
     @State private var cachedMaxCount: Int = 1
@@ -80,20 +47,12 @@ struct StreakCalendarView: View {
     @State private var displayedMonth: Date = Date()
     @State private var cachedMonthData: MonthData? = nil
 
-    // Heatmap mode
-    @State private var selectedRange: CalendarTimeRange = .threeMonths
-    @State private var cachedCalendar: [[DayActivity]] = []
-    @State private var cachedMonthLabels: [(String, Int)] = []
-
     private let weekdaySymbols = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Mode toggle
-            modeToggle
-
             // Stats row
             statsRow
 
@@ -103,74 +62,22 @@ struct StreakCalendarView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            // Calendar content
-            if selectedMode == .month {
-                monthCalendarView
-            } else {
-                heatmapCalendarView
-            }
+            monthCalendarView
         }
         .onAppear {
             rebuildMilestones()
             rebuildCurrentStreakDates()
-            if selectedMode == .month {
-                rebuildMonthCalendar()
-            } else {
-                rebuildHeatmap()
-            }
+            rebuildMonthCalendar()
             rebuildStats()
         }
         .onChange(of: store.words.count) {
             rebuildMilestones()
             rebuildCurrentStreakDates()
-            if selectedMode == .month {
-                rebuildMonthCalendar()
-            } else {
-                rebuildHeatmap()
-            }
-            rebuildStats()
-        }
-        .onChange(of: selectedRange) {
-            rebuildHeatmap()
+            rebuildMonthCalendar()
             rebuildStats()
         }
         .onChange(of: displayedMonth) {
             rebuildMonthCalendar()
-        }
-        .onChange(of: selectedMode) {
-            selectedDay = nil
-            if selectedMode == .month {
-                rebuildMonthCalendar()
-            } else {
-                rebuildHeatmap()
-                rebuildStats()
-            }
-        }
-    }
-
-    // MARK: - Mode Toggle
-
-    private var modeToggle: some View {
-        HStack(spacing: 8) {
-            ForEach(CalendarViewMode.allCases, id: \.self) { mode in
-                Button {
-                    Haptics.selection()
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        selectedMode = mode
-                    }
-                } label: {
-                    Text(mode.rawValue)
-                        .font(.custom("Poppins-Medium", size: 13))
-                        .foregroundColor(selectedMode == mode ? themeStore.cardBg : themeStore.mainText)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(selectedMode == mode ? themeStore.mainText : themeStore.secondaryText.opacity(0.1))
-                        )
-                }
-            }
-            Spacer()
         }
     }
 
@@ -328,7 +235,7 @@ struct StreakCalendarView: View {
                 // Selected ring
                 if isSelected {
                     Circle()
-                        .stroke(themeStore.accentGreen, lineWidth: 2)
+                        .stroke(themeStore.mainText, lineWidth: 2)
                         .frame(width: 38, height: 38)
                 }
 
@@ -337,9 +244,7 @@ struct StreakCalendarView: View {
                     .font(.custom("Poppins-Medium", size: 13))
                     .foregroundColor(day.isFuture
                         ? themeStore.secondaryText.opacity(0.3)
-                        : day.count > 0
-                            ? .white
-                            : themeStore.mainText)
+                        : themeStore.mainText)
             }
 
             // Streak / milestone indicator
@@ -377,162 +282,7 @@ struct StreakCalendarView: View {
         return themeStore.accentGreen.opacity(0.3 + intensity * 0.7)
     }
 
-    // MARK: - Heatmap Calendar View
-
-    private var heatmapCalendarView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Time range picker
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(CalendarTimeRange.allCases) { range in
-                        Button {
-                            Haptics.selection()
-                            withAnimation(.easeInOut(duration: 0.25)) {
-                                selectedRange = range
-                                selectedDay = nil
-                            }
-                        } label: {
-                            Text(range.rawValue)
-                                .font(.custom("Poppins-Medium", size: 13))
-                                .foregroundColor(selectedRange == range ? themeStore.cardBg : themeStore.mainText)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 6)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(selectedRange == range ? themeStore.mainText : themeStore.secondaryText.opacity(0.1))
-                                )
-                        }
-                    }
-                }
-            }
-
-            heatmapGrid
-            heatmapLegend
-        }
-    }
-
-    private let heatmapDayLabelWidth: CGFloat = 32
-
-    private var heatmapGrid: some View {
-        let weeks = effectiveWeeksToShow
-
-        return VStack(alignment: .leading, spacing: 2) {
-            // Month labels
-            HStack(spacing: 0) {
-                Color.clear.frame(width: heatmapDayLabelWidth, height: 14)
-
-                GeometryReader { geo in
-                    let cellSize = (geo.size.width - CGFloat(weeks - 1) * 3) / CGFloat(max(weeks, 1))
-                    ForEach(cachedMonthLabels, id: \.1) { label, weekIndex in
-                        Text(label)
-                            .font(.custom("Poppins-Regular", size: 10))
-                            .foregroundColor(themeStore.secondaryText)
-                            .position(
-                                x: CGFloat(weekIndex) * (cellSize + 3) + cellSize / 2,
-                                y: 6
-                            )
-                    }
-                }
-            }
-            .frame(height: 14)
-
-            // Grid with day labels
-            HStack(alignment: .top, spacing: 0) {
-                // Day-of-week labels (all 7)
-                VStack(spacing: 3) {
-                    ForEach(0..<daysInWeek, id: \.self) { index in
-                        GeometryReader { geo in
-                            Text(weekdaySymbols[index])
-                                .font(.custom("Poppins-Regular", size: 9))
-                                .foregroundColor(themeStore.secondaryText)
-                                .frame(width: heatmapDayLabelWidth, alignment: .trailing)
-                                .position(x: heatmapDayLabelWidth / 2, y: geo.size.height / 2)
-                        }
-                    }
-                }
-                .frame(width: heatmapDayLabelWidth)
-
-                // Heatmap cells
-                GeometryReader { geo in
-                    let cellSize = (geo.size.width - CGFloat(weeks - 1) * 3) / CGFloat(max(weeks, 1))
-                    HStack(alignment: .top, spacing: 3) {
-                        ForEach(Array(cachedCalendar.enumerated()), id: \.offset) { _, week in
-                            VStack(spacing: 3) {
-                                ForEach(Array(week.enumerated()), id: \.offset) { _, day in
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                            .fill(heatmapCellColor(for: day))
-                                            .frame(width: cellSize, height: cellSize)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                                    .stroke(heatmapBorderColor(for: day), lineWidth: heatmapBorderWidth(for: day))
-                                            )
-
-                                        // Milestone gold dot
-                                        if day.isStreakMilestone {
-                                            Circle()
-                                                .fill(themeStore.accentGold)
-                                                .frame(width: 4, height: 4)
-                                                .offset(x: cellSize / 2 - 3, y: -cellSize / 2 + 3)
-                                        }
-                                    }
-                                    .onTapGesture {
-                                        guard !day.isFuture else { return }
-                                        Haptics.selection()
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            if selectedDay?.date == day.date {
-                                                selectedDay = nil
-                                            } else {
-                                                selectedDay = day
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .aspectRatio(CGFloat(max(weeks, 1)) / CGFloat(daysInWeek), contentMode: .fit)
-            }
-        }
-    }
-
-    private var heatmapLegend: some View {
-        HStack(spacing: 4) {
-            Text("0")
-                .font(.custom("Poppins-Regular", size: 10))
-                .foregroundColor(themeStore.secondaryText)
-            ForEach([0.0, 0.25, 0.5, 0.75, 1.0], id: \.self) { intensity in
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(intensity == 0 ? themeStore.secondaryText.opacity(0.1) : themeStore.accentGreen.opacity(0.25 + intensity * 0.75))
-                    .frame(width: 12, height: 12)
-            }
-            Text("\(cachedMaxCount)+")
-                .font(.custom("Poppins-Regular", size: 10))
-                .foregroundColor(themeStore.secondaryText)
-        }
-    }
-
-    private func heatmapCellColor(for day: DayActivity) -> Color {
-        if day.isFuture { return Color.clear }
-        if day.count == 0 { return themeStore.secondaryText.opacity(0.1) }
-        let intensity = min(1.0, Double(day.count) / Double(max(cachedMaxCount, 3)))
-        return themeStore.accentGreen.opacity(0.25 + intensity * 0.75)
-    }
-
-    private func heatmapBorderColor(for day: DayActivity) -> Color {
-        if selectedDay?.date == day.date { return themeStore.mainText }
-        if day.isToday { return themeStore.mainText.opacity(0.4) }
-        return Color.clear
-    }
-
-    private func heatmapBorderWidth(for day: DayActivity) -> CGFloat {
-        if selectedDay?.date == day.date { return 1.5 }
-        if day.isToday { return 1 }
-        return 0
-    }
-
-    // MARK: - Selected Day Card (Enriched)
+    // MARK: - Selected Day Card
 
     private static let selectedDayFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -580,19 +330,7 @@ struct StreakCalendarView: View {
                 }
             }
 
-            // Word list
-            if !day.words.isEmpty {
-                Divider()
-                    .background(themeStore.dividerColor)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(day.words, id: \.self) { word in
-                        Text(word)
-                            .font(.custom("Poppins-Regular", size: 13))
-                            .foregroundColor(themeStore.secondaryText)
-                    }
-                }
-            }
         }
         .padding(12)
         .background(
@@ -606,18 +344,6 @@ struct StreakCalendarView: View {
     }
 
     // MARK: - Data Building
-
-    private var effectiveWeeksToShow: Int {
-        if selectedRange == .all {
-            guard let earliest = store.words.map({ $0.dateAdded }).min() else { return 1 }
-            let cal = Calendar.current
-            let today = cal.startOfDay(for: Date())
-            let start = cal.startOfDay(for: earliest)
-            let days = max(1, (cal.dateComponents([.day], from: start, to: today).day ?? 0) + 1)
-            return max(1, Int(ceil(Double(days) / 7.0)) + 1)
-        }
-        return selectedRange.weeksToShow
-    }
 
     private func rebuildMonthCalendar() {
         let cal = Calendar.current
@@ -701,66 +427,6 @@ struct StreakCalendarView: View {
         )
     }
 
-    private func rebuildHeatmap() {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let weeks = effectiveWeeksToShow
-
-        let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
-
-        let todayWeekday = cal.component(.weekday, from: today)
-        let daysBack = (weeks - 1) * 7 + (todayWeekday - 1)
-        guard let startDate = cal.date(byAdding: .day, value: -daysBack, to: today) else { return }
-
-        // Study minutes for entire range
-        let studyMinutes = studyTimeTracker.minutesForDateRange(from: startDate, to: today)
-
-        var builtWeeks: [[DayActivity]] = []
-        var currentDate = startDate
-        var allMax = 0
-
-        for _ in 0..<weeks {
-            var week: [DayActivity] = []
-            for _ in 0..<daysInWeek {
-                let wordsForDay = grouped[currentDate] ?? []
-                let count = wordsForDay.count
-                if count > allMax { allMax = count }
-                let isFuture = currentDate > today
-                let wordNames = Array(wordsForDay.prefix(5).map { $0.word })
-
-                week.append(DayActivity(
-                    date: currentDate,
-                    count: count,
-                    isFuture: isFuture,
-                    isToday: currentDate == today,
-                    studyMinutes: studyMinutes[currentDate] ?? 0,
-                    words: wordNames,
-                    isStreakMilestone: cachedMilestones.contains(currentDate)
-                ))
-                currentDate = cal.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
-            }
-            builtWeeks.append(week)
-        }
-
-        cachedCalendar = builtWeeks
-        cachedMaxCount = max(allMax, 1)
-
-        // Month labels
-        let df = DateFormatter()
-        df.dateFormat = "MMM"
-        var labels: [(String, Int)] = []
-        var lastMonth = -1
-        for weekIndex in 0..<weeks {
-            guard let weekStart = cal.date(byAdding: .day, value: weekIndex * 7, to: startDate) else { continue }
-            let month = cal.component(.month, from: weekStart)
-            if month != lastMonth {
-                labels.append((df.string(from: weekStart), weekIndex))
-                lastMonth = month
-            }
-        }
-        cachedMonthLabels = labels
-    }
-
     private func rebuildStats() {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
@@ -768,19 +434,12 @@ struct StreakCalendarView: View {
 
         var stats = CalendarStats()
 
-        // Determine range start based on mode
+        // Range start based on displayed month
         let rangeStart: Date
-        if selectedMode == .month {
-            if let md = cachedMonthData {
-                rangeStart = cal.date(from: DateComponents(year: md.year, month: md.month, day: 1)) ?? today
-            } else {
-                rangeStart = today
-            }
+        if let md = cachedMonthData {
+            rangeStart = cal.date(from: DateComponents(year: md.year, month: md.month, day: 1)) ?? today
         } else {
-            let weeks = effectiveWeeksToShow
-            let todayWeekday = cal.component(.weekday, from: today)
-            let daysBack = (weeks - 1) * 7 + (todayWeekday - 1)
-            rangeStart = cal.date(byAdding: .day, value: -daysBack, to: today) ?? today
+            rangeStart = today
         }
 
         let rangeGrouped = grouped.filter { $0.key >= rangeStart && $0.key <= today }

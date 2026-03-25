@@ -118,7 +118,6 @@ extension Color {
         self.init(red: red, green: green, blue: blue)
     }
 
-    /// Dynamic color that adapts to light/dark mode from hex strings
     init(light: String, dark: String) {
         self.init(UIColor { traits in
             traits.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))

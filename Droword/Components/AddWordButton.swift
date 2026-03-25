@@ -19,7 +19,6 @@ struct AddWordButton: View {
                 }
             } label: {
                 ZStack {
-                    // Hidden text to keep button size constant
                     Text(title)
                         .font(.custom("Poppins-Bold", size: 17))
                         .foregroundColor(.clear)

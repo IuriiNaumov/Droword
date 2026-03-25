@@ -22,7 +22,14 @@ struct QuizClozeView: View {
             } else if session.isComplete {
                 QuizCompletionView(
                     correct: session.correctCount,
-                    total: session.total
+                    total: session.total,
+                    bestStreak: session.bestStreak,
+                    missedWords: session.queue.compactMap { item in
+                        if session.answerResults[item.id] == false {
+                            return (word: item.word, translation: item.translation)
+                        }
+                        return nil
+                    }
                 ) {
                     startSession()
                 }
@@ -76,14 +83,12 @@ struct QuizClozeView: View {
                         if hasSubmitted && isCorrect {
                             Text(" \(item.word) ")
                                 .font(.custom("Poppins-Bold", size: 18))
-                                .foregroundColor(isAlmostCorrect
-                                    ? darkerShade(of: themeStore.accentGold, by: 0.2)
-                                    : darkerShade(of: themeStore.accentGreen, by: 0.2))
+                                .foregroundColor(themeStore.mainText)
                                 .transition(.scale.combined(with: .opacity))
                         } else if hasSubmitted && !isCorrect {
                             Text(" \(item.word) ")
                                 .font(.custom("Poppins-Bold", size: 18))
-                                .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.2))
+                                .foregroundColor(themeStore.mainText)
                                 .transition(.scale.combined(with: .opacity))
                         } else {
                             Text(" _____ ")
@@ -204,10 +209,10 @@ struct QuizClozeView: View {
     private func feedbackBadge(icon: String, text: String, iconColor: Color? = nil, color: Color) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundColor(darkerShade(of: iconColor ?? color, by: 0.3))
+                .foregroundColor(themeStore.mainText)
             Text(text)
                 .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(darkerShade(of: color, by: 0.3))
+                .foregroundColor(themeStore.mainText)
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 16)
@@ -234,7 +239,6 @@ struct QuizClozeView: View {
         hasSubmitted = false
         isCorrect = false
         isAlmostCorrect = false
-        isInputFocused = true
     }
 
     private func checkAnswer() {
@@ -284,10 +288,6 @@ struct QuizClozeView: View {
         hasSubmitted = false
         isCorrect = false
         isAlmostCorrect = false
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            isInputFocused = true
-        }
     }
 
     private func levenshteinDistance(_ s: String, _ t: String) -> Int {

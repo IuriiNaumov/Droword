@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Autumn leaf shape (SVG-based)
 struct LeafShape: Shape {
     func path(in rect: CGRect) -> Path {
         let s = min(rect.width, rect.height)
@@ -10,7 +9,6 @@ struct LeafShape: Shape {
 
         var path = Path()
 
-        // Leaf outline
         path.move(to: CGPoint(x: 60 * f + ox, y: 15 * f + oy))
         path.addCurve(
             to: CGPoint(x: 100 * f + ox, y: 65 * f + oy),
@@ -47,11 +45,9 @@ struct LeafVeinsShape: Shape {
 
         var path = Path()
 
-        // Central vein
         path.move(to: CGPoint(x: 60 * f + ox, y: 20 * f + oy))
         path.addLine(to: CGPoint(x: 60 * f + ox, y: 105 * f + oy))
 
-        // Side veins
         let veins: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
             (60, 40, 80, 55),
             (60, 55, 85, 70),

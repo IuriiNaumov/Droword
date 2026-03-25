@@ -23,7 +23,14 @@ struct QuizTypingView: View {
             } else if session.isComplete {
                 QuizCompletionView(
                     correct: session.correctCount,
-                    total: session.total
+                    total: session.total,
+                    bestStreak: session.bestStreak,
+                    missedWords: session.queue.compactMap { item in
+                        if session.answerResults[item.id] == false {
+                            return (word: item.word, translation: item.translation)
+                        }
+                        return nil
+                    }
                 ) {
                     startSession()
                 }
@@ -98,15 +105,15 @@ struct QuizTypingView: View {
                 if hasSubmitted && isAlmostCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.3))
+                            .foregroundColor(themeStore.mainText)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Almost correct!")
                                 .font(.custom("Poppins-Medium", size: 14))
-                                .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.3))
+                                .foregroundColor(themeStore.mainText)
                             if let item = session.currentItem {
                                 Text("Answer: \(expectedAnswer(for: item))")
                                     .font(.custom("Poppins-Regular", size: 13))
-                                    .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.2))
+                                    .foregroundColor(themeStore.mainText)
                             }
                         }
                     }
@@ -122,11 +129,11 @@ struct QuizTypingView: View {
                 if hasSubmitted && !isCorrect && !isAlmostCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
+                            .foregroundColor(themeStore.mainText)
                         if let item = session.currentItem {
                             Text("Correct: \(expectedAnswer(for: item))")
                                 .font(.custom("Poppins-Medium", size: 14))
-                                .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
+                                .foregroundColor(themeStore.mainText)
                         }
                     }
                     .padding(.vertical, 10)
@@ -141,10 +148,10 @@ struct QuizTypingView: View {
                 if hasSubmitted && isCorrect && !isAlmostCorrect {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                            .foregroundColor(themeStore.mainText)
                         Text("Correct!")
                             .font(.custom("Poppins-Medium", size: 14))
-                            .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                            .foregroundColor(themeStore.mainText)
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal, 16)
@@ -217,7 +224,6 @@ struct QuizTypingView: View {
         hasSubmitted = false
         isCorrect = false
         isAlmostCorrect = false
-        isInputFocused = true
     }
 
     private func checkAnswer() {
@@ -269,10 +275,6 @@ struct QuizTypingView: View {
         hasSubmitted = false
         isCorrect = false
         isAlmostCorrect = false
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            isInputFocused = true
-        }
     }
 
     private func levenshteinDistance(_ s: String, _ t: String) -> Int {

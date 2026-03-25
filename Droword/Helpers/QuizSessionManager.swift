@@ -7,6 +7,8 @@ final class QuizSessionManager: ObservableObject {
         case multipleChoice
         case typing
         case cloze
+        case matching
+        case sentenceBuilding
     }
 
     struct QuizItem: Identifiable {
@@ -23,6 +25,10 @@ final class QuizSessionManager: ObservableObject {
     @Published var correctCount: Int = 0
     @Published var isComplete: Bool = false
     @Published var exerciseTypes: [UUID: ExerciseType] = [:]
+    @Published var currentStreak: Int = 0
+    @Published var bestStreak: Int = 0
+    @Published var answerResults: [UUID: Bool] = [:]
+    @Published var directionMap: [UUID: Bool] = [:]  // true = reversed
 
     var maxSessionSize = 10
 
@@ -73,6 +79,9 @@ final class QuizSessionManager: ObservableObject {
         currentIndex = 0
         correctCount = 0
         isComplete = false
+        currentStreak = 0
+        bestStreak = 0
+        answerResults = [:]
     }
 
     func prepareMixedSession(from words: [StoredWord], filterTag: String? = nil) {
@@ -95,7 +104,9 @@ final class QuizSessionManager: ObservableObject {
             due.append(contentsOf: notDue.prefix(maxSessionSize - due.count))
         }
 
-        let items = Array(due.prefix(maxSessionSize)).map { w in
+        let selected = Array(due.prefix(maxSessionSize))
+
+        let items = selected.map { w in
             QuizItem(
                 id: w.id,
                 word: w.word,
@@ -106,23 +117,83 @@ final class QuizSessionManager: ObservableObject {
             )
         }
 
+        // Build a lookup for adaptive difficulty
+        let wordReps: [UUID: Int] = Dictionary(
+            uniqueKeysWithValues: selected.map { ($0.id, $0.repetitions) }
+        )
+
         queue = items.shuffled()
         currentIndex = 0
         correctCount = 0
         isComplete = false
+        currentStreak = 0
+        bestStreak = 0
+        answerResults = [:]
 
         exerciseTypes = [:]
-        for item in queue {
+
+        // Pick one item for matching round if session has 4+ items
+        let matchingCandidateIndex: Int? = queue.count >= 4 ? Int.random(in: 0..<queue.count) : nil
+
+        // Pick one item for sentence building if eligible
+        let sentenceCandidates = queue.indices.filter { i in
+            let item = queue[i]
+            guard let ex = item.example, !ex.isEmpty else { return false }
+            let words = ex.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+            return words.count >= 3 && words.count <= 12
+        }
+        let sentenceBuildingIndex: Int? = sentenceCandidates.filter { $0 != matchingCandidateIndex }.randomElement()
+
+        for (index, item) in queue.enumerated() {
+            if index == matchingCandidateIndex {
+                exerciseTypes[item.id] = .matching
+                continue
+            }
+            if index == sentenceBuildingIndex {
+                exerciseTypes[item.id] = .sentenceBuilding
+                continue
+            }
+
+            let reps = wordReps[item.id] ?? 0
             let isClozeEligible = item.example != nil
                 && !item.example!.isEmpty
                 && item.example!.localizedCaseInsensitiveContains(item.word)
 
-            if isClozeEligible {
+            if reps >= 2 {
+                // Adaptive: words answered correctly multiple times get harder exercises
+                if isClozeEligible {
+                    exerciseTypes[item.id] = Bool.random() ? .typing : .cloze
+                } else {
+                    exerciseTypes[item.id] = .typing
+                }
+            } else if isClozeEligible {
                 exerciseTypes[item.id] = ExerciseType.allCases.randomElement()!
             } else {
                 exerciseTypes[item.id] = Bool.random() ? .multipleChoice : .typing
             }
         }
+
+        // Build balanced direction map: roughly half normal, half reversed
+        let nonCloze = queue.filter { exerciseTypes[$0.id] != .cloze }
+        let halfReversed = nonCloze.count / 2
+        var reversedFlags = Array(repeating: true, count: halfReversed)
+            + Array(repeating: false, count: nonCloze.count - halfReversed)
+        reversedFlags.shuffle()
+        directionMap = [:]
+        for (i, item) in nonCloze.enumerated() {
+            directionMap[item.id] = reversedFlags[i]
+        }
+    }
+
+    /// Returns 4 word-translation pairs for matching exercise, including the current item
+    func matchingPairs(for item: QuizItem) -> [(word: String, translation: String)] {
+        var pairs: [(word: String, translation: String)] = [(item.word, item.translation)]
+        // Grab other items from queue as additional pairs
+        let others = queue.filter { $0.id != item.id }.shuffled().prefix(3)
+        for other in others {
+            pairs.append((other.word, other.translation))
+        }
+        return pairs.shuffled()
     }
 
     func distractors(for item: QuizItem, from allWords: [StoredWord], reversed: Bool = false) -> [String] {
@@ -142,7 +213,16 @@ final class QuizSessionManager: ObservableObject {
     }
 
     func recordAnswer(correct: Bool) {
-        if correct { correctCount += 1 }
+        if correct {
+            correctCount += 1
+            currentStreak += 1
+            bestStreak = max(bestStreak, currentStreak)
+        } else {
+            currentStreak = 0
+        }
+        if let item = currentItem {
+            answerResults[item.id] = correct
+        }
     }
 
     func advance() {

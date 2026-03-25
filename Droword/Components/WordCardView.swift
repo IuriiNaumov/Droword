@@ -90,71 +90,66 @@ struct WordCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
 
+            if let tag = tag, !tag.isEmpty {
+                Text(tag)
+                    .font(themeStore.medium(15))
+                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(colorForTag(tag).opacity(isDarkBackground ? 0.5 : 0.32))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
+                    )
+                    .padding(.bottom, 2)
+            }
+
+            headerRow
+
+            if let transcription = transcription, !transcription.isEmpty {
+                Text(transcription)
+                    .font(themeStore.regular(14))
+                    .foregroundColor(secondaryTextColor)
+            }
+
+            if let type = type, !type.isEmpty, isExpanded {
+                Text(type.capitalized)
+                    .font(themeStore.regular(14))
+                    .foregroundColor(secondaryTextColor)
+                    .padding(.bottom, 2)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            if let translation = translation {
+                Text(translation)
+                    .font(themeStore.regular(16))
+                    .foregroundColor(primaryTextColor)
+            }
+
             if isExpanded {
-
-                if let tag = tag, !tag.isEmpty {
-                    Text(tag)
-                        .font(themeStore.medium(15))
-                        .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 28)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(colorForTag(tag).opacity(isDarkBackground ? 0.5 : 0.32))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
-                        )
-                        .padding(.bottom, 2)
-                }
-
-                headerRow
-
-                if let transcription = transcription, !transcription.isEmpty {
-                    Text(transcription)
-                        .font(themeStore.regular(14))
-                        .foregroundColor(secondaryTextColor)
-                }
-
-                if let type = type, !type.isEmpty {
-                    Text(type.capitalized)
-                        .font(themeStore.regular(14))
-                        .foregroundColor(secondaryTextColor)
-                        .padding(.bottom, 2)
-                }
-
-                if let translation = translation {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(translation)
-                            .font(themeStore.regular(16))
-                            .foregroundColor(primaryTextColor)
-                    }
-                }
-
                 if let _ = example {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(highlightedExample)
-                            .font(themeStore.regular(16))
-                            .foregroundColor(primaryTextColor)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    Text(highlightedExample)
+                        .font(themeStore.regular(16))
+                        .foregroundColor(primaryTextColor)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 if let explanation = explanation {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(explanation)
-                            .font(themeStore.regular(16))
-                            .foregroundColor(primaryTextColor)
-                    }
+                    Text(explanation)
+                        .font(themeStore.regular(16))
+                        .foregroundColor(primaryTextColor)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 if let breakdown = breakdown {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(breakdown)
-                            .font(themeStore.regular(16))
-                            .foregroundColor(primaryTextColor)
-                    }
+                    Text(breakdown)
+                        .font(themeStore.regular(16))
+                        .foregroundColor(primaryTextColor)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 if let comment = comment, !comment.isEmpty {
@@ -168,60 +163,27 @@ struct WordCardView: View {
                             .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : themeStore.secondaryText)
                     }
                     .padding(.top, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
-
-                HStack {
-                    if storedWord != nil {
-                        Button(action: shareWord) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 16))
-                                .foregroundColor(secondaryTextColor)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Spacer()
-                    Button(action: { Haptics.warning(); onDelete() }) {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.red)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.top, 8)
-
-            } else {
-
-                headerRow
-
-                if let transcription = transcription, !transcription.isEmpty {
-                    Text(transcription)
-                        .font(themeStore.regular(14))
-                        .foregroundColor(secondaryTextColor)
-                }
-
-                if let translation = translation {
-                    Text(translation)
-                        .font(themeStore.regular(16))
-                        .foregroundColor(primaryTextColor)
-                }
-
-                HStack {
-                    if storedWord != nil {
-                        Button(action: shareWord) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 16))
-                                .foregroundColor(secondaryTextColor)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    Spacer()
-                    Button(action: { Haptics.warning(); onDelete() }) {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.red)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.top, 8)
             }
+
+            HStack {
+                if storedWord != nil {
+                    Button(action: shareWord) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16))
+                            .foregroundColor(secondaryTextColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
+                Button(action: { Haptics.warning(); onDelete() }) {
+                    Image(systemName: "trash.fill")
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 8)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -281,6 +243,7 @@ struct WordCardView: View {
             }
             .buttonStyle(.plain)
             .padding(.top, 6)
+
         }
         .frame(maxWidth: .infinity)
     }

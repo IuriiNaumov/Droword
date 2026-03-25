@@ -28,7 +28,6 @@ struct CoachMarkView: View {
                 Spacer()
 
                 VStack(spacing: 16) {
-                    // Step indicator
                     HStack(spacing: 6) {
                         ForEach(0..<steps.count, id: \.self) { i in
                             Circle()

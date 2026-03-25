@@ -23,7 +23,14 @@ struct QuizMultipleChoiceView: View {
             } else if session.isComplete {
                 QuizCompletionView(
                     correct: session.correctCount,
-                    total: session.total
+                    total: session.total,
+                    bestStreak: session.bestStreak,
+                    missedWords: session.queue.compactMap { item in
+                        if session.answerResults[item.id] == false {
+                            return (word: item.word, translation: item.translation)
+                        }
+                        return nil
+                    }
                 ) {
                     startSession()
                 }
@@ -132,10 +139,10 @@ struct QuizMultipleChoiceView: View {
                 return themeStore.mainText
             }
             if isThisCorrect {
-                return darkerShade(of: themeStore.accentGreen, by: 0.4)
+                return themeStore.mainText
             }
             if isSelected && !isThisCorrect {
-                return darkerShade(of: themeStore.accentRed, by: 0.4)
+                return themeStore.mainText
             }
             return themeStore.mainText.opacity(0.4)
         }
@@ -152,12 +159,12 @@ struct QuizMultipleChoiceView: View {
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.3))
+                        .foregroundColor(themeStore.mainText)
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.3))
+                        .foregroundColor(themeStore.mainText)
                         .transition(.scale.combined(with: .opacity))
                 }
             }

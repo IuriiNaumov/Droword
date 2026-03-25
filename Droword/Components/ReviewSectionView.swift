@@ -46,11 +46,11 @@ struct ReviewSectionView: View {
 
                 reviewCard
                     .id(learningQueue[currentIndex].id)
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-                    .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentIndex)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentIndex)
             }
         } else if !store.words.isEmpty {
             reviewEmptyState
@@ -100,26 +100,20 @@ struct ReviewSectionView: View {
 
     private var reviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                if let tag = card.tag, !tag.isEmpty {
-                    Text(tag)
-                        .font(themeStore.medium(13))
-                        .foregroundColor(isDarkBg ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 18)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(backgroundColor.opacity(isDarkBg ? 0.5 : 0.32))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1)
-                        )
-                }
-                Spacer()
-                Text("\(remaining) remaining")
-                    .font(themeStore.regular(13))
-                    .foregroundColor(secondaryText)
+            if let tag = card.tag, !tag.isEmpty {
+                Text(tag)
+                    .font(themeStore.medium(13))
+                    .foregroundColor(isDarkBg ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(backgroundColor.opacity(isDarkBg ? 0.5 : 0.32))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1)
+                    )
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -210,7 +204,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Text("Again")
                         .font(themeStore.bold(15))
-                        .foregroundColor(darkerShade(of: themeStore.accentRed, by: 0.4))
+                        .foregroundColor(themeStore.mainText)
                         .padding(.vertical, 13)
                         .frame(maxWidth: .infinity)
                         .background(
@@ -231,7 +225,7 @@ struct ReviewSectionView: View {
                             .font(.system(size: 13, weight: .bold))
                     }
                     .font(themeStore.bold(15))
-                    .foregroundColor(darkerShade(of: themeStore.accentGreen, by: 0.4))
+                    .foregroundColor(themeStore.mainText)
                     .padding(.vertical, 13)
                     .frame(maxWidth: .infinity)
                     .background(
