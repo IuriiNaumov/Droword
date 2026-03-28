@@ -68,7 +68,7 @@ struct PersonalDetailsView: View {
                     }
                 }) {
                     Text("Save")
-                        .duo3DStyle(themeStore.buttonAccent, isDisabled: !canSave)
+                        .duo3DStyle(themeStore.mainAccentColor, isDisabled: !canSave)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(!canSave)
@@ -81,16 +81,7 @@ struct PersonalDetailsView: View {
                 BannerToastView(type: .success, message: "Saved", duration: 1.5)
             }
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
+        
         .onAppear {
             tempName = userName
         }

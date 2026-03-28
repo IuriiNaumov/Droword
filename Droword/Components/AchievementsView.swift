@@ -60,15 +60,7 @@ struct AchievementsView: View {
             .padding(.bottom, 40)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
             ToolbarItem(placement: .principal) {
                 Text("Achievements")
                     .font(.custom("Poppins-Bold", size: 18))

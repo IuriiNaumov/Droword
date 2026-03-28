@@ -114,16 +114,13 @@ struct ProfileHeaderView: View {
                 }
 
                 Spacer()
-            }.padding(.top, 20)
+            }
 
         }
         .padding(.horizontal, 36)
-        .padding(.vertical, 20)
+        .padding(.top, 40)
         .onAppear {
-            let df = DateFormatter()
-            df.calendar = Calendar(identifier: .gregorian)
-            df.dateFormat = "yyyy-MM-dd"
-            let today = df.string(from: Date())
+            let today = DateFormatting.todayString
             if firstUseDate.isEmpty { firstUseDate = today }
 
             let computed = WordsStore.computeCurrentStreak(from: store.words)
@@ -167,10 +164,7 @@ struct ProfileHeaderView: View {
     }
 
     private func usageDurationString() -> String {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
+        guard let start = DateFormatting.dayFormatter.date(from: firstUseDate), let end = DateFormatting.dayFormatter.date(from: DateFormatting.todayString) else {
             return "0 days"
         }
         let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: start, to: end)
@@ -203,7 +197,9 @@ struct ProfileHeaderView: View {
     }
 
     private nonisolated func avatarFileURL() -> URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("user_avatar.jpg")
+        }
         return docs.appendingPathComponent("user_avatar.jpg")
     }
 }

@@ -8,34 +8,23 @@ struct StatCardView: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    private var baseColor: Color {
-        themeStore.isMonochrome ? themeStore.mainText.opacity(0.75) : themeStore.accentBlue
-    }
-
-    private var textColor: Color {
-        if themeStore.isMonochrome { return .white }
-        return themeStore.mainText
-    }
-
     var body: some View {
         VStack(spacing: 6) {
             Text(value)
                 .font(themeStore.bold(22))
-                .foregroundColor(textColor)
+                .foregroundColor(themeStore.isMonochrome ? .white : themeStore.mainText)
 
             Text(title)
                 .font(themeStore.medium(13))
-                .foregroundColor(textColor.opacity(0.75))
+                .foregroundColor(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(baseColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
+                .fill(themeStore.isMonochrome
+                      ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+                      : themeStore.appBg)
         )
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: value)
     }

@@ -39,12 +39,12 @@ struct OnboardingDetailsPage: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .stroke(tempName.count > 40 ? Color.red : themeStore.dividerColor, lineWidth: 2)
+                                    .stroke(tempName.count > 40 ? Color.accentRed : themeStore.dividerColor, lineWidth: 2)
                             )
 
                         Text(nameCounterText)
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(tempName.count > 40 ? Color.red : themeStore.secondaryText)
+                            .foregroundColor(tempName.count > 40 ? Color.accentRed: themeStore.secondaryText)
                             .padding(.trailing, 16)
                     }
                 }

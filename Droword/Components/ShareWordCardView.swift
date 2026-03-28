@@ -3,11 +3,10 @@ import SwiftUI
 struct ShareWordCardView: View {
     let word: StoredWord
     let backgroundColor: Color
-    let isDark: Bool
 
-    private var primaryText: Color { isDark ? .white : .mainBlack }
-    private var secondaryText: Color { isDark ? Color.white.opacity(0.85) : .mainBlack.opacity(0.8) }
-    private var subtleText: Color { isDark ? Color.white.opacity(0.6) : Color.mainGrey }
+    private var primaryText: Color { .mainBlack }
+    private var secondaryText: Color { .mainBlack.opacity(0.8) }
+    private var subtleText: Color { Color.mainGrey }
 
     private var isGolden: Bool { word.tag == "Golden" }
 
@@ -15,17 +14,13 @@ struct ShareWordCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let tag = word.tag, !tag.isEmpty {
                 Text(tag)
-                    .font(.custom("Poppins-Medium", size: 15))
-                    .foregroundColor(isDark ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 28)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(backgroundColor.opacity(isDark ? 0.5 : 0.32))
-                    )
+                    .font(.custom("Poppins-Medium", size: 13))
+                    .foregroundColor(Self.tagColor(for: tag))
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 18)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Self.tagColor(for: tag), lineWidth: 1)
                     )
                     .padding(.bottom, 2)
             }
@@ -76,7 +71,7 @@ struct ShareWordCardView: View {
             if let comment = word.comment, !comment.isEmpty {
                 Text(comment)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(isDark ? Color.white.opacity(0.75) : Color.mainGrey)
+                    .foregroundColor(Color.mainGrey)
                     .padding(.top, 4)
             }
 
@@ -129,29 +124,23 @@ struct ShareWordCardView: View {
 }
 
 extension ShareWordCardView {
-    static func cardColor(for word: StoredWord, themeStore: ThemeStore) -> Color {
-        guard let tag = word.tag, !tag.isEmpty else {
-            return Color(.secondarySystemBackground)
-        }
+    static func tagColor(for tag: String) -> Color {
         switch tag {
-        case "Chat": return themeStore.accentBlue
-        case "Travel": return themeStore.accentGreen
-        case "Street": return themeStore.accentPink
-        case "Movies": return themeStore.accentPurple
-        case "Golden": return themeStore.goldenColor
+        case "Travel": return Color.accentBlue
+        case "Golden": return Color.accentGold
         default:
-            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
-                return themeStore.resolvedTagColor(custom.colorHex)
+            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
+               let color = Color(fromHexString: custom.colorHex) {
+                return color
             }
-            return Color(.secondarySystemBackground)
+            return Color.gray
         }
     }
 
     static func renderImage(for word: StoredWord, themeStore: ThemeStore) -> UIImage? {
-        let bgColor = cardColor(for: word, themeStore: themeStore)
-        let isDark = UIColor(bgColor).isDarkColor
+        let bgColor = Color(.secondarySystemBackground)
 
-        let view = ShareWordCardView(word: word, backgroundColor: bgColor, isDark: isDark)
+        let view = ShareWordCardView(word: word, backgroundColor: bgColor)
 
         let controller = UIHostingController(rootView: view)
         controller.view.backgroundColor = .clear
@@ -164,14 +153,5 @@ extension ShareWordCardView {
         return renderer.image { _ in
             controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
         }
-    }
-}
-
-private extension UIColor {
-    var isDarkColor: Bool {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        getRed(&r, green: &g, blue: &b, alpha: &a)
-        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return lum < 0.5
     }
 }

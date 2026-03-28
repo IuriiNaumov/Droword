@@ -46,20 +46,13 @@ final class DailyChallengeManager: ObservableObject {
 
     @Published private(set) var totalCompleted: Int = 0
 
-    private static let dateFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        return df
-    }()
-
     private init() {
         totalCompleted = UserDefaults.standard.integer(forKey: totalCompletedKey)
         loadOrGenerate()
     }
 
     var todayString: String {
-        Self.dateFormatter.string(from: Date())
+        DateFormatting.todayString
     }
 
     var allCompleted: Bool {

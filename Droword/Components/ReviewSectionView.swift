@@ -23,13 +23,6 @@ struct ReviewSectionView: View {
         if allCaughtUp {
             allCaughtUpBanner
                 .transition(.opacity)
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            allCaughtUp = false
-                        }
-                    }
-                }
         } else if currentIndex < learningQueue.count {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
@@ -46,14 +39,9 @@ struct ReviewSectionView: View {
 
                 reviewCard
                     .id(learningQueue[currentIndex].id)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .trailing).combined(with: .opacity),
-                    removal: .move(edge: .leading).combined(with: .opacity)
-                ))
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentIndex)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.25), value: currentIndex)
             }
-        } else if !store.words.isEmpty {
-            reviewEmptyState
         }
         }
         .onAppear { prepareSession() }
@@ -64,38 +52,16 @@ struct ReviewSectionView: View {
     private var card: WordCard { learningQueue[currentIndex] }
 
     private var backgroundColor: Color {
-        if let tag = card.tag {
-            switch tag {
-            case "Chat":   return themeStore.accentBlue
-            case "Travel": return themeStore.accentGreen
-            case "Street": return themeStore.accentPink
-            case "Movies": return themeStore.accentPurple
-            case "Golden": return themeStore.goldenColor
-            default:
-                if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
-                    return themeStore.resolvedTagColor(custom.colorHex)
-                }
-            }
-        }
-        return themeStore.cardBg
+        themeStore.cardBg
     }
 
-    private var isDarkBg: Bool { backgroundColor.reviewIsDark }
-    private var hasTagColor: Bool { card.tag != nil && !card.tag!.isEmpty }
+
 
     private var primaryText: Color {
-        if isDarkBg { return .white }
-        if themeStore.isDuolingo && hasTagColor {
-            return darkerShade(of: backgroundColor, by: 0.45)
-        }
-        return themeStore.mainText
+        themeStore.mainText
     }
     private var secondaryText: Color {
-        if isDarkBg { return Color.white.opacity(0.85) }
-        if themeStore.isDuolingo && hasTagColor {
-            return darkerShade(of: backgroundColor, by: 0.35)
-        }
-        return themeStore.mainText.opacity(0.8)
+        themeStore.mainText.opacity(0.8)
     }
 
     private var reviewCard: some View {
@@ -103,16 +69,12 @@ struct ReviewSectionView: View {
             if let tag = card.tag, !tag.isEmpty {
                 Text(tag)
                     .font(themeStore.medium(13))
-                    .foregroundColor(isDarkBg ? Color.white.opacity(0.9) : darkerShade(of: backgroundColor, by: 0.45))
+                    .foregroundColor(themeStore.colorForTag(tag))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 18)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(backgroundColor.opacity(isDarkBg ? 0.5 : 0.32))
-                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1)
+                            .stroke(themeStore.colorForTag(tag), lineWidth: 1)
                     )
             }
 
@@ -203,7 +165,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Text("Again")
                         .font(themeStore.bold(15))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundColor(.white)
                         .padding(.vertical, 13)
                         .frame(maxWidth: .infinity)
                         .background(
@@ -218,13 +180,9 @@ struct ReviewSectionView: View {
                     scheduleNext(for: card, isGotIt: true)
                     advanceToNext(didReinsert: false)
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("Got it")
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .bold))
-                    }
-                    .font(themeStore.bold(15))
-                    .foregroundColor(themeStore.mainText)
+                    Text("Got it")
+                        .font(themeStore.bold(15))
+                        .foregroundColor(.white)
                     .padding(.vertical, 13)
                     .frame(maxWidth: .infinity)
                     .background(
@@ -239,10 +197,6 @@ struct ReviewSectionView: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(backgroundColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .fullScreenCover(isPresented: $showPremiumWall) {
@@ -254,19 +208,24 @@ struct ReviewSectionView: View {
 
     private var allCaughtUpBanner: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(themeStore.accentGreen)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("All caught up!")
-                        .font(themeStore.bold(16))
-                        .foregroundColor(themeStore.mainText)
-                    Text("You reviewed \(totalDue) \(totalDue == 1 ? "word" : "words")")
-                        .font(themeStore.regular(13))
+            HStack {
+                StatusBannerView(
+                    icon: "checkmark.circle.fill",
+                    iconColor: themeStore.accentGreen,
+                    title: "All caught up!",
+                    subtitle: "You reviewed \(totalDue) \(totalDue == 1 ? "word" : "words"). New reviews will appear when it's time to practice."
+                )
+
+                Button {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        allCaughtUp = false
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(themeStore.secondaryText)
                 }
-                Spacer()
+                .buttonStyle(.plain)
             }
 
             if !isPremium && !hasSeenReviewPaywall {
@@ -303,47 +262,10 @@ struct ReviewSectionView: View {
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
         .fullScreenCover(isPresented: $showPaywallFromReview) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
-        }
-    }
-
-    private var reviewEmptyState: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Review")
-                .font(themeStore.bold(24))
-                .foregroundColor(themeStore.mainText)
-                .padding(.horizontal, 20)
-
-            HStack(spacing: 12) {
-                Image(systemName: "clock.badge.checkmark")
-                    .font(.system(size: 22))
-                    .foregroundColor(themeStore.accentBlue)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Your words are growing!")
-                        .font(themeStore.medium(15))
-                        .foregroundColor(themeStore.mainText)
-                    Text("Reviews will appear here when it's time to practice.")
-                        .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(themeStore.cardBg)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(themeStore.dividerColor, lineWidth: 1)
-                    )
-            )
         }
     }
 
@@ -489,11 +411,4 @@ struct ReviewSectionView: View {
     }
 }
 
-private extension Color {
-    var reviewIsDark: Bool {
-        let ui = UIColor(self)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
-        return (0.2126 * r + 0.7152 * g + 0.0722 * b) < 0.5
-    }
-}
+

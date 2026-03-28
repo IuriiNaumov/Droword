@@ -14,6 +14,7 @@ struct AddWordView: View {
     @State private var isAdding = false
     @State private var showOfflineAlert = false
     @State private var showOfflineToast = false
+    @State private var showDuplicateAlert = false
     @AppStorage("isPremium") private var isPremium: Bool = false
     @AppStorage("hasSeenOfflineAlert") private var hasSeenOfflineAlert: Bool = false
     @FocusState private var focusedField: Field?
@@ -84,7 +85,7 @@ struct AddWordView: View {
             .scrollDismissesKeyboard(.interactively)
             .disabled(isAdding)
         }
-        .transaction { tx in tx.disablesAnimations = true }
+
         .overlay {
             if showOfflineAlert {
                 CustomAlertView(
@@ -100,6 +101,21 @@ struct AddWordView: View {
                     },
                     secondaryButton: .init(title: "Cancel", style: .cancel) {
                         showOfflineAlert = false
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(999)
+            }
+        }
+        .overlay {
+            if showDuplicateAlert {
+                CustomAlertView(
+                    icon: "doc.on.doc",
+                    iconColor: themeStore.accentGold,
+                    title: "Word already exists",
+                    message: "«\(word.trimmingCharacters(in: .whitespacesAndNewlines))» is already in your dictionary.",
+                    primaryButton: .init(title: "Got it", style: .primary) {
+                        showDuplicateAlert = false
                     }
                 )
                 .transition(.opacity)
@@ -138,13 +154,10 @@ struct AddWordView: View {
 
             HStack {
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(themeStore.secondaryText)
-                        .padding(8)
-                        .background(themeStore.secondaryText.opacity(0.12))
-                        .clipShape(Circle())
+                    CloseButtonIcon()
+                        .environmentObject(themeStore)
                 }
+                .buttonStyle(.plain)
                 Spacer()
             }
         }
@@ -213,6 +226,14 @@ struct AddWordView: View {
         guard !isAdding else { return }
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedWord.isEmpty else { return }
+
+        let isDuplicate = store.words.contains {
+            $0.word.lowercased() == trimmedWord.lowercased()
+        }
+        if isDuplicate {
+            showDuplicateAlert = true
+            return
+        }
 
         let canUseAI = isPremium || DailyLimitsManager.canTranslate
 

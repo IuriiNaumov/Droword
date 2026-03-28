@@ -86,7 +86,7 @@ struct ConfettiView: View {
                 width: CGFloat.random(in: 4...8),
                 height: CGFloat.random(in: 6...14),
                 isCircle: Bool.random(),
-                color: colors.randomElement() ?? .blue,
+                color: colors.randomElement() ?? Color.accentBlue,
                 opacity: Double.random(in: 0.7...1.0)
             )
         }

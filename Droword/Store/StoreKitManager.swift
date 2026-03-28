@@ -94,10 +94,7 @@ final class StoreKitManager: ObservableObject {
             
             let hasUsedTrial = UserDefaults.standard.bool(forKey: "hasUsedTrial")
             let trialStart = UserDefaults.standard.string(forKey: "trialStartDate") ?? ""
-            let df = DateFormatter()
-            df.calendar = Calendar(identifier: .gregorian)
-            df.dateFormat = "yyyy-MM-dd"
-            if hasUsedTrial, !trialStart.isEmpty, let start = df.date(from: trialStart) {
+            if hasUsedTrial, !trialStart.isEmpty, let start = DateFormatting.dayFormatter.date(from: trialStart) {
                 let daysSince = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
                 if daysSince > 7 {
                     UserDefaults.standard.set(false, forKey: "isPremium")

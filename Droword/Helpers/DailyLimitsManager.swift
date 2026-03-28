@@ -12,10 +12,7 @@ struct DailyLimitsManager {
     private static let goldenKey = "dailyLimits.goldenFetches"
 
     private static func resetIfNeeded() {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        let today = df.string(from: Date())
+        let today = DateFormatting.todayString
 
         if UserDefaults.standard.string(forKey: dateKey) != today {
             UserDefaults.standard.set(today, forKey: dateKey)

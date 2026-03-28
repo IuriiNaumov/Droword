@@ -55,7 +55,7 @@ struct QuizTypingView: View {
 
     private func typingView(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
-            Text("\(session.currentIndex + 1) / \(session.total)")
+            Text("\(min(session.answeredCount + 1, session.total))/\(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
                 .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
@@ -179,7 +179,7 @@ struct QuizTypingView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
                                     ? themeStore.secondaryText.opacity(0.3)
-                                    : themeStore.buttonAccent)
+                                    : themeStore.mainAccentColor)
                         )
                 }
                 .buttonStyle(.plain)
@@ -198,7 +198,7 @@ struct QuizTypingView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.buttonAccent)
+                                .fill(themeStore.mainAccentColor)
                         )
                 }
                 .buttonStyle(.plain)
@@ -277,32 +277,7 @@ struct QuizTypingView: View {
         isAlmostCorrect = false
     }
 
-    private func levenshteinDistance(_ s: String, _ t: String) -> Int {
-        let sArr = Array(s)
-        let tArr = Array(t)
-        let m = sArr.count
-        let n = tArr.count
 
-        if m == 0 { return n }
-        if n == 0 { return m }
-
-        var prev = Array(0...n)
-        var curr = [Int](repeating: 0, count: n + 1)
-
-        for i in 1...m {
-            curr[0] = i
-            for j in 1...n {
-                let cost = sArr[i - 1] == tArr[j - 1] ? 0 : 1
-                curr[j] = min(
-                    prev[j] + 1,
-                    curr[j - 1] + 1,
-                    prev[j - 1] + cost
-                )
-            }
-            prev = curr
-        }
-        return prev[n]
-    }
 
     private var emptyState: some View {
         VStack(spacing: 18) {

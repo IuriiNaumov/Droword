@@ -82,12 +82,7 @@ struct SeasonalEffectsSettingsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
+        
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
@@ -110,7 +105,7 @@ struct SeasonalEffectsSettingsView: View {
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
-                .tint(themeStore.buttonAccent)
+                .tint(themeStore.mainAccentColor)
         }
         .padding(.vertical, 14)
         .padding(.horizontal, 20)

@@ -52,40 +52,21 @@ struct SuggestionsContainer: Codable {
     let suggestions: [SuggestedWord]
 }
 
-private let suggestWorkerURL = "https://droword-api.droword-api.workers.dev"
-private let suggestWorkerAppKey = "drw_live_28f9a1c7e5d34b6"
-
 @MainActor
 func fetchSuggestionsWithTopic(
     words: [String],
-    languageStore: LanguageStore,
+    languageStore: LanguageStore
 ) async throws -> (topic: String?, suggestions: [SuggestedWord]) {
-    
-    let learningLanguage = languageStore.learningLanguage
-    let nativeLanguage = languageStore.nativeLanguage
-    let url = URL(string: "\(suggestWorkerURL)/suggest")!
-
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue(suggestWorkerAppKey, forHTTPHeaderField: "X-App-Key")
-
     let body: [String: Any] = [
         "words": words,
-        "learningLanguage": learningLanguage,
-        "nativeLanguage": nativeLanguage,
+        "learningLanguage": languageStore.learningLanguage,
+        "nativeLanguage": languageStore.nativeLanguage,
         "level": languageStore.learningLevel
     ]
 
-    request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
+    let request = try APIClient.makeRequest(endpoint: "suggest", body: body)
     let (data, response) = try await URLSession.shared.data(for: request)
-
-    guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-        let raw = String(data: data, encoding: .utf8) ?? "No body"
-        throw NSError(domain: "Worker", code: -1, userInfo: [NSLocalizedDescriptionKey: raw])
-    }
-
-    let container = try JSONDecoder().decode(SuggestionsContainer.self, from: data)
+    let validated = try APIClient.validateResponse(data, response)
+    let container = try JSONDecoder().decode(SuggestionsContainer.self, from: validated)
     return (topic: container.topic, suggestions: container.suggestions)
 }

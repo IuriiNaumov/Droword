@@ -107,7 +107,7 @@ struct MilestoneCelebrationView: View {
                         .font(.custom("Poppins-Bold", size: 17))
                         .foregroundColor(.white)
                 }
-                .duo3DStyle(themeStore.buttonAccent)
+                .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
             }

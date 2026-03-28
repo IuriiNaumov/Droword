@@ -33,7 +33,7 @@ final class ThemeStore: ObservableObject {
         let accentGold: Color
         let goldenColor: Color
         let accentRed: Color
-        let buttonAccent: Color
+        let mainAccentColor: Color
         let appBg: Color
         let cardBg: Color
         let mainText: Color
@@ -100,10 +100,10 @@ final class ThemeStore: ObservableObject {
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
-            buttonAccent: {
+            mainAccentColor: {
                 switch palette {
                 case .duolingo: return Color(hex: "#58CC02")
-                default: return Color.accentBlack
+                default: return Color("AccentBlack") // graphite
                 }
             }(),
             appBg: {
@@ -139,46 +139,46 @@ final class ThemeStore: ObservableObject {
             tabTint: {
                 switch palette {
                 case .duolingo: return Color(hex: "#58CC02")
-                default: return Color("MainBlack")
+                default: return Color("AccentBlack") // graphite tab tint
                 }
             }(),
             buttonShadow: {
                 switch palette {
                 case .duolingo: return Color(hex: "#46A302")
-                default: return Color.accentBlack.opacity(0.25)
+                default: return Color(hex: "#2A2A2A") // darker graphite shadow
                 }
             }(),
             iconGreen: {
                 switch palette {
-                case .colorful: return Color(hex: "#78C47C")
+                case .colorful: return Color(hex: "#38B05B")
                 case .duolingo: return Color(hex: "#58CC02")
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
             iconGold: {
                 switch palette {
-                case .colorful: return Color(hex: "#E8BC5E")
+                case .colorful: return Color(hex: "#EBA130")
                 case .duolingo: return Color(hex: "#2EC4B6")
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
             iconPurple: {
                 switch palette {
-                case .colorful: return Color(hex: "#A98DC8")
+                case .colorful: return Color(hex: "#7D71C8")
                 case .duolingo: return Color(hex: "#CE82FF")
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
             iconPink: {
                 switch palette {
-                case .colorful: return Color(hex: "#D4789A")
+                case .colorful: return Color(hex: "#D86B94")
                 case .duolingo: return Color(hex: "#FF7E7E")
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
             iconBlue: {
                 switch palette {
-                case .colorful: return Color(hex: "#7BADC8")
+                case .colorful: return Color(hex: "#5B9BD5")
                 case .duolingo: return Color(hex: "#89E219")
                 case .monochrome: return Color("MonoMedium")
                 }
@@ -204,7 +204,7 @@ final class ThemeStore: ObservableObject {
     var accentGold: Color { cached.accentGold }
     var goldenColor: Color { cached.goldenColor }
     var accentRed: Color { cached.accentRed }
-    var buttonAccent: Color { cached.buttonAccent }
+    var mainAccentColor: Color { cached.mainAccentColor }
     var appBg: Color { cached.appBg }
     var cardBg: Color { cached.cardBg }
     var mainText: Color { cached.mainText }

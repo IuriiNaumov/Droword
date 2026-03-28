@@ -91,10 +91,7 @@ struct DrowordApp: App {
             guard granted else { return }
             let lastActiveDay = UserDefaults.standard.string(forKey: "lastActiveDay") ?? ""
             if !lastActiveDay.isEmpty {
-                let df = DateFormatter()
-                df.calendar = Calendar(identifier: .gregorian)
-                df.dateFormat = "yyyy-MM-dd"
-                if let lastDate = df.date(from: lastActiveDay) {
+                if let lastDate = DateFormatting.dayFormatter.date(from: lastActiveDay) {
                     NotificationManager.shared.scheduleInactivityReminders(lastActive: lastDate)
                 }
             }
@@ -141,10 +138,7 @@ struct DrowordApp: App {
             if let due = w.dueDate { return due <= today } else { return true }
         }.count
 
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        let todayStr = df.string(from: Date())
+        let todayStr = DateFormatting.todayString
         let lastActiveDay = UserDefaults.standard.string(forKey: "lastActiveDay") ?? ""
         let hasPracticedToday = lastActiveDay == todayStr
         let currentStreak = UserDefaults.standard.integer(forKey: "currentStreak")
@@ -165,15 +159,8 @@ struct DrowordApp: App {
         )
     }
 
-    private static let trialDateFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        return df
-    }()
-
     private func checkTrialPeriod() {
-        let df = Self.trialDateFormatter
+        let df = DateFormatting.dayFormatter
 
         if !hasUsedTrial {
             hasUsedTrial = true
@@ -188,7 +175,8 @@ struct DrowordApp: App {
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         if daysSinceStart > 7 && isPremium {
             let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
-            if !hasPurchased {
+            let debugOverride = UserDefaults.standard.bool(forKey: "debugPremiumOverride")
+            if !hasPurchased && !debugOverride {
                 isPremium = false
                 UserDefaults.standard.set(false, forKey: "seasonalEffectsEnabled")
                 if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),

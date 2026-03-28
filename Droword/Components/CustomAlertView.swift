@@ -90,10 +90,6 @@ struct CustomAlertView: View {
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(themeStore.cardBg)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(themeStore.dividerColor, lineWidth: 1)
-                    )
             )
             .padding(.horizontal, 40)
             .shadow(color: .black.opacity(0.15), radius: 20, y: 10)

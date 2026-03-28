@@ -45,10 +45,6 @@ struct StatsView: View {
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
         .foregroundColor(themeStore.mainText)
         .padding(.horizontal, 20)

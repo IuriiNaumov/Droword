@@ -37,7 +37,7 @@ struct DictionarySettingsView: View {
                     .padding(.top, -8)
 
                 VStack(spacing: 0) {
-                    settingsRow(icon: "trash.fill", color: .red, title: "Clear \(store.words.count) word\(store.words.count == 1 ? "" : "s")") {
+                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear \(store.words.count) word\(store.words.count == 1 ? "" : "s")") {
                         store.clear()
                     }
                 }
@@ -47,12 +47,7 @@ struct DictionarySettingsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
+        
         .onChange(of: csvFileURL) { _, newURL in
             guard let url = newURL else { return }
             let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
@@ -112,7 +107,7 @@ struct DictionarySettingsView: View {
 
                 Text(title)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(title == "Clear All Words" ? .red : .primary)
+                    .foregroundColor(title == "Clear All Words" ? Color.accentRed : .primary)
 
                 Spacer()
 
@@ -128,7 +123,7 @@ struct DictionarySettingsView: View {
     }
 
     private func exportCSV() {
-        let df = settingsDayFormatter
+        let df = DateFormatting.dayFormatter
 
         var csv = "Word,Translation,Type,Tag,Comment,Example,Explanation,Breakdown,Transcription,From Language,To Language,Date Added\n"
         for w in store.words {
@@ -195,7 +190,7 @@ struct DictionarySettingsView: View {
 
         guard let colWord else { return }
 
-        let df = settingsDayFormatter
+        let df = DateFormatting.dayFormatter
 
         let existingWords = Set(store.words.map { $0.word.lowercased() })
         var count = 0

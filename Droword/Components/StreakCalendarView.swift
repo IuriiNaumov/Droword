@@ -319,10 +319,6 @@ struct StreakCalendarView: View {
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
     }
 

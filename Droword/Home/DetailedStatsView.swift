@@ -8,14 +8,6 @@ struct DetailedStatsView: View {
     @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    private var statColor: Color {
-        themeStore.accentBlue
-    }
-
-    private var statTextColor: Color {
-        themeStore.mainText
-    }
-
     private var wordsAddedToday: Int {
         let cal = Calendar.current
         return store.words.filter { cal.isDateInToday($0.dateAdded) }.count
@@ -118,7 +110,7 @@ struct DetailedStatsView: View {
     }
 
     private static let pieColors: [Color] = [
-        .blue, .green, .orange, .purple, .pink, .cyan, .yellow, .red, .indigo, .mint
+        Color.accentBlue, Color.accentGreen, Color.accentGold, Color.accentPurple, Color.accentPink, Color.accentBlue, Color.accentGold, Color.accentRed, .indigo, .mint
     ]
 
     var body: some View {
@@ -146,9 +138,8 @@ struct DetailedStatsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
                     }
                 }
             }
@@ -157,28 +148,11 @@ struct DetailedStatsView: View {
 
     private var overviewSection: some View {
         HStack(spacing: 12) {
-            miniStatCard(value: "\(store.totalWordsAdded)", label: "Total")
-            miniStatCard(value: "\(wordsAddedToday)", label: "Today")
-            miniStatCard(value: "\(wordsAddedLastWeek)", label: "7 days")
-            miniStatCard(value: "\(currentStreak)", label: "Streak")
+            StatCardView(title: "Total", value: "\(store.totalWordsAdded)")
+            StatCardView(title: "Today", value: "\(wordsAddedToday)")
+            StatCardView(title: "7 days", value: "\(wordsAddedLastWeek)")
+            StatCardView(title: "Streak", value: "\(currentStreak)")
         }
-    }
-
-    private func miniStatCard(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.custom("Poppins-Bold", size: 20))
-                .foregroundColor(statTextColor)
-            Text(label)
-                .font(.custom("Poppins-Medium", size: 12))
-                .foregroundColor(statTextColor.opacity(0.75))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(statColor.opacity(colorScheme == .dark ? 0.9 : 1.0))
-        )
     }
 
     private var studyTimeSection: some View {
@@ -266,7 +240,7 @@ struct DetailedStatsView: View {
                             .fill(Color.yellow.opacity(0.8))
                             .frame(width: max(0, geo.size.width * CGFloat(m.learning) / CGFloat(total)))
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.green.opacity(0.7))
+                            .fill(Color.accentGreen.opacity(0.7))
                             .frame(width: max(0, geo.size.width * CGFloat(m.known) / CGFloat(total)))
                     }
                 }
@@ -274,9 +248,9 @@ struct DetailedStatsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 5))
 
                 HStack(spacing: 16) {
-                    masteryLabel(color: Color.orange.opacity(0.7), title: "New", count: m.new)
-                    masteryLabel(color: Color.yellow.opacity(0.8), title: "Learning", count: m.learning)
-                    masteryLabel(color: Color.green.opacity(0.7), title: "Known", count: m.known)
+                    masteryLabel(color: Color.accentRed.opacity(0.7), title: "New", count: m.new)
+                    masteryLabel(color: Color.accentGold.opacity(0.8), title: "Learning", count: m.learning)
+                    masteryLabel(color: Color.accentGreen.opacity(0.7), title: "Known", count: m.known)
                 }
             }
         }
@@ -497,10 +471,6 @@ struct DetailedStatsView: View {
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
     }
 }

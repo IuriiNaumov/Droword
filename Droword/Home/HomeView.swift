@@ -20,19 +20,14 @@ struct HomeView: View {
     @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
     @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
     @AppStorage("hasSeenCoachMarks") private var hasSeenCoachMarks: Bool = false
+    @AppStorage("isPremium") private var isPremium: Bool = false
     @State private var showGoldenIntro = false
     @State private var showChallenges = false
+    @State private var showPremiumFromLimit = false
     @State private var showCoachMarks = false
     @State private var enrichmentToast: String?
     @State private var cachedRecentWords: [StoredWord] = []
     @State private var previousWordCount: Int?
-
-    private static let dayFormatter: DateFormatter = {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        return df
-    }()
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -133,6 +128,10 @@ struct HomeView: View {
             .environmentObject(golden)
             .fullScreenCover(isPresented: $showChallenges) {
                 DailyChallengeDetailView(manager: challengeManager)
+                    .environmentObject(themeStore)
+            }
+            .fullScreenCover(isPresented: $showPremiumFromLimit) {
+                PremiumView(asWall: true)
                     .environmentObject(themeStore)
             }
             .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
@@ -252,11 +251,29 @@ struct HomeView: View {
         }
     }
 
+    private var enrichmentLimitBanner: some View {
+        StatusBannerView(
+            icon: "clock.fill",
+            iconColor: themeStore.accentGold,
+            title: "Daily limit reached",
+            subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
+        )
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(themeStore.accentGold.opacity(0.12))
+        )
+        .onTapGesture {
+            Haptics.lightImpact()
+            showPremiumFromLimit = true
+        }
+    }
+
     private var mainContent: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
                 ProfileHeaderView()
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 60)
                 StatsView()
 
                 Button {
@@ -281,6 +298,11 @@ struct HomeView: View {
                             .font(themeStore.bold(24))
                             .foregroundColor(themeStore.mainText)
                             .padding(.horizontal, 20)
+
+                        if !isPremium && !DailyLimitsManager.canTranslate {
+                            enrichmentLimitBanner
+                                .padding(.horizontal, 20)
+                        }
 
                         ForEach(cachedRecentWords) { word in
                             WordCardView(
@@ -309,7 +331,7 @@ struct HomeView: View {
                     .padding(.top, 40)
                 }
             }
-            .padding(.bottom, 60)
+            .padding(.bottom, 20)
             .iPadContentWidth()
         }
         .background {

@@ -142,7 +142,7 @@ struct ListeningSettingsSheet: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: unifiedCornerRadius - 4)
-                                .fill(isSelected ? themeStore.buttonAccent : Color.clear)
+                                .fill(isSelected ? themeStore.mainAccentColor : Color.clear)
                         )
                 }
                 .buttonStyle(.plain)

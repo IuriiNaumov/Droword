@@ -59,7 +59,7 @@ struct QuizMultipleChoiceView: View {
 
     private func questionView(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
-            Text("\(session.currentIndex + 1) / \(session.total)")
+            Text("\(min(session.answeredCount + 1, session.total))/\(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
                 .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
@@ -106,7 +106,7 @@ struct QuizMultipleChoiceView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.buttonAccent)
+                                .fill(themeStore.mainAccentColor)
                         )
                 }
                 .buttonStyle(.plain)

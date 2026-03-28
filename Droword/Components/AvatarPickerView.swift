@@ -51,7 +51,7 @@ struct AvatarPickerView: View {
                 sourceButton(
                     icon: "camera.fill",
                     title: "Take a photo",
-                    color: .blue
+                    color: Color.accentBlue
                 ) {
                     showCamera = true
                 }
@@ -59,7 +59,7 @@ struct AvatarPickerView: View {
                 sourceButton(
                     icon: "photo.on.rectangle",
                     title: "Choose from gallery",
-                    color: .green
+                    color: Color.accentGreen
                 ) {
                     showPhotosPicker = true
                 }
@@ -68,7 +68,7 @@ struct AvatarPickerView: View {
                     sourceButton(
                         icon: "trash.fill",
                         title: "Remove photo",
-                        color: .red
+                        color: Color.accentRed
                     ) {
                         onComplete(nil)
                         dismiss()

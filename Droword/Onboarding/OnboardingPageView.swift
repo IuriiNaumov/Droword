@@ -77,7 +77,8 @@ struct OnboardingPageView: View {
                 CustomizeIllustration(accent: model.accent, size: size, px: px, py: py)
             }
         }
-        .frame(width: size, height: size * 0.75)
+        .frame(width: size, height: size * 1.15)
+        .clipped()
         .accessibilityHidden(true)
     }
 

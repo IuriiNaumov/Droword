@@ -17,18 +17,11 @@ struct PremiumView: View {
 
     private var trialDaysRemaining: Int? {
         guard hasUsedTrial, !trialStartDate.isEmpty,
-              let start = Self.trialDF.date(from: trialStartDate) else { return nil }
+              let start = DateFormatting.dayFormatter.date(from: trialStartDate) else { return nil }
         let daysPassed = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         let remaining = 7 - daysPassed
         return remaining > 0 ? remaining : nil
     }
-
-    private static let trialDF: DateFormatter = {
-        let df = DateFormatter()
-        df.calendar = Calendar(identifier: .gregorian)
-        df.dateFormat = "yyyy-MM-dd"
-        return df
-    }()
 
     private enum Plan: String {
         case monthly, yearly
@@ -67,7 +60,7 @@ struct PremiumView: View {
     ]
 
     var body: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack(alignment: .topLeading) {
             Color(.systemBackground).ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -112,29 +105,16 @@ struct PremiumView: View {
 
             if asWall {
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .padding(10)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(Circle())
+                    CloseButtonIcon()
+                        .environmentObject(themeStore)
+                        .contentShape(Rectangle())
                 }
-                .padding(.top, 16)
-                .padding(.trailing, 20)
+                .buttonStyle(.plain)
+                .padding(.top, 10)
+                .padding(.leading, 12)
             }
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            if !asWall {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
-        }
+        
         .onAppear {
             withAnimation(.easeOut(duration: 0.4)) {
                 appeared = true
@@ -146,7 +126,7 @@ struct PremiumView: View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.system(size: 40, weight: .medium))
-                .foregroundColor(isPremium ? Color(hex: "#34C759") : Color.accentBlack)
+                .foregroundColor(isPremium ? Color("AccentGreen") : Color.accentBlack)
                 .scaleEffect(appeared ? 1.0 : 0.5)
                 .opacity(appeared ? 1.0 : 0)
 
@@ -218,7 +198,7 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color(hex: "#34C759"))
+                        .foregroundColor(Color("AccentGreen"))
 
                     Text(row.title)
                         .font(.custom("Poppins-Regular", size: 16))
@@ -284,7 +264,7 @@ struct PremiumView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Capsule().fill(Color(hex: "#34C759")))
+                                .background(Capsule().fill(Color("AccentGreen")))
                         }
                     }
                     Text(detail)
@@ -339,7 +319,7 @@ struct PremiumView: View {
             if let error = purchaseError {
                 Text(error)
                     .font(.custom("Poppins-Regular", size: 12))
-                    .foregroundColor(.red)
+                    .foregroundColor(Color.accentRed)
                     .multilineTextAlignment(.center)
             }
         }
@@ -353,7 +333,7 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(Color(hex: "#34C759"))
+                        .foregroundColor(Color("AccentGreen"))
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRO is active")

@@ -54,10 +54,6 @@ struct GoldenWordSkeletonCard: View {
                     )
                 )
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(themeStore.dividerColor, lineWidth: 1)
-        )
         .onAppear {
             withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
                 shimmerPhase = 2.0

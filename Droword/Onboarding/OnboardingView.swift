@@ -161,7 +161,7 @@ struct OnboardingView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 56, height: 56)
-                    .background(Circle().fill(themeStore.buttonAccent))
+                    .background(Circle().fill(themeStore.mainAccentColor))
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())

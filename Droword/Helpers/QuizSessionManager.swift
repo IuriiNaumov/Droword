@@ -3,7 +3,7 @@ import Combine
 
 final class QuizSessionManager: ObservableObject {
 
-    enum ExerciseType: CaseIterable {
+    enum ExerciseType: String, CaseIterable, Codable {
         case multipleChoice
         case typing
         case cloze
@@ -11,7 +11,7 @@ final class QuizSessionManager: ObservableObject {
         case sentenceBuilding
     }
 
-    struct QuizItem: Identifiable {
+    struct QuizItem: Identifiable, Codable {
         let id: UUID
         let word: String
         let translation: String
@@ -29,8 +29,10 @@ final class QuizSessionManager: ObservableObject {
     @Published var bestStreak: Int = 0
     @Published var answerResults: [UUID: Bool] = [:]
     @Published var directionMap: [UUID: Bool] = [:]
+    @Published var answeredCount: Int = 0
     
     var maxSessionSize = 10
+    var originalSessionSize: Int = 0
 
     var currentItem: QuizItem? {
         guard currentIndex < queue.count else { return nil }
@@ -42,7 +44,7 @@ final class QuizSessionManager: ObservableObject {
         return exerciseTypes[item.id]
     }
 
-    var total: Int { queue.count }
+    var total: Int { originalSessionSize }
 
     func prepareSession(from words: [StoredWord], filterTag: String? = nil) {
         var filtered = words
@@ -76,8 +78,10 @@ final class QuizSessionManager: ObservableObject {
         }
 
         queue = items.shuffled()
+        originalSessionSize = queue.count
         currentIndex = 0
         correctCount = 0
+        answeredCount = 0
         isComplete = false
         currentStreak = 0
         bestStreak = 0
@@ -122,8 +126,10 @@ final class QuizSessionManager: ObservableObject {
         )
 
         queue = items.shuffled()
+        originalSessionSize = queue.count
         currentIndex = 0
         correctCount = 0
+        answeredCount = 0
         isComplete = false
         currentStreak = 0
         bestStreak = 0
@@ -163,7 +169,7 @@ final class QuizSessionManager: ObservableObject {
                     exerciseTypes[item.id] = .typing
                 }
             } else if isClozeEligible {
-                exerciseTypes[item.id] = ExerciseType.allCases.randomElement()!
+                exerciseTypes[item.id] = ExerciseType.allCases.randomElement() ?? .multipleChoice
             } else {
                 exerciseTypes[item.id] = Bool.random() ? .multipleChoice : .typing
             }
@@ -206,12 +212,30 @@ final class QuizSessionManager: ObservableObject {
     }
 
     func recordAnswer(correct: Bool) {
+        // Only count first attempt at each word for progress display
+        if let item = currentItem, answerResults[item.id] == nil {
+            answeredCount += 1
+        }
         if correct {
             correctCount += 1
             currentStreak += 1
             bestStreak = max(bestStreak, currentStreak)
         } else {
             currentStreak = 0
+            // Re-insert wrong answer near end of queue for retry
+            if let item = currentItem {
+                let retryItem = QuizItem(
+                    id: item.id,
+                    word: item.word,
+                    translation: item.translation,
+                    transcription: item.transcription,
+                    tag: item.tag,
+                    example: item.example
+                )
+                let insertAt = min(currentIndex + 3, queue.count)
+                queue.insert(retryItem, at: insertAt)
+                exerciseTypes[retryItem.id] = .multipleChoice
+            }
         }
         if let item = currentItem {
             answerResults[item.id] = correct
@@ -224,6 +248,81 @@ final class QuizSessionManager: ObservableObject {
         } else {
             currentIndex += 1
         }
+    }
+
+    // MARK: - Session persistence
+
+    private static let savedSessionKey = "savedQuizSession"
+
+    private struct SessionSnapshot: Codable {
+        let queue: [QuizItem]
+        let currentIndex: Int
+        let correctCount: Int
+        let currentStreak: Int
+        let bestStreak: Int
+        let answeredCount: Int
+        let originalSessionSize: Int
+        let answerResults: [String: Bool]   // UUID string -> Bool
+        let exerciseTypes: [String: String] // UUID string -> ExerciseType rawValue
+        let directionMap: [String: Bool]    // UUID string -> Bool
+    }
+
+    func saveSession() {
+        let snapshot = SessionSnapshot(
+            queue: queue,
+            currentIndex: currentIndex,
+            correctCount: correctCount,
+            currentStreak: currentStreak,
+            bestStreak: bestStreak,
+            answeredCount: answeredCount,
+            originalSessionSize: originalSessionSize,
+            answerResults: Dictionary(uniqueKeysWithValues: answerResults.map { ($0.key.uuidString, $0.value) }),
+            exerciseTypes: Dictionary(uniqueKeysWithValues: exerciseTypes.map { ($0.key.uuidString, $0.value.rawValue) }),
+            directionMap: Dictionary(uniqueKeysWithValues: directionMap.map { ($0.key.uuidString, $0.value) })
+        )
+        if let data = try? JSONEncoder().encode(snapshot) {
+            UserDefaults.standard.set(data, forKey: Self.savedSessionKey)
+        }
+    }
+
+    func restoreSession() -> Bool {
+        guard let data = UserDefaults.standard.data(forKey: Self.savedSessionKey),
+              let snapshot = try? JSONDecoder().decode(SessionSnapshot.self, from: data),
+              !snapshot.queue.isEmpty,
+              snapshot.currentIndex < snapshot.queue.count else {
+            return false
+        }
+
+        queue = snapshot.queue
+        currentIndex = snapshot.currentIndex
+        correctCount = snapshot.correctCount
+        currentStreak = snapshot.currentStreak
+        bestStreak = snapshot.bestStreak
+        answeredCount = snapshot.answeredCount
+        originalSessionSize = snapshot.originalSessionSize
+        isComplete = false
+        answerResults = Dictionary(uniqueKeysWithValues: snapshot.answerResults.compactMap { key, val in
+            guard let uuid = UUID(uuidString: key) else { return nil }
+            return (uuid, val)
+        })
+        exerciseTypes = Dictionary(uniqueKeysWithValues: snapshot.exerciseTypes.compactMap { key, val in
+            guard let uuid = UUID(uuidString: key),
+                  let type = ExerciseType(rawValue: val) else { return nil }
+            return (uuid, type)
+        })
+        directionMap = Dictionary(uniqueKeysWithValues: snapshot.directionMap.compactMap { key, val in
+            guard let uuid = UUID(uuidString: key) else { return nil }
+            return (uuid, val)
+        })
+        return true
+    }
+
+    func clearSavedSession() {
+        UserDefaults.standard.removeObject(forKey: Self.savedSessionKey)
+    }
+
+    var hasSavedSession: Bool {
+        UserDefaults.standard.data(forKey: Self.savedSessionKey) != nil
     }
 
     static func applyScheduling(

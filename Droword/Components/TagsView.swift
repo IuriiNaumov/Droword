@@ -12,7 +12,7 @@ struct TagsView: View {
     var sortOption: Binding<DictionarySortOption>? = nil
     @State private var isDeleteMode: Bool = false
 
-    private let builtInNames: Set<String> = ["Golden", "Chat", "Travel", "Street", "Movies"]
+    private let builtInNames: Set<String> = ["Golden", "Travel"]
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
@@ -20,10 +20,7 @@ struct TagsView: View {
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
             ("Golden", themeStore.goldenColor, false),
-            ("Chat",   themeStore.accentBlue, false),
-            ("Travel", themeStore.accentGreen, false),
-            ("Street", themeStore.accentPink, false),
-            ("Movies", themeStore.accentPurple, false),
+            ("Travel", themeStore.accentBlue, false),
         ]
         return custom + builtIn
     }
@@ -74,7 +71,7 @@ struct TagsView: View {
                             if isDeleteMode && tag.isCustom {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.red)
+                                    .foregroundColor(Color.accentRed)
                                     .transition(.scale.combined(with: .opacity))
                             }
 
@@ -146,7 +143,7 @@ struct TagsView: View {
                                 .foregroundColor(isDeleteMode ? .white : themeStore.secondaryText)
                                 .frame(width: 32, height: 32)
                                 .background(
-                                    Circle().fill(isDeleteMode ? Color.red : themeStore.secondaryText.opacity(0.15))
+                                    Circle().fill(isDeleteMode ? Color("AccentGreen") : themeStore.secondaryText.opacity(0.15))
                                 )
                         }
                         .buttonStyle(.plain)

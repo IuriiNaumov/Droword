@@ -29,7 +29,7 @@ struct NotificationSettingsView: View {
                         Spacer()
                         Toggle("", isOn: $dailyReminders)
                             .labelsHidden()
-                            .tint(themeStore.buttonAccent)
+                            .tint(themeStore.mainAccentColor)
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(themeStore.cardBg))
@@ -46,7 +46,7 @@ struct NotificationSettingsView: View {
                         Spacer()
                         Toggle("", isOn: $streakMilestones)
                             .labelsHidden()
-                            .tint(themeStore.buttonAccent)
+                            .tint(themeStore.mainAccentColor)
                     }
                     .padding()
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(themeStore.cardBg))
@@ -56,12 +56,7 @@ struct NotificationSettingsView: View {
             .padding(.vertical, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
+        
         .onChange(of: dailyReminders) { _, enabled in
             if enabled {
                 NotificationManager.shared.requestAuthorization { _ in }

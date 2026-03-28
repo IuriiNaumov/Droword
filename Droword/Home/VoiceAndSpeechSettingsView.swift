@@ -55,11 +55,6 @@ struct VoiceAndSpeechSettingsView: View {
             .padding(.vertical, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
+        
     }
 }

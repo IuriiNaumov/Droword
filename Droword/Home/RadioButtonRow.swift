@@ -15,7 +15,7 @@ struct RadioButtonRow: View {
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()
-                            .fill(themeStore.buttonAccent)
+                            .fill(themeStore.mainAccentColor)
                             .frame(width: 22, height: 22)
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))

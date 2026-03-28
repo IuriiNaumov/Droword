@@ -22,9 +22,8 @@ struct DailyChallengeDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
                     }
                 }
             }
@@ -69,10 +68,6 @@ struct DailyChallengeDetailView: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
     }
 
@@ -143,10 +138,6 @@ struct DailyChallengeDetailView: View {
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(themeStore.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
     }
 }

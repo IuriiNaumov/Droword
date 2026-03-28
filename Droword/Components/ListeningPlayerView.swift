@@ -22,14 +22,8 @@ struct ListeningPlayerView: View {
             VStack(spacing: 0) {
                 HStack {
                     Button(action: { session.stop(); dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(themeStore.mainText)
-                            .frame(width: 40, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: unifiedCornerRadius, style: .continuous)
-                                    .fill(themeStore.cardBg)
-                            )
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
                     }
                     .buttonStyle(.plain)
 
@@ -150,7 +144,7 @@ struct ListeningPlayerView: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: unifiedCornerRadius, style: .continuous)
-                        .fill(filteredWords.isEmpty ? themeStore.secondaryText.opacity(0.3) : themeStore.buttonAccent)
+                        .fill(filteredWords.isEmpty ? themeStore.secondaryText.opacity(0.3) : themeStore.mainAccentColor)
                 )
             }
             .buttonStyle(.plain)
@@ -308,7 +302,7 @@ struct ListeningPlayerView: View {
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: unifiedCornerRadius - 4)
-                                        .fill(isSelected ? themeStore.buttonAccent : Color.clear)
+                                        .fill(isSelected ? themeStore.mainAccentColor : Color.clear)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -381,10 +375,6 @@ struct ListeningPlayerView: View {
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(themeStore.cardBg)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(themeStore.dividerColor, lineWidth: 1)
-                    )
             )
             .padding(.horizontal, 20)
             .padding(.bottom, 48)
@@ -443,7 +433,7 @@ struct ListeningPlayerView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: unifiedCornerRadius, style: .continuous)
-                            .fill(themeStore.buttonAccent)
+                            .fill(themeStore.mainAccentColor)
                     )
             }
             .buttonStyle(.plain)

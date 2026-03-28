@@ -62,7 +62,7 @@ struct DictionaryView: View {
                                 .padding(.horizontal, 16)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(isSelectMode ? themeStore.buttonAccent : themeStore.cardBg)
+                                        .fill(isSelectMode ? themeStore.mainAccentColor : themeStore.cardBg)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -91,10 +91,6 @@ struct DictionaryView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(themeStore.cardBg)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(themeStore.dividerColor, lineWidth: 1)
-                        )
                 )
                 .padding(.horizontal, horizontalPadding)
 
@@ -138,7 +134,7 @@ struct DictionaryView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 22))
-                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.buttonAccent : themeStore.secondaryText)
+                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
                                     Text("Select all (\(filteredWords.count))")
                                         .font(themeStore.medium(15))
                                         .foregroundColor(themeStore.mainText)
@@ -162,7 +158,7 @@ struct DictionaryView: View {
                                     } label: {
                                         Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
                                             .font(.system(size: 22))
-                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.buttonAccent : themeStore.secondaryText)
+                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
                                     }
                                     .buttonStyle(.plain)
                                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -209,7 +205,7 @@ struct DictionaryView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.red)
+                            .fill(Color.accentRed)
                     )
                     .padding(.horizontal, horizontalPadding)
                     .padding(.bottom, 8)
@@ -242,7 +238,7 @@ struct DictionaryView: View {
         .background(themeStore.appBg)
         .sheet(isPresented: $showAddTag) {
             AddTagView()
-                .presentationDetents([.fraction(0.5)])
+                .presentationDetents([.fraction(0.65)])
                 .presentationDragIndicator(.visible)
         }
         .onAppear {

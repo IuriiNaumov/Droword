@@ -1,6 +1,4 @@
 import SwiftUI
-import AVFoundation
-import UIKit
 
 struct WordCard: Identifiable {
     let id: UUID
@@ -33,11 +31,7 @@ struct PracticeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
 
-    @State private var showListeningPlayer = false
-    @State private var showPremiumWall = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
-
-    private var hasEnoughWordsForPractice: Bool {
+    private var hasEnoughWords: Bool {
         store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count >= 4
     }
 
@@ -49,26 +43,13 @@ struct PracticeView: View {
                 header
                     .padding(.bottom, 8)
 
-                Group {
-                    if !hasEnoughWordsForPractice {
-                        practiceEmptyState
-                    } else {
-                        QuizMixedView(sessionSize: 15, filterTag: nil, direction: .mixed)
-                    }
+                if hasEnoughWords {
+                    QuizMixedView(sessionSize: 10)
+                } else {
+                    practiceEmptyState
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .iPadContentWidth()
-        }
-        .fullScreenCover(isPresented: $showListeningPlayer) {
-            ListeningPlayerView()
-                .environmentObject(store)
-                .environmentObject(themeStore)
-                .environmentObject(languageStore)
-        }
-        .fullScreenCover(isPresented: $showPremiumWall) {
-            PremiumView(asWall: true)
-                .environmentObject(themeStore)
         }
     }
 
@@ -88,25 +69,6 @@ struct PracticeView: View {
                 .foregroundColor(themeStore.mainText)
 
             Spacer()
-
-            Button {
-                Haptics.mediumImpact()
-                if isPremium || DailyLimitsManager.canPlayTTS {
-                    showListeningPlayer = true
-                } else {
-                    showPremiumWall = true
-                }
-            } label: {
-                Image(systemName: "headphones")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(themeStore.mainText)
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(themeStore.cardBg)
-                    )
-            }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)

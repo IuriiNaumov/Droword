@@ -68,7 +68,7 @@ struct QuizCompletionView: View {
                                 icon: "flame.fill",
                                 value: "\(bestStreak)",
                                 label: "Best streak",
-                                color: .orange
+                                color: themeStore.accentRed
                             )
                             statBubble(
                                 icon: "checkmark.circle.fill",
@@ -123,7 +123,7 @@ struct QuizCompletionView: View {
                             .frame(maxWidth: .infinity)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(themeStore.buttonAccent)
+                                    .fill(themeStore.mainAccentColor)
                             )
                     }
                     .buttonStyle(.plain)
@@ -150,7 +150,7 @@ struct QuizCompletionView: View {
     private func statBubble(icon: String, value: String, label: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: 16))
+                .font(.system(size: 20))
                 .foregroundColor(color)
             Text(value)
                 .font(.custom("Poppins-Bold", size: 18))

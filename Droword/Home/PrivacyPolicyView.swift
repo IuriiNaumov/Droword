@@ -59,12 +59,7 @@ struct PrivacyPolicyView: View {
             .padding(.vertical, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
+        
     }
 
     private func policySection(title: String, body: String) -> some View {

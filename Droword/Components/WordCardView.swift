@@ -31,20 +31,7 @@ struct WordCardView: View {
         self.onDelete = onDelete
     }
 
-    private func colorForTag(_ tag: String) -> Color {
-        switch tag {
-        case "Chat": return themeStore.accentBlue
-        case "Travel": return themeStore.accentGreen
-        case "Street": return themeStore.accentPink
-        case "Movies": return themeStore.accentPurple
-        case "Golden": return themeStore.goldenColor
-        default:
-            if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }) {
-                return themeStore.resolvedTagColor(custom.colorHex)
-            }
-            return themeStore.cardBg
-        }
-    }
+
 
     @State private var isExpanded = true
     @State private var isPlaying = false
@@ -57,34 +44,15 @@ struct WordCardView: View {
     private var isGolden: Bool { tag == "Golden" }
 
     private var backgroundColor: Color {
-        if let tag = tag, !tag.isEmpty {
-            return colorForTag(tag)
-        }
-        return themeStore.cardBg
-    }
-
-    private var isDarkBackground: Bool {
-        backgroundColor.isDarkColor
-    }
-
-    private var hasTagColor: Bool {
-        tag != nil && !tag!.isEmpty
+        themeStore.cardBg
     }
 
     private var primaryTextColor: Color {
-        if isDarkBackground { return .white }
-        if themeStore.isDuolingo && hasTagColor {
-            return darkerShade(of: backgroundColor, by: 0.45)
-        }
-        return themeStore.mainText
+        themeStore.mainText
     }
 
     private var secondaryTextColor: Color {
-        if isDarkBackground { return Color.white.opacity(0.85) }
-        if themeStore.isDuolingo && hasTagColor {
-            return darkerShade(of: backgroundColor, by: 0.35)
-        }
-        return themeStore.mainText.opacity(0.8)
+        themeStore.mainText.opacity(0.8)
     }
 
     var body: some View {
@@ -92,17 +60,13 @@ struct WordCardView: View {
 
             if let tag = tag, !tag.isEmpty {
                 Text(tag)
-                    .font(themeStore.medium(15))
-                    .foregroundColor(isDarkBackground ? Color.white.opacity(0.9) : darkerShade(of: colorForTag(tag), by: 0.45))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 28)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(colorForTag(tag).opacity(isDarkBackground ? 0.5 : 0.32))
-                    )
+                    .font(themeStore.medium(13))
+                    .foregroundColor(themeStore.colorForTag(tag))
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 18)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(darkerShade(of: backgroundColor, by: 0.15), lineWidth: 1.5)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(themeStore.colorForTag(tag), lineWidth: 1)
                     )
                     .padding(.bottom, 2)
             }
@@ -156,11 +120,11 @@ struct WordCardView: View {
                     HStack(alignment: .top, spacing: 6) {
                         Image(systemName: "brain.head.profile")
                             .font(.system(size: 14))
-                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.6) : themeStore.secondaryText.opacity(0.7))
+                            .foregroundColor(themeStore.secondaryText.opacity(0.7))
                             .padding(.top, 2)
                         Text(comment)
                             .font(themeStore.regular(16))
-                            .foregroundColor(isDarkBackground ? Color.white.opacity(0.75) : themeStore.secondaryText)
+                            .foregroundColor(themeStore.secondaryText)
                     }
                     .padding(.top, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -179,7 +143,7 @@ struct WordCardView: View {
                 Spacer()
                 Button(action: { Haptics.warning(); onDelete() }) {
                     Image(systemName: "trash.fill")
-                        .foregroundColor(.red)
+                        .foregroundColor(Color.accentRed)
                 }
                 .buttonStyle(.plain)
             }
@@ -190,10 +154,6 @@ struct WordCardView: View {
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(backgroundColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
-                )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .padding(.top, 12)
@@ -295,16 +255,6 @@ struct WordCardView: View {
             attributedString[range].font = .custom("Poppins-Bold", size: 16)
         }
         return attributedString
-    }
-}
-
-private extension Color {
-    var isDarkColor: Bool {
-        let ui = UIColor(self)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
-        let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-        return lum < 0.5
     }
 }
 

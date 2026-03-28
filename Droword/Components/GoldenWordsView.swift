@@ -85,10 +85,6 @@ struct GoldenWordsView: View {
                             .background(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .fill(gold)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                            .stroke(themeStore.dividerColor, lineWidth: 1)
-                                    )
                             )
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .transition(.scale.combined(with: .opacity))

@@ -23,13 +23,10 @@ struct AddTagView: View {
 
                     HStack {
                         Button { dismiss() } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(themeStore.secondaryText)
-                                .padding(8)
-                                .background(themeStore.secondaryText.opacity(0.12))
-                                .clipShape(Circle())
+                            CloseButtonIcon()
+                                .environmentObject(themeStore)
                         }
+                        .buttonStyle(.plain)
                         Spacer()
                     }
                 }.padding(.top, 40)
@@ -66,13 +63,37 @@ struct AddTagView: View {
                     }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+
+                    Text("Suggested")
+                        .font(.custom("Poppins-Regular", size: 14))
+                        .foregroundColor(themeStore.secondaryText)
+                        .padding(.top, 4)
+
+                    HStack(spacing: 12) {
+                        ForEach(suggestedColors, id: \.hex) { item in
+                            Button {
+                                colorHex = item.hex
+                                Haptics.selection()
+                            } label: {
+                                Circle()
+                                    .fill(Color(item.assetName))
+                                    .frame(width: 36, height: 36)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(colorHex == item.hex ? themeStore.mainText : Color.clear, lineWidth: 2)
+                                            .padding(-2)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
 
                 Spacer()
 
                 Button(action: { saveTag() }) {
                     Text(isSaving ? "Adding..." : "Add")
-                        .duo3DStyle(themeStore.buttonAccent, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .duo3DStyle(themeStore.mainAccentColor, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -88,6 +109,20 @@ struct AddTagView: View {
             }
         }
     }
+
+    private struct SuggestedColor {
+        let hex: String
+        let assetName: String
+    }
+
+    private let suggestedColors: [SuggestedColor] = [
+        SuggestedColor(hex: "#D86B94", assetName: "AccentPink"),
+        SuggestedColor(hex: "#5B9BD5", assetName: "AccentBlue"),
+        SuggestedColor(hex: "#7D71C8", assetName: "AccentPurple"),
+        SuggestedColor(hex: "#38B05B", assetName: "AccentGreen"),
+        SuggestedColor(hex: "#EBA130", assetName: "AccentGold"),
+        SuggestedColor(hex: "#E04F4F", assetName: "AccentRed"),
+    ]
 
     private var parsedColor: Color? {
         let trimmed = colorHex.trimmingCharacters(in: .whitespacesAndNewlines)

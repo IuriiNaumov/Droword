@@ -25,13 +25,16 @@ struct FormTextField: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 19)
-                .background(themeStore.cardBg)
                 .foregroundColor(themeStore.mainText)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(isFocused ? focusedColor : themeStore.dividerColor, lineWidth: isFocused ? 3 : 2)
+                .tint(themeStore.mainAccentColor)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(themeStore.dividerColor.opacity(0.55))
                 )
-                .cornerRadius(20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(isFocused ? themeStore.mainAccentColor : Color.clear, lineWidth: 2)
+                )
 
             if showCounter, let limit = maxLength {
                 Text("\(text.count)/\(limit)")
@@ -52,7 +55,7 @@ struct FormTextField: View {
         StatefulPreviewWrapper("Hello") { binding in
             FormTextField(title: "Username",
                           text: binding,
-                          focusedColor: .blue,
+                          focusedColor: Color.accentBlue,
                           maxLength: 12,
                           showCounter: true)
         }

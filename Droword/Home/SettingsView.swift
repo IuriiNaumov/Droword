@@ -39,7 +39,7 @@ struct SettingsView: View {
 
     private var trialDaysRemaining: Int? {
         guard hasUsedTrial, !trialStartDate.isEmpty,
-              let start = settingsDayFormatter.date(from: trialStartDate) else { return nil }
+              let start = DateFormatting.dayFormatter.date(from: trialStartDate) else { return nil }
         let daysPassed = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         let remaining = 7 - daysPassed
         return remaining > 0 ? remaining : nil
@@ -155,9 +155,8 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.primary)
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
                     }
                 }
             }
@@ -219,7 +218,7 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(isPremium ? Color(hex: "#34C759") : .white)
+                    .foregroundColor(isPremium ? Color("AccentGreen") : .white)
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
@@ -251,7 +250,7 @@ struct SettingsView: View {
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundColor(Color(hex: "#34C759"))
+                        .foregroundColor(Color("AccentGreen"))
                 }
             }
             .padding(.horizontal, 18)
@@ -321,7 +320,7 @@ struct SettingsView: View {
     }
 
     private func usageDurationString() -> String {
-        let df = settingsDayFormatter
+        let df = DateFormatting.dayFormatter
         guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
             return "0 days"
         }

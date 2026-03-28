@@ -54,8 +54,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         overrideRate ?? currentRate
     }
 
-    private let ttsEndpoint = URL(string: "https://droword-api.droword-api.workers.dev/tts")!
-    private let appKey = "drw_live_28f9a1c7e5d34b6"
+    private var ttsEndpoint: URL { URL(string: "\(APIClient.baseURL)/tts")! }
 
     private var playbackContinuation: CheckedContinuation<Void, Never>?
 
@@ -108,7 +107,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         var request = URLRequest(url: ttsEndpoint)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue(appKey, forHTTPHeaderField: "X-App-Key")
+        request.addValue(APIClient.appKey, forHTTPHeaderField: "X-App-Key")
 
         let body: [String: Any] = [
             "text": text,

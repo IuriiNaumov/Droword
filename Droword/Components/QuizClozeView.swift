@@ -62,7 +62,7 @@ struct QuizClozeView: View {
 
     private func clozeView(item: QuizSessionManager.QuizItem) -> some View {
         VStack(spacing: 0) {
-            Text("\(session.currentIndex + 1) / \(session.total)")
+            Text("\(min(session.answeredCount + 1, session.total))/\(session.total)")
                 .font(.custom("Poppins-Medium", size: 14))
                 .foregroundColor(themeStore.secondaryText)
                 .padding(.top, 8)
@@ -136,7 +136,7 @@ struct QuizClozeView: View {
                     }
 
                 if hasSubmitted && isAlmostCorrect {
-                    feedbackBadge(
+                    QuizFeedbackBadge(
                         icon: "checkmark.circle.fill",
                         text: "Almost! Answer: \(item.word)",
                         color: themeStore.accentGold
@@ -144,7 +144,7 @@ struct QuizClozeView: View {
                 }
 
                 if hasSubmitted && !isCorrect && !isAlmostCorrect {
-                    feedbackBadge(
+                    QuizFeedbackBadge(
                         icon: "xmark.circle.fill",
                         text: "Correct: \(item.word)",
                         color: themeStore.accentRed
@@ -152,7 +152,7 @@ struct QuizClozeView: View {
                 }
 
                 if hasSubmitted && isCorrect && !isAlmostCorrect {
-                    feedbackBadge(
+                    QuizFeedbackBadge(
                         icon: "checkmark.circle.fill",
                         text: "Correct!",
                         color: themeStore.accentGreen
@@ -176,7 +176,7 @@ struct QuizClozeView: View {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(userInput.trimmingCharacters(in: .whitespaces).isEmpty
                                     ? themeStore.secondaryText.opacity(0.3)
-                                    : themeStore.buttonAccent)
+                                    : themeStore.mainAccentColor)
                         )
                 }
                 .buttonStyle(.plain)
@@ -195,7 +195,7 @@ struct QuizClozeView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.buttonAccent)
+                                .fill(themeStore.mainAccentColor)
                         )
                 }
                 .buttonStyle(.plain)
@@ -206,22 +206,7 @@ struct QuizClozeView: View {
         }
     }
 
-    private func feedbackBadge(icon: String, text: String, iconColor: Color? = nil, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundColor(themeStore.mainText)
-            Text(text)
-                .font(.custom("Poppins-Medium", size: 14))
-                .foregroundColor(themeStore.mainText)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(color.opacity(0.3))
-        )
-        .transition(.scale.combined(with: .opacity))
-    }
+
 
     private var borderColor: Color {
         if !hasSubmitted {
@@ -290,32 +275,7 @@ struct QuizClozeView: View {
         isAlmostCorrect = false
     }
 
-    private func levenshteinDistance(_ s: String, _ t: String) -> Int {
-        let sArr = Array(s)
-        let tArr = Array(t)
-        let m = sArr.count
-        let n = tArr.count
 
-        if m == 0 { return n }
-        if n == 0 { return m }
-
-        var prev = Array(0...n)
-        var curr = [Int](repeating: 0, count: n + 1)
-
-        for i in 1...m {
-            curr[0] = i
-            for j in 1...n {
-                let cost = sArr[i - 1] == tArr[j - 1] ? 0 : 1
-                curr[j] = min(
-                    prev[j] + 1,
-                    curr[j - 1] + 1,
-                    prev[j - 1] + cost
-                )
-            }
-            prev = curr
-        }
-        return prev[n]
-    }
 
     private var emptyState: some View {
         VStack(spacing: 18) {

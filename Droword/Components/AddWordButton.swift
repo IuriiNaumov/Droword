@@ -25,15 +25,14 @@ struct AddWordButton: View {
 
                     if isLoading {
                         LoadingStagesView()
-                            .transition(.opacity)
                     } else {
                         Text(title)
                             .font(.custom("Poppins-Bold", size: 17))
                             .foregroundColor(.white)
-                            .transition(.opacity)
                     }
                 }
-                .duo3DStyle(themeStore.buttonAccent, isDisabled: isDisabled)
+
+                .duo3DStyle(themeStore.mainAccentColor, isDisabled: isDisabled)
             }
             .disabled(isDisabled || isLoading)
             .buttonStyle(Duo3DButtonStyle())
@@ -47,7 +46,6 @@ struct AddWordButton: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: errorMessage)
-        .animation(.easeInOut(duration: 0.2), value: isLoading)
     }
 
     private struct TimeoutError: Error {}
@@ -69,11 +67,11 @@ struct AddWordButton: View {
     @MainActor
     private func performAction() async {
         guard !isLoading else { return }
-        isLoading = true
+        withAnimation(.easeInOut(duration: 0.2)) { isLoading = true }
         errorMessage = nil
 
         defer {
-            isLoading = false
+            withAnimation(.easeInOut(duration: 0.2)) { isLoading = false }
         }
 
         do {

@@ -5,86 +5,36 @@ struct LanguageSelectionView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
     
-    @State private var showToast = false
-    @State private var toastType: AppToastType = .success
-    @State private var toastMessage = ""
-    @State private var toastID = UUID()
-    
     var body: some View {
-        ZStack {
-            
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 30) {
-                    
-                    Text("Language Preferences")
-                        .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top, 20)
-                    
-                    LanguageCubePicker(
-                        selectedLanguage: $languageStore.nativeLanguage,
-                        title: "I speak",
-                        languages: LanguageCatalog.availableLanguages,
-                        blockedLanguage: languageStore.learningLanguage
-                    )
-                    .onChange(of: languageStore.nativeLanguage) {
-                        showToastForChange()
-                    }
-                    
-                    LanguageCubePicker(
-                        selectedLanguage: $languageStore.learningLanguage,
-                        title: "I'm learning",
-                        languages: LanguageCatalog.availableLanguages,
-                        blockedLanguage: languageStore.nativeLanguage
-                    )
-                    .onChange(of: languageStore.learningLanguage) {
-                        showToastForChange()
-                    }
-                }
-                .padding(.bottom, 50)
-            }
-            .background(themeStore.appBg.ignoresSafeArea())
-            
-            if showToast {
-                BannerToastView(
-                    type: toastType,
-                    message: toastMessage,
-                    duration: 2
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 30) {
+                
+                Text("Language Preferences")
+                    .font(.custom("Poppins-Bold", size: 26))
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 20)
+                
+                LanguageCubePicker(
+                    selectedLanguage: $languageStore.nativeLanguage,
+                    title: "I speak",
+                    languages: LanguageCatalog.availableLanguages,
+                    blockedLanguage: languageStore.learningLanguage
                 )
-                .id(toastID)
+                
+                LanguageCubePicker(
+                    selectedLanguage: $languageStore.learningLanguage,
+                    title: "I'm learning",
+                    languages: LanguageCatalog.availableLanguages,
+                    blockedLanguage: languageStore.nativeLanguage
+                )
             }
+            .padding(.bottom, 50)
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-            }
-        }
+        .background(themeStore.appBg.ignoresSafeArea())
+        
     }
     
-    private func showToastForChange() {
-        let native = languageStore.nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
-        let learning = languageStore.learningLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if native.isEmpty || learning.isEmpty {
-            toastType = .success
-            toastMessage = "Language has been updated"
-        } else if native == learning {
-            toastType = .error
-            toastMessage = "Oops! Something went wrong."
-        } else {
-            toastType = .success
-            toastMessage = "Language has been updated"
-        }
-        
-        toastID = UUID()
-        showToast = true
-    }
 }
 
 #Preview {
