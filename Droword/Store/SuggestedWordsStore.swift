@@ -36,7 +36,10 @@ final class SuggestedWordsStore: ObservableObject {
             guard !relevantWords.isEmpty else { return }
             
             let baseWords = relevantWords.map { $0.word }
-            let result = try await fetchSuggestionsWithTopic(words: baseWords, languageStore: languageStore)
+            let allWords = words
+                .filter { $0.fromLanguage == currentLanguage }
+                .map { $0.word.lowercased() }
+            let result = try await fetchSuggestionsWithTopic(words: baseWords, exclude: allWords, languageStore: languageStore)
             self.topic = result.topic
             self.suggestedWords = result.suggestions
         } catch {

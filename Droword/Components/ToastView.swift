@@ -4,16 +4,10 @@ enum AppToastType {
     case success
     case error
 
-    var background: Color {
-        return Color.accentBlack
-    }
-
-    var textColor: Color {
+    var icon: String {
         switch self {
-        case .success:
-            return darkerShade(of: Color.accentBlue, by: 0.4)
-        case .error:
-            return darkerShade(of: Color.accentBlue, by: 0.4)
+        case .success: return "checkmark.circle.fill"
+        case .error: return "xmark.circle.fill"
         }
     }
 
@@ -28,6 +22,7 @@ enum AppToastType {
 }
 
 struct BannerToastView: View {
+    @EnvironmentObject private var themeStore: ThemeStore
 
     let type: AppToastType
     let message: String?
@@ -40,19 +35,19 @@ struct BannerToastView: View {
             if isVisible {
                 HStack(spacing: 10) {
 
-                    Image(systemName: type == .success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(.white)
+                    Image(systemName: type.icon)
+                        .foregroundColor(themeStore.toastText)
                         .font(.system(size: 18, weight: .semibold))
 
                     Text(message ?? type.text)
-                        .font(.custom("Poppins-Medium", size: 15))
-                        .foregroundColor(.white)
+                        .font(themeStore.medium(15))
+                        .foregroundColor(themeStore.toastText)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(type.background)
+                        .fill(themeStore.toastBg)
                 )
                 .padding(.top, 20)
                 .transition(

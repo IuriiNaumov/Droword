@@ -216,6 +216,16 @@ final class ThemeStore: ObservableObject {
 
     var accentSoft: Color { accentBlue.opacity(0.12) }
 
+    var toastBg: Color {
+        switch palette {
+        case .colorful: return Color(light: "#E3E8FA", dark: "#262B47")
+        case .duolingo: return Color(light: "#E5F8D8", dark: "#243819")
+        case .monochrome: return Color(light: "#EBEBEB", dark: "#383838")
+        }
+    }
+
+    var toastText: Color { accentBlue }
+
     var monoDark: Color { Color("MonoMedium") }
 
     var fontBold: String {

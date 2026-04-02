@@ -41,6 +41,7 @@ struct WordCardView: View {
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
 
+
     private var isSuggested: Bool { tag == "Suggested" }
 
     private var backgroundColor: Color {
@@ -156,6 +157,46 @@ struct WordCardView: View {
                 .fill(backgroundColor)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .contextMenu {
+            Button {
+                UIPasteboard.general.string = word
+                NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+            } label: {
+                Label(word, systemImage: "doc.on.doc")
+            }
+
+            if let translation = translation, !translation.isEmpty {
+                Button {
+                    UIPasteboard.general.string = translation
+                    NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+                } label: {
+                    Label(translation, systemImage: "doc.on.doc")
+                }
+            }
+
+            if let example = example, !example.isEmpty {
+                Button {
+                    UIPasteboard.general.string = example
+                    NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+                } label: {
+                    Label("Example", systemImage: "text.quote")
+                }
+            }
+
+            Button {
+                var parts: [String] = [word]
+                if let transcription = transcription, !transcription.isEmpty { parts.append(transcription) }
+                if let translation = translation, !translation.isEmpty { parts.append(translation) }
+                if let type = type, !type.isEmpty { parts.append(type.capitalized) }
+                if let example = example, !example.isEmpty { parts.append(example) }
+                if let explanation = explanation, !explanation.isEmpty { parts.append(explanation) }
+                if let comment = comment, !comment.isEmpty { parts.append(comment) }
+                UIPasteboard.general.string = parts.joined(separator: "\n")
+                NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+            } label: {
+                Label("Copy all", systemImage: "doc.on.doc.fill")
+            }
+        }
         .padding(.top, 12)
         .onTapGesture {
             if isExpanded {

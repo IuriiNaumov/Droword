@@ -26,6 +26,7 @@ struct HomeView: View {
     @State private var showPremiumFromLimit = false
     @State private var showCoachMarks = false
     @State private var enrichmentToast: String?
+    @State private var copiedToast = false
     @State private var cachedRecentWords: [StoredWord] = []
     @State private var lastSuggestionTodayCount: Int?
 
@@ -111,19 +112,19 @@ struct HomeView: View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
                 mainContent
-                    .tabItem { Label("Home", systemImage: "house.fill") }
+                    .tabItem { Label("", systemImage: "house.fill") }
                     .tag(Tab.home)
 
                 DictionaryView()
-                    .tabItem { Label("Dictionary", systemImage: "book.fill") }
+                    .tabItem { Label("", systemImage: "rectangle.portrait.on.rectangle.portrait") }
                     .tag(Tab.list)
 
                 PracticeView()
-                    .tabItem { Label("Practice", systemImage: "rectangle.portrait.on.rectangle.portrait") }
+                    .tabItem { Label("", systemImage: "lightbulb.fill") }
                     .tag(Tab.practice)
 
                 Color.clear
-                    .tabItem { Label("Add", systemImage: "plus.circle.fill") }
+                    .tabItem { Label("", systemImage: "plus.circle.fill") }
                     .tag(Tab.add)
             }
             .tint(themeStore.tabTint)
@@ -199,6 +200,21 @@ struct HomeView: View {
                 if let toast = enrichmentToast {
                     BannerToastView(type: .success, message: toast)
                         .zIndex(200)
+                }
+                if copiedToast {
+                    BannerToastView(type: .success, message: "Copied", duration: 1.5)
+                        .zIndex(201)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .copiedToClipboard)) { _ in
+                Haptics.selection()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    copiedToast = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        copiedToast = false
+                    }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .wordsEnriched)) { notification in

@@ -123,7 +123,7 @@ struct DetailedStatsView: View {
                                 x: .value("Date", item.date, unit: .day),
                                 y: .value("Minutes", item.minutes)
                             )
-                            .foregroundStyle(themeStore.accentBlue.gradient)
+                            .foregroundStyle(themeStore.accentBlue)
                             .cornerRadius(3)
                         }
                     }

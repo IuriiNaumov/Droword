@@ -242,4 +242,5 @@ struct DrowordApp: App {
 
 extension Notification.Name {
     static let sharedWordReceived = Notification.Name("sharedWordReceived")
+    static let copiedToClipboard = Notification.Name("copiedToClipboard")
 }

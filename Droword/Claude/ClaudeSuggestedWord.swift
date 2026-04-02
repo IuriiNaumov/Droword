@@ -55,14 +55,18 @@ struct SuggestionsContainer: Codable {
 @MainActor
 func fetchSuggestionsWithTopic(
     words: [String],
+    exclude: [String],
     languageStore: LanguageStore
 ) async throws -> (topic: String?, suggestions: [SuggestedWord]) {
-    let body: [String: Any] = [
+    var body: [String: Any] = [
         "words": words,
         "learningLanguage": languageStore.learningLanguage,
         "nativeLanguage": languageStore.nativeLanguage,
         "level": languageStore.learningLevel
     ]
+    if !exclude.isEmpty {
+        body["exclude"] = exclude
+    }
 
     let request = try APIClient.makeRequest(endpoint: "suggest", body: body)
     let (data, response) = try await URLSession.shared.data(for: request)
