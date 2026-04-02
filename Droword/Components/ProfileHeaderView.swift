@@ -72,13 +72,13 @@ struct ProfileHeaderView: View {
                             Image(uiImage: avatarImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: 64, height: 64)
+                                .frame(width: 58, height: 58)
                                 .clipped()
                                 .clipShape(Circle())
                         } else {
                             Circle()
                                 .fill(themeStore.accentBlue.opacity(0.25))
-                                .frame(width: 64, height: 64)
+                                .frame(width: 58, height: 58)
                                 .overlay(
                                     Image(systemName: "person.fill")
                                         .font(.system(size: 26, weight: .semibold))
