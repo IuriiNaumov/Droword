@@ -28,11 +28,11 @@ final class QuizSessionManager: ObservableObject {
     @Published var currentStreak: Int = 0
     @Published var bestStreak: Int = 0
     @Published var answerResults: [UUID: Bool] = [:]
+    @Published var orderedResults: [Bool] = []
     @Published var directionMap: [UUID: Bool] = [:]
     @Published var answeredCount: Int = 0
     
     var maxSessionSize = 10
-    var originalSessionSize: Int = 0
 
     var currentItem: QuizItem? {
         guard currentIndex < queue.count else { return nil }
@@ -44,49 +44,7 @@ final class QuizSessionManager: ObservableObject {
         return exerciseTypes[item.id]
     }
 
-    var total: Int { originalSessionSize }
-
-    func prepareSession(from words: [StoredWord], filterTag: String? = nil) {
-        var filtered = words
-            .filter { $0.translation != nil && !$0.translation!.isEmpty }
-
-        if let tag = filterTag, !tag.isEmpty {
-            filtered = filtered.filter { $0.tag == tag }
-        }
-
-        let today = Calendar.current.startOfDay(for: Date())
-        var due = filtered.filter { w in
-            if let d = w.dueDate { return d <= today } else { return true }
-        }.shuffled()
-        let notDue = filtered.filter { w in
-            if let d = w.dueDate { return d > today } else { return false }
-        }.shuffled()
-
-        if due.count < maxSessionSize {
-            due.append(contentsOf: notDue.prefix(maxSessionSize - due.count))
-        }
-
-        let items = Array(due.prefix(maxSessionSize)).map { w in
-            QuizItem(
-                id: w.id,
-                word: w.word,
-                translation: w.translation ?? "",
-                transcription: w.transcription,
-                tag: w.tag,
-                example: w.example
-            )
-        }
-
-        queue = items.shuffled()
-        originalSessionSize = queue.count
-        currentIndex = 0
-        correctCount = 0
-        answeredCount = 0
-        isComplete = false
-        currentStreak = 0
-        bestStreak = 0
-        answerResults = [:]
-    }
+    var total: Int { queue.count }
 
     func prepareMixedSession(from words: [StoredWord], filterTag: String? = nil) {
         var filtered = words
@@ -126,7 +84,6 @@ final class QuizSessionManager: ObservableObject {
         )
 
         queue = items.shuffled()
-        originalSessionSize = queue.count
         currentIndex = 0
         correctCount = 0
         answeredCount = 0
@@ -134,6 +91,7 @@ final class QuizSessionManager: ObservableObject {
         currentStreak = 0
         bestStreak = 0
         answerResults = [:]
+        orderedResults = []
 
         exerciseTypes = [:]
 
@@ -212,30 +170,12 @@ final class QuizSessionManager: ObservableObject {
     }
 
     func recordAnswer(correct: Bool) {
-        // Only count first attempt at each word for progress display
-        if let item = currentItem, answerResults[item.id] == nil {
-            answeredCount += 1
-        }
         if correct {
             correctCount += 1
             currentStreak += 1
             bestStreak = max(bestStreak, currentStreak)
         } else {
             currentStreak = 0
-            // Re-insert wrong answer near end of queue for retry
-            if let item = currentItem {
-                let retryItem = QuizItem(
-                    id: item.id,
-                    word: item.word,
-                    translation: item.translation,
-                    transcription: item.transcription,
-                    tag: item.tag,
-                    example: item.example
-                )
-                let insertAt = min(currentIndex + 3, queue.count)
-                queue.insert(retryItem, at: insertAt)
-                exerciseTypes[retryItem.id] = .multipleChoice
-            }
         }
         if let item = currentItem {
             answerResults[item.id] = correct
@@ -243,14 +183,16 @@ final class QuizSessionManager: ObservableObject {
     }
 
     func advance() {
+        if let item = currentItem, let result = answerResults[item.id] {
+            answeredCount += 1
+            orderedResults.append(result)
+        }
         if currentIndex + 1 >= queue.count {
             isComplete = true
         } else {
             currentIndex += 1
         }
     }
-
-    // MARK: - Session persistence
 
     private static let savedSessionKey = "savedQuizSession"
 
@@ -261,10 +203,10 @@ final class QuizSessionManager: ObservableObject {
         let currentStreak: Int
         let bestStreak: Int
         let answeredCount: Int
-        let originalSessionSize: Int
-        let answerResults: [String: Bool]   // UUID string -> Bool
-        let exerciseTypes: [String: String] // UUID string -> ExerciseType rawValue
-        let directionMap: [String: Bool]    // UUID string -> Bool
+        let answerResults: [String: Bool]
+        let exerciseTypes: [String: String]
+        let directionMap: [String: Bool]
+        let orderedResults: [Bool]
     }
 
     func saveSession() {
@@ -275,10 +217,10 @@ final class QuizSessionManager: ObservableObject {
             currentStreak: currentStreak,
             bestStreak: bestStreak,
             answeredCount: answeredCount,
-            originalSessionSize: originalSessionSize,
             answerResults: Dictionary(uniqueKeysWithValues: answerResults.map { ($0.key.uuidString, $0.value) }),
             exerciseTypes: Dictionary(uniqueKeysWithValues: exerciseTypes.map { ($0.key.uuidString, $0.value.rawValue) }),
-            directionMap: Dictionary(uniqueKeysWithValues: directionMap.map { ($0.key.uuidString, $0.value) })
+            directionMap: Dictionary(uniqueKeysWithValues: directionMap.map { ($0.key.uuidString, $0.value) }),
+            orderedResults: orderedResults
         )
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.standard.set(data, forKey: Self.savedSessionKey)
@@ -299,7 +241,6 @@ final class QuizSessionManager: ObservableObject {
         currentStreak = snapshot.currentStreak
         bestStreak = snapshot.bestStreak
         answeredCount = snapshot.answeredCount
-        originalSessionSize = snapshot.originalSessionSize
         isComplete = false
         answerResults = Dictionary(uniqueKeysWithValues: snapshot.answerResults.compactMap { key, val in
             guard let uuid = UUID(uuidString: key) else { return nil }
@@ -314,6 +255,7 @@ final class QuizSessionManager: ObservableObject {
             guard let uuid = UUID(uuidString: key) else { return nil }
             return (uuid, val)
         })
+        orderedResults = snapshot.orderedResults
         return true
     }
 

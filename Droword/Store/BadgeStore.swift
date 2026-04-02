@@ -7,15 +7,15 @@ enum BadgeCategory: String, CaseIterable {
     case streak
     case dailyGoal
     case quizMastery
-    case goldenWords
+    case suggestedWords
 
     var title: String {
         switch self {
-        case .wordCount:   return "Words"
-        case .streak:      return "Streaks"
-        case .dailyGoal:   return "Daily Goals"
-        case .quizMastery: return "Quizzes"
-        case .goldenWords: return "Golden Words"
+        case .wordCount:       return "Words"
+        case .streak:          return "Streaks"
+        case .dailyGoal:       return "Daily Goals"
+        case .quizMastery:     return "Quizzes"
+        case .suggestedWords:  return "Suggested Words"
         }
     }
 }
@@ -37,15 +37,15 @@ final class BadgeStore: ObservableObject {
     @Published var dailyGoalCompletions: Int {
         didSet { UserDefaults.standard.set(dailyGoalCompletions, forKey: "badge.dailyGoalCompletions") }
     }
-    @Published var goldenWordsAccepted: Int {
-        didSet { UserDefaults.standard.set(goldenWordsAccepted, forKey: "badge.goldenWordsAccepted") }
+    @Published var suggestedWordsAccepted: Int {
+        didSet { UserDefaults.standard.set(suggestedWordsAccepted, forKey: "badge.suggestedWordsAccepted") }
     }
 
     init() {
         let defaults = UserDefaults.standard
         self.quizCompletions = defaults.integer(forKey: "badge.quizCompletions")
         self.dailyGoalCompletions = defaults.integer(forKey: "badge.dailyGoalCompletions")
-        self.goldenWordsAccepted = defaults.integer(forKey: "badge.goldenWordsAccepted")
+        self.suggestedWordsAccepted = defaults.integer(forKey: "badge.suggestedWordsAccepted")
     }
 
     func recordQuizCompletion() {
@@ -56,8 +56,8 @@ final class BadgeStore: ObservableObject {
         dailyGoalCompletions += 1
     }
 
-    func recordGoldenWordAccepted() {
-        goldenWordsAccepted += 1
+    func recordSuggestedWordAccepted() {
+        suggestedWordsAccepted += 1
     }
 
     func progress(for badge: BadgeDefinition, totalWords: Int, currentStreak: Int) -> Int {
@@ -66,7 +66,7 @@ final class BadgeStore: ObservableObject {
         case .streak:       return currentStreak
         case .dailyGoal:    return dailyGoalCompletions
         case .quizMastery:  return quizCompletions
-        case .goldenWords:  return goldenWordsAccepted
+        case .suggestedWords: return suggestedWordsAccepted
         }
     }
 
@@ -95,8 +95,8 @@ final class BadgeStore: ObservableObject {
         BadgeDefinition(id: "quiz.50",  emoji: "📝", title: "Quiz Pro",      description: "Complete 50 quizzes",       category: .quizMastery, requiredCount: 50),
         BadgeDefinition(id: "quiz.100", emoji: "📝", title: "Quiz Legend",   description: "Complete 100 quizzes",      category: .quizMastery, requiredCount: 100),
 
-        BadgeDefinition(id: "golden.5",  emoji: "✨", title: "Gold Finder",    description: "Accept 5 golden words",     category: .goldenWords, requiredCount: 5),
-        BadgeDefinition(id: "golden.20", emoji: "✨", title: "Gold Collector", description: "Accept 20 golden words",    category: .goldenWords, requiredCount: 20),
-        BadgeDefinition(id: "golden.50", emoji: "✨", title: "Gold Hoarder",   description: "Accept 50 golden words",    category: .goldenWords, requiredCount: 50),
+        BadgeDefinition(id: "suggested.5",  emoji: "💡", title: "Open Mind",       description: "Accept 5 suggested words",   category: .suggestedWords, requiredCount: 5),
+        BadgeDefinition(id: "suggested.20", emoji: "💡", title: "Word Explorer",  description: "Accept 20 suggested words",  category: .suggestedWords, requiredCount: 20),
+        BadgeDefinition(id: "suggested.50", emoji: "💡", title: "Vocab Builder",  description: "Accept 50 suggested words",  category: .suggestedWords, requiredCount: 50),
     ]
 }

@@ -15,8 +15,8 @@ struct AddWordView: View {
     @State private var showOfflineAlert = false
     @State private var showOfflineToast = false
     @State private var showDuplicateAlert = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("hasSeenOfflineAlert") private var hasSeenOfflineAlert: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenOfflineAlert) private var hasSeenOfflineAlert: Bool = false
     @FocusState private var focusedField: Field?
     @State private var didAppear = false
 
@@ -46,17 +46,12 @@ struct AddWordView: View {
     ]
 
 
-    private var wordCounterText: String {
-        "\(min(word.count, 40))/40"
-    }
-
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-
+        NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    header
+                    Text("New word")
+                        .sheetTitle()
 
                     wordSection
                     translationSection
@@ -69,21 +64,33 @@ struct AddWordView: View {
                         }
                     }
 
-                    AddWordButton(
-                        title: "Add",
-                        isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty
-                    ) {
-                        await addWord()
+                    Button {
+                        Task { await addWord() }
+                    } label: {
+                        Text(isAdding ? "Adding..." : "Add")
+                            .font(.custom("Poppins-Bold", size: 17))
+                            .foregroundColor(.white)
+                            .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
-                    .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .padding(.top, 16)
+                    .buttonStyle(Duo3DButtonStyle())
+                    .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty || isAdding)
                 }
                 .padding(.horizontal, 24)
-                .padding(.top, 28)
+                .padding(.bottom, 20)
                 .iPadContentWidth(600)
             }
             .scrollDismissesKeyboard(.interactively)
             .disabled(isAdding)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
+                    }
+                }
+            }
         }
 
         .overlay {
@@ -145,35 +152,22 @@ struct AddWordView: View {
         }
     }
 
-    private var header: some View {
-        ZStack {
-            Text("New word")
-                .font(.custom("Poppins-Bold", size: 26))
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-            HStack {
-                Button { dismiss() } label: {
-                    CloseButtonIcon()
-                        .environmentObject(themeStore)
-                }
-                .buttonStyle(.plain)
-                Spacer()
-            }
-        }
-    }
-
     private var wordSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Word or phrase *")
-                .font(.custom("Poppins-Regular", size: 18))
-                .foregroundColor(themeStore.secondaryText)
+            HStack {
+                Text("Word or phrase *")
+                    .font(.custom("Poppins-Regular", size: 18))
+                    .foregroundColor(themeStore.secondaryText)
+                Spacer()
+                Text("\(word.count)/40")
+                    .font(.custom("Poppins-Regular", size: 14))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
+            }
 
             FormTextField(
                 title: wordPlaceholder,
                 text: $word,
-                maxLength: 40,
-                showCounter: true
+                maxLength: 40
             )
             .focused($focusedField, equals: .word)
             .textInputAutocapitalization(.sentences)
@@ -254,7 +248,7 @@ struct AddWordView: View {
         isAdding = true
 
         do {
-            let result = try await translateWithGPT(word: trimmedWord, languageStore: languageStore)
+            let result = try await translateWithClaude(word: trimmedWord, languageStore: languageStore)
 
             if !isPremium {
                 DailyLimitsManager.recordTranslation()

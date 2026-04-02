@@ -3,8 +3,8 @@ import SwiftUI
 struct VoiceAndSpeechSettingsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
-    @AppStorage("ttsRate") private var ttsRate: Double = 1.0
+    @AppStorage(AppStorageKeys.ttsVoice) private var ttsVoice: String = "coral"
+    @AppStorage(AppStorageKeys.ttsRate) private var ttsRate: Double = 1.0
 
     private let speedOptions: [Double] = [0.75, 0.9, 1.0, 1.25, 1.5]
 
@@ -12,10 +12,7 @@ struct VoiceAndSpeechSettingsView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Voice & Speech")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .sheetTitle()
 
                 Text("Voice")
                     .font(.custom("Poppins-Medium", size: 16))
@@ -52,7 +49,7 @@ struct VoiceAndSpeechSettingsView: View {
                     .padding(.horizontal)
                 }
             }
-            .padding(.vertical, 20)
+            .padding(.bottom, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
         

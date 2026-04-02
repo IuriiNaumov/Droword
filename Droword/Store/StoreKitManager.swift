@@ -88,16 +88,18 @@ final class StoreKitManager: ObservableObject {
         let hasPurchase = !purchased.isEmpty
         UserDefaults.standard.set(hasPurchase, forKey: "hasRealPurchase")
 
+        let debugOverride = UserDefaults.standard.bool(forKey: AppStorageKeys.debugPremiumOverride)
+        if debugOverride { return }
+
         if hasPurchase {
-            UserDefaults.standard.set(true, forKey: "isPremium")
-        } else if UserDefaults.standard.bool(forKey: "hasRealPurchase") == false {
-            
-            let hasUsedTrial = UserDefaults.standard.bool(forKey: "hasUsedTrial")
-            let trialStart = UserDefaults.standard.string(forKey: "trialStartDate") ?? ""
+            UserDefaults.standard.set(true, forKey: AppStorageKeys.isPremium)
+        } else {
+            let hasUsedTrial = UserDefaults.standard.bool(forKey: AppStorageKeys.hasUsedTrial)
+            let trialStart = UserDefaults.standard.string(forKey: AppStorageKeys.trialStartDate) ?? ""
             if hasUsedTrial, !trialStart.isEmpty, let start = DateFormatting.dayFormatter.date(from: trialStart) {
                 let daysSince = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
                 if daysSince > 7 {
-                    UserDefaults.standard.set(false, forKey: "isPremium")
+                    UserDefaults.standard.set(false, forKey: AppStorageKeys.isPremium)
                 }
             }
         }

@@ -12,37 +12,26 @@ struct FormTextField: View {
 
     @FocusState private var isFocused: Bool
 
-    private let counterFont = Font.custom("Poppins-Regular", size: 13)
-
     var body: some View {
-        ZStack(alignment: .trailing) {
-            TextField(title, text: $text)
-                .focused($isFocused)
-                .onReceive(Just(text)) { newValue in
-                    if let limit = maxLength, newValue.count > limit {
-                        text = String(newValue.prefix(limit))
-                    }
+        TextField(title, text: $text)
+            .focused($isFocused)
+            .onReceive(Just(text)) { newValue in
+                if let limit = maxLength, newValue.count > limit {
+                    text = String(newValue.prefix(limit))
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 19)
-                .foregroundColor(themeStore.mainText)
-                .tint(themeStore.mainAccentColor)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(themeStore.dividerColor.opacity(0.55))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(isFocused ? themeStore.mainAccentColor : Color.clear, lineWidth: 2)
-                )
-
-            if showCounter, let limit = maxLength {
-                Text("\(text.count)/\(limit)")
-                    .font(counterFont)
-                    .foregroundColor(themeStore.secondaryText)
-                    .padding(.trailing, 14)
             }
-        }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 19)
+            .foregroundColor(themeStore.mainText)
+            .tint(themeStore.mainAccentColor)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(themeStore.dividerColor.opacity(0.55))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(isFocused ? themeStore.mainAccentColor : Color.clear, lineWidth: 2)
+            )
     }
 }
 

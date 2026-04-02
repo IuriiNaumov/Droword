@@ -15,11 +15,6 @@ struct WordCard: Identifiable {
     let comment: String?
 }
 
-enum PracticeMode: String, CaseIterable {
-    case practice = "Practice"
-    case listening = "Listening"
-}
-
 enum QuizDirection: String, CaseIterable {
     case normal = "Word → Translation"
     case reversed = "Translation → Word"
@@ -88,7 +83,7 @@ struct PracticeView: View {
                 translation: "Вкусный",
                 example: "Este plato es muy sabroso y delicioso.",
                 comment: "Моё любимое слово!",
-                tag: "Golden",
+                tag: "Suggested",
                 fromLanguage: "es",
                 toLanguage: "ru"
             )

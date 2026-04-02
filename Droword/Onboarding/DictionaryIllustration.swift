@@ -19,7 +19,6 @@ struct DictionaryIllustration: View {
                 .offset(x: -size * 0.02 + px * 0.12, y: size * 0.02 + py * 0.08)
 
             VStack(alignment: .leading, spacing: 8) {
-                // Tag badge — matches WordCardView tag style
                 Text("Travel")
                     .font(themeStore.medium(13))
                     .foregroundColor(themeStore.accentBlue)
@@ -31,7 +30,6 @@ struct DictionaryIllustration: View {
                     )
                     .padding(.bottom, 2)
 
-                // Header row — matches WordCardView headerRow
                 HStack(alignment: .top, spacing: 8) {
                     Text("Serendipity")
                         .font(themeStore.bold(24))
@@ -39,30 +37,25 @@ struct DictionaryIllustration: View {
 
                     Spacer()
 
-                    // Static sound waves icon — matches WordCardView audio button
                     Image(systemName: "waveform")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(themeStore.mainText.opacity(0.4))
                         .padding(.top, 6)
                 }
 
-                // Transcription — matches WordCardView transcription
                 Text("/ˌser.ənˈdɪp.ə.ti/")
                     .font(themeStore.regular(14))
                     .foregroundColor(themeStore.mainText.opacity(0.8))
 
-                // Translation — matches WordCardView translation
                 Text("Счастливая случайность")
                     .font(themeStore.regular(16))
                     .foregroundColor(themeStore.mainText)
 
-                // Example with highlighted word — matches WordCardView example style
                 Text("A \(Text("serendipity").font(themeStore.bold(16)).foregroundColor(.orange)) led me to this place.")
                     .font(themeStore.regular(16))
                     .foregroundColor(themeStore.mainText)
                     .fixedSize(horizontal: false, vertical: true)
 
-                // Bottom row — matches WordCardView share/delete row
                 HStack {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 16))

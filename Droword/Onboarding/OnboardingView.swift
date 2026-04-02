@@ -7,7 +7,7 @@ struct OnboardingView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
 
-    @AppStorage("userName") private var userName: String = ""
+    @AppStorage(AppStorageKeys.userName) private var userName: String = ""
 
     @State private var animateStage: Bool = false
     @State private var dragOffset: CGSize = .zero
@@ -65,7 +65,7 @@ struct OnboardingView: View {
                             .padding(.horizontal, 28)
                             .padding(.top, 24)
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .automatic))
+                    .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.spring(response: 0.5, dampingFraction: 0.85), value: page)
                     .onChange(of: page) {
                         retriggerStagedAnimation()

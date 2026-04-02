@@ -11,36 +11,26 @@ struct AddTagView: View {
     @State private var didRequestNotifications = false
 
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-
+        NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
-                ZStack {
-                    Text("New Tag")
-                        .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-
-                    HStack {
-                        Button { dismiss() } label: {
-                            CloseButtonIcon()
-                                .environmentObject(themeStore)
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
-                    }
-                }.padding(.top, 40)
+                Text("New Tag")
+                    .sheetTitle()
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Name")
-                        .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(themeStore.secondaryText)
+                    HStack {
+                        Text("Name")
+                            .font(.custom("Poppins-Regular", size: 18))
+                            .foregroundColor(themeStore.secondaryText)
+                        Spacer()
+                        Text("\(name.count)/40")
+                            .font(.custom("Poppins-Regular", size: 14))
+                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                    }
 
                     FormTextField(
                         title: "Enter tag name",
                         text: $name,
-                        maxLength: 40,
-                        showCounter: true
+                        maxLength: 40
                     )
                 }
 
@@ -76,7 +66,7 @@ struct AddTagView: View {
                                 Haptics.selection()
                             } label: {
                                 Circle()
-                                    .fill(Color(item.assetName))
+                                    .fill(item.color)
                                     .frame(width: 36, height: 36)
                                     .overlay(
                                         Circle()
@@ -97,10 +87,19 @@ struct AddTagView: View {
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .padding(.bottom, 16)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 20)
+            .padding(.bottom, 20)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
+                    }
+                }
+            }
         }
         .task {
             if !didRequestNotifications {
@@ -110,21 +109,21 @@ struct AddTagView: View {
         }
     }
 
-    private struct SuggestedColor {
-        let hex: String
-        let assetName: String
+    private var suggestedColors: [(hex: String, color: Color)] {
+        [
+            ("#D86B94", themeStore.accentPink),
+            ("#5B9BD5", themeStore.accentBlue),
+            ("#7D71C8", themeStore.accentPurple),
+            ("#38B05B", themeStore.accentGreen),
+            ("#EBA130", themeStore.accentGold),
+            ("#E04F4F", themeStore.accentRed),
+        ]
     }
 
-    private let suggestedColors: [SuggestedColor] = [
-        SuggestedColor(hex: "#D86B94", assetName: "AccentPink"),
-        SuggestedColor(hex: "#5B9BD5", assetName: "AccentBlue"),
-        SuggestedColor(hex: "#7D71C8", assetName: "AccentPurple"),
-        SuggestedColor(hex: "#38B05B", assetName: "AccentGreen"),
-        SuggestedColor(hex: "#EBA130", assetName: "AccentGold"),
-        SuggestedColor(hex: "#E04F4F", assetName: "AccentRed"),
-    ]
-
     private var parsedColor: Color? {
+        if let match = suggestedColors.first(where: { $0.hex == colorHex }) {
+            return match.color
+        }
         let trimmed = colorHex.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = TagStore.shared.normalizeHex(trimmed)
         return Color(fromHexString: normalized)

@@ -3,20 +3,17 @@ import SwiftUI
 struct AppearancePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
+    @AppStorage(AppStorageKeys.appAppearance) private var storedAppearance: String = AppAppearance.system.rawValue
 
     private var selected: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
+        NavigationStack {
             VStack(spacing: 24) {
                 Text("Appearance")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
+                    .sheetTitle()
 
                 HStack(alignment: .top, spacing: 12) {
                     ForEach(AppAppearance.allCases, id: \.self) { option in
@@ -27,15 +24,22 @@ struct AppearancePickerView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+
+                Spacer()
             }
-
-            Spacer()
+            .padding(.bottom, 20)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
+                    }
+                }
+            }
         }
-        .background(themeStore.appBg.ignoresSafeArea())
-        
     }
-
-    // MARK: - Card
 
     private func appearanceCard(option: AppAppearance, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -74,8 +78,6 @@ struct AppearancePickerView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Preview block
-
     @ViewBuilder
     private func previewBlock(for option: AppAppearance, isSelected: Bool) -> some View {
         switch option {
@@ -88,14 +90,12 @@ struct AppearancePickerView: View {
         }
     }
 
-    // System card: left half light, right half dark — matching SVG clip-path approach
     private func systemPreview() -> some View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
 
             ZStack {
-                // Light half (left)
                 singlePreview(isDark: false)
                     .frame(width: w, height: h)
                     .clipped()
@@ -106,7 +106,6 @@ struct AppearancePickerView: View {
                         }
                     )
 
-                // Dark half (right)
                 singlePreview(isDark: true)
                     .frame(width: w, height: h)
                     .clipped()
@@ -120,10 +119,7 @@ struct AppearancePickerView: View {
         }
     }
 
-    // MARK: - Single preview
-
     private func singlePreview(isDark: Bool) -> some View {
-        // Exact colors from SVG designs
         let bg = isDark
             ? Color(hex: "#1C1C1E")
             : Color(hex: "#F2F2F7")
@@ -134,54 +130,45 @@ struct AppearancePickerView: View {
             ? Color(hex: "#2C2C2E")
             : Color(hex: "#E5E5EA")
 
-        // SVG viewport: 200×340, we scale proportionally using GeometryReader
         return GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-            // Scale factors based on 200×340 SVG
             let sx = w / 200.0
             let sy = h / 340.0
 
             ZStack(alignment: .topLeading) {
                 bg
 
-                // Avatar circle — SVG: cx=44 cy=60 r=22
                 Circle()
                     .fill(element)
                     .frame(width: 44 * sx, height: 44 * sy)
                     .offset(x: (44 - 22) * sx, y: (60 - 22) * sy)
 
-                // Title line 1 — SVG: x=78 y=48 w=52 h=10 rx=5
                 RoundedRectangle(cornerRadius: 5 * sx, style: .continuous)
                     .fill(element)
                     .frame(width: 52 * sx, height: 10 * sy)
                     .offset(x: 78 * sx, y: 48 * sy)
 
-                // Title line 2 — SVG: x=78 y=64 w=84 h=10 rx=5
                 RoundedRectangle(cornerRadius: 5 * sx, style: .continuous)
                     .fill(element)
                     .frame(width: 84 * sx, height: 10 * sy)
                     .offset(x: 78 * sx, y: 64 * sy)
 
-                // Divider — SVG: x=20 y=100 w=160 h=1
                 Rectangle()
                     .fill(card)
                     .frame(width: 160 * sx, height: max(1, 1 * sy))
                     .offset(x: 20 * sx, y: 100 * sy)
 
-                // Button 1 — SVG: x=20 y=116 w=160 h=44 rx=12
                 RoundedRectangle(cornerRadius: 12 * sx, style: .continuous)
                     .fill(card)
                     .frame(width: 160 * sx, height: 44 * sy)
                     .offset(x: 20 * sx, y: 116 * sy)
 
-                // Button 2 — SVG: x=20 y=172 w=160 h=44 rx=12
                 RoundedRectangle(cornerRadius: 12 * sx, style: .continuous)
                     .fill(card)
                     .frame(width: 160 * sx, height: 44 * sy)
                     .offset(x: 20 * sx, y: 172 * sy)
 
-                // Button 3 — SVG: x=20 y=228 w=160 h=44 rx=12
                 RoundedRectangle(cornerRadius: 12 * sx, style: .continuous)
                     .fill(card)
                     .frame(width: 160 * sx, height: 44 * sy)

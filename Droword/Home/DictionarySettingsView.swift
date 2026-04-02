@@ -15,10 +15,7 @@ struct DictionarySettingsView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Dictionary")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .sheetTitle()
 
                 VStack(spacing: 0) {
                     settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Dictionary") {
@@ -43,7 +40,7 @@ struct DictionarySettingsView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
-            .padding(.vertical, 20)
+            .padding(.bottom, 20)
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())

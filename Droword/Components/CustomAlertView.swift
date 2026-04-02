@@ -92,7 +92,7 @@ struct CustomAlertView: View {
                     .fill(themeStore.cardBg)
             )
             .padding(.horizontal, 40)
-            .shadow(color: .black.opacity(0.15), radius: 20, y: 10)
+
         }
     }
 

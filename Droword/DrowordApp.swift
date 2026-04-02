@@ -14,16 +14,15 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
 @main
 struct DrowordApp: App {
     @StateObject private var store = WordsStore()
-    @StateObject private var golden = GoldenWordsStore()
+    @StateObject private var suggested = SuggestedWordsStore()
     @StateObject private var languageStore = LanguageStore()
     @StateObject private var themeStore = ThemeStore()
     @StateObject private var badgeStore = BadgeStore()
 
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
-    @AppStorage("notifDailyReminders") private var dailyReminders: Bool = true
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("hasUsedTrial") private var hasUsedTrial: Bool = false
-    @AppStorage("trialStartDate") private var trialStartDate: String = ""
+    @AppStorage(AppStorageKeys.appAppearance) private var storedAppearance: String = AppAppearance.system.rawValue
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasUsedTrial) private var hasUsedTrial: Bool = false
+    @AppStorage(AppStorageKeys.trialStartDate) private var trialStartDate: String = ""
     @Environment(\.scenePhase) private var scenePhase
 
     private let notificationDelegate = NotificationDelegate()
@@ -35,9 +34,11 @@ struct DrowordApp: App {
     }
 
     init() {
+        migrateNotificationSettings()
+        configureNavigationBarTint()
         warmUpKeyboard()
         warmUpAudioSession()
-        warmUpGPT()
+        warmUpClaude()
         preloadFonts()
         setupNotifications()
         checkTrialPeriod()
@@ -47,9 +48,10 @@ struct DrowordApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(appearance.colorScheme)
+                .tint(themeStore.mainAccentColor)
                 .animation(.easeInOut(duration: 0.4), value: themeStore.palette)
                 .environmentObject(store)
-                .environmentObject(golden)
+                .environmentObject(suggested)
                 .environmentObject(languageStore)
                 .environmentObject(themeStore)
                 .environmentObject(badgeStore)
@@ -81,6 +83,9 @@ struct DrowordApp: App {
                 .onOpenURL { url in
                     handleIncomingURL(url)
                 }
+                .onChange(of: themeStore.palette) { _, newPalette in
+                    Self.applyNavigationTint(for: newPalette.rawValue)
+                }
         }
     }
 
@@ -89,7 +94,7 @@ struct DrowordApp: App {
 
         NotificationManager.shared.requestAuthorization { granted in
             guard granted else { return }
-            let lastActiveDay = UserDefaults.standard.string(forKey: "lastActiveDay") ?? ""
+            let lastActiveDay = UserDefaults.standard.string(forKey: AppStorageKeys.lastActiveDay) ?? ""
             if !lastActiveDay.isEmpty {
                 if let lastDate = DateFormatting.dayFormatter.date(from: lastActiveDay) {
                     NotificationManager.shared.scheduleInactivityReminders(lastActive: lastDate)
@@ -116,13 +121,38 @@ struct DrowordApp: App {
         try? session.setActive(true)
     }
 
-    private func warmUpGPT() {
-        let premium = UserDefaults.standard.bool(forKey: "isPremium")
+    private func warmUpClaude() {
+        let premium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
         guard premium else { return }
         let langStore = LanguageStore()
         Task.detached(priority: .background) {
-            _ = try? await translateWithGPT(word: "hola", languageStore: langStore)
+            _ = try? await translateWithClaude(word: "hola", languageStore: langStore)
         }
+    }
+
+    private static func applyNavigationTint(for paletteRaw: String) {
+        let tintColor: UIColor
+        switch paletteRaw {
+        case "duolingo":
+            tintColor = UIColor(red: 0.345, green: 0.8, blue: 0.008, alpha: 1)
+        case "monochrome":
+            tintColor = UIColor(named: "MonoMedium") ?? .gray
+        default:
+            tintColor = UIColor(named: "AccentBlue") ?? .systemBlue
+        }
+        UINavigationBar.appearance().tintColor = tintColor
+        for scene in UIApplication.shared.connectedScenes {
+            if let windowScene = scene as? UIWindowScene {
+                for window in windowScene.windows {
+                    window.tintColor = tintColor
+                }
+            }
+        }
+    }
+
+    private func configureNavigationBarTint() {
+        let raw = UserDefaults.standard.string(forKey: "appThemePalette") ?? "colorful"
+        Self.applyNavigationTint(for: raw)
     }
 
     private func preloadFonts() {
@@ -131,32 +161,41 @@ struct DrowordApp: App {
     }
 
     private func scheduleSmartNotifications() {
-        guard dailyReminders else { return }
+        let prefs = NotificationPreferences.fromDefaults()
+        let lastActiveDay = UserDefaults.standard.string(forKey: AppStorageKeys.lastActiveDay) ?? ""
+        let lastActive = DateFormatting.dayFormatter.date(from: lastActiveDay)
 
-        let today = Calendar.current.startOfDay(for: Date())
-        let dueCount = store.words.filter { w in
-            if let due = w.dueDate { return due <= today } else { return true }
-        }.count
-
-        let todayStr = DateFormatting.todayString
-        let lastActiveDay = UserDefaults.standard.string(forKey: "lastActiveDay") ?? ""
-        let hasPracticedToday = lastActiveDay == todayStr
-        let currentStreak = UserDefaults.standard.integer(forKey: "currentStreak")
-
-        let dueWordInfos = store.words
-            .filter { w in
-                guard let due = w.dueDate, due <= today else { return false }
-                guard let tr = w.translation, !tr.isEmpty else { return false }
-                return true
-            }
-            .map { DueWordInfo(word: $0.word, translation: $0.translation!) }
-
-        NotificationManager.shared.scheduleDaily(
-            dueCount: dueCount,
-            currentStreak: currentStreak,
-            hasPracticedToday: hasPracticedToday,
-            dueWords: dueWordInfos
+        NotificationManager.shared.rescheduleAll(
+            prefs: prefs,
+            allWords: store.words,
+            lastActiveDate: lastActive
         )
+    }
+
+    private func migrateNotificationSettings() {
+        let d = UserDefaults.standard
+        let migrated = d.bool(forKey: "notifSettingsMigratedV2")
+        guard !migrated else { return }
+
+        let oldDailyReminders = d.object(forKey: AppStorageKeys.notifDailyReminders) as? Bool ?? true
+        let oldStreakMilestones = d.object(forKey: AppStorageKeys.notifStreakMilestones) as? Bool ?? true
+
+        d.set(oldDailyReminders, forKey: AppStorageKeys.notifGlobalEnabled)
+        d.set(oldDailyReminders, forKey: AppStorageKeys.notifDailyReminderEnabled)
+        d.set(12, forKey: AppStorageKeys.notifDailyReminderHour)
+        d.set(0, forKey: AppStorageKeys.notifDailyReminderMinute)
+        d.set(false, forKey: AppStorageKeys.notifVocabEnabled)
+        d.set(true, forKey: AppStorageKeys.notifVocabShowTranscription)
+        d.set(true, forKey: AppStorageKeys.notifVocabShowTranslation)
+        d.set(false, forKey: AppStorageKeys.notifVocabIncludeMastered)
+        d.set(3, forKey: AppStorageKeys.notifVocabFrequency)
+        d.set(9, forKey: AppStorageKeys.notifVocabStartHour)
+        d.set(0, forKey: AppStorageKeys.notifVocabStartMinute)
+        d.set(18, forKey: AppStorageKeys.notifVocabEndHour)
+        d.set(0, forKey: AppStorageKeys.notifVocabEndMinute)
+        d.set(oldStreakMilestones, forKey: AppStorageKeys.notifStreakMilestones)
+
+        d.set(true, forKey: "notifSettingsMigratedV2")
     }
 
     private func checkTrialPeriod() {
@@ -175,10 +214,10 @@ struct DrowordApp: App {
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         if daysSinceStart > 7 && isPremium {
             let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
-            let debugOverride = UserDefaults.standard.bool(forKey: "debugPremiumOverride")
+            let debugOverride = UserDefaults.standard.bool(forKey: AppStorageKeys.debugPremiumOverride)
             if !hasPurchased && !debugOverride {
                 isPremium = false
-                UserDefaults.standard.set(false, forKey: "seasonalEffectsEnabled")
+                UserDefaults.standard.set(false, forKey: AppStorageKeys.seasonalEffectsEnabled)
                 if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),
                    savedPalette == ThemeStore.Palette.duolingo.rawValue {
                     UserDefaults.standard.set(ThemeStore.Palette.colorful.rawValue, forKey: "appThemePalette")

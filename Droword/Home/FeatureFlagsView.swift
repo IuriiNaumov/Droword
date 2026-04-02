@@ -2,13 +2,16 @@ import SwiftUI
 
 struct FeatureFlagsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("debugPremiumOverride") private var debugOverride: Bool = false
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.debugPremiumOverride) private var debugOverride: Bool = false
+    @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding: Bool = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
+                Text("Feature Flags")
+                    .sheetTitle()
+
                 VStack(spacing: 0) {
                     HStack(spacing: 16) {
                         ZStack {
@@ -65,12 +68,11 @@ struct FeatureFlagsView: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
-            .padding(.vertical, 20)
+            .padding(.bottom, 20)
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
         
-        .navigationTitle("Feature Flags")
-        .navigationBarTitleDisplayMode(.large)
+
     }
 }

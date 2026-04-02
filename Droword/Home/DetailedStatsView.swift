@@ -8,31 +8,6 @@ struct DetailedStatsView: View {
     @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    private var wordsAddedToday: Int {
-        let cal = Calendar.current
-        return store.words.filter { cal.isDateInToday($0.dateAdded) }.count
-    }
-
-    private var wordsAddedLastWeek: Int {
-        let cal = Calendar.current
-        guard let ago = cal.date(byAdding: .day, value: -7, to: Date()) else { return 0 }
-        return store.words.filter { $0.dateAdded >= ago }.count
-    }
-
-    private var currentStreak: Int {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let dates = Set(store.words.map { cal.startOfDay(for: $0.dateAdded) })
-
-        var streak = 0
-        var day = today
-        while dates.contains(day) {
-            streak += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
-            day = prev
-        }
-        return streak
-    }
 
     private var dueToday: Int {
         let today = Calendar.current.startOfDay(for: Date())
@@ -71,8 +46,6 @@ struct DetailedStatsView: View {
         return (best.key, best.value.count)
     }
 
-
-
     private var tagDistribution: [(tag: String, count: Int)] {
         var dict: [String: Int] = [:]
         for w in store.words {
@@ -97,18 +70,6 @@ struct DetailedStatsView: View {
         return f
     }
 
-    private var wordsPerDay: [(date: Date, count: Int)] {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
-
-        return (0..<30).reversed().compactMap { daysAgo in
-            guard let date = cal.date(byAdding: .day, value: -daysAgo, to: today) else { return nil }
-            let count = grouped[date]?.count ?? 0
-            return (date: date, count: count)
-        }
-    }
-
     private static let pieColors: [Color] = [
         Color.accentBlue, Color.accentGreen, Color.accentGold, Color.accentPurple, Color.accentPink, Color.accentBlue, Color.accentGold, Color.accentRed, .indigo, .mint
     ]
@@ -117,10 +78,10 @@ struct DetailedStatsView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
-                    overviewSection
+                    Text("Stats")
+                        .sheetTitle()
+
                     studyTimeSection
-                    calendarSection
-                    wordsPerDayChartSection
                     masterySection
                     reviewSection
                     tagChartSection
@@ -128,13 +89,10 @@ struct DetailedStatsView: View {
                     factsSection
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
                 .padding(.bottom, 40)
                 .iPadContentWidth()
             }
             .background(themeStore.appBg.ignoresSafeArea())
-            .navigationTitle("Stats")
-            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {
@@ -143,15 +101,6 @@ struct DetailedStatsView: View {
                     }
                 }
             }
-        }
-    }
-
-    private var overviewSection: some View {
-        HStack(spacing: 12) {
-            StatCardView(title: "Total", value: "\(store.totalWordsAdded)")
-            StatCardView(title: "Today", value: "\(wordsAddedToday)")
-            StatCardView(title: "7 days", value: "\(wordsAddedLastWeek)")
-            StatCardView(title: "Streak", value: "\(currentStreak)")
         }
     }
 
@@ -217,12 +166,6 @@ struct DetailedStatsView: View {
                 .foregroundColor(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private var calendarSection: some View {
-        sectionCard(title: "Activity") {
-            StreakCalendarView()
-        }
     }
 
     private var masterySection: some View {
@@ -299,52 +242,6 @@ struct DetailedStatsView: View {
                         .foregroundColor(themeStore.secondaryText)
                 }
                 .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private var wordsPerDayChartSection: some View {
-        let data = wordsPerDay
-        let maxCount = data.map(\.count).max() ?? 1
-
-        return sectionCard(title: "Words per day") {
-            VStack(alignment: .leading, spacing: 8) {
-                if data.allSatisfy({ $0.count == 0 }) {
-                    Text("No data yet — add words to see your chart")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.secondaryText)
-                        .frame(height: 160)
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Chart {
-                        ForEach(data, id: \.date) { item in
-                            BarMark(
-                                x: .value("Date", item.date, unit: .day),
-                                y: .value("Words", item.count)
-                            )
-                            .foregroundStyle(themeStore.accentGreen.gradient)
-                            .cornerRadius(3)
-                        }
-                    }
-                    .chartYAxis {
-                        AxisMarks(position: .leading) { value in
-                            AxisValueLabel()
-                                .font(.custom("Poppins-Regular", size: 10))
-                                .foregroundStyle(themeStore.secondaryText)
-                            AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                                .foregroundStyle(themeStore.dividerColor)
-                        }
-                    }
-                    .chartXAxis {
-                        AxisMarks(values: .stride(by: .day, count: 7)) { value in
-                            AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-                                .font(.custom("Poppins-Regular", size: 10))
-                                .foregroundStyle(themeStore.secondaryText)
-                        }
-                    }
-                    .chartYScale(domain: 0...(max(maxCount, 1)))
-                    .frame(height: 160)
-                }
             }
         }
     }
@@ -428,8 +325,6 @@ struct DetailedStatsView: View {
                     factRow(text: "Best day: \(dateFormatter.string(from: best.date)) (\(best.count) words)")
                 }
 
-                factRow(text: "Level: \(languageStore.learningLevel)")
-
                 if let first = store.words.map({ $0.dateAdded }).min() {
                     let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
                     factRow(text: "Learning for \(days) day\(days == 1 ? "" : "s")")
@@ -438,15 +333,6 @@ struct DetailedStatsView: View {
                 let totalMinutes = studyTimeTracker.totalAllTimeMinutes
                 if totalMinutes > 0 {
                     factRow(text: "Total study time: \(StudyTimeTracker.format(seconds: totalMinutes * 60))")
-                }
-
-                let avgPerDay: Double = {
-                    guard let first = store.words.map({ $0.dateAdded }).min() else { return 0 }
-                    let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
-                    return Double(store.words.count) / Double(days)
-                }()
-                if avgPerDay > 0 {
-                    factRow(text: "Average: \(String(format: "%.1f", avgPerDay)) words/day")
                 }
             }
         }

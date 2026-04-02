@@ -4,9 +4,9 @@ import StoreKit
 struct PremiumView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("hasUsedTrial") private var hasUsedTrial: Bool = false
-    @AppStorage("trialStartDate") private var trialStartDate: String = ""
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasUsedTrial) private var hasUsedTrial: Bool = false
+    @AppStorage(AppStorageKeys.trialStartDate) private var trialStartDate: String = ""
     @StateObject private var storeKit = StoreKitManager.shared
 
     var asWall: Bool = false
@@ -60,61 +60,23 @@ struct PremiumView: View {
     ]
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color(.systemBackground).ignoresSafeArea()
-
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    headerSection
-                        .padding(.top, asWall ? 56 : 24)
-
-                    if isPremium {
-                        proActiveFeatures
-                            .padding(.top, 28)
-
-                        activeSection
-                            .padding(.top, 28)
-                    } else {
-                        comparisonSection
-                            .padding(.top, 28)
-
-                        plansSection
-                            .padding(.top, 28)
-
-                        subscribeButton
-                            .padding(.top, 24)
-
-                        Button {
-                            Task { await storeKit.restorePurchases() }
-                        } label: {
-                            Text("Restore purchases")
-                                .font(.custom("Poppins-Regular", size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        .disabled(storeKit.isLoading)
-                        .padding(.top, 12)
-
-                        subscriptionDisclosure
-
-                        legalLinks
-                    }
-                }
-                .padding(.bottom, 50)
-                .iPadContentWidth(600)
-            }
-
+        Group {
             if asWall {
-                Button { dismiss() } label: {
-                    CloseButtonIcon()
-                        .environmentObject(themeStore)
-                        .contentShape(Rectangle())
+                NavigationStack {
+                    premiumContent
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button { dismiss() } label: {
+                                    CloseButtonIcon()
+                                        .environmentObject(themeStore)
+                                }
+                            }
+                        }
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 10)
-                .padding(.leading, 12)
+            } else {
+                premiumContent
             }
         }
-        
         .onAppear {
             withAnimation(.easeOut(duration: 0.4)) {
                 appeared = true
@@ -122,11 +84,54 @@ struct PremiumView: View {
         }
     }
 
+    private var premiumContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                headerSection
+                    .padding(.top, 24)
+
+                if isPremium {
+                    proActiveFeatures
+                        .padding(.top, 28)
+
+                    activeSection
+                        .padding(.top, 28)
+                } else {
+                    comparisonSection
+                        .padding(.top, 28)
+
+                    plansSection
+                        .padding(.top, 28)
+
+                    subscribeButton
+                        .padding(.top, 24)
+
+                    Button {
+                        Task { await storeKit.restorePurchases() }
+                    } label: {
+                        Text("Restore purchases")
+                            .font(.custom("Poppins-Regular", size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                    .disabled(storeKit.isLoading)
+                    .padding(.top, 12)
+
+                    subscriptionDisclosure
+
+                    legalLinks
+                }
+            }
+            .padding(.bottom, 50)
+            .iPadContentWidth(600)
+        }
+        .background(Color(.systemBackground).ignoresSafeArea())
+    }
+
     private var headerSection: some View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.system(size: 40, weight: .medium))
-                .foregroundColor(isPremium ? Color("AccentGreen") : Color.accentBlack)
+                .foregroundColor(isPremium ? themeStore.accentBlue : Color.accentBlack)
                 .scaleEffect(appeared ? 1.0 : 0.5)
                 .opacity(appeared ? 1.0 : 0)
 
@@ -198,7 +203,7 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Color("AccentGreen"))
+                        .foregroundColor(themeStore.accentBlue)
 
                     Text(row.title)
                         .font(.custom("Poppins-Regular", size: 16))
@@ -333,7 +338,7 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(Color("AccentGreen"))
+                        .foregroundColor(themeStore.accentBlue)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRO is active")
@@ -358,7 +363,7 @@ struct PremiumView: View {
             .padding(18)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
+                    .fill(themeStore.accentSoft)
             )
             .padding(.horizontal, 20)
 

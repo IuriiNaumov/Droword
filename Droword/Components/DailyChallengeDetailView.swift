@@ -9,16 +9,17 @@ struct DailyChallengeDetailView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
+                    Text("Daily Challenges")
+                        .sheetTitle()
+
                     summaryHeader
                     challengesList
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
                 .padding(.bottom, 40)
             }
             .background(themeStore.appBg.ignoresSafeArea())
-            .navigationTitle("Daily Challenges")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { dismiss() } label: {

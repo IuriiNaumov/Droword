@@ -3,7 +3,7 @@ import Foundation
 struct DailyLimitsManager {
     static let maxFreeTranslations = 3
     static let maxFreeTTS = 10
-    static let maxFreeGoldenFetches = 2
+    static let maxFreeSuggestionFetches = 2
 
 
     private static let dateKey = "dailyLimits.date"
@@ -60,16 +60,16 @@ struct DailyLimitsManager {
         UserDefaults.standard.set(current + 1, forKey: ttsKey)
     }
 
-    static var goldenFetchesToday: Int {
+    static var suggestionFetchesToday: Int {
         resetIfNeeded()
         return UserDefaults.standard.integer(forKey: goldenKey)
     }
 
-    static var canFetchGolden: Bool {
-        goldenFetchesToday < maxFreeGoldenFetches
+    static var canFetchSuggestions: Bool {
+        suggestionFetchesToday < maxFreeSuggestionFetches
     }
 
-    static func recordGoldenFetch() {
+    static func recordSuggestionFetch() {
         resetIfNeeded()
         let current = UserDefaults.standard.integer(forKey: goldenKey)
         UserDefaults.standard.set(current + 1, forKey: goldenKey)

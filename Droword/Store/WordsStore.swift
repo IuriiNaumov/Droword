@@ -96,6 +96,7 @@ final class WordsStore: ObservableObject {
     func add(_ word: StoredWord) {
         words.append(word)
         totalWordsAdded += 1
+        UserDefaults.standard.set(true, forKey: AppStorageKeys.hasEverAddedWord)
     }
 
     func remove(_ word: StoredWord) {
@@ -209,8 +210,8 @@ final class WordsStore: ObservableObject {
 
     func syncStreakToAppGroup() {
         let streak = Self.computeCurrentStreak(from: words)
-        sharedDefaults.set(streak, forKey: "currentStreak")
-        UserDefaults.standard.set(streak, forKey: "currentStreak")
+        sharedDefaults.set(streak, forKey: AppStorageKeys.currentStreak)
+        UserDefaults.standard.set(streak, forKey: AppStorageKeys.currentStreak)
     }
 
     func updateScheduling(for id: UUID,

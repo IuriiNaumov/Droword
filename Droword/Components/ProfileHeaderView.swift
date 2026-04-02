@@ -19,14 +19,14 @@ struct ProfileHeaderView: View {
         "love your vibe",
         "crushing it"
     ]
-    @AppStorage("selectedCuteTag") private var storedCuteTag: String = "cutie"
-    @AppStorage("selectedCuteTagDate") private var storedCuteTagDate: String = ""
-    @AppStorage("userName") private var storedUserName: String = ""
-    @AppStorage("daysUsedCount") private var daysUsedCount: Int = 0
-    @AppStorage("lastActiveDay") private var lastActiveDay: String = ""
-    @AppStorage("firstUseDate") private var firstUseDate: String = ""
-    @AppStorage("currentStreak") private var currentStreak: Int = 0
-    @AppStorage("isPremium") private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.selectedCuteTag) private var storedCuteTag: String = "cutie"
+    @AppStorage(AppStorageKeys.selectedCuteTagDate) private var storedCuteTagDate: String = ""
+    @AppStorage(AppStorageKeys.userName) private var storedUserName: String = ""
+    @AppStorage(AppStorageKeys.daysUsedCount) private var daysUsedCount: Int = 0
+    @AppStorage(AppStorageKeys.lastActiveDay) private var lastActiveDay: String = ""
+    @AppStorage(AppStorageKeys.firstUseDate) private var firstUseDate: String = ""
+    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
 
     private var overdueCount: Int {
         let cal = Calendar.current
@@ -46,7 +46,9 @@ struct ProfileHeaderView: View {
     }
 
     private var displayName: String {
-        storedUserName.isEmpty ? "Cool guy" : storedUserName
+        let name = storedUserName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return "Cool guy" }
+        return name.components(separatedBy: " ").first ?? name
     }
 
     private var cuteTagPalettes: [(bg: Color, text: Color)] {[
@@ -97,12 +99,12 @@ struct ProfileHeaderView: View {
                         if isPremium {
                             Text("PRO")
                                 .font(themeStore.bold(10))
-                                .foregroundColor(.white)
+                                .foregroundColor(themeStore.accentBlue)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(
-                                    Capsule()
-                                        .fill(Color.accentBlack)
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(themeStore.accentSoft)
                                 )
                         }
                     }
@@ -159,6 +161,7 @@ struct ProfileHeaderView: View {
             SettingsView()
                 .environmentObject(store)
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
                 .preferredColorScheme(colorScheme)
         }
     }

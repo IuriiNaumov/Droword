@@ -36,12 +36,12 @@ struct WordCardView: View {
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var showPremiumWall = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @State private var highlightedExample: AttributedString = ""
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
 
-    private var isGolden: Bool { tag == "Golden" }
+    private var isSuggested: Bool { tag == "Suggested" }
 
     private var backgroundColor: Color {
         themeStore.cardBg
@@ -169,14 +169,14 @@ struct WordCardView: View {
         }
         .onAppear {
             if let example = example {
-                highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
+                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
             } else {
                 highlightedExample = ""
             }
         }
         .onChange(of: example) { _, newValue in
             if let example = newValue {
-                highlightedExample = Self.makeHighlightedExample(comment: example, word: word, isGolden: isGolden)
+                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
             } else {
                 highlightedExample = ""
             }
@@ -184,6 +184,7 @@ struct WordCardView: View {
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 
@@ -248,10 +249,10 @@ struct WordCardView: View {
         }
     }
 
-    private static func makeHighlightedExample(comment: String, word: String, isGolden: Bool) -> AttributedString {
+    private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
         var attributedString = AttributedString(comment)
         if let range = attributedString.range(of: word, options: .caseInsensitive) {
-            attributedString[range].foregroundColor = isGolden ? .accentColor : .orange
+            attributedString[range].foregroundColor = UIColor(Color("AccentGold"))
             attributedString[range].font = .custom("Poppins-Bold", size: 16)
         }
         return attributedString
@@ -270,7 +271,7 @@ struct WordCardView: View {
             comment: "Мое любимое слово!",
             explanation: "Используется для описания вкусной еды или напитков.",
             breakdown: "Происходит от sabor (вкус) + -oso (обладающий качеством)",
-            tag: "Golden",
+            tag: "Suggested",
             onDelete: {}
         )
 

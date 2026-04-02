@@ -39,154 +39,165 @@ struct DictionaryView: View {
             : [GridItem(.flexible())]
     }
 
+    private var headerView: some View {
+        HStack {
+            Text("Dictionary")
+                .font(themeStore.bold(38))
+                .foregroundColor(themeStore.mainText)
+            Spacer()
+            if !store.words.isEmpty {
+                Button {
+                    Haptics.selection()
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isSelectMode.toggle()
+                        if !isSelectMode { selectedWordIDs.removeAll() }
+                    }
+                } label: {
+                    Text(isSelectMode ? "Done" : "Select")
+                        .font(themeStore.medium(15))
+                        .foregroundColor(isSelectMode ? .white : themeStore.mainText)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(isSelectMode ? themeStore.mainAccentColor : themeStore.cardBg)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.top, 8)
+        .padding(.horizontal, horizontalPadding)
+    }
+
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Dictionary")
-                        .font(themeStore.bold(38))
-                        .foregroundColor(themeStore.mainText)
-                    Spacer()
-                    if !store.words.isEmpty {
-                        Button {
-                            Haptics.selection()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                isSelectMode.toggle()
-                                if !isSelectMode { selectedWordIDs.removeAll() }
-                            }
-                        } label: {
-                            Text(isSelectMode ? "Done" : "Select")
-                                .font(themeStore.medium(15))
-                                .foregroundColor(isSelectMode ? .white : themeStore.mainText)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(isSelectMode ? themeStore.mainAccentColor : themeStore.cardBg)
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.top, 8)
-                .padding(.horizontal, horizontalPadding)
+        Group {
+            if store.words.isEmpty {
+                VStack(spacing: 0) {
+                    headerView
 
-                HStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(themeStore.secondaryText)
-                    TextField("Search words, translations, examples...", text: $searchText)
-                        .font(themeStore.regular(16))
-                        .foregroundColor(themeStore.mainText)
-                        .disableAutocorrection(true)
-                    if !searchText.isEmpty {
-                        Button(action: { Haptics.lightImpact(intensity: 0.4); searchText = "" }) {
-                            Image(systemName: "xmark.circle.fill")
+                    EmptyListView(
+                        icon: "book.closed",
+                        title: "Your word garden is waiting",
+                        subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
+                    )
+                }
+            } else {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        headerView
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
                                 .foregroundColor(themeStore.secondaryText)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(themeStore.cardBg)
-                )
-                .padding(.horizontal, horizontalPadding)
-
-                TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
-                    .padding(.horizontal, horizontalPadding)
-
-                LazyVGrid(columns: gridColumns, spacing: 12) {
-                    if filteredWords.isEmpty {
-                        if let tag = selectedTag, !tag.isEmpty {
-                            EmptyListView(
-                                icon: "tag",
-                                title: "No words in «\(tag)»",
-                                subtitle: "Add words with this tag and they'll appear here."
-                            )
-                            .frame(minHeight: 300)
-                        } else if !searchText.isEmpty {
-                            EmptyListView(
-                                icon: "magnifyingglass",
-                                title: "No words found",
-                                subtitle: "Try a different search or remove the filter."
-                            )
-                            .frame(minHeight: 300)
-                        } else {
-                            EmptyListView(
-                                icon: "book.closed",
-                                title: "Your word garden is waiting",
-                                subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
-                            )
-                            .frame(minHeight: 300)
-                        }
-                    } else {
-                        if isSelectMode {
-                            Button {
-                                Haptics.selection()
-                                if selectedWordIDs.count == filteredWords.count {
-                                    selectedWordIDs.removeAll()
-                                } else {
-                                    selectedWordIDs = Set(filteredWords.map(\.id))
+                            TextField("Search words, translations, examples...", text: $searchText)
+                                .font(themeStore.regular(16))
+                                .foregroundColor(themeStore.mainText)
+                                .disableAutocorrection(true)
+                            if !searchText.isEmpty {
+                                Button(action: { Haptics.lightImpact(intensity: 0.4); searchText = "" }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(themeStore.secondaryText)
                                 }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
-                                        .font(.system(size: 22))
-                                        .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
-                                    Text("Select all (\(filteredWords.count))")
-                                        .font(themeStore.medium(15))
-                                        .foregroundColor(themeStore.mainText)
-                                    Spacer()
-                                }
-                                .padding(.vertical, 8)
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(themeStore.cardBg)
+                        )
+                        .padding(.horizontal, horizontalPadding)
 
-                        ForEach(filteredWords) { word in
-                            HStack(spacing: 12) {
+                        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
+                            .padding(.horizontal, horizontalPadding)
+
+                        LazyVGrid(columns: gridColumns, spacing: 12) {
+                            if filteredWords.isEmpty {
+                                if let tag = selectedTag, !tag.isEmpty {
+                                    EmptyListView(
+                                        icon: "tag",
+                                        title: "No words in «\(tag)»",
+                                        subtitle: "Add words with this tag and they'll appear here."
+                                    )
+                                    .frame(minHeight: 300)
+                                } else if !searchText.isEmpty {
+                                    EmptyListView(
+                                        icon: "magnifyingglass",
+                                        title: "No words found",
+                                        subtitle: "Try a different search or remove the filter."
+                                    )
+                                    .frame(minHeight: 300)
+                                }
+                            } else {
                                 if isSelectMode {
                                     Button {
-                                        Haptics.lightImpact(intensity: 0.3)
-                                        if selectedWordIDs.contains(word.id) {
-                                            selectedWordIDs.remove(word.id)
+                                        Haptics.selection()
+                                        if selectedWordIDs.count == filteredWords.count {
+                                            selectedWordIDs.removeAll()
                                         } else {
-                                            selectedWordIDs.insert(word.id)
+                                            selectedWordIDs = Set(filteredWords.map(\.id))
                                         }
                                     } label: {
-                                        Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
-                                            .font(.system(size: 22))
-                                            .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
+                                        HStack(spacing: 10) {
+                                            Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
+                                                .font(.system(size: 22))
+                                                .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
+                                            Text("Select all (\(filteredWords.count))")
+                                                .font(themeStore.medium(15))
+                                                .foregroundColor(themeStore.mainText)
+                                            Spacer()
+                                        }
+                                        .padding(.vertical, 8)
                                     }
                                     .buttonStyle(.plain)
-                                    .transition(.move(edge: .leading).combined(with: .opacity))
                                 }
 
-                                WordCardView(
-                                    word: word.word,
-                                    translation: word.translation,
-                                    type: word.type,
-                                    example: word.example,
-                                    transcription: word.transcription,
-                                    comment: word.comment,
-                                    explanation: word.explanation,
-                                    breakdown: word.breakdown,
-                                    tag: word.tag,
-                                    storedWord: word
-                                ) {
-                                    store.remove(word)
+                                ForEach(filteredWords) { word in
+                                    HStack(spacing: 12) {
+                                        if isSelectMode {
+                                            Button {
+                                                Haptics.lightImpact(intensity: 0.3)
+                                                if selectedWordIDs.contains(word.id) {
+                                                    selectedWordIDs.remove(word.id)
+                                                } else {
+                                                    selectedWordIDs.insert(word.id)
+                                                }
+                                            } label: {
+                                                Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
+                                                    .font(.system(size: 22))
+                                                    .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .transition(.move(edge: .leading).combined(with: .opacity))
+                                        }
+
+                                        WordCardView(
+                                            word: word.word,
+                                            translation: word.translation,
+                                            type: word.type,
+                                            example: word.example,
+                                            transcription: word.transcription,
+                                            comment: word.comment,
+                                            explanation: word.explanation,
+                                            breakdown: word.breakdown,
+                                            tag: word.tag,
+                                            storedWord: word
+                                        ) {
+                                            store.remove(word)
+                                        }
+                                    }
                                 }
                             }
                         }
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, 40)
+                        .id(themeStore.palette)
                     }
+                    .iPadContentWidth(1000)
                 }
-                .padding(.horizontal, horizontalPadding)
-                .padding(.bottom, 40)
-                .id(themeStore.palette)
             }
-            .iPadContentWidth(1000)
         }
         .overlay(alignment: .bottom) {
             if isSelectMode && !selectedWordIDs.isEmpty {

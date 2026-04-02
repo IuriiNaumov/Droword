@@ -4,7 +4,7 @@ struct AchievementsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
-    @AppStorage("currentStreak") private var currentStreak: Int = 0
+    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
     @Environment(\.dismiss) private var dismiss
 
     private let columns = [
@@ -22,6 +22,9 @@ struct AchievementsView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
+                Text("Achievements")
+                    .sheetTitle()
+
                 VStack(spacing: 6) {
                     Text("\(unlockedCount)/\(BadgeStore.allBadges.count)")
                         .font(.custom("Poppins-Bold", size: 32))
@@ -31,7 +34,6 @@ struct AchievementsView: View {
                         .font(.custom("Poppins-Regular", size: 14))
                         .foregroundColor(themeStore.secondaryText)
                 }
-                .padding(.top, 12)
 
                 ForEach(BadgeCategory.allCases, id: \.rawValue) { category in
                     let badges = BadgeStore.allBadges.filter { $0.category == category }
@@ -56,16 +58,10 @@ struct AchievementsView: View {
                     }
                 }
             }
-            .padding(.vertical, 20)
             .padding(.bottom, 40)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Achievements")
-                    .font(.custom("Poppins-Bold", size: 18))
-            }
-        }
+
     }
 }
 

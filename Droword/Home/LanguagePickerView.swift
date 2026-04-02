@@ -10,10 +10,7 @@ struct LanguageSelectionView: View {
             VStack(spacing: 30) {
                 
                 Text("Language Preferences")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 20)
+                    .sheetTitle()
                 
                 LanguageCubePicker(
                     selectedLanguage: $languageStore.nativeLanguage,

@@ -31,8 +31,8 @@ struct StatsView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.5))
             }
 
             HStack(spacing: 12) {
@@ -41,7 +41,7 @@ struct StatsView: View {
                 StatCardView(title: "Time", value: studyTimeTracker.todayFormatted)
             }
         }
-        .padding(20)
+        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(themeStore.cardBg)
@@ -52,6 +52,7 @@ struct StatsView: View {
         .fullScreenCover(isPresented: $showDetailedStats) {
             DetailedStatsView()
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 }

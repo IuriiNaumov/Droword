@@ -13,7 +13,7 @@ final class WordEnrichmentService {
     private var isEnriching = false
 
     private var isPremium: Bool {
-        UserDefaults.standard.bool(forKey: "isPremium")
+        UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
     }
 
     init(store: WordsStore, languageStore: LanguageStore) {
@@ -62,7 +62,7 @@ final class WordEnrichmentService {
             if !isPremium && !DailyLimitsManager.canTranslate { break }
 
             do {
-                let result = try await translateWithGPT(word: word.word, languageStore: languageStore)
+                let result = try await translateWithClaude(word: word.word, languageStore: languageStore)
 
                 if !isPremium {
                     DailyLimitsManager.recordTranslation()

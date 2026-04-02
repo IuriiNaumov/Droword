@@ -31,7 +31,6 @@ final class ThemeStore: ObservableObject {
         let accentPurple: Color
         let accentPink: Color
         let accentGold: Color
-        let goldenColor: Color
         let accentRed: Color
         let mainAccentColor: Color
         let appBg: Color
@@ -87,12 +86,6 @@ final class ThemeStore: ObservableObject {
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
-            goldenColor: {
-                switch palette {
-                case .duolingo: return Color(hex: "#FFC800")
-                default: return Color("AccentGold")
-                }
-            }(),
             accentRed: {
                 switch palette {
                 case .colorful: return Color("AccentRed")
@@ -102,8 +95,9 @@ final class ThemeStore: ObservableObject {
             }(),
             mainAccentColor: {
                 switch palette {
+                case .colorful: return Color("AccentBlue")
                 case .duolingo: return Color(hex: "#58CC02")
-                default: return Color("AccentBlack") // graphite
+                case .monochrome: return Color("MonoMedium")
                 }
             }(),
             appBg: {
@@ -138,14 +132,16 @@ final class ThemeStore: ObservableObject {
             }(),
             tabTint: {
                 switch palette {
+                case .colorful: return Color("AccentBlue")
                 case .duolingo: return Color(hex: "#58CC02")
-                default: return Color("AccentBlack") // graphite tab tint
+                case .monochrome: return Color("MonoMedium")
                 }
             }(),
             buttonShadow: {
                 switch palette {
+                case .colorful: return Color(hex: "#3D7ABF")
                 case .duolingo: return Color(hex: "#46A302")
-                default: return Color(hex: "#2A2A2A") // darker graphite shadow
+                case .monochrome: return Color(hex: "#555555")
                 }
             }(),
             iconGreen: {
@@ -202,7 +198,7 @@ final class ThemeStore: ObservableObject {
     var accentPurple: Color { cached.accentPurple }
     var accentPink: Color { cached.accentPink }
     var accentGold: Color { cached.accentGold }
-    var goldenColor: Color { cached.goldenColor }
+
     var accentRed: Color { cached.accentRed }
     var mainAccentColor: Color { cached.mainAccentColor }
     var appBg: Color { cached.appBg }
@@ -217,6 +213,8 @@ final class ThemeStore: ObservableObject {
     var iconPurple: Color { cached.iconPurple }
     var iconPink: Color { cached.iconPink }
     var iconBlue: Color { cached.iconBlue }
+
+    var accentSoft: Color { accentBlue.opacity(0.12) }
 
     var monoDark: Color { Color("MonoMedium") }
 

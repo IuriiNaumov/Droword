@@ -67,7 +67,7 @@ struct VoicePickerView: View {
             selectedKey = option.key
         }
       
-        UserDefaults.standard.set(selectedKey, forKey: "ttsVoice")
+        UserDefaults.standard.set(selectedKey, forKey: AppStorageKeys.ttsVoice)
     }
 
     private let previewPhrases: [String] = [

@@ -11,8 +11,9 @@ struct ReviewSectionView: View {
     @State private var isPlaying: Bool = false
     @State private var showPremiumWall: Bool = false
     @State private var allCaughtUp: Bool = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("hasSeenReviewPaywall") private var hasSeenReviewPaywall: Bool = false
+    @State private var dismissed: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenReviewPaywall) private var hasSeenReviewPaywall: Bool = false
     @State private var showPaywallFromReview: Bool = false
 
     private var totalDue: Int { learningQueue.count }
@@ -20,10 +21,10 @@ struct ReviewSectionView: View {
 
     var body: some View {
         Group {
-        if allCaughtUp {
+        if allCaughtUp && !dismissed {
             allCaughtUpBanner
                 .transition(.opacity)
-        } else if currentIndex < learningQueue.count {
+        } else if !allCaughtUp && currentIndex < learningQueue.count {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Review")
@@ -45,7 +46,7 @@ struct ReviewSectionView: View {
         }
         }
         .onAppear { prepareSession() }
-        .onChange(of: store.words.count) { prepareSession() }
+        .onChange(of: store.words.count) { handleWordsChanged() }
     }
 
 
@@ -202,23 +203,46 @@ struct ReviewSectionView: View {
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var iconCircleFill: Color {
+        themeStore.isMonochrome
+            ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+            : themeStore.appBg
+    }
+
     private var allCaughtUpBanner: some View {
         VStack(spacing: 12) {
-            HStack {
-                StatusBannerView(
-                    icon: "checkmark.circle.fill",
-                    iconColor: themeStore.accentGreen,
-                    title: "All caught up!",
-                    subtitle: "You reviewed \(totalDue) \(totalDue == 1 ? "word" : "words"). New reviews will appear when it's time to practice."
-                )
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(iconCircleFill)
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(themeStore.accentGreen)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("All caught up!")
+                        .font(themeStore.bold(16))
+                        .foregroundColor(themeStore.mainText)
+                    Text("You reviewed \(totalDue) \(totalDue == 1 ? "word" : "words").\nNew reviews will appear when it's time to practice.")
+                        .font(themeStore.regular(13))
+                        .foregroundColor(themeStore.secondaryText)
+                }
+
+                Spacer()
 
                 Button {
                     withAnimation(.easeOut(duration: 0.3)) {
-                        allCaughtUp = false
+                        dismissed = true
                     }
                 } label: {
                     Image(systemName: "xmark")
@@ -266,6 +290,7 @@ struct ReviewSectionView: View {
         .fullScreenCover(isPresented: $showPaywallFromReview) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 
@@ -293,8 +318,27 @@ struct ReviewSectionView: View {
         currentIndex = 0
         showTranslation = false
         allCaughtUp = false
+        dismissed = false
     }
 
+    private func handleWordsChanged() {
+        let currentWordIDs = Set(store.words.map { $0.id })
+        let before = learningQueue.count
+
+        learningQueue.removeAll { !currentWordIDs.contains($0.id) }
+
+        guard before != learningQueue.count else { return }
+
+        if currentIndex >= learningQueue.count {
+            if allCaughtUp {
+                return
+            }
+            allCaughtUp = true
+            showTranslation = false
+        } else {
+            showTranslation = false
+        }
+    }
 
     private func scheduleNext(for card: WordCard, isGotIt: Bool) {
         guard let w = store.words.first(where: { $0.id == card.id }) else { return }

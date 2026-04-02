@@ -11,7 +11,6 @@ struct PracticeIllustration: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Progress header — matches QuizMixedView progressHeader
                 VStack(spacing: 6) {
                     HStack {
                         Text("3 / 10")
@@ -31,7 +30,6 @@ struct PracticeIllustration: View {
                     }
                     .padding(.horizontal, 20)
 
-                    // Segmented progress bar — matches QuizMixedView segmentedProgressBar
                     HStack(spacing: 2) {
                         ForEach(0..<10, id: \.self) { index in
                             RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -45,7 +43,6 @@ struct PracticeIllustration: View {
 
                 Spacer()
 
-                // Word prompt — matches QuizMixedView multipleChoiceContent
                 VStack(spacing: 8) {
                     Text("Ephemeral")
                         .font(.custom("Poppins-Bold", size: 28))
@@ -63,7 +60,6 @@ struct PracticeIllustration: View {
                 }
                 .padding(.bottom, 24)
 
-                // Options — matches QuizMixedView mcOptionButton
                 VStack(spacing: 12) {
                     optionRow(text: "Постоянный", state: .normal)
                     optionRow(text: "Мимолётный", state: .correct)
@@ -78,7 +74,7 @@ struct PracticeIllustration: View {
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(themeStore.appBg)
-                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+
             )
             .offset(x: px * 0.25, y: py * 0.18)
         }
@@ -111,11 +107,11 @@ struct PracticeIllustration: View {
 
     private func segmentColor(for index: Int) -> Color {
         if index < 2 {
-            return themeStore.accentGreen       // answered correctly
+            return themeStore.accentGreen
         }
         if index == 2 {
-            return themeStore.mainAccentColor.opacity(0.5)  // current
+            return themeStore.accentBlue.opacity(0.5)
         }
-        return themeStore.dividerColor.opacity(0.4)         // upcoming
+        return themeStore.dividerColor.opacity(0.4)
     }
 }

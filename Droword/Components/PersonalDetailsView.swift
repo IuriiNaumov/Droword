@@ -3,7 +3,7 @@ import SwiftUI
 struct PersonalDetailsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("userName") private var userName: String = ""
+    @AppStorage(AppStorageKeys.userName) private var userName: String = ""
 
     @State private var tempName: String = ""
     @State private var showToast = false
@@ -17,44 +17,31 @@ struct PersonalDetailsView: View {
         isNameValid
     }
 
-    private var nameCounterText: String {
-        "\(min(tempName.count, 40))/40"
-    }
-
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-
+        NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Personal details")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .sheetTitle()
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Name *")
-                        .font(.custom("Poppins-Regular", size: 18))
-                        .foregroundColor(themeStore.secondaryText)
+                    HStack {
+                        Text("Name *")
+                            .font(.custom("Poppins-Regular", size: 18))
+                            .foregroundColor(themeStore.secondaryText)
+                        Spacer()
+                        Text("\(tempName.count)/40")
+                            .font(.custom("Poppins-Regular", size: 14))
+                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                    }
 
                     FormTextField(
                         title: "Your name",
                         text: $tempName,
-                        focusedColor: themeStore.secondaryText
+                        focusedColor: themeStore.secondaryText,
+                        maxLength: 40
                     )
-                    .overlay(alignment: .trailing) {
-                        Text(nameCounterText)
-                            .font(.custom("Poppins-Regular", size: 14))
-                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
-                            .padding(.trailing, 16)
-                            .allowsHitTesting(false)
-                    }
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
-                    .onChange(of: tempName) { _, newValue in
-                        if newValue.count > 40 {
-                            tempName = String(newValue.prefix(40))
-                        }
-                    }
                 }
 
                 Button(action: {
@@ -72,16 +59,27 @@ struct PersonalDetailsView: View {
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(!canSave)
+
+                Spacer()
             }
             .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 30)
-
-            if showToast {
-                BannerToastView(type: .success, message: "Saved", duration: 1.5)
+            .padding(.bottom, 20)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
+                    }
+                }
+            }
+            .overlay {
+                if showToast {
+                    BannerToastView(type: .success, message: "Saved", duration: 1.5)
+                }
             }
         }
-        
         .onAppear {
             tempName = userName
         }

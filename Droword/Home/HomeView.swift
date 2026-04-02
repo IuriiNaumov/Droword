@@ -6,28 +6,28 @@ struct HomeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
-    @StateObject private var golden = GoldenWordsStore()
+    @EnvironmentObject private var suggested: SuggestedWordsStore
     @StateObject private var challengeManager = DailyChallengeManager.shared
 
     @State private var showAddWordView = false
     @State private var sharedWord: String = ""
     @State private var selectedTab: Tab = .home
-    @State private var lastGoldenTrigger = 0
     @State private var activeMilestone: MilestoneType?
-    @AppStorage("lastCelebratedWordCount") private var lastCelebratedWordCount: Int = 0
-    @AppStorage("lastCelebratedDailyGoal") private var lastCelebratedDailyGoalDate: String = ""
-    @AppStorage("hasSeenGoldenIntro") private var hasSeenGoldenIntro: Bool = false
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
-    @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
-    @AppStorage("hasSeenCoachMarks") private var hasSeenCoachMarks: Bool = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @State private var showGoldenIntro = false
+    @AppStorage(AppStorageKeys.lastCelebratedWordCount) private var lastCelebratedWordCount: Int = 0
+    @AppStorage(AppStorageKeys.lastCelebratedDailyGoal) private var lastCelebratedDailyGoalDate: String = ""
+    @AppStorage(AppStorageKeys.hasSeenSuggestedIntro) private var hasSeenSuggestedIntro: Bool = false
+    @AppStorage(AppStorageKeys.seasonalEffectsEnabled) private var seasonalEffectsEnabled: Bool = false
+    @AppStorage(AppStorageKeys.seasonalAnimationEnabled) private var seasonalAnimationEnabled: Bool = true
+    @AppStorage(AppStorageKeys.hasSeenCoachMarks) private var hasSeenCoachMarks: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasEverAddedWord) private var hasEverAddedWord: Bool = false
+    @State private var showSuggestedIntro = false
     @State private var showChallenges = false
     @State private var showPremiumFromLimit = false
     @State private var showCoachMarks = false
     @State private var enrichmentToast: String?
     @State private var cachedRecentWords: [StoredWord] = []
-    @State private var previousWordCount: Int?
+    @State private var lastSuggestionTodayCount: Int?
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -88,6 +88,25 @@ struct HomeView: View {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
     }
 
+    private var todayWordsCount: Int {
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        return store.words.filter { $0.dateAdded >= startOfDay }.count
+    }
+
+    private func checkSuggestionTrigger() {
+        let todayCount = todayWordsCount
+        guard todayCount > 0, todayCount % 5 == 0, todayCount != lastSuggestionTodayCount else { return }
+        lastSuggestionTodayCount = todayCount
+
+        let isPremium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
+        if isPremium || DailyLimitsManager.canFetchSuggestions {
+            if !isPremium { DailyLimitsManager.recordSuggestionFetch() }
+            Task {
+                await suggested.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
+            }
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             TabView(selection: $selectedTab) {
@@ -120,19 +139,23 @@ struct HomeView: View {
             }
             .fullScreenCover(isPresented: $showAddWordView) {
                 sharedWord = ""
+                checkSuggestionTrigger()
             } content: {
                 AddWordView(initialWord: sharedWord, store: store)
                     .environmentObject(themeStore)
+                    .tint(themeStore.mainAccentColor)
                     .transaction { $0.disablesAnimations = true }
             }
-            .environmentObject(golden)
+            .environmentObject(suggested)
             .fullScreenCover(isPresented: $showChallenges) {
                 DailyChallengeDetailView(manager: challengeManager)
                     .environmentObject(themeStore)
+                    .tint(themeStore.mainAccentColor)
             }
             .fullScreenCover(isPresented: $showPremiumFromLimit) {
                 PremiumView(asWall: true)
                     .environmentObject(themeStore)
+                    .tint(themeStore.mainAccentColor)
             }
             .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
                 if let word = notification.userInfo?["word"] as? String {
@@ -151,10 +174,10 @@ struct HomeView: View {
                     .zIndex(100)
                 }
 
-                if showGoldenIntro {
-                    GoldenWordsIntroView {
+                if showSuggestedIntro {
+                    SuggestedWordsIntroView {
                         withAnimation(.easeOut(duration: 0.25)) {
-                            showGoldenIntro = false
+                            showSuggestedIntro = false
                         }
                     }
                     .transition(.opacity)
@@ -197,38 +220,22 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: golden.goldenWords.count) { _, newCount in
-            if newCount > 0 && !hasSeenGoldenIntro {
-                hasSeenGoldenIntro = true
+        .onChange(of: suggested.suggestedWords.count) { _, newCount in
+            if newCount > 0 && !hasSeenSuggestedIntro {
+                hasSeenSuggestedIntro = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     withAnimation(.easeOut(duration: 0.3)) {
-                        showGoldenIntro = true
+                        showSuggestedIntro = true
                     }
                 }
             }
         }
-        .onChange(of: store.words.count) { _, newValue in
-            let oldCount = previousWordCount ?? 0
-            guard newValue > oldCount else {
-                previousWordCount = newValue
-                return
-            }
-            
-            let addedCount = newValue - oldCount
-            challengeManager.recordWordsAdded(count: addedCount)
+        .onChange(of: store.words.count) { oldValue, newValue in
+            guard newValue > oldValue else { return }
 
-            previousWordCount = newValue
-
-            if newValue > 0, newValue % 5 == 0, newValue != lastGoldenTrigger {
-                let isPremium = UserDefaults.standard.bool(forKey: "isPremium")
-                if isPremium || DailyLimitsManager.canFetchGolden {
-                    if !isPremium { DailyLimitsManager.recordGoldenFetch() }
-                    Task {
-                        await golden.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
-                    }
-                }
-                lastGoldenTrigger = newValue
-            }
+            let added = newValue - oldValue
+            challengeManager.recordWordsAdded(count: added)
+            checkSuggestionTrigger()
 
             let todayStr = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .none)
             if lastCelebratedDailyGoalDate != todayStr {
@@ -288,8 +295,8 @@ struct HomeView: View {
                 ReviewSectionView()
                     .padding(.horizontal, 20)
 
-                GoldenWordsView()
-                    .environmentObject(golden)
+                SuggestedWordsView()
+                    .environmentObject(suggested)
                     .padding(.horizontal, 20)
 
                 if !cachedRecentWords.isEmpty {
@@ -325,8 +332,8 @@ struct HomeView: View {
                 } else {
                     EmptyListView(
                         icon: "heart.fill",
-                        title: store.words.isEmpty ? "Add your first word" : "Add a word",
-                        subtitle: store.words.isEmpty ? "That's all it takes to start learning." : "Your recent words will appear here."
+                        title: hasEverAddedWord ? "Add a word" : "Add your first word",
+                        subtitle: hasEverAddedWord ? "Your recent words will appear here." : "That's all it takes to start learning."
                     )
                     .padding(.top, 40)
                 }

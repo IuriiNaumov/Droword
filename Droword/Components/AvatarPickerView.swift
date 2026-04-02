@@ -14,80 +14,75 @@ struct AvatarPickerView: View {
     @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
-        sourcePickerCard
-            .presentationDetents([.medium])
-            .photosPicker(isPresented: $showPhotosPicker, selection: $selectedItem, matching: .images)
-            .onChange(of: selectedItem) { _, newItem in
-                guard let newItem else { return }
-                Task {
-                    if let data = try? await newItem.loadTransferable(type: Data.self),
-                       let uiImage = UIImage(data: data) {
-                        onComplete(uiImage)
-                        dismiss()
-                    }
-                }
-            }
-            .fullScreenCover(isPresented: $showCamera) {
-                CameraView { image in
-                    showCamera = false
-                    if let image {
-                        onComplete(image)
-                        dismiss()
-                    }
-                }
-                .ignoresSafeArea()
-            }
-    }
+        NavigationStack {
+            VStack(spacing: 24) {
+                Text("Change photo")
+                    .sheetTitle()
 
-    private var sourcePickerCard: some View {
-        VStack(spacing: 0) {
-            Text("Change photo")
-                .font(.custom("Poppins-Bold", size: 20))
-                .foregroundColor(themeStore.mainText)
-                .padding(.top, 24)
-                .padding(.bottom, 20)
-
-            VStack(spacing: 12) {
-                sourceButton(
-                    icon: "camera.fill",
-                    title: "Take a photo",
-                    color: Color.accentBlue
-                ) {
-                    showCamera = true
-                }
-
-                sourceButton(
-                    icon: "photo.on.rectangle",
-                    title: "Choose from gallery",
-                    color: Color.accentGreen
-                ) {
-                    showPhotosPicker = true
-                }
-
-                if currentImage != nil {
+                VStack(spacing: 12) {
                     sourceButton(
-                        icon: "trash.fill",
-                        title: "Remove photo",
-                        color: Color.accentRed
+                        icon: "camera.fill",
+                        title: "Take a photo",
+                        color: Color.accentBlue
                     ) {
-                        onComplete(nil)
-                        dismiss()
+                        showCamera = true
+                    }
+
+                    sourceButton(
+                        icon: "photo.on.rectangle",
+                        title: "Choose from gallery",
+                        color: Color.accentGreen
+                    ) {
+                        showPhotosPicker = true
+                    }
+
+                    if currentImage != nil {
+                        sourceButton(
+                            icon: "trash.fill",
+                            title: "Remove photo",
+                            color: Color.accentRed
+                        ) {
+                            onComplete(nil)
+                            dismiss()
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+
+                Spacer()
+            }
+            .padding(.bottom, 20)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
                     }
                 }
             }
-            .padding(.horizontal, 20)
-
-            Button {
-                dismiss()
-            } label: {
-                Text("Cancel")
-                    .font(.custom("Poppins-Medium", size: 16))
-                    .foregroundColor(themeStore.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
+        }
+        .photosPicker(isPresented: $showPhotosPicker, selection: $selectedItem, matching: .images)
+        .onChange(of: selectedItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    onComplete(uiImage)
+                    dismiss()
+                }
             }
-            .padding(.top, 8)
-            .padding(.bottom, 8)
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraView { image in
+                showCamera = false
+                if let image {
+                    onComplete(image)
+                    dismiss()
+                }
+            }
+            .ignoresSafeArea()
         }
     }
 

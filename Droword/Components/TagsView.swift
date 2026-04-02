@@ -6,28 +6,31 @@ struct TagsView: View {
     @Binding var selectedTag: String?
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
-    var hasGoldenWords: Bool = false
+    var hasSuggestedWords: Bool = false
     var showManagementControls: Bool = true
     var onAddTag: (() -> Void)? = nil
     var sortOption: Binding<DictionarySortOption>? = nil
     @State private var isDeleteMode: Bool = false
 
-    private let builtInNames: Set<String> = ["Golden", "Travel"]
+    private let builtInNames: Set<String> = ["Suggested", "Travel", "Movie", "Street", "Social media"]
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
             ($0.name, themeStore.resolvedTagColor($0.colorHex), true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
-            ("Golden", themeStore.goldenColor, false),
+            ("Suggested", themeStore.accentBlue, false),
             ("Travel", themeStore.accentBlue, false),
+            ("Movie", themeStore.accentPink, false),
+            ("Street", themeStore.accentPurple, false),
+            ("Social media", themeStore.accentGold, false),
         ]
         return custom + builtIn
     }
 
     var visibleTags: [(name: String, color: Color, isCustom: Bool)] {
         allTags.filter { tag in
-            tag.name == "Golden" ? hasGoldenWords : true
+            tag.name == "Suggested" ? hasSuggestedWords : true
         }
     }
 
@@ -202,8 +205,8 @@ private struct WiggleEffect: ViewModifier {
                 .foregroundColor(Color("MainBlack"))
                 .padding(.horizontal)
 
-            TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
-            TagsView(selectedTag: .constant("Chat"), hasGoldenWords: false)
+            TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)
+            TagsView(selectedTag: .constant("Chat"), hasSuggestedWords: false)
         }
         .padding(.vertical, 30)
         .background(Color.white)
@@ -215,8 +218,8 @@ private struct WiggleEffect: ViewModifier {
                 .foregroundColor(.white)
                 .padding(.horizontal)
 
-            TagsView(selectedTag: .constant(nil), hasGoldenWords: true)
-            TagsView(selectedTag: .constant("Street"), hasGoldenWords: false)
+            TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)
+            TagsView(selectedTag: .constant("Street"), hasSuggestedWords: false)
         }
         .padding(.vertical, 30)
         .background(Color.black)

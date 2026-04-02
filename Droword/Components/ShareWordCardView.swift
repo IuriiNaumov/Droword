@@ -8,7 +8,7 @@ struct ShareWordCardView: View {
     private var secondaryText: Color { .mainBlack.opacity(0.8) }
     private var subtleText: Color { Color.mainGrey }
 
-    private var isGolden: Bool { word.tag == "Golden" }
+    private var isSuggested: Bool { word.tag == "Suggested" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -116,7 +116,7 @@ struct ShareWordCardView: View {
            let attrStart = AttributedString.Index(range.lowerBound, within: attr),
            let attrEnd = AttributedString.Index(range.upperBound, within: attr) {
             let highlightRange = attrStart..<attrEnd
-            attr[highlightRange].foregroundColor = isGolden ? .accentColor : .orange
+            attr[highlightRange].foregroundColor = isSuggested ? .accentColor : .orange
             attr[highlightRange].font = .custom("Poppins-Bold", size: 16)
         }
         return attr
@@ -127,7 +127,7 @@ extension ShareWordCardView {
     static func tagColor(for tag: String) -> Color {
         switch tag {
         case "Travel": return Color.accentBlue
-        case "Golden": return Color.accentGold
+        case "Suggested": return Color.accentBlue
         default:
             if let custom = TagStore.shared.tags.first(where: { $0.name.caseInsensitiveCompare(tag) == .orderedSame }),
                let color = Color(fromHexString: custom.colorHex) {

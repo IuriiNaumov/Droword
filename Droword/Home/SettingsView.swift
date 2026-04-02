@@ -7,17 +7,20 @@ struct SettingsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
 
-    @AppStorage("appAppearance") private var storedAppearance: String = AppAppearance.system.rawValue
-    @AppStorage("ttsVoice") private var ttsVoice: String = "coral"
-    @AppStorage("ttsRate") private var ttsRate: Double = 1.0
-    @AppStorage("userName") private var storedUserName: String = ""
-    @AppStorage("firstUseDate") private var firstUseDate: String = ""
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
-    @AppStorage("isPremium") private var isPremium: Bool = false
-    @AppStorage("hasUsedTrial") private var hasUsedTrial: Bool = false
-    @AppStorage("trialStartDate") private var trialStartDate: String = ""
+    @AppStorage(AppStorageKeys.appAppearance) private var storedAppearance: String = AppAppearance.system.rawValue
+    @AppStorage(AppStorageKeys.ttsVoice) private var ttsVoice: String = "coral"
+    @AppStorage(AppStorageKeys.ttsRate) private var ttsRate: Double = 1.0
+    @AppStorage(AppStorageKeys.userName) private var storedUserName: String = ""
+    @AppStorage(AppStorageKeys.firstUseDate) private var firstUseDate: String = ""
+    @AppStorage(AppStorageKeys.seasonalEffectsEnabled) private var seasonalEffectsEnabled: Bool = false
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.hasUsedTrial) private var hasUsedTrial: Bool = false
+    @AppStorage(AppStorageKeys.trialStartDate) private var trialStartDate: String = ""
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
+    @State private var showAppearanceSheet = false
+    @State private var showPersonalDetailsSheet = false
+    @State private var showThemeSheet = false
     @State private var path = NavigationPath()
     #if DEBUG
     @State private var devTapCount = 0
@@ -78,6 +81,8 @@ struct SettingsView: View {
                         Text(displayName)
                             .font(.custom("Poppins-Bold", size: 22))
                             .foregroundColor(.primary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, alignment: .center)
                             #if DEBUG
                             .onTapGesture(count: 5) {
                                 showFeatureFlags.toggle()
@@ -98,7 +103,7 @@ struct SettingsView: View {
                         groupedSettingsSection([
                             SettingItem(icon: "person.circle", color: themeStore.iconGreen, title: "Personal details"),
                         ]) { item in
-                            if item.title == "Personal details" { path.append(SettingsDestination.personalDetails) }
+                            if item.title == "Personal details" { showPersonalDetailsSheet = true }
                         }
 
                         groupedSettingsSection([
@@ -109,7 +114,7 @@ struct SettingsView: View {
                             SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
                         ]) { item in
                             if item.title == "Language" { path.append(SettingsDestination.language) }
-                            if item.title == "Appearance" { path.append(SettingsDestination.appearance) }
+                            if item.title == "Appearance" { showAppearanceSheet = true }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
                             if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
@@ -129,7 +134,7 @@ struct SettingsView: View {
                             SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title, showProBadge: !isPremium),
                             SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off", showProBadge: !isPremium)
                         ]) { item in
-                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
+                            if item.title == "Theme" { showThemeSheet = true }
                             if item.title == "Seasonal effects" { path.append(SettingsDestination.seasonalEffects) }
                         }
 
@@ -163,20 +168,14 @@ struct SettingsView: View {
             .navigationBarBackButtonHidden(true)
             .navigationDestination(for: SettingsDestination.self) { destination in
                 switch destination {
-                case .personalDetails:
-                    PersonalDetailsView()
                 case .language:
                     LanguageSelectionView()
                         .environmentObject(languageStore)
-                case .appearance:
-                    AppearancePickerView()
-                case .theme:
-                    ThemePickerView()
-                        .environmentObject(themeStore)
                 case .voiceAndSpeech:
                     VoiceAndSpeechSettingsView()
                 case .notifications:
                     NotificationSettingsView()
+                        .environmentObject(store)
                 case .dictionary:
                     DictionarySettingsView()
                         .environmentObject(store)
@@ -191,9 +190,12 @@ struct SettingsView: View {
                     SeasonalEffectsSettingsView()
                 case .premium:
                     PremiumView()
+                default:
+                    EmptyView()
                 }
             }
         }
+        .tint(themeStore.mainAccentColor)
         .sheet(isPresented: $showAvatarPicker) {
             AvatarPickerView(currentImage: avatarImage) { newImage in
                 if let newImage {
@@ -204,6 +206,26 @@ struct SettingsView: View {
                     deleteAvatarFromDisk()
                 }
             }
+            .presentationDetents([.medium])
+            .preferredColorScheme(appearance.colorScheme)
+        }
+        .sheet(isPresented: $showPersonalDetailsSheet) {
+            PersonalDetailsView()
+                .environmentObject(themeStore)
+                .presentationDetents([.medium])
+                .preferredColorScheme(appearance.colorScheme)
+        }
+        .sheet(isPresented: $showAppearanceSheet) {
+            AppearancePickerView()
+                .environmentObject(themeStore)
+                .presentationDetents([.medium])
+                .preferredColorScheme(appearance.colorScheme)
+        }
+        .sheet(isPresented: $showThemeSheet) {
+            ThemePickerView()
+                .environmentObject(themeStore)
+                .presentationDetents([.medium])
+                .preferredColorScheme(appearance.colorScheme)
         }
         .onAppear {
             avatarImage = loadAvatarFromDisk()
@@ -218,23 +240,23 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(isPremium ? Color("AccentGreen") : .white)
+                    .foregroundColor(isPremium ? themeStore.accentBlue : .white)
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
                         Text("PRO Trial")
                             .font(.custom("Poppins-Bold", size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(themeStore.mainText)
                         Text("\(days) \(days == 1 ? "day" : "days") remaining")
                             .font(.custom("Poppins-Regular", size: 12))
                             .foregroundColor(.orange)
                     } else {
                         Text(isPremium ? "PRO Active" : "Get Droword PRO")
                             .font(.custom("Poppins-Bold", size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(isPremium ? themeStore.mainText : .white)
                         Text(isPremium ? "Unlimited access" : "Unlock unlimited AI features")
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundColor(isPremium ? themeStore.secondaryText : .white.opacity(0.7))
                     }
                 }
 
@@ -250,14 +272,14 @@ struct SettingsView: View {
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundColor(Color("AccentGreen"))
+                        .foregroundColor(themeStore.accentBlue)
                 }
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.accentBlack)
+                    .fill(isPremium ? themeStore.accentSoft : Color.accentBlack)
             )
         }
         .buttonStyle(Duo3DButtonStyle())

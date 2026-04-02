@@ -3,19 +3,16 @@ import SwiftUI
 struct SeasonalEffectsSettingsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("seasonalEffectsEnabled") private var seasonalEffectsEnabled: Bool = false
-    @AppStorage("seasonalAnimationEnabled") private var seasonalAnimationEnabled: Bool = true
-    @AppStorage("isPremium") private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.seasonalEffectsEnabled) private var seasonalEffectsEnabled: Bool = false
+    @AppStorage(AppStorageKeys.seasonalAnimationEnabled) private var seasonalAnimationEnabled: Bool = true
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @State private var showPremiumWall = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Seasonal effects")
-                    .font(.custom("Poppins-Bold", size: 26))
-                    .foregroundColor(.primary)
-                    .padding(.top, 12)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .sheetTitle()
 
                 Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
                     .font(.custom("Poppins-Regular", size: 14))
@@ -78,7 +75,7 @@ struct SeasonalEffectsSettingsView: View {
                     .transition(.opacity)
                 }
             }
-            .padding(.vertical, 20)
+            .padding(.bottom, 20)
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
@@ -86,6 +83,7 @@ struct SeasonalEffectsSettingsView: View {
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 

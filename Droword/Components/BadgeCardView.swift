@@ -13,7 +13,7 @@ struct BadgeCardView: View {
                 .font(.system(size: 32))
                 .grayscale(isUnlocked ? 0 : 1.0)
                 .opacity(isUnlocked ? 1.0 : 0.4)
-                .shadow(color: isUnlocked ? themeStore.accentGold.opacity(0.5) : .clear, radius: 8)
+
                 .scaleEffect(appeared ? 1.0 : 0.6)
 
             Text(badge.title)

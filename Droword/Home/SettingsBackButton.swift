@@ -7,7 +7,7 @@ struct SettingsBackButton: View {
     var body: some View {
         Button { dismiss() } label: {
             BackArrowShape()
-                .stroke(themeStore.mainText, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                .stroke(themeStore.mainAccentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                 .frame(width: 10, height: 18)
                 .contentShape(Rectangle().size(width: 44, height: 44))
         }

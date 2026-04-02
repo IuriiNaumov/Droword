@@ -19,7 +19,6 @@ struct CustomizeIllustration: View {
     var body: some View {
         ZStack {
             VStack(spacing: 20) {
-                // Profile header — matches SettingsView avatar + name section
                 VStack(spacing: 12) {
                     Circle()
                         .fill(themeStore.secondaryText.opacity(0.15))
@@ -40,7 +39,6 @@ struct CustomizeIllustration: View {
                 }
                 .padding(.top, 8)
 
-                // Settings rows — matches SettingsView groupedSettingsSection
                 VStack(spacing: 0) {
                     settingsRow(
                         icon: "moon.fill",
@@ -74,14 +72,13 @@ struct CustomizeIllustration: View {
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(themeStore.appBg)
-                    .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
+
             )
             .offset(x: px * 0.25, y: py * 0.18)
         }
         .allowsHitTesting(false)
     }
 
-    // Matches SettingsView groupedSettingsSection row layout exactly
     private func settingsRow(icon: String, color: Color, title: String, value: String?) -> some View {
         HStack(spacing: 16) {
             ZStack {
