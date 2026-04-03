@@ -3,7 +3,7 @@ import SwiftUI
 struct StatCardView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
-    let title: String
+    let title: LocalizedStringKey
     let value: String
 
     @Environment(\.colorScheme) private var colorScheme

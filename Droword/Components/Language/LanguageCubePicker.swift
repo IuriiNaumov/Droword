@@ -3,7 +3,7 @@ import UIKit
 
 struct LanguageCubePicker: View {
     @Binding var selectedLanguage: String
-    var title: String
+    var title: LocalizedStringKey
     var languages: [LanguageOption]
     var blockedLanguage: String? = nil
 

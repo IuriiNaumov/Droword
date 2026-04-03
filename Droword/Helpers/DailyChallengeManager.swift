@@ -172,26 +172,26 @@ final class DailyChallengeManager: ObservableObject {
         switch type {
         case .addWords:
             let count = [3, 5, 7].randomElement()!
-            return ("Word Collector", "Add \(count) new words", count)
+            return (String(localized: "Word Collector"), String(localized: "Add \(count) new words"), count)
 
         case .perfectQuiz:
-            return ("Perfect Score", "Complete a quiz with 100%", 1)
+            return (String(localized: "Perfect Score"), String(localized: "Complete a quiz with 100%"), 1)
 
         case .practiceQuiz:
             let count = [2, 3].randomElement()!
-            return ("Quiz Machine", "Complete \(count) quizzes", count)
+            return (String(localized: "Quiz Machine"), String(localized: "Complete \(count) quizzes"), count)
 
         case .reviewWords:
             let count = [5, 8, 10].randomElement()!
-            return ("Memory Keeper", "Review \(count) due words", count)
+            return (String(localized: "Memory Keeper"), String(localized: "Review \(count) due words"), count)
 
         case .studyTime:
             let minutes = [5, 10, 15].randomElement()!
-            return ("Dedicated Learner", "Study for \(minutes) minutes", minutes)
+            return (String(localized: "Dedicated Learner"), String(localized: "Study for \(minutes) minutes"), minutes)
 
         case .addTaggedWords:
             let count = [2, 3].randomElement()!
-            return ("Organizer", "Add \(count) tagged words", count)
+            return (String(localized: "Organizer"), String(localized: "Add \(count) tagged words"), count)
         }
     }
 }

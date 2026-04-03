@@ -84,9 +84,9 @@ struct AddWordButton: View {
             Haptics.error()
             withAnimation {
                 if (error as? TimeoutError) != nil {
-                    errorMessage = "The request took too long. Please try again."
+                    errorMessage = String(localized: "The request took too long. Please try again.")
                 } else {
-                    errorMessage = "Something went wrong. Try again."
+                    errorMessage = String(localized: "Something went wrong. Try again.")
                 }
             }
             onError?(error)

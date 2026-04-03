@@ -340,7 +340,7 @@ struct QuizMixedView: View {
                     Button {
                         skipQuestion()
                     } label: {
-                        Text(hintShown ? "Show answer" : "Don't know")
+                        Text(hintShown ? LocalizedStringKey("Show answer") : LocalizedStringKey("Don't know"))
                             .font(themeStore.medium(14))
                             .foregroundColor(themeStore.secondaryText)
                     }
@@ -608,7 +608,7 @@ struct QuizMixedView: View {
             let firstChar = primary.first.map { String($0).uppercased() } ?? "?"
             let letterCount = primary.count
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                hintText = "\(firstChar)..., \(letterCount) letters"
+                hintText = String(localized: "\(firstChar)..., \(letterCount) letters")
                 hintShown = true
             }
             typingInput = ""
@@ -684,11 +684,11 @@ struct QuizMixedView: View {
 
     private func streakMilestoneText(_ streak: Int) -> String {
         switch streak {
-        case 3: return "Nice start!"
-        case 5: return "On fire!"
-        case 7: return "Unstoppable!"
-        case 10: return "Perfect 10!"
-        default: return "x\(streak) streak!"
+        case 3: return String(localized: "Nice start!")
+        case 5: return String(localized: "On fire!")
+        case 7: return String(localized: "Unstoppable!")
+        case 10: return String(localized: "Perfect 10!")
+        default: return String(localized: "x\(streak) streak!")
         }
     }
 

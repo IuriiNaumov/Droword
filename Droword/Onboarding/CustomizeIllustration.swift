@@ -49,7 +49,7 @@ struct CustomizeIllustration: View {
                     settingsRow(
                         icon: "textformat.size",
                         color: themeStore.iconGreen,
-                        title: "Language",
+                        title: "Language Pair",
                         value: "English"
                     )
                     settingsRow(

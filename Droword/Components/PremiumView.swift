@@ -46,9 +46,9 @@ struct PremiumView: View {
 
     private struct FeatureRow: Identifiable {
         let id = UUID()
-        let title: String
-        let free: String
-        let pro: String
+        let title: LocalizedStringKey
+        let free: LocalizedStringKey
+        let pro: LocalizedStringKey
     }
 
     private let featureRows: [FeatureRow] = [
@@ -140,11 +140,11 @@ struct PremiumView: View {
                 .foregroundColor(.primary)
 
             if let days = trialDaysRemaining, isPremium {
-                Text("Trial: \(days) \(days == 1 ? "day" : "days") remaining")
+                Text("Trial: \(days) days remaining", comment: "PRO trial countdown")
                     .font(.custom("Poppins-Medium", size: 14))
                     .foregroundColor(.orange)
             } else {
-                Text(isPremium ? "You have full access" : "Unlock unlimited AI features")
+                Text(isPremium ? LocalizedStringKey("You have full access") : LocalizedStringKey("Unlock unlimited AI features"))
                     .font(.custom("Poppins-Regular", size: 15))
                     .foregroundColor(.secondary)
             }
@@ -232,13 +232,14 @@ struct PremiumView: View {
                 detail: "per month",
                 badge: nil
             )
+
         }
         .padding(.horizontal, 20)
         .opacity(appeared ? 1.0 : 0)
         .offset(y: appeared ? 0 : 16)
     }
 
-    private func planCard(plan: Plan, title: String, price: String, detail: String, badge: String?) -> some View {
+    private func planCard(plan: Plan, title: LocalizedStringKey, price: String, detail: LocalizedStringKey, badge: LocalizedStringKey?) -> some View {
         Button {
             withAnimation(.easeOut(duration: 0.2)) {
                 selectedPlan = plan
@@ -349,6 +350,7 @@ struct PremiumView: View {
                             .foregroundColor(.secondary)
                     }
 
+
                     Spacer()
                 }
 
@@ -363,7 +365,7 @@ struct PremiumView: View {
             .padding(18)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.accentSoft)
+                    .fill(themeStore.accentBlueSoft)
             )
             .padding(.horizontal, 20)
 
@@ -405,7 +407,7 @@ struct PremiumView: View {
         }
 
         guard let product else {
-            purchaseError = "Product not available. Check your connection."
+            purchaseError = String(localized: "Product not available. Check your connection.")
             return
         }
 
@@ -419,7 +421,7 @@ struct PremiumView: View {
         }
     }
 
-    private func subscriptionDetailRow(label: String, value: String) -> some View {
+    private func subscriptionDetailRow(label: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(label)
                 .font(.custom("Poppins-Regular", size: 14))
@@ -433,9 +435,9 @@ struct PremiumView: View {
 
     private var activePlanName: String {
         if storeKit.purchasedProductIDs.contains(StoreKitManager.monthlyID) {
-            return "Monthly"
+            return String(localized: "Monthly")
         } else if storeKit.purchasedProductIDs.contains(StoreKitManager.yearlyID) {
-            return "Yearly"
+            return String(localized: "Yearly")
         }
         return "—"
     }
@@ -443,16 +445,16 @@ struct PremiumView: View {
     private var activePriceString: String {
         if storeKit.purchasedProductIDs.contains(StoreKitManager.monthlyID),
            let product = storeKit.monthlyProduct {
-            return "\(product.displayPrice) / month"
+            return String(localized: "\(product.displayPrice) / month")
         } else if storeKit.purchasedProductIDs.contains(StoreKitManager.yearlyID),
                   let product = storeKit.yearlyProduct {
-            return "\(product.displayPrice) / year"
+            return String(localized: "\(product.displayPrice) / year")
         }
         return "—"
     }
 
     private var nextRenewalDateString: String {
-        return "See Apple Settings"
+        return String(localized: "See Apple Settings")
     }
 
     private var subscriptionDisclosure: some View {

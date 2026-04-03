@@ -58,26 +58,26 @@ private struct SeededRNG: RandomNumberGenerator {
 }
 
 private let dailyReminderTitles = [
-    "Time to learn!",
-    "Your daily word moment",
-    "Keep growing!",
-    "A word a day",
-    "Stay curious"
+    String(localized: "Time to learn!"),
+    String(localized: "Your daily word moment"),
+    String(localized: "Keep growing!"),
+    String(localized: "A word a day"),
+    String(localized: "Stay curious")
 ]
 
 private let dailyReminderBodies = [
-    "A few minutes now — your future self will thank you!",
-    "Small steps, big vocabulary. Let's go!",
-    "Your words are waiting. A quick session?",
-    "Consistency is key. Open up and review!",
-    "One small step today — closer to your goal."
+    String(localized: "A few minutes now — your future self will thank you!"),
+    String(localized: "Small steps, big vocabulary. Let's go!"),
+    String(localized: "Your words are waiting. A quick session?"),
+    String(localized: "Consistency is key. Open up and review!"),
+    String(localized: "One small step today — closer to your goal.")
 ]
 
 private let inactivityBodies = [
-    "It's been a while — your words are waiting!",
-    "A quick review keeps words fresh. Come back?",
-    "Don't let your progress fade — even 2 minutes help.",
-    "Your vocabulary misses you. Let's pick up where you left off!"
+    String(localized: "It's been a while — your words are waiting!"),
+    String(localized: "A quick review keeps words fresh. Come back?"),
+    String(localized: "Don't let your progress fade — even 2 minutes help."),
+    String(localized: "Your vocabulary misses you. Let's pick up where you left off!")
 ]
 
 final class NotificationManager {
@@ -217,7 +217,7 @@ final class NotificationManager {
         }
 
         if bodyParts.isEmpty {
-            content.body = "Do you remember what this means?"
+            content.body = String(localized: "Do you remember what this means?")
         } else {
             content.body = bodyParts.joined(separator: " — ")
         }
@@ -324,7 +324,7 @@ final class NotificationManager {
             guard fire > Date() else { continue }
 
             let content = UNMutableNotificationContent()
-            content.title = "We miss you!"
+            content.title = String(localized: "We miss you!")
             content.body = inactivityBodies[i % inactivityBodies.count]
             content.sound = .default
 
@@ -343,8 +343,8 @@ final class NotificationManager {
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifStreakMilestones) else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Streak milestone!"
-        content.body = "You've been learning for \(streak) days in a row. Keep going!"
+        content.title = String(localized: "Streak milestone!")
+        content.body = String(localized: "You've been learning for \(streak) days in a row. Keep going!")
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
@@ -358,8 +358,8 @@ final class NotificationManager {
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifGlobalEnabled) else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Daily goal reached!"
-        content.body = "Awesome, you've hit your word goal for today."
+        content.title = String(localized: "Daily goal reached!")
+        content.body = String(localized: "Awesome, you've hit your word goal for today.")
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)

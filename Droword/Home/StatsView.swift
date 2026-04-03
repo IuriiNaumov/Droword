@@ -32,7 +32,7 @@ struct StatsView: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.5))
+                    .foregroundColor(themeStore.accentBlue)
             }
 
             HStack(spacing: 12) {

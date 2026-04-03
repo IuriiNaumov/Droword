@@ -214,7 +214,7 @@ final class ThemeStore: ObservableObject {
     var iconPink: Color { cached.iconPink }
     var iconBlue: Color { cached.iconBlue }
 
-    var accentSoft: Color { accentBlue.opacity(0.12) }
+    var accentBlueSoft: Color { accentBlue.opacity(0.12) }
 
     var toastBg: Color {
         switch palette {

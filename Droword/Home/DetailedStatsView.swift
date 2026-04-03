@@ -49,7 +49,7 @@ struct DetailedStatsView: View {
     private var tagDistribution: [(tag: String, count: Int)] {
         var dict: [String: Int] = [:]
         for w in store.words {
-            let tag = w.tag ?? "No tag"
+            let tag = w.tag ?? String(localized: "No tag")
             dict[tag, default: 0] += 1
         }
         return dict.sorted { $0.value > $1.value }.map { (tag: $0.key, count: $0.value) }
@@ -58,7 +58,7 @@ struct DetailedStatsView: View {
     private var typeDistribution: [(type: String, count: Int)] {
         var dict: [String: Int] = [:]
         for w in store.words {
-            let t = w.type.isEmpty ? "Other" : w.type.capitalized
+            let t = w.type.isEmpty ? String(localized: "Other") : w.type.capitalized
             dict[t, default: 0] += 1
         }
         return dict.sorted { $0.value > $1.value }.map { (type: $0.key, count: $0.value) }
@@ -111,9 +111,9 @@ struct DetailedStatsView: View {
         return sectionCard(title: "Study time") {
             VStack(spacing: 14) {
                 HStack(spacing: 12) {
-                    studyTimeStat(value: studyTimeTracker.todayFormatted, label: "Today")
-                    studyTimeStat(value: studyTimeTracker.weekFormatted, label: "This week")
-                    studyTimeStat(value: "\(studyTimeTracker.averageDailyMinutes)m", label: "Avg/day")
+                    studyTimeStat(value: studyTimeTracker.todayFormatted, label: String(localized: "Today"))
+                    studyTimeStat(value: studyTimeTracker.weekFormatted, label: String(localized: "This week"))
+                    studyTimeStat(value: StudyTimeTracker.format(seconds: studyTimeTracker.averageDailyMinutes * 60), label: String(localized: "Avg/day"))
                 }
 
                 if data.contains(where: { $0.minutes > 0 }) {
@@ -152,6 +152,11 @@ struct DetailedStatsView: View {
                         .frame(height: 80)
                         .frame(maxWidth: .infinity)
                 }
+
+                Text("Based on the last 14 days")
+                    .font(.custom("Poppins-Regular", size: 12))
+                    .foregroundColor(themeStore.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -191,9 +196,9 @@ struct DetailedStatsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 5))
 
                 HStack(spacing: 16) {
-                    masteryLabel(color: Color.accentRed.opacity(0.7), title: "New", count: m.new)
-                    masteryLabel(color: Color.accentGold.opacity(0.8), title: "Learning", count: m.learning)
-                    masteryLabel(color: Color.accentGreen.opacity(0.7), title: "Known", count: m.known)
+                    masteryLabel(color: Color.accentRed.opacity(0.7), title: String(localized: "New"), count: m.new)
+                    masteryLabel(color: Color.accentGold.opacity(0.8), title: String(localized: "Learning"), count: m.learning)
+                    masteryLabel(color: Color.accentGreen.opacity(0.7), title: String(localized: "Known"), count: m.known)
                 }
             }
         }
@@ -283,7 +288,7 @@ struct DetailedStatsView: View {
                                 }
                             }
                             if tags.count > 6 {
-                                Text("+\(tags.count - 6) more")
+                                Text("+\(tags.count - 6) more", comment: "Additional tags count")
                                     .font(.custom("Poppins-Regular", size: 12))
                                     .foregroundColor(themeStore.secondaryText)
                             }
@@ -327,7 +332,7 @@ struct DetailedStatsView: View {
 
                 if let first = store.words.map({ $0.dateAdded }).min() {
                     let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
-                    factRow(text: "Learning for \(days) day\(days == 1 ? "" : "s")")
+                    factRow(text: "Learning for \(days) days")
                 }
 
                 let totalMinutes = studyTimeTracker.totalAllTimeMinutes
@@ -338,13 +343,13 @@ struct DetailedStatsView: View {
         }
     }
 
-    private func factRow(text: String) -> some View {
+    private func factRow(text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.custom("Poppins-Regular", size: 14))
             .foregroundColor(.primary)
     }
 
-    private func sectionCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func sectionCard<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(.custom("Poppins-Bold", size: 18))

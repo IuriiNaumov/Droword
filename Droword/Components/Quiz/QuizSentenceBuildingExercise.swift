@@ -100,7 +100,7 @@ struct QuizSentenceBuildingExercise: View {
             if hasAnswered && isCorrect {
                 QuizFeedbackBadge(
                     icon: "checkmark.circle.fill",
-                    text: "Correct!",
+                    text: String(localized: "Correct!"),
                     color: themeStore.accentGreen
                 )
             }

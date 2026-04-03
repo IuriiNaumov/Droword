@@ -71,9 +71,9 @@ final class StudyTimeTracker: ObservableObject {
         let hours = seconds / 3600
         let minutes = (seconds % 3600) / 60
         if hours > 0 {
-            return "\(hours)h \(minutes)m"
+            return String(localized: "\(hours)h \(minutes)m", comment: "Study time format: hours and minutes")
         }
-        return "\(max(minutes, 0))m"
+        return String(localized: "\(max(minutes, 0))m", comment: "Study time format: minutes only")
     }
 
 

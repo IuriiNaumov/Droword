@@ -334,7 +334,7 @@ struct NotificationSettingsView: View {
         return UIImage(named: name)
     }
 
-    private func toggleRow(icon: String, color: Color, title: String, isOn: Binding<Bool>) -> some View {
+    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
@@ -357,7 +357,7 @@ struct NotificationSettingsView: View {
         .background(themeStore.cardBg)
     }
 
-    private func timePickerRow(icon: String, color: Color, title: String, date: Binding<Date>) -> some View {
+    private func timePickerRow(icon: String, color: Color, title: LocalizedStringKey, date: Binding<Date>) -> some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()

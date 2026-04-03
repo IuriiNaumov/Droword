@@ -87,7 +87,7 @@ struct SeasonalEffectsSettingsView: View {
         }
     }
 
-    private func toggleRow(icon: String, color: Color, title: String, isOn: Binding<Bool>) -> some View {
+    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
@@ -112,10 +112,10 @@ struct SeasonalEffectsSettingsView: View {
 
     private func seasonName(_ season: Season) -> String {
         switch season {
-        case .spring: return "Spring"
-        case .summer: return "Summer"
-        case .fall: return "Fall"
-        case .winter: return "Winter"
+        case .spring: return String(localized: "Spring")
+        case .summer: return String(localized: "Summer")
+        case .fall: return String(localized: "Fall")
+        case .winter: return String(localized: "Winter")
         }
     }
 }

@@ -23,7 +23,7 @@ struct QuizCompletionView: View {
         }
     }
 
-    private var encouragementText: String {
+    private var encouragementText: LocalizedStringKey {
         switch percentage {
         case 90...100: return "Outstanding!"
         case 70..<90: return "Great job!"
@@ -147,7 +147,7 @@ struct QuizCompletionView: View {
         }
     }
 
-    private func statBubble(icon: String, value: String, label: String, color: Color) -> some View {
+    private func statBubble(icon: String, value: String, label: LocalizedStringKey, color: Color) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 20))

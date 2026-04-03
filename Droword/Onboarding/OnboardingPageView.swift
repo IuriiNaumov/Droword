@@ -2,8 +2,8 @@ import SwiftUI
 
 struct OnboardingPageModel: Identifiable, Equatable {
     let id = UUID()
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
     let illustrationStyle: IllustrationStyle
     let accent: Color
 

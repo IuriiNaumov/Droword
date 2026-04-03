@@ -5,7 +5,11 @@ struct VoiceOption: Identifiable, Equatable {
     let id = UUID()
     let key: String
     let title: String
-    let description: String
+    let description: LocalizedStringKey
+
+    static func == (lhs: VoiceOption, rhs: VoiceOption) -> Bool {
+        lhs.id == rhs.id && lhs.key == rhs.key
+    }
 }
 
 struct VoicePickerView: View {

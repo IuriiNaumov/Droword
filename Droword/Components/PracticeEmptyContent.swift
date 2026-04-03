@@ -3,9 +3,9 @@ import SwiftUI
 struct PracticeEmptyContent: View {
     @EnvironmentObject private var themeStore: ThemeStore
     let icon: String
-    let title: String
-    let subtitle: String
-    let tip: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let tip: LocalizedStringKey
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0

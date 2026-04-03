@@ -15,6 +15,7 @@ struct ReviewSectionView: View {
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenReviewPaywall) private var hasSeenReviewPaywall: Bool = false
     @State private var showPaywallFromReview: Bool = false
+    @State private var nextReviewText: LocalizedStringKey? = nil
 
     private var totalDue: Int { learningQueue.count }
     private var remaining: Int { max(0, learningQueue.count - currentIndex) }
@@ -31,7 +32,7 @@ struct ReviewSectionView: View {
                         .font(themeStore.bold(24))
                         .foregroundColor(themeStore.mainText)
 
-                    Text("\(remaining) \(remaining == 1 ? "word" : "words")")
+                    Text("\(remaining) words")
                         .font(themeStore.regular(14))
                         .foregroundColor(themeStore.secondaryText)
 
@@ -158,6 +159,18 @@ struct ReviewSectionView: View {
                 .buttonStyle(.plain)
             }
 
+            if let text = nextReviewText {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 12, weight: .medium))
+                    Text(text)
+                        .font(themeStore.medium(13))
+                }
+                .foregroundColor(themeStore.accentGreen)
+                .frame(maxWidth: .infinity)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
             HStack(spacing: 12) {
                 Button {
                     Haptics.warning()
@@ -178,8 +191,9 @@ struct ReviewSectionView: View {
 
                 Button {
                     Haptics.success()
+                    let ivl = computeNextInterval(for: card)
                     scheduleNext(for: card, isGotIt: true)
-                    advanceToNext(didReinsert: false)
+                    showNextReviewHint(days: ivl)
                 } label: {
                     Text("Got it")
                         .font(themeStore.bold(15))
@@ -233,7 +247,7 @@ struct ReviewSectionView: View {
                     Text("All caught up!")
                         .font(themeStore.bold(16))
                         .foregroundColor(themeStore.mainText)
-                    Text("You reviewed \(totalDue) \(totalDue == 1 ? "word" : "words").\nNew reviews will appear when it's time to practice.")
+                    Text("You reviewed \(totalDue) words.\nNew reviews will appear when it's time to practice.")
                         .font(themeStore.regular(13))
                         .foregroundColor(themeStore.secondaryText)
                 }
@@ -392,6 +406,35 @@ struct ReviewSectionView: View {
         }
     }
 
+    private func computeNextInterval(for card: WordCard) -> Int {
+        guard let w = store.words.first(where: { $0.id == card.id }) else { return 1 }
+        var ef = max(1.3, w.easeFactor)
+        let q: Double = 4
+        ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+        ef = max(1.3, ef)
+        let reps = w.repetitions + 1
+        if reps == 1 { return 1 }
+        else if reps == 2 { return 6 }
+        else { return max(1, Int(round(Double(w.intervalDays) * ef))) }
+    }
+
+    private func showNextReviewHint(days: Int) {
+        let text: LocalizedStringKey = days == 1
+            ? "Next review tomorrow"
+            : "Next review in \(days) days"
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            nextReviewText = text
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                nextReviewText = nil
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                advanceToNext(didReinsert: false)
+            }
+        }
+    }
+
     private func reinsert(_ card: WordCard, after positions: Int) {
         guard currentIndex < learningQueue.count else { return }
         learningQueue.remove(at: currentIndex)
@@ -401,6 +444,7 @@ struct ReviewSectionView: View {
 
     private func advanceToNext(didReinsert: Bool) {
         showTranslation = false
+        nextReviewText = nil
         DailyChallengeManager.shared.recordWordsReviewed(count: 1)
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             if !didReinsert {

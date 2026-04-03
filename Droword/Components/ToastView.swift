@@ -14,9 +14,9 @@ enum AppToastType {
     var text: String {
         switch self {
         case .success:
-            return "Saved."
+            return String(localized: "Saved.")
         case .error:
-            return "Oops! Something went wrong."
+            return String(localized: "Oops! Something went wrong.")
         }
     }
 }

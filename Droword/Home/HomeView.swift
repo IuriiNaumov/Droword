@@ -42,11 +42,11 @@ struct HomeView: View {
     private var level: (name: String, min: Int, max: Int) {
         let total = store.words.count
         switch total {
-        case 0..<50: return ("Beginner 🐣", 0, 50)
-        case 50..<150: return ("Explorer 🦊", 50, 150)
-        case 150..<300: return ("Linguist 🦉", 150, 300)
-        case 300..<600: return ("Master 🐉", 300, 600)
-        default: return ("Legend 🌟", 600, 1000)
+        case 0..<50: return (String(localized: "Beginner 🐣"), 0, 50)
+        case 50..<150: return (String(localized: "Explorer 🦊"), 50, 150)
+        case 150..<300: return (String(localized: "Linguist 🦉"), 150, 300)
+        case 300..<600: return (String(localized: "Master 🐉"), 300, 600)
+        default: return (String(localized: "Legend 🌟"), 600, 1000)
         }
     }
 
@@ -221,9 +221,9 @@ struct HomeView: View {
                 if let words = notification.userInfo?["words"] as? [String], !words.isEmpty {
                     let message: String
                     if words.count == 1 {
-                        message = "\"\(words[0])\" updated with translation"
+                        message = String(localized: "\"\(words[0])\" updated with translation")
                     } else {
-                        message = "\(words.count) words updated with translations"
+                        message = String(localized: "\(words.count) words updated with translations")
                     }
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         enrichmentToast = message

@@ -8,6 +8,18 @@ enum DictionarySortOption: String, CaseIterable {
     case masteryHigh = "Best known"
     case masteryLow = "Least known"
     case dueSoonest = "Due soon"
+
+    var displayName: LocalizedStringKey {
+        switch self {
+        case .newestFirst:     return "Newest"
+        case .oldestFirst:     return "Oldest"
+        case .alphabeticalAZ:  return "A → Z"
+        case .alphabeticalZA:  return "Z → A"
+        case .masteryHigh:     return "Best known"
+        case .masteryLow:      return "Least known"
+        case .dueSoonest:      return "Due soon"
+        }
+    }
 }
 
 struct DictionaryView: View {
@@ -208,7 +220,7 @@ struct DictionaryView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "trash.fill")
                             .font(.system(size: 15, weight: .semibold))
-                        Text("Delete \(selectedWordIDs.count) word\(selectedWordIDs.count == 1 ? "" : "s")")
+                        Text("Delete \(selectedWordIDs.count) words")
                             .font(themeStore.bold(16))
                     }
                     .foregroundColor(.white)
@@ -230,7 +242,7 @@ struct DictionaryView: View {
                 CustomAlertView(
                     icon: "trash.fill",
                     iconColor: themeStore.accentRed,
-                    title: "Delete \(selectedWordIDs.count) word\(selectedWordIDs.count == 1 ? "" : "s")?",
+                    title: "Delete \(selectedWordIDs.count) words?",
                     message: "This action cannot be undone.",
                     primaryButton: .init(title: "Delete", style: .destructive) {
                         store.removeMultiple(ids: selectedWordIDs)

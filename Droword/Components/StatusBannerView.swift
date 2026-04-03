@@ -5,8 +5,8 @@ struct StatusBannerView: View {
 
     let icon: String
     let iconColor: Color
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
 
     var body: some View {
         HStack(spacing: 12) {

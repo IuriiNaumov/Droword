@@ -86,7 +86,7 @@ struct AvatarPickerView: View {
         }
     }
 
-    private func sourceButton(icon: String, title: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func sourceButton(icon: String, title: LocalizedStringKey, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 ZStack {

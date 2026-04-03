@@ -34,7 +34,7 @@ struct DictionarySettingsView: View {
                     .padding(.top, -8)
 
                 VStack(spacing: 0) {
-                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear \(store.words.count) word\(store.words.count == 1 ? "" : "s")") {
+                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear \(store.words.count) words") {
                         store.clear()
                     }
                 }
@@ -76,7 +76,7 @@ struct DictionarySettingsView: View {
                     icon: "checkmark.circle.fill",
                     iconColor: themeStore.accentGreen,
                     title: "Import Complete",
-                    message: "\(count) word\(count == 1 ? "" : "s") imported successfully.",
+                    message: "\(count) words imported successfully.",
                     primaryButton: .init(title: "OK", style: .primary) {
                         importedCount = nil
                     }
@@ -87,7 +87,7 @@ struct DictionarySettingsView: View {
         }
     }
 
-    private func settingsRow(icon: String, color: Color, title: String, action: @escaping () -> Void) -> some View {
+    private func settingsRow(icon: String, color: Color, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button {
             Haptics.selection()
             action()
@@ -104,7 +104,7 @@ struct DictionarySettingsView: View {
 
                 Text(title)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(title == "Clear All Words" ? Color.accentRed : .primary)
+                    .foregroundColor(color == Color.accentRed ? Color.accentRed : .primary)
 
                 Spacer()
 

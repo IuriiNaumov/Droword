@@ -4,9 +4,9 @@ struct EmptyListView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var icon: String = "text.badge.plus"
-    var title: String = "Your word garden is waiting"
-    var subtitle: String = "Add a couple of words — and we'll begin the journey."
-    var tip: String? = nil
+    var title: LocalizedStringKey = "Your word garden is waiting"
+    var subtitle: LocalizedStringKey = "Add a couple of words — and we'll begin the journey."
+    var tip: LocalizedStringKey? = nil
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0

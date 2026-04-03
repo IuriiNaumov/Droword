@@ -22,6 +22,7 @@ struct SettingsView: View {
     @State private var showPersonalDetailsSheet = false
     @State private var showThemeSheet = false
     @State private var path = NavigationPath()
+    @State private var showOnboarding = false
     #if DEBUG
     @State private var devTapCount = 0
     @State private var showFeatureFlags = false
@@ -108,12 +109,14 @@ struct SettingsView: View {
 
                         groupedSettingsSection([
                             SettingItem(icon: "moon.fill", color: themeStore.monoDark, title: "Appearance", value: appearanceTitle),
-                            SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language", value: languageStore.learningLanguage),
+                            SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language Pair", value: languageStore.learningLanguage),
+                            SettingItem(icon: "globe", color: themeStore.accentBlue, title: "App Language"),
                             SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
                             SettingItem(icon: "mic.fill", color: themeStore.iconBlue, title: "Voice & Speech"),
                             SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
                         ]) { item in
-                            if item.title == "Language" { path.append(SettingsDestination.language) }
+                            if item.title == "Language Pair" { path.append(SettingsDestination.language) }
+                            if item.title == "App Language" { openAppLanguageSettings() }
                             if item.title == "Appearance" { showAppearanceSheet = true }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
@@ -142,6 +145,14 @@ struct SettingsView: View {
                             SettingItem(icon: "book.closed.fill", color: themeStore.iconBlue, title: "Dictionary")
                         ]) { _ in
                             path.append(SettingsDestination.dictionary)
+                        }
+
+                        groupedSettingsSection([
+                            SettingItem(icon: "play.circle.fill", color: themeStore.accentBlue, title: "App Tour"),
+                            SettingItem(icon: "sparkles.rectangle.stack.fill", color: themeStore.accentGold, title: "What's New")
+                        ]) { item in
+                            if item.title == "App Tour" { showOnboarding = true }
+                            if item.title == "What's New" { path.append(SettingsDestination.whatsNew) }
                         }
 
                         groupedSettingsSection([
@@ -190,6 +201,8 @@ struct SettingsView: View {
                     SeasonalEffectsSettingsView()
                 case .premium:
                     PremiumView()
+                case .whatsNew:
+                    WhatsNewView()
                 default:
                     EmptyView()
                 }
@@ -227,6 +240,10 @@ struct SettingsView: View {
                 .presentationDetents([.medium])
                 .preferredColorScheme(appearance.colorScheme)
         }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingReplayView()
+                .environmentObject(themeStore)
+        }
         .onAppear {
             avatarImage = loadAvatarFromDisk()
         }
@@ -247,14 +264,14 @@ struct SettingsView: View {
                         Text("PRO Trial")
                             .font(.custom("Poppins-Bold", size: 16))
                             .foregroundColor(themeStore.mainText)
-                        Text("\(days) \(days == 1 ? "day" : "days") remaining")
+                        Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
                             .font(.custom("Poppins-Regular", size: 12))
                             .foregroundColor(.orange)
                     } else {
-                        Text(isPremium ? "PRO Active" : "Get Droword PRO")
+                        Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
                             .font(.custom("Poppins-Bold", size: 16))
                             .foregroundColor(isPremium ? themeStore.mainText : .white)
-                        Text(isPremium ? "Unlimited access" : "Unlock unlimited AI features")
+                        Text(isPremium ? LocalizedStringKey("Unlimited access") : LocalizedStringKey("Unlock unlimited AI features"))
                             .font(.custom("Poppins-Regular", size: 12))
                             .foregroundColor(isPremium ? themeStore.secondaryText : .white.opacity(0.7))
                     }
@@ -279,7 +296,7 @@ struct SettingsView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isPremium ? themeStore.accentSoft : Color.accentBlack)
+                    .fill(isPremium ? themeStore.accentBlueSoft : Color.accentBlack)
             )
         }
         .buttonStyle(Duo3DButtonStyle())
@@ -328,7 +345,7 @@ struct SettingsView: View {
 
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                            .foregroundColor(themeStore.accentBlue)
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 20)
@@ -341,30 +358,32 @@ struct SettingsView: View {
         .padding(.horizontal, 20)
     }
 
+    private func openAppLanguageSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
+    }
+
     private func usageDurationString() -> String {
         let df = DateFormatting.dayFormatter
         guard let start = df.date(from: firstUseDate), let end = df.date(from: df.string(from: Date())) else {
-            return "0 days"
+            return String(localized: "\(0) days")
         }
         let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: start, to: end)
         let years = max(0, comps.year ?? 0)
         let months = max(0, comps.month ?? 0)
         let days = max(0, comps.day ?? 0)
 
-        func plural(_ value: Int, _ singular: String, _ plural: String) -> String {
-            return value == 1 ? "\(value) \(singular)" : "\(value) \(plural)"
-        }
-
         if years >= 1 {
             if months > 0 {
-                return "\(plural(years, "year", "years")) \(plural(months, "month", "months"))"
+                return String(localized: "\(years) years \(months) months")
             } else {
-                return plural(years, "year", "years")
+                return String(localized: "\(years) years")
             }
         } else if months >= 1 {
-            return plural(months, "month", "months")
+            return String(localized: "\(months) months")
         } else {
-            return plural(days + 1, "day", "days")
+            return String(localized: "\(days + 1) days")
         }
     }
 

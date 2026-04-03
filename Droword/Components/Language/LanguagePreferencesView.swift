@@ -19,7 +19,7 @@ struct LanguagePreferencesView: View {
                     LanguageCubePicker(
                         selectedLanguage: $languageStore.nativeLanguage,
                         title: "I speak",
-                        languages: Self.availableLanguages,
+                        languages: LanguageCatalog.availableLanguages,
                         blockedLanguage: languageStore.learningLanguage
                     )
                     .onChange(of: languageStore.nativeLanguage) {
@@ -29,7 +29,7 @@ struct LanguagePreferencesView: View {
                     LanguageCubePicker(
                         selectedLanguage: $languageStore.learningLanguage,
                         title: "I'm learning",
-                        languages: Self.availableLanguages,
+                        languages: LanguageCatalog.availableLanguages,
                         blockedLanguage: languageStore.nativeLanguage
                     )
                     .onChange(of: languageStore.learningLanguage) {
@@ -61,18 +61,4 @@ struct LanguagePreferencesView: View {
         showToast = true
     }
     
-    static let availableLanguages = [
-        LanguageOption(name: "English", flag: "🇬🇧", color: Color("AccentBlue")),
-        LanguageOption(name: "Español", flag: "🇲🇽", color: Color("AccentBlue")),
-        LanguageOption(name: "Русский", flag: "🇷🇺", color: Color("AccentBlue")),
-        LanguageOption(name: "Français", flag: "🇫🇷", color: Color("AccentBlue")),
-        LanguageOption(name: "Deutsch", flag: "🇩🇪", color: Color("AccentBlue")),
-        LanguageOption(name: "Italiano", flag: "🇮🇹", color: Color("AccentBlue")),
-        LanguageOption(name: "Português", flag: "🇧🇷", color: Color("AccentBlue")),
-        LanguageOption(name: "한국어", flag: "🇰🇷", color: Color("AccentBlue")),
-        LanguageOption(name: "中文", flag: "🇨🇳", color: Color("AccentBlue")),
-        LanguageOption(name: "日本語", flag: "🇯🇵", color: Color("AccentBlue")),
-        LanguageOption(name: "العربية", flag: "🇸🇦", color: Color("AccentBlue")),
-        LanguageOption(name: "हिन्दी", flag: "🇮🇳", color: Color("AccentBlue"))
-    ]
 }

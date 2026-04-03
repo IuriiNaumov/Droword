@@ -39,7 +39,7 @@ struct DailyChallengeButton: View {
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(themeStore.secondaryText.opacity(0.5))
+                .foregroundColor(themeStore.accentBlue)
         }
         .padding(16)
         .background(

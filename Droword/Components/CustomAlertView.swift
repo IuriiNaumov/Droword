@@ -5,13 +5,13 @@ struct CustomAlertView: View {
 
     let icon: String
     let iconColor: Color
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
     let primaryButton: AlertButton
     var secondaryButton: AlertButton? = nil
 
     struct AlertButton {
-        let title: String
+        let title: LocalizedStringKey
         let style: Style
         let action: () -> Void
 
@@ -45,12 +45,12 @@ struct CustomAlertView: View {
                 .padding(.top, 4)
 
                 Text(title)
-                    .font(.custom("Poppins-Bold", size: 18))
+                    .font(themeStore.bold(18))
                     .foregroundColor(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 Text(message)
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -61,7 +61,7 @@ struct CustomAlertView: View {
                         primaryButton.action()
                     } label: {
                         Text(primaryButton.title)
-                            .font(.custom("Poppins-Bold", size: 15))
+                            .font(themeStore.bold(15))
                             .foregroundColor(buttonTextColor(primaryButton.style))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 13)
@@ -78,7 +78,7 @@ struct CustomAlertView: View {
                             secondary.action()
                         } label: {
                             Text(secondary.title)
-                                .font(.custom("Poppins-Medium", size: 14))
+                                .font(themeStore.medium(14))
                                 .foregroundColor(themeStore.secondaryText)
                         }
                         .buttonStyle(.plain)
@@ -99,7 +99,7 @@ struct CustomAlertView: View {
     private func buttonBgColor(_ style: AlertButton.Style) -> Color {
         switch style {
         case .primary:
-            return themeStore.mainText
+            return themeStore.accentBlue
         case .destructive:
             return themeStore.accentRed
         case .cancel:
@@ -110,7 +110,7 @@ struct CustomAlertView: View {
     private func buttonTextColor(_ style: AlertButton.Style) -> Color {
         switch style {
         case .primary:
-            return themeStore.cardBg
+            return .white
         case .destructive:
             return .white
         case .cancel:

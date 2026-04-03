@@ -43,7 +43,10 @@ struct StreakCalendarView: View {
     @State private var displayedMonth: Date = Date()
     @State private var cachedMonthData: MonthData? = nil
 
-    private let weekdaySymbols = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    private var weekdaySymbols: [String] {
+        let symbols = Calendar.current.shortStandaloneWeekdaySymbols
+        return Array(symbols[1...]) + [symbols[0]]  // Mon–Sun order
+    }
 
 
     var body: some View {
@@ -87,7 +90,7 @@ struct StreakCalendarView: View {
         }
     }
 
-    private func statBubble(value: String, label: String) -> some View {
+    private func statBubble(value: String, label: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.custom("Poppins-Bold", size: 18))
@@ -297,14 +300,22 @@ struct StreakCalendarView: View {
 
             HStack(spacing: 12) {
                 if day.count > 0 {
-                    Label("\(day.count) \(day.count == 1 ? "word" : "words")", systemImage: "text.book.closed")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.mainText)
+                    Label {
+                        Text("\(day.count) words")
+                    } icon: {
+                        Image(systemName: "text.book.closed")
+                    }
+                    .font(.custom("Poppins-Regular", size: 13))
+                    .foregroundColor(themeStore.mainText)
                 }
                 if day.studyMinutes > 0 {
-                    Label("\(day.studyMinutes)m studied", systemImage: "clock")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.mainText)
+                    Label {
+                        Text("\(day.studyMinutes)m studied")
+                    } icon: {
+                        Image(systemName: "clock")
+                    }
+                    .font(.custom("Poppins-Regular", size: 13))
+                    .foregroundColor(themeStore.mainText)
                 }
                 if day.count == 0 && day.studyMinutes == 0 {
                     Text("No activity")

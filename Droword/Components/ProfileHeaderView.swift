@@ -104,7 +104,7 @@ struct ProfileHeaderView: View {
                                 .padding(.vertical, 3)
                                 .background(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(themeStore.accentSoft)
+                                        .fill(themeStore.accentBlueSoft)
                                 )
                         }
                     }
@@ -168,27 +168,23 @@ struct ProfileHeaderView: View {
 
     private func usageDurationString() -> String {
         guard let start = DateFormatting.dayFormatter.date(from: firstUseDate), let end = DateFormatting.dayFormatter.date(from: DateFormatting.todayString) else {
-            return "0 days"
+            return String(localized: "\(0) days")
         }
         let comps = Calendar(identifier: .gregorian).dateComponents([.year, .month, .day], from: start, to: end)
         let years = max(0, comps.year ?? 0)
         let months = max(0, comps.month ?? 0)
         let days = max(0, comps.day ?? 0)
 
-        func plural(_ value: Int, _ singular: String, _ plural: String) -> String {
-            return value == 1 ? "\(value) \(singular)" : "\(value) \(plural)"
-        }
-
         if years >= 1 {
             if months > 0 {
-                return "\(plural(years, "year", "years")) \(plural(months, "month", "months"))"
+                return String(localized: "\(years) years \(months) months")
             } else {
-                return plural(years, "year", "years")
+                return String(localized: "\(years) years")
             }
         } else if months >= 1 {
-            return plural(months, "month", "months")
+            return String(localized: "\(months) months")
         } else {
-            return plural(days + 1, "day", "days")
+            return String(localized: "\(days + 1) days")
         }
     }
 

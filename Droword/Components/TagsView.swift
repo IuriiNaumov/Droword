@@ -121,7 +121,7 @@ struct TagsView: View {
                                     Haptics.selection()
                                 } label: {
                                     HStack {
-                                        Text(option.rawValue)
+                                        Text(option.displayName)
                                         if sortBinding.wrappedValue == option {
                                             Image(systemName: "checkmark")
                                         }

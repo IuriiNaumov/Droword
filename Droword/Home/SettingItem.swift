@@ -13,13 +13,14 @@ enum SettingsDestination: Hashable {
     case achievements
     case seasonalEffects
     case premium
+    case whatsNew
 }
 
 struct SettingItem: Identifiable {
     let id = UUID()
     let icon: String
     let color: Color
-    let title: String
+    let title: LocalizedStringKey
     var value: String? = nil
     var showProBadge: Bool = false
 }

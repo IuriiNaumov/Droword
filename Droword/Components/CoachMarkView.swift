@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct CoachMarkStep {
-    let title: String
-    let message: String
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
     let icon: String
 }
 

@@ -36,9 +36,9 @@ enum MilestoneType: Identifiable, Equatable {
 
     var title: String {
         switch self {
-        case .wordCount(let n): return "\(n) words!"
-        case .streak(let n): return "\(n)-day streak!"
-        case .dailyGoal: return "Daily goal!"
+        case .wordCount(let n): return String(localized: "\(n) words!")
+        case .streak(let n): return String(localized: "\(n)-day streak!")
+        case .dailyGoal: return String(localized: "Daily goal!")
         }
     }
 
@@ -46,20 +46,20 @@ enum MilestoneType: Identifiable, Equatable {
         switch self {
         case .wordCount(let n):
             switch n {
-            case ..<25: return "You're off to a great start."
-            case ..<50: return "Your vocabulary is growing fast."
-            case ..<100: return "That's an impressive collection."
-            case ..<200: return "You're becoming a true linguist."
-            case ..<500: return "Half a thousand words. Incredible."
-            default: return "You've reached legendary status."
+            case ..<25: return String(localized: "You're off to a great start.")
+            case ..<50: return String(localized: "Your vocabulary is growing fast.")
+            case ..<100: return String(localized: "That's an impressive collection.")
+            case ..<200: return String(localized: "You're becoming a true linguist.")
+            case ..<500: return String(localized: "Half a thousand words. Incredible.")
+            default: return String(localized: "You've reached legendary status.")
             }
         case .streak(let n):
             switch n {
-            case ..<30: return "A full week of learning!"
-            case ..<100: return "A whole month. Truly dedicated."
-            default: return "100 days. Unstoppable."
+            case ..<30: return String(localized: "A full week of learning!")
+            case ..<100: return String(localized: "A whole month. Truly dedicated.")
+            default: return String(localized: "100 days. Unstoppable.")
             }
-        case .dailyGoal: return "You've hit your target for today."
+        case .dailyGoal: return String(localized: "You've hit your target for today.")
         }
     }
 }
