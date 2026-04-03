@@ -78,7 +78,7 @@ struct TagsView: View {
                                     .transition(.scale.combined(with: .opacity))
                             }
 
-                            Text(tag.name)
+                            Text(LocalizedStringKey(tag.name))
                                 .font(themeStore.medium(compact ? 13 : 15))
                                 .foregroundColor(textColor)
 

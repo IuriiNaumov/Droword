@@ -25,20 +25,20 @@ struct AddWordView: View {
     @State private var commentPlaceholder = ""
     enum Field { case word, translation, comment }
 
-    private let wordPlaceholders = [
+    private let wordPlaceholders: [LocalizedStringResource] = [
         "Something you heard today?",
         "Add a word you liked",
         "New word to remember",
         "Your word of the day",
         "Learned something cool?"
     ]
-    private let translationPlaceholders = [
+    private let translationPlaceholders: [LocalizedStringResource] = [
         "Add translation if you know it",
         "Not sure? Skip for now",
         "Write the meaning here",
         "I can translate it for you"
     ]
-    private let commentPlaceholders = [
+    private let commentPlaceholders: [LocalizedStringResource] = [
         "Where did you hear it?",
         "What does it remind you of?",
         "A scene from a movie?",
@@ -65,12 +65,24 @@ struct AddWordView: View {
                     }
 
                     Button {
+                        Haptics.lightImpact()
                         Task { await addWord() }
                     } label: {
-                        Text(isAdding ? "Adding..." : "Add")
-                            .font(.custom("Poppins-Bold", size: 17))
-                            .foregroundColor(.white)
-                            .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
+                        ZStack {
+                            // Hidden text to keep consistent button size
+                            Text("Add")
+                                .font(.custom("Poppins-Bold", size: 17))
+                                .foregroundColor(.clear)
+
+                            if isAdding {
+                                BouncingDotsView()
+                            } else {
+                                Text("Add")
+                                    .font(.custom("Poppins-Bold", size: 17))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
                     .buttonStyle(Duo3DButtonStyle())
                     .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty || isAdding)
@@ -140,9 +152,9 @@ struct AddWordView: View {
             }
         }
         .onAppear {
-            wordPlaceholder = wordPlaceholders.randomElement() ?? "Enter a word"
-            translationPlaceholder = translationPlaceholders.randomElement() ?? "Enter translation"
-            commentPlaceholder = commentPlaceholders.randomElement() ?? "Add a memory hint"
+            wordPlaceholder = String(localized: wordPlaceholders.randomElement() ?? "Enter a word")
+            translationPlaceholder = String(localized: translationPlaceholders.randomElement() ?? "Enter translation")
+            commentPlaceholder = String(localized: commentPlaceholders.randomElement() ?? "Add a memory hint")
 
             if !initialWord.isEmpty && word.isEmpty {
                 word = initialWord
@@ -322,6 +334,38 @@ struct AddWordView: View {
     }
 
 
+}
+
+private struct BouncingDotsView: View {
+    @State private var phase: Bool = false
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<4, id: \.self) { index in
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 7, height: 7)
+                    .offset(y: dotOffset(for: index))
+            }
+        }
+        .frame(height: 20)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) {
+                phase.toggle()
+            }
+        }
+    }
+
+    private func dotOffset(for index: Int) -> CGFloat {
+        // Even dots (0, 2) go up when phase is true, odd (1, 3) go down
+        let up = index.isMultiple(of: 2)
+        let offset: CGFloat = 5
+        if up {
+            return phase ? -offset : offset
+        } else {
+            return phase ? offset : -offset
+        }
+    }
 }
 
 #Preview {

@@ -28,23 +28,6 @@ struct ProfileHeaderView: View {
     @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
 
-    private var overdueCount: Int {
-        let cal = Calendar.current
-        let startOfToday = cal.startOfDay(for: Date())
-        return store.words.filter { w in
-            if let due = w.dueDate { return due < startOfToday } else { return false }
-        }.count
-    }
-
-    private var dueTodayCount: Int {
-        let cal = Calendar.current
-        let startOfToday = cal.startOfDay(for: Date())
-        guard let startOfTomorrow = cal.date(byAdding: .day, value: 1, to: startOfToday) else { return 0 }
-        return store.words.filter { w in
-            if let due = w.dueDate { return (due >= startOfToday && due < startOfTomorrow) } else { return false }
-        }.count
-    }
-
     private var displayName: String {
         let name = storedUserName.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return "Cool guy" }

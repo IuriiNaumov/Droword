@@ -56,13 +56,19 @@ struct PrivacyPolicyView: View {
             .padding(.bottom, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
     }
 
     private func policySection(title: String, body: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.custom("Poppins-Medium", size: 17))
+                .font(.custom("Poppins-Bold", size: 18))
                 .foregroundColor(.primary)
             Text(body)
                 .font(.custom("Poppins-Regular", size: 14))

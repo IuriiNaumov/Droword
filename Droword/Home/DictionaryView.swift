@@ -35,12 +35,13 @@ struct DictionaryView: View {
     @State private var cachedTag: String? = nil
     @State private var cachedSearch: String = ""
     @State private var cachedSort: DictionarySortOption = .newestFirst
-    @State private var cachedWords: [StoredWord] = []
+    @State private var cachedRevision: Int = -1
     @State private var cachedFiltered: [StoredWord] = []
     @State private var showAddTag = false
     @State private var isSelectMode = false
     @State private var selectedWordIDs: Set<UUID> = []
     @State private var showBulkDeleteConfirmation = false
+    @State private var cardAppeared: Set<UUID> = []
 
     private var filteredWords: [StoredWord] { cachedFiltered }
     private let horizontalPadding: CGFloat = 20
@@ -166,7 +167,7 @@ struct DictionaryView: View {
                                     .buttonStyle(.plain)
                                 }
 
-                                ForEach(filteredWords) { word in
+                                ForEach(Array(filteredWords.enumerated()), id: \.element.id) { index, word in
                                     HStack(spacing: 12) {
                                         if isSelectMode {
                                             Button {
@@ -198,6 +199,14 @@ struct DictionaryView: View {
                                             storedWord: word
                                         ) {
                                             store.remove(word)
+                                        }
+                                    }
+                                    .opacity(cardAppeared.contains(word.id) ? 1 : 0)
+                                    .offset(y: cardAppeared.contains(word.id) ? 0 : 20)
+                                    .onAppear {
+                                        let delay = Double(min(index, 15)) * 0.04
+                                        _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
+                                            cardAppeared.insert(word.id)
                                         }
                                     }
                                 }
@@ -267,8 +276,8 @@ struct DictionaryView: View {
         .onAppear {
             recalculateFiltered()
         }
-        .onChange(of: selectedTag) { recalculateFiltered() }
-        .onChange(of: store.words) { recalculateFiltered() }
+        .onChange(of: selectedTag) { cardAppeared.removeAll(); recalculateFiltered() }
+        .onChange(of: store.revision) { recalculateFiltered() }
         .onChange(of: searchText) {
             searchDebounceTask?.cancel()
             searchDebounceTask = Task {
@@ -277,8 +286,8 @@ struct DictionaryView: View {
                 debouncedSearch = searchText
             }
         }
-        .onChange(of: debouncedSearch) { recalculateFiltered() }
-        .onChange(of: sortOption) { recalculateFiltered() }
+        .onChange(of: debouncedSearch) { cardAppeared.removeAll(); recalculateFiltered() }
+        .onChange(of: sortOption) { cardAppeared.removeAll(); recalculateFiltered() }
         .animation(.spring(), value: store.words.count)
     }
 
@@ -286,7 +295,7 @@ struct DictionaryView: View {
         let tag = selectedTag?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let search = debouncedSearch.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
-        if tag == cachedTag, search == cachedSearch, sortOption == cachedSort, store.words == cachedWords { return }
+        if tag == cachedTag, search == cachedSearch, sortOption == cachedSort, store.revision == cachedRevision { return }
 
         var result = store.words
 
@@ -330,7 +339,7 @@ struct DictionaryView: View {
         cachedTag = tag
         cachedSearch = search
         cachedSort = sortOption
-        cachedWords = store.words
+        cachedRevision = store.revision
     }
 }
 

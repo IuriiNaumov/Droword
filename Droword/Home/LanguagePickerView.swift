@@ -66,6 +66,13 @@ struct LanguageSelectionView: View {
             .padding(.bottom, 50)
         }
         .background(themeStore.appBg.ignoresSafeArea())
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .overlay {
             if let pending = pendingLearningLanguage {
                 CustomAlertView(

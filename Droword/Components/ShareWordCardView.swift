@@ -13,7 +13,7 @@ struct ShareWordCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let tag = word.tag, !tag.isEmpty {
-                Text(tag)
+                Text(LocalizedStringKey(tag))
                     .font(.custom("Poppins-Medium", size: 13))
                     .foregroundColor(Self.tagColor(for: tag))
                     .padding(.vertical, 4)

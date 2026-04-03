@@ -9,7 +9,8 @@ struct SettingsBackButton: View {
             BackArrowShape()
                 .stroke(themeStore.mainAccentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                 .frame(width: 10, height: 18)
-                .contentShape(Rectangle().size(width: 44, height: 44))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

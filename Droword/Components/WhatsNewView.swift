@@ -68,12 +68,13 @@ struct WhatsNewView: View {
             .iPadContentWidth(600)
         }
         .background(themeStore.appBg.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 SettingsBackButton()
             }
         }
-        .navigationBarBackButtonHidden(true)
     }
 
     private func featureRow(_ feature: WhatsNewFeature) -> some View {

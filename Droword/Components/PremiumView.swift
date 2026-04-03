@@ -75,6 +75,13 @@ struct PremiumView: View {
                 }
             } else {
                 premiumContent
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            SettingsBackButton()
+                        }
+                    }
+                    .navigationBarBackButtonHidden(true)
+                    .enableSwipeBack()
             }
         }
         .onAppear {
@@ -198,7 +205,7 @@ struct PremiumView: View {
     }
 
     private var proActiveFeatures: some View {
-        VStack(spacing: 14) {
+        VStack(alignment: .leading, spacing: 14) {
             ForEach(featureRows) { row in
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")

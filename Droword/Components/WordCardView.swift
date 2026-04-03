@@ -60,7 +60,7 @@ struct WordCardView: View {
         VStack(alignment: .leading, spacing: 8) {
 
             if let tag = tag, !tag.isEmpty {
-                Text(tag)
+                Text(LocalizedStringKey(tag))
                     .font(themeStore.medium(13))
                     .foregroundColor(themeStore.colorForTag(tag))
                     .padding(.vertical, 4)
@@ -196,6 +196,7 @@ struct WordCardView: View {
             } label: {
                 Label("Copy all", systemImage: "doc.on.doc.fill")
             }
+
         }
         .padding(.top, 12)
         .onTapGesture {
@@ -261,8 +262,7 @@ struct WordCardView: View {
         Task {
             Haptics.selection()
             isPlaying = true
-            await AudioManager.shared.play(word: word)
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await AudioManager.shared.playAndWait(text: word)
             withAnimation {
                 isPlaying = false
             }

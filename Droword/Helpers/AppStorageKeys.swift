@@ -41,4 +41,7 @@ enum AppStorageKeys {
     static let lastCelebratedDailyGoal = "lastCelebratedDailyGoal"
     static let debugPremiumOverride = "debugPremiumOverride"
     static let hasEverAddedWord = "hasEverAddedWord"
+    static let reviewAllCaughtUp = "reviewAllCaughtUp"
+    static let reviewDismissed = "reviewDismissed"
+    static let reviewSessionDate = "reviewSessionDate"
 }

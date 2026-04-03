@@ -1,5 +1,4 @@
 import SwiftUI
-import AVFoundation
 import UserNotifications
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
@@ -37,11 +36,13 @@ struct DrowordApp: App {
         migrateNotificationSettings()
         configureNavigationBarTint()
         warmUpKeyboard()
-        warmUpAudioSession()
         warmUpClaude()
-        preloadFonts()
         setupNotifications()
         checkTrialPeriod()
+        Task.detached(priority: .background) {
+            _ = UIFont(name: "Poppins-Bold", size: 14)
+            _ = UIFont(name: "Poppins-Regular", size: 14)
+        }
     }
 
     var body: some Scene {
@@ -115,12 +116,6 @@ struct DrowordApp: App {
         }
     }
 
-    private func warmUpAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, options: .mixWithOthers)
-        try? session.setActive(true)
-    }
-
     private func warmUpClaude() {
         let premium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
         guard premium else { return }
@@ -153,11 +148,6 @@ struct DrowordApp: App {
     private func configureNavigationBarTint() {
         let raw = UserDefaults.standard.string(forKey: "appThemePalette") ?? "colorful"
         Self.applyNavigationTint(for: raw)
-    }
-
-    private func preloadFonts() {
-        _ = UIFont(name: "Poppins-Bold", size: 14)
-        _ = UIFont(name: "Poppins-Regular", size: 14)
     }
 
     private func scheduleSmartNotifications() {
@@ -201,10 +191,18 @@ struct DrowordApp: App {
     private func checkTrialPeriod() {
         let df = DateFormatting.dayFormatter
 
-        if !hasUsedTrial {
+        // Restore trial date from Keychain if UserDefaults were cleared (reinstall)
+        if !hasUsedTrial, let keychainDate = TrialKeychain.loadStartDate() {
             hasUsedTrial = true
-            trialStartDate = df.string(from: Date())
+            trialStartDate = keychainDate
+        }
+
+        if !hasUsedTrial {
+            let today = df.string(from: Date())
+            hasUsedTrial = true
+            trialStartDate = today
             isPremium = true
+            TrialKeychain.save(startDate: today)
             return
         }
 
@@ -214,7 +212,11 @@ struct DrowordApp: App {
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         if daysSinceStart > 7 && isPremium {
             let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
+            #if DEBUG
             let debugOverride = UserDefaults.standard.bool(forKey: AppStorageKeys.debugPremiumOverride)
+            #else
+            let debugOverride = false
+            #endif
             if !hasPurchased && !debugOverride {
                 isPremium = false
                 UserDefaults.standard.set(false, forKey: AppStorageKeys.seasonalEffectsEnabled)

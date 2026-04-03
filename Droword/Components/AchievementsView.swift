@@ -41,7 +41,7 @@ struct AchievementsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category.title)
                                 .font(.custom("Poppins-Bold", size: 18))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundColor(.primary)
                                 .padding(.horizontal, 20)
 
                             LazyVGrid(columns: columns, spacing: 12) {
@@ -61,7 +61,13 @@ struct AchievementsView: View {
             .padding(.bottom, 40)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
     }
 }
 

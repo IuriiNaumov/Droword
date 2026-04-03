@@ -15,7 +15,7 @@ struct VoiceAndSpeechSettingsView: View {
                     .sheetTitle()
 
                 Text("Voice")
-                    .font(.custom("Poppins-Medium", size: 16))
+                    .font(.custom("Poppins-Bold", size: 18))
                     .foregroundColor(.primary)
                     .padding(.horizontal)
 
@@ -32,7 +32,7 @@ struct VoiceAndSpeechSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Speed")
-                        .font(.custom("Poppins-Medium", size: 16))
+                        .font(.custom("Poppins-Bold", size: 18))
                         .foregroundColor(.primary)
                         .padding(.horizontal)
 
@@ -52,6 +52,12 @@ struct VoiceAndSpeechSettingsView: View {
             .padding(.bottom, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
     }
 }

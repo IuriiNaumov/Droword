@@ -47,8 +47,8 @@ struct SeasonalEffectsSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Current season")
-                        .font(.custom("Poppins-Medium", size: 14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .font(.custom("Poppins-Bold", size: 18))
+                        .foregroundColor(.primary)
 
                     let season = Season.current
                     HStack(spacing: 8) {
@@ -79,7 +79,13 @@ struct SeasonalEffectsSettingsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)

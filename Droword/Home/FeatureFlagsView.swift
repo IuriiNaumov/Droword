@@ -72,7 +72,12 @@ struct FeatureFlagsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        
-
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
     }
 }

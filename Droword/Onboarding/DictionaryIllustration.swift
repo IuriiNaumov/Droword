@@ -8,71 +8,80 @@ struct DictionaryIllustration: View {
     let px: CGFloat
     let py: CGFloat
 
-    private let tagColor: Color = .accentBlue
-
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(accent.opacity(0.15))
-                .frame(width: size * 0.75, height: size * 0.58)
-                .rotationEffect(.degrees(-3))
-                .offset(x: -size * 0.02 + px * 0.12, y: size * 0.02 + py * 0.08)
+        let cardWidth = size * 0.65
+        let cardHeight = size * 0.56
+        let cornerRadius: CGFloat = 20
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Travel")
-                    .font(themeStore.medium(13))
-                    .foregroundColor(themeStore.accentBlue)
+        ZStack {
+            // Card shadow (back-most)
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(themeStore.mainText.opacity(0.08))
+                .frame(width: cardWidth, height: cardHeight)
+                .offset(x: 6 + px * 0.06, y: 10 + py * 0.04)
+
+            // Card back
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(themeStore.mainText.opacity(0.05))
+                .frame(width: cardWidth, height: cardHeight)
+                .offset(x: 3 + px * 0.08, y: 5 + py * 0.05)
+
+            // Main card
+            VStack(alignment: .leading, spacing: 0) {
+                // Category tag
+                Text("Anime")
+                    .font(.custom("Poppins-SemiBold", size: 10))
+                    .foregroundColor(themeStore.accentPurple)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 4)
-                    .padding(.horizontal, 18)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(themeStore.accentBlue, lineWidth: 1)
+                    .background(
+                        Capsule()
+                            .fill(themeStore.accentPurple.opacity(0.18))
                     )
+                    .padding(.bottom, 8)
+
+                // Big kanji
+                Text("茶")
+                    .font(.system(size: 48, weight: .bold, design: .serif))
+                    .foregroundColor(themeStore.mainText)
                     .padding(.bottom, 2)
 
-                HStack(alignment: .top, spacing: 8) {
-                    Text("Serendipity")
-                        .font(themeStore.bold(24))
-                        .foregroundColor(themeStore.mainText)
+                // Phonetic
+                Text("/otʃa/")
+                    .font(.custom("Poppins-Regular", size: 11))
+                    .foregroundColor(themeStore.secondaryText)
+                    .padding(.bottom, 8)
 
-                    Spacer()
+                // Divider
+                Rectangle()
+                    .fill(themeStore.dividerColor)
+                    .frame(height: 1)
+                    .padding(.bottom, 8)
 
-                    Image(systemName: "waveform")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(themeStore.mainText.opacity(0.4))
-                        .padding(.top, 6)
-                }
-
-                Text("/ˌser.ənˈdɪp.ə.ti/")
-                    .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.mainText.opacity(0.8))
-
-                Text("Счастливая случайность")
-                    .font(themeStore.regular(16))
+                // Translation
+                Text("tea")
+                    .font(.custom("Poppins-SemiBold", size: 15))
                     .foregroundColor(themeStore.mainText)
+                    .padding(.bottom, 6)
 
-                Text("A \(Text("serendipity").font(themeStore.bold(16)).foregroundColor(.orange)) led me to this place.")
-                    .font(themeStore.regular(16))
-                    .foregroundColor(themeStore.mainText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 16))
-                        .foregroundColor(themeStore.mainText.opacity(0.8))
-                    Spacer()
-                    Image(systemName: "trash.fill")
-                        .foregroundColor(.accentRed)
-                }
-                .padding(.top, 8)
+                Text("Noun")
+                    .font(.custom("Poppins-SemiBold", size: 9))
+                    .foregroundColor(themeStore.accentGreen)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule()
+                            .fill(themeStore.accentGreen.opacity(0.18))
+                    )
             }
-            .padding()
-            .frame(width: size * 0.75, alignment: .leading)
+            .padding(16)
+            .frame(width: cardWidth, alignment: .leading)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(themeStore.cardBg)
             )
-            .offset(x: px * 0.3, y: py * 0.2)
+            .offset(x: px * 0.12, y: py * 0.08)
+
         }
         .allowsHitTesting(false)
     }

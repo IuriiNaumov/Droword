@@ -28,6 +28,7 @@ struct HomeView: View {
     @State private var enrichmentToast: String?
     @State private var copiedToast = false
     @State private var cachedRecentWords: [StoredWord] = []
+    @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
 
     enum Tab: String, CaseIterable, Identifiable {
@@ -327,7 +328,7 @@ struct HomeView: View {
                                 .padding(.horizontal, 20)
                         }
 
-                        ForEach(cachedRecentWords) { word in
+                        ForEach(Array(cachedRecentWords.enumerated()), id: \.element.id) { index, word in
                             WordCardView(
                                 word: word.word,
                                 translation: word.translation,
@@ -342,6 +343,14 @@ struct HomeView: View {
                                 store.remove(word)
                             }
                             .padding(.horizontal, 20)
+                            .opacity(recentCardAppeared.contains(word.id) ? 1 : 0)
+                            .offset(y: recentCardAppeared.contains(word.id) ? 0 : 20)
+                            .onAppear {
+                                let delay = Double(index) * 0.08
+                                _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
+                                    recentCardAppeared.insert(word.id)
+                                }
+                            }
                         }
                     }
                     .padding(.top, 4)

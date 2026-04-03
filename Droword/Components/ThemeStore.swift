@@ -14,6 +14,13 @@ final class ThemeStore: ObservableObject {
             case .monochrome: return "Monochrome"
             }
         }
+        var subtitle: String {
+            switch self {
+            case .colorful: return "Warm and vibrant"
+            case .duolingo: return "Fresh green accent"
+            case .monochrome: return "Clean and minimal"
+            }
+        }
     }
 
     @Published var palette: Palette {

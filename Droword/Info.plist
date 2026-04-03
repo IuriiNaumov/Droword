@@ -19,9 +19,9 @@
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-Bold.ttf</string>
 	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Droword uses the camera to take a profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Droword accesses your photo library to set a profile photo.</string>
 </dict>
 </plist>

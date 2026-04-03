@@ -101,8 +101,9 @@ struct OnboardingView: View {
                                 }
                             }) {
                                 Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(themeStore.mainText.opacity(0.75))
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(themeStore.mainAccentColor)
+                                    .frame(height: 22)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .background(

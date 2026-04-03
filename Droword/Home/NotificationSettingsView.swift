@@ -219,6 +219,13 @@ struct NotificationSettingsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .animation(.easeInOut(duration: 0.25), value: globalEnabled)
         .onChange(of: globalEnabled) { _, _ in triggerReschedule() }
         .onChange(of: dailyReminderEnabled) { _, _ in triggerReschedule() }
@@ -403,10 +410,9 @@ struct NotificationSettingsView: View {
         .background(themeStore.cardBg)
     }
 
-    private func sectionHeader(_ title: String) -> some View {
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(.custom("Poppins-Medium", size: 14))
-            .foregroundColor(themeStore.secondaryText)
-            .padding(.horizontal, 8)
+            .font(.custom("Poppins-Bold", size: 18))
+            .foregroundColor(.primary)
     }
 }

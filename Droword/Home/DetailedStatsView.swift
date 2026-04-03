@@ -217,38 +217,25 @@ struct DetailedStatsView: View {
 
     private var reviewSection: some View {
         sectionCard(title: "Review") {
-            HStack(spacing: 16) {
-                VStack(spacing: 4) {
-                    Text("\(dueToday)")
-                        .font(.custom("Poppins-Bold", size: 28))
-                        .foregroundColor(.primary)
-                    Text("Due today")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.secondaryText)
-                }
-                .frame(maxWidth: .infinity)
-
-                VStack(spacing: 4) {
-                    Text("\(totalLapses)")
-                        .font(.custom("Poppins-Bold", size: 28))
-                        .foregroundColor(.primary)
-                    Text("Total lapses")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.secondaryText)
-                }
-                .frame(maxWidth: .infinity)
-
-                VStack(spacing: 4) {
-                    Text(String(format: "%.1f", averageEase))
-                        .font(.custom("Poppins-Bold", size: 28))
-                        .foregroundColor(.primary)
-                    Text("Avg ease")
-                        .font(.custom("Poppins-Regular", size: 13))
-                        .foregroundColor(themeStore.secondaryText)
-                }
-                .frame(maxWidth: .infinity)
+            HStack(alignment: .top, spacing: 16) {
+                reviewStat(value: "\(dueToday)", label: String(localized: "Due today"))
+                reviewStat(value: "\(totalLapses)", label: String(localized: "Total lapses"))
+                reviewStat(value: String(format: "%.1f", averageEase), label: String(localized: "Avg ease"))
             }
         }
+    }
+
+    private func reviewStat(value: String, label: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.custom("Poppins-Bold", size: 28))
+                .foregroundColor(.primary)
+            Text(label)
+                .font(.custom("Poppins-Regular", size: 13))
+                .foregroundColor(themeStore.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var tagChartSection: some View {
@@ -277,7 +264,7 @@ struct DetailedStatsView: View {
                                     Circle()
                                         .fill(Self.pieColors[index % Self.pieColors.count])
                                         .frame(width: 8, height: 8)
-                                    Text(item.tag)
+                                    Text(LocalizedStringKey(item.tag))
                                         .font(.custom("Poppins-Regular", size: 13))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)

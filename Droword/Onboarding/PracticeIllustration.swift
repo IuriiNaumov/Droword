@@ -9,109 +9,116 @@ struct PracticeIllustration: View {
     let py: CGFloat
 
     var body: some View {
+        let cardWidth = size * 0.78
+
         ZStack {
             VStack(spacing: 0) {
+                // Progress header
                 VStack(spacing: 6) {
                     HStack {
-                        Text("3 / 10")
-                            .font(.custom("Poppins-Medium", size: 13))
+                        Text("2/7")
+                            .font(.custom("Poppins-SemiBold", size: 12))
                             .foregroundColor(themeStore.secondaryText)
-
                         Spacer()
-
-                        HStack(spacing: 4) {
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 14))
-                                .foregroundColor(themeStore.accentRed)
-                            Text("3")
-                                .font(.custom("Poppins-Bold", size: 14))
-                                .foregroundColor(themeStore.accentRed)
-                        }
                     }
                     .padding(.horizontal, 20)
 
-                    HStack(spacing: 2) {
-                        ForEach(0..<10, id: \.self) { index in
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(segmentColor(for: index))
+                                .fill(themeStore.dividerColor.opacity(0.5))
                                 .frame(height: 6)
+
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(accent)
+                                .frame(width: geo.size.width * 0.33, height: 6)
                         }
                     }
+                    .frame(height: 6)
                     .padding(.horizontal, 20)
                 }
-                .padding(.top, 12)
+                .padding(.top, 14)
 
                 Spacer()
 
-                VStack(spacing: 8) {
-                    Text("Ephemeral")
-                        .font(.custom("Poppins-Bold", size: 28))
+                // Word and instruction
+                VStack(spacing: 6) {
+                    Text("tea")
+                        .font(.custom("Poppins-Bold", size: 26))
                         .foregroundColor(themeStore.mainText)
-                        .multilineTextAlignment(.center)
 
-                    Text("/ɪˈfem.ər.əl/")
-                        .font(.custom("Poppins-Regular", size: 14))
+                    Text("Type the word")
+                        .font(.custom("Poppins-Regular", size: 12))
                         .foregroundColor(themeStore.secondaryText)
-
-                    Text("Choose the correct translation")
-                        .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(themeStore.secondaryText.opacity(0.7))
-                        .padding(.top, 8)
                 }
-                .padding(.bottom, 24)
 
-                VStack(spacing: 12) {
-                    optionRow(text: "Постоянный", state: .normal)
-                    optionRow(text: "Мимолётный", state: .correct)
-                    optionRow(text: "Огромный", state: .dimmed)
-                    optionRow(text: "Внезапный", state: .dimmed)
+                Spacer()
+
+                // Input field
+                HStack(spacing: 0) {
+                    Text("お茶")
+                        .font(.system(size: 18, weight: .medium, design: .serif))
+                        .foregroundColor(themeStore.mainText)
+
+                    // Cursor
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(accent)
+                        .frame(width: 2, height: 20)
+                        .padding(.leading, 2)
+
+                    Spacer()
                 }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(themeStore.cardBg)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(accent, lineWidth: 1.5)
+                        )
+                )
                 .padding(.horizontal, 20)
 
+                // Hint pill
+                HStack(spacing: 6) {
+                    Text("💡")
+                        .font(.system(size: 10))
+                    Text("Hint: お..., 2 letters")
+                        .font(.custom("Poppins-Medium", size: 11))
+                        .foregroundColor(themeStore.mainText.opacity(0.8))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(themeStore.accentGold.opacity(0.18))
+                )
+                .padding(.top, 10)
+
                 Spacer()
+
+                // Check button
+                Text("Check")
+                    .font(.custom("Poppins-Bold", size: 15))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(accent)
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
             }
-            .frame(width: size * 0.78)
+            .frame(width: cardWidth)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .fill(themeStore.appBg)
-
             )
             .offset(x: px * 0.25, y: py * 0.18)
         }
         .allowsHitTesting(false)
-    }
-
-    private enum OptionState { case normal, correct, dimmed }
-
-    private func optionRow(text: String, state: OptionState) -> some View {
-        HStack {
-            Text(text)
-                .font(.custom("Poppins-Medium", size: 16))
-                .foregroundColor(state == .dimmed ? themeStore.mainText.opacity(0.4) : themeStore.mainText)
-
-            Spacer()
-
-            if state == .correct {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(themeStore.mainText)
-            }
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(state == .correct ? themeStore.accentGreen : themeStore.cardBg)
-        )
-        .opacity(state == .dimmed ? 0.4 : 1.0)
-    }
-
-    private func segmentColor(for index: Int) -> Color {
-        if index < 2 {
-            return themeStore.accentGreen
-        }
-        if index == 2 {
-            return themeStore.accentBlue.opacity(0.5)
-        }
-        return themeStore.dividerColor.opacity(0.4)
     }
 }

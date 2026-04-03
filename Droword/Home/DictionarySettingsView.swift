@@ -44,7 +44,13 @@ struct DictionarySettingsView: View {
             .padding(.horizontal, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                SettingsBackButton()
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .onChange(of: csvFileURL) { _, newURL in
             guard let url = newURL else { return }
             let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)

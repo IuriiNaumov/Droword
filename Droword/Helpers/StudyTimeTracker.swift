@@ -11,6 +11,7 @@ final class StudyTimeTracker: ObservableObject {
     private let sessionsKey = "StudyTimeTracker.sessions"
     private var sessionStart: Date?
     private var tickTimer: Timer?
+    private var cachedSessions: [Session]?
 
     private struct Session: Codable {
         let date: Date
@@ -18,6 +19,7 @@ final class StudyTimeTracker: ObservableObject {
     }
 
     private init() {
+        cachedSessions = loadSessionsFromDisk()
         recalculate()
     }
 
@@ -153,12 +155,20 @@ final class StudyTimeTracker: ObservableObject {
         let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
         sessions = sessions.filter { $0.date >= cutoff }
 
+        cachedSessions = sessions
         if let data = try? JSONEncoder().encode(sessions) {
             UserDefaults.standard.set(data, forKey: sessionsKey)
         }
     }
 
     private func loadSessions() -> [Session] {
+        if let cached = cachedSessions { return cached }
+        let loaded = loadSessionsFromDisk()
+        cachedSessions = loaded
+        return loaded
+    }
+
+    private func loadSessionsFromDisk() -> [Session] {
         guard let data = UserDefaults.standard.data(forKey: sessionsKey),
               let decoded = try? JSONDecoder().decode([Session].self, from: data) else {
             return []

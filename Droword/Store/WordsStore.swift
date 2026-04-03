@@ -71,21 +71,35 @@ let appGroupID = "group.com.droword.shared"
 @MainActor
 final class WordsStore: ObservableObject {
     @Published private(set) var words: [StoredWord] = [] {
-        didSet { if hasLoaded { scheduleSave() } }
+        didSet {
+            if hasLoaded {
+                revision += 1
+                scheduleSave()
+            }
+        }
     }
 
     @Published private(set) var totalWordsAdded: Int = 0 {
         didSet { if hasLoaded { scheduleSave() } }
     }
 
+    @Published private(set) var revision: Int = 0
+
     private let storageKey = "WordsStore.words"
     private let totalKey = "WordsStore.totalWordsAdded"
     private static let migrationKey = "WordsStore.migratedToAppGroup"
+    private static let fileMigrationKey = "WordsStore.migratedToFile"
     private var hasLoaded = false
     private var saveTask: Task<Void, Never>?
 
     private var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? UserDefaults.standard
+    }
+
+    private static var wordsFileURL: URL {
+        let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return container.appendingPathComponent("words.json")
     }
 
     init() {
@@ -113,44 +127,48 @@ final class WordsStore: ObservableObject {
 
     private func migrateIfNeeded() {
         let shared = sharedDefaults
-        guard !shared.bool(forKey: Self.migrationKey) else { return }
 
-        let standard = UserDefaults.standard
-
-        if let data = standard.data(forKey: storageKey) {
-            shared.set(data, forKey: storageKey)
+        if !shared.bool(forKey: Self.migrationKey) {
+            let standard = UserDefaults.standard
+            if let data = standard.data(forKey: storageKey) {
+                shared.set(data, forKey: storageKey)
+            }
+            let total = standard.integer(forKey: totalKey)
+            if total > 0 {
+                shared.set(total, forKey: totalKey)
+            }
+            shared.set(true, forKey: Self.migrationKey)
         }
 
-        let total = standard.integer(forKey: totalKey)
-        if total > 0 {
-            shared.set(total, forKey: totalKey)
+        if !shared.bool(forKey: Self.fileMigrationKey) {
+            if let data = shared.data(forKey: storageKey) {
+                try? data.write(to: Self.wordsFileURL, options: .atomic)
+            }
+            shared.set(true, forKey: Self.fileMigrationKey)
         }
-
-        shared.set(true, forKey: Self.migrationKey)
     }
 
     private func load() {
-        let defaults = sharedDefaults
-
-        if let data = defaults.data(forKey: storageKey),
+        if let data = try? Data(contentsOf: Self.wordsFileURL),
            let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
+            words = decoded
+        } else if let data = sharedDefaults.data(forKey: storageKey),
+                  let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
             words = decoded
         }
 
-        totalWordsAdded = defaults.integer(forKey: totalKey)
+        totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
         hasLoaded = true
     }
 
     func reloadFromDisk() {
-        let defaults = sharedDefaults
-        if let data = defaults.data(forKey: storageKey),
-           let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
-            if decoded != words {
-                hasLoaded = false
-                words = decoded
-                totalWordsAdded = defaults.integer(forKey: totalKey)
-                hasLoaded = true
-            }
+        guard let data = try? Data(contentsOf: Self.wordsFileURL),
+              let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) else { return }
+        if decoded != words {
+            hasLoaded = false
+            words = decoded
+            totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+            hasLoaded = true
         }
     }
 
@@ -161,14 +179,12 @@ final class WordsStore: ObservableObject {
             guard !Task.isCancelled, let self else { return }
             let copy = self.words
             let total = self.totalWordsAdded
-            let storageKey = self.storageKey
             let totalKey = self.totalKey
             let defaults = self.sharedDefaults
+            let fileURL = Self.wordsFileURL
             Task.detached(priority: .utility) {
                 if let data = try? JSONEncoder().encode(copy) {
-                    await MainActor.run {
-                        defaults.set(data, forKey: storageKey)
-                    }
+                    try? data.write(to: fileURL, options: .atomic)
                 }
                 await MainActor.run {
                     defaults.set(total, forKey: totalKey)

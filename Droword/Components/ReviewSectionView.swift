@@ -10,8 +10,9 @@ struct ReviewSectionView: View {
     @State private var showTranslation: Bool = false
     @State private var isPlaying: Bool = false
     @State private var showPremiumWall: Bool = false
-    @State private var allCaughtUp: Bool = false
-    @State private var dismissed: Bool = false
+    @AppStorage(AppStorageKeys.reviewAllCaughtUp) private var allCaughtUp: Bool = false
+    @AppStorage(AppStorageKeys.reviewDismissed) private var dismissed: Bool = false
+    @AppStorage(AppStorageKeys.reviewSessionDate) private var sessionDateRaw: Double = 0
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenReviewPaywall) private var hasSeenReviewPaywall: Bool = false
     @State private var showPaywallFromReview: Bool = false
@@ -46,7 +47,7 @@ struct ReviewSectionView: View {
             }
         }
         }
-        .onAppear { prepareSession() }
+        .onAppear { prepareSessionIfNeeded() }
         .onChange(of: store.words.count) { handleWordsChanged() }
     }
 
@@ -69,7 +70,7 @@ struct ReviewSectionView: View {
     private var reviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let tag = card.tag, !tag.isEmpty {
-                Text(tag)
+                Text(LocalizedStringKey(tag))
                     .font(themeStore.medium(13))
                     .foregroundColor(themeStore.colorForTag(tag))
                     .padding(.vertical, 4)
@@ -308,6 +309,30 @@ struct ReviewSectionView: View {
         }
     }
 
+    private func prepareSessionIfNeeded() {
+        // Session is in progress — keep it
+        if !learningQueue.isEmpty {
+            return
+        }
+
+        // Session was completed — check if new words became due since then
+        if allCaughtUp {
+            let sessionDate = Date(timeIntervalSince1970: sessionDateRaw)
+            let now = Date()
+            let newDue = store.words.contains { w in
+                if let due = w.dueDate { return due > sessionDate && due <= now }
+                return false
+            }
+            if newDue {
+                // New words are due — start fresh session
+                prepareSession()
+            }
+            return
+        }
+
+        prepareSession()
+    }
+
     private func prepareSession() {
         let now = Date()
         let due = store.words.filter { w in
@@ -333,15 +358,52 @@ struct ReviewSectionView: View {
         showTranslation = false
         allCaughtUp = false
         dismissed = false
+        sessionDateRaw = now.timeIntervalSince1970
     }
 
     private func handleWordsChanged() {
         let currentWordIDs = Set(store.words.map { $0.id })
-        let before = learningQueue.count
+        let queueIDs = Set(learningQueue.map { $0.id })
 
+        // Remove deleted words
+        let before = learningQueue.count
         learningQueue.removeAll { !currentWordIDs.contains($0.id) }
 
-        guard before != learningQueue.count else { return }
+        // Add newly added words that are due for review
+        let now = Date()
+        let newDue = store.words.filter { w in
+            !queueIDs.contains(w.id) && (w.dueDate == nil || w.dueDate! <= now)
+        }
+        for word in newDue {
+            learningQueue.append(
+                WordCard(
+                    id: word.id,
+                    word: word.word,
+                    partOfSpeech: word.type.isEmpty ? "word" : word.type,
+                    example: word.example ?? "Add an example later",
+                    translation: word.translation ?? "No translation yet",
+                    explanation: word.explanation,
+                    breakdown: word.breakdown,
+                    transcription: word.transcription,
+                    tag: word.tag,
+                    fromLanguage: word.fromLanguage,
+                    toLanguage: word.toLanguage,
+                    comment: word.comment
+                )
+            )
+        }
+
+        let changed = before != learningQueue.count || !newDue.isEmpty
+
+        // If new words appeared, reset "all caught up" state
+        if !newDue.isEmpty && allCaughtUp {
+            allCaughtUp = false
+            dismissed = false
+            showTranslation = false
+            return
+        }
+
+        guard changed else { return }
 
         if currentIndex >= learningQueue.count {
             if allCaughtUp {
@@ -452,6 +514,7 @@ struct ReviewSectionView: View {
             }
             if currentIndex >= learningQueue.count {
                 allCaughtUp = true
+                sessionDateRaw = Date().timeIntervalSince1970
                 Haptics.success()
             }
         }
@@ -466,8 +529,7 @@ struct ReviewSectionView: View {
         if !isPremium { DailyLimitsManager.recordTTS() }
         Task {
             isPlaying = true
-            await AudioManager.shared.play(word: card.word)
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            try? await AudioManager.shared.playAndWait(text: card.word)
             withAnimation { isPlaying = false }
         }
     }

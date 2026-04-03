@@ -45,9 +45,11 @@ struct QuizMixedView: View {
     @State private var streakMilestone: Int? = nil
     @State private var streakMilestoneOpacity: Double = 0
 
+    @State private var hasEnoughWords: Bool = true
+
     var body: some View {
         ZStack {
-            if store.words.filter({ $0.translation != nil && !$0.translation!.isEmpty }).count < 4 {
+            if !hasEnoughWords {
                 notEnoughState
             } else if session.isComplete {
                 QuizCompletionView(
@@ -170,7 +172,10 @@ struct QuizMixedView: View {
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.currentIndex)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
-        .onAppear { restoreOrStartSession() }
+        .onAppear {
+            hasEnoughWords = store.words.filter({ $0.translation != nil && !$0.translation!.isEmpty }).count >= 4
+            restoreOrStartSession()
+        }
         .onChange(of: session.isComplete) { _, isComplete in
             if isComplete {
                 session.clearSavedSession()
@@ -184,6 +189,7 @@ struct QuizMixedView: View {
         .onTapGesture { isInputFocused = false }
         .onChange(of: store.words.count) { _, _ in
             let usable = store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count
+            hasEnoughWords = usable >= 4
             if usable < 4 {
                 session.clearSavedSession()
                 session.queue = []

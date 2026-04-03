@@ -3,6 +3,7 @@ import SwiftUI
 struct SoundWavesView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @State private var barHeights: [CGFloat] = [8, 12, 8]
+    @State private var animating = false
     let isPlaying: Bool
 
     private let barWidth: CGFloat = 4
@@ -18,28 +19,32 @@ struct SoundWavesView: View {
                     .cornerRadius(2)
             }
         }
-        .onAppear { if isPlaying { startAnimation() } }
-        .onChange(of: isPlaying) { _, animating in
-            if animating {
-                startAnimation()
+        .onChange(of: isPlaying) { _, playing in
+            if playing {
+                animating = true
+                tick()
             } else {
-                resetBars()
+                animating = false
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    barHeights = [8, 12, 8]
+                }
+            }
+        }
+        .onAppear {
+            if isPlaying {
+                animating = true
+                tick()
             }
         }
     }
 
-    private func startAnimation() {
-        withAnimation(Animation.easeInOut(duration: 0.3).repeatForever(autoreverses: true)) {
+    private func tick() {
+        guard animating else { return }
+        withAnimation(.easeInOut(duration: 0.3)) {
             barHeights = barHeights.map { _ in CGFloat.random(in: minHeight...maxHeight) }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if isPlaying {
-                startAnimation()
-            }
+            tick()
         }
-    }
-
-    private func resetBars() {
-        withAnimation { barHeights = [8, 12, 8] }
     }
 }

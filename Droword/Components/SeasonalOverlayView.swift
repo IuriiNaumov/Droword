@@ -87,6 +87,13 @@ struct SeasonalOverlayView: View {
         }
     }()
 
+    private static let springColor = Color(red: 1.0, green: 0.56, blue: 0.82)
+    private static let springCenter = Color(red: 1.0, green: 0.37, blue: 0.69)
+    private static let winterColor = Color(red: 0.3, green: 0.65, blue: 1.0)
+    private static let summerPetal = Color(red: 1.0, green: 0.847, blue: 0.302)
+    private static let summerCenter = Color(red: 0.957, green: 0.639, blue: 0.0)
+    private static let leafFill = Color(red: 0.788, green: 0.478, blue: 0.169)
+
     var body: some View {
         GeometryReader { geo in
             let allShapes = season.shapes.flatMap { shape in
@@ -97,69 +104,122 @@ struct SeasonalOverlayView: View {
                 TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { timeline in
                     let now = timeline.date.timeIntervalSinceReferenceDate
 
-                    ZStack {
-                        ForEach(particles) { p in
+                    Canvas { context, size in
+                        for p in particles {
                             let age = now + p.timeOffset
-                            let totalH = geo.size.height + 60
+                            let totalH = size.height + 60
                             let rawY = CGFloat(age) * p.speed
                             let y = ((rawY.truncatingRemainder(dividingBy: totalH) + totalH)
                                 .truncatingRemainder(dividingBy: totalH)) - 30
-                            let x = p.xFraction * geo.size.width + sin(CGFloat(age) * p.driftSpeed) * p.drift
+                            let x = p.xFraction * size.width + sin(CGFloat(age) * p.driftSpeed) * p.drift
                             let pick = allShapes[p.shapeIndex % allShapes.count]
-                            let flowerSize = pick.1 * (p.size / 20)
+                            let s = pick.1 * (p.size / 20) * 2
+                            let angle = Angle.degrees(p.rotation + age * 5)
 
-                            if season.isSpring {
-                                SakuraFlower(size: flowerSize * 2)
-                                    .opacity(p.opacity)
-                                    .rotationEffect(.degrees(p.rotation + age * 5))
-                                    .position(x: x, y: y)
-                            } else if season.isWinter {
-                                SnowflakeView(size: flowerSize * 2.5)
-                                    .opacity(p.opacity)
-                                    .rotationEffect(.degrees(p.rotation + age * 5))
-                                    .position(x: x, y: y)
-                            } else if season.isSummer {
-                                SunView(size: flowerSize * 2)
-                                    .opacity(p.opacity)
-                                    .rotationEffect(.degrees(p.rotation + age * 5))
-                                    .position(x: x, y: y)
-                            } else {
-                                LeafView(size: flowerSize * 2)
-                                    .opacity(p.opacity)
-                                    .rotationEffect(.degrees(p.rotation + age * 5))
-                                    .position(x: x, y: y)
-                            }
+                            var ctx = context
+                            ctx.opacity = p.opacity
+                            ctx.translateBy(x: x, y: y)
+                            ctx.rotate(by: angle)
+
+                            drawParticleShape(in: &ctx, season: season, size: s)
                         }
                     }
                 }
             } else {
-                ZStack {
-                    ForEach(particles) { p in
+                Canvas { context, size in
+                    for p in particles {
                         let pick = allShapes[p.shapeIndex % allShapes.count]
-                        let flowerSize = pick.1 * (p.size / 20)
+                        let s = pick.1 * (p.size / 20) * 2
+                        let x = p.xFraction * size.width
+                        let y = (p.timeOffset / 50) * size.height
 
-                        Group {
-                            if season.isSpring {
-                                SakuraFlower(size: flowerSize * 2)
-                            } else if season.isWinter {
-                                SnowflakeView(size: flowerSize * 2.5)
-                            } else if season.isSummer {
-                                SunView(size: flowerSize * 2)
-                            } else {
-                                LeafView(size: flowerSize * 2)
-                            }
-                        }
-                        .opacity(p.opacity)
-                        .rotationEffect(.degrees(p.rotation))
-                        .position(
-                            x: p.xFraction * geo.size.width,
-                            y: (p.timeOffset / 50) * geo.size.height
-                        )
+                        var ctx = context
+                        ctx.opacity = p.opacity
+                        ctx.translateBy(x: x, y: y)
+                        ctx.rotate(by: .degrees(p.rotation))
+
+                        drawParticleShape(in: &ctx, season: season, size: s)
                     }
                 }
             }
         }
         .allowsHitTesting(false)
+    }
+
+    private func drawParticleShape(in context: inout GraphicsContext, season: Season, size: CGFloat) {
+        switch season {
+        case .spring:
+            for i in 0..<5 {
+                let petalW = size * 0.233
+                let petalH = size * 0.367
+                let offsetY = -size * 0.25
+                var petal = context
+                petal.rotate(by: .degrees(Double(i) * 72))
+                petal.translateBy(x: 0, y: offsetY)
+                let rect = CGRect(x: -petalW / 2, y: -petalH / 2, width: petalW, height: petalH)
+                petal.fill(Path(ellipseIn: rect), with: .color(Self.springColor))
+            }
+            let cR = size * 0.167 / 2
+            context.fill(Path(ellipseIn: CGRect(x: -cR, y: -cR, width: cR * 2, height: cR * 2)), with: .color(Self.springCenter))
+
+        case .winter:
+            let s = size * 1.25
+            let f = s / 120.0
+            let lw = s * 0.05
+            let arms: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
+                (60, 15, 60, 105), (15, 60, 105, 60),
+                (25, 25, 95, 95), (95, 25, 25, 95),
+            ]
+            let branches: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
+                (60, 15, 52, 28), (60, 15, 68, 28),
+                (105, 60, 92, 52), (105, 60, 92, 68),
+                (60, 105, 52, 92), (60, 105, 68, 92),
+                (15, 60, 28, 52), (15, 60, 28, 68),
+            ]
+            var path = Path()
+            for a in arms {
+                path.move(to: CGPoint(x: a.0 * f - s / 2, y: a.1 * f - s / 2))
+                path.addLine(to: CGPoint(x: a.2 * f - s / 2, y: a.3 * f - s / 2))
+            }
+            for b in branches {
+                path.move(to: CGPoint(x: b.0 * f - s / 2, y: b.1 * f - s / 2))
+                path.addLine(to: CGPoint(x: b.2 * f - s / 2, y: b.3 * f - s / 2))
+            }
+            context.stroke(path, with: .color(Self.winterColor), style: StrokeStyle(lineWidth: lw, lineCap: .round))
+
+        case .summer:
+            for i in 0..<8 {
+                let petalW = size * 0.2
+                let petalH = size * 0.433
+                let offsetY = -size * 0.27
+                var petal = context
+                petal.rotate(by: .degrees(Double(i) * 45))
+                petal.translateBy(x: 0, y: offsetY)
+                let rect = CGRect(x: -petalW / 2, y: -petalH / 2, width: petalW, height: petalH)
+                petal.fill(Path(ellipseIn: rect), with: .color(Self.summerPetal))
+            }
+            let cR = size * 0.233 / 2
+            context.fill(Path(ellipseIn: CGRect(x: -cR, y: -cR, width: cR * 2, height: cR * 2)), with: .color(Self.summerCenter))
+
+        case .fall:
+            let f = size / 120.0
+            var leafPath = Path()
+            leafPath.move(to: CGPoint(x: 0, y: -45 * f))
+            leafPath.addCurve(to: CGPoint(x: 40 * f, y: 5 * f),
+                              control1: CGPoint(x: 25 * f, y: -40 * f),
+                              control2: CGPoint(x: 45 * f, y: -20 * f))
+            leafPath.addCurve(to: CGPoint(x: 0, y: 45 * f),
+                              control1: CGPoint(x: 35 * f, y: 30 * f),
+                              control2: CGPoint(x: 10 * f, y: 45 * f))
+            leafPath.addCurve(to: CGPoint(x: -40 * f, y: 5 * f),
+                              control1: CGPoint(x: -10 * f, y: 45 * f),
+                              control2: CGPoint(x: -35 * f, y: 30 * f))
+            leafPath.addCurve(to: CGPoint(x: 0, y: -45 * f),
+                              control1: CGPoint(x: -45 * f, y: -20 * f),
+                              control2: CGPoint(x: -25 * f, y: -40 * f))
+            leafPath.closeSubpath()
+            context.fill(leafPath, with: .color(Self.leafFill))
+        }
     }
 }
 

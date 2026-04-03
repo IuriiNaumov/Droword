@@ -73,22 +73,7 @@ struct OnboardingReplayView: View {
                 }
                 .iPadContentWidth(600)
 
-                // Close button
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button {
-                            Haptics.selection()
-                            dismiss()
-                        } label: {
-                            CloseButtonIcon()
-                                .environmentObject(themeStore)
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.top, 12)
-                    }
-                    Spacer()
-                }
+
             }
         }
         .onAppear { retriggerAnimation() }
