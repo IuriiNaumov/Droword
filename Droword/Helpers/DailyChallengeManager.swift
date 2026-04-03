@@ -32,6 +32,28 @@ struct DailyChallenge: Codable, Identifiable {
 
     var isCompleted: Bool { currentValue >= targetValue }
     var progress: Double { min(1.0, Double(currentValue) / Double(max(1, targetValue))) }
+
+    var localizedTitle: String {
+        switch type {
+        case .addWords:       return String(localized: "Word Collector")
+        case .perfectQuiz:    return String(localized: "Perfect Score")
+        case .practiceQuiz:   return String(localized: "Quiz Machine")
+        case .reviewWords:    return String(localized: "Memory Keeper")
+        case .studyTime:      return String(localized: "Dedicated Learner")
+        case .addTaggedWords: return String(localized: "Organizer")
+        }
+    }
+
+    var localizedDescription: String {
+        switch type {
+        case .addWords:       return String(localized: "Add \(targetValue) new words")
+        case .perfectQuiz:    return String(localized: "Complete a quiz with 100%")
+        case .practiceQuiz:   return String(localized: "Complete \(targetValue) quizzes")
+        case .reviewWords:    return String(localized: "Review \(targetValue) due words")
+        case .studyTime:      return String(localized: "Study for \(targetValue) minutes")
+        case .addTaggedWords: return String(localized: "Add \(targetValue) tagged words")
+        }
+    }
 }
 
 @MainActor

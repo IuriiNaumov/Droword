@@ -257,7 +257,7 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(isPremium ? themeStore.accentBlue : .white)
+                    .foregroundColor(themeStore.accentBlue)
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
@@ -270,10 +270,10 @@ struct SettingsView: View {
                     } else {
                         Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
                             .font(.custom("Poppins-Bold", size: 16))
-                            .foregroundColor(isPremium ? themeStore.mainText : .white)
+                            .foregroundColor(themeStore.mainText)
                         Text(isPremium ? LocalizedStringKey("Unlimited access") : LocalizedStringKey("Unlock unlimited AI features"))
                             .font(.custom("Poppins-Regular", size: 12))
-                            .foregroundColor(isPremium ? themeStore.secondaryText : .white.opacity(0.7))
+                            .foregroundColor(themeStore.secondaryText)
                     }
                 }
 
@@ -282,10 +282,10 @@ struct SettingsView: View {
                 if !isPremium {
                     Text("Upgrade")
                         .font(.custom("Poppins-Bold", size: 13))
-                        .foregroundColor(Color.accentBlack)
+                        .foregroundColor(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
-                        .background(Capsule().fill(Color.white))
+                        .background(Capsule().fill(themeStore.accentBlue))
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 22))
@@ -296,7 +296,7 @@ struct SettingsView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(isPremium ? themeStore.accentBlueSoft : Color.accentBlack)
+                    .fill(themeStore.accentBlueSoft)
             )
         }
         .buttonStyle(Duo3DButtonStyle())
@@ -322,17 +322,19 @@ struct SettingsView: View {
                                 .foregroundColor(item.color)
                         }
 
-                        Text(item.title)
-                            .font(.custom("Poppins-Regular", size: 16))
-                            .foregroundColor(.primary)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(item.title)
+                                .font(.custom("Poppins-Regular", size: 16))
+                                .foregroundColor(.primary)
 
-                        if item.showProBadge {
-                            Text("PRO")
-                                .font(.custom("Poppins-Bold", size: 9))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Capsule().fill(Color.accentBlack))
+                            if item.showProBadge {
+                                Text("PRO")
+                                    .font(.custom("Poppins-Bold", size: 9))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(themeStore.accentBlue))
+                            }
                         }
 
                         Spacer()

@@ -74,7 +74,7 @@ struct ProfileHeaderView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Text(displayName)
                             .font(themeStore.bold(18))
                             .foregroundColor(themeStore.mainText)

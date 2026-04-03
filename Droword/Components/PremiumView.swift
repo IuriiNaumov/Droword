@@ -28,10 +28,10 @@ struct PremiumView: View {
     }
 
     private var monthlyPrice: String {
-        storeKit.monthlyProduct?.displayPrice ?? "$4.99"
+        storeKit.monthlyProduct?.displayPrice ?? "$6.99"
     }
     private var yearlyPrice: String {
-        storeKit.yearlyProduct?.displayPrice ?? "$39.99"
+        storeKit.yearlyProduct?.displayPrice ?? "$62.99"
     }
     private var yearlyMonthly: String {
         if let product = storeKit.yearlyProduct {
@@ -138,7 +138,7 @@ struct PremiumView: View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.system(size: 40, weight: .medium))
-                .foregroundColor(isPremium ? themeStore.accentBlue : Color.accentBlack)
+                .foregroundColor(themeStore.accentBlue)
                 .scaleEffect(appeared ? 1.0 : 0.5)
                 .opacity(appeared ? 1.0 : 0)
 
@@ -170,7 +170,7 @@ struct PremiumView: View {
                     .frame(width: 80)
                 Text("PRO")
                     .font(.custom("Poppins-Bold", size: 13))
-                    .foregroundColor(Color.accentBlack)
+                    .foregroundColor(themeStore.accentBlue)
                     .frame(width: 80)
             }
             .padding(.horizontal, 20)
@@ -192,7 +192,7 @@ struct PremiumView: View {
 
                         Text(row.pro)
                             .font(.custom("Poppins-Medium", size: 13))
-                            .foregroundColor(Color.accentBlack)
+                            .foregroundColor(themeStore.accentBlue)
                             .frame(width: 80)
                     }
                     .padding(.vertical, 12)
@@ -229,7 +229,7 @@ struct PremiumView: View {
                 title: "Yearly",
                 price: yearlyPrice,
                 detail: "\(yearlyMonthly)/mo",
-                badge: "Save 33%"
+                badge: "Save 25%"
             )
 
             planCard(
@@ -255,12 +255,12 @@ struct PremiumView: View {
             HStack {
                 ZStack {
                     Circle()
-                        .stroke(selectedPlan == plan ? Color.accentBlack : Color(.separator), lineWidth: 2)
+                        .stroke(selectedPlan == plan ? themeStore.accentBlue : Color(.separator), lineWidth: 2)
                         .frame(width: 22, height: 22)
 
                     if selectedPlan == plan {
                         Circle()
-                            .fill(Color.accentBlack)
+                            .fill(themeStore.accentBlue)
                             .frame(width: 14, height: 14)
                     }
                 }
@@ -297,7 +297,7 @@ struct PremiumView: View {
                     .fill(Color(.secondarySystemBackground))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(selectedPlan == plan ? Color.accentBlack : Color.clear, lineWidth: 2)
+                            .stroke(selectedPlan == plan ? themeStore.accentBlue : Color.clear, lineWidth: 2)
                     )
             )
         }
@@ -323,7 +323,7 @@ struct PremiumView: View {
                 .padding(.vertical, 16)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.accentBlack)
+                        .fill(themeStore.accentBlue)
                 )
             }
             .buttonStyle(Duo3DButtonStyle())

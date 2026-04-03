@@ -105,7 +105,7 @@ struct DailyChallengeDetailView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text(challenge.title)
+                    Text(challenge.localizedTitle)
                         .font(.custom("Poppins-Medium", size: 16))
                         .foregroundColor(challenge.isCompleted ? themeStore.secondaryText : themeStore.mainText)
                         .strikethrough(challenge.isCompleted, color: themeStore.secondaryText)
@@ -113,7 +113,7 @@ struct DailyChallengeDetailView: View {
                     Spacer()
                 }
 
-                Text(challenge.description)
+                Text(challenge.localizedDescription)
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(themeStore.secondaryText)
 
