@@ -178,7 +178,7 @@ struct NotificationSettingsView: View {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .font(.system(size: 12))
                                     Text("End time must be after start time")
-                                        .font(.custom("Poppins-Regular", size: 12))
+                                        .font(themeStore.regular(12))
                                 }
                                 .foregroundColor(.orange)
                                 .padding(.horizontal, 20)
@@ -187,7 +187,7 @@ struct NotificationSettingsView: View {
 
                             if store.words.isEmpty {
                                 Text("Add words to receive vocabulary notifications")
-                                    .font(.custom("Poppins-Regular", size: 12))
+                                    .font(themeStore.regular(12))
                                     .foregroundColor(themeStore.secondaryText)
                                     .padding(.horizontal, 20)
                                     .padding(.top, 6)
@@ -210,7 +210,7 @@ struct NotificationSettingsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
                     Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
-                        .font(.custom("Poppins-Regular", size: 12))
+                        .font(themeStore.regular(12))
                         .foregroundColor(themeStore.secondaryText)
                         .padding(.horizontal, 8)
                 }
@@ -300,21 +300,21 @@ struct NotificationSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text("DROWORD")
-                        .font(.custom("Poppins-Bold", size: 12))
+                        .font(themeStore.bold(12))
                         .foregroundColor(themeStore.secondaryText)
                     Spacer()
                     Text("now")
-                        .font(.custom("Poppins-Regular", size: 12))
+                        .font(themeStore.regular(12))
                         .foregroundColor(themeStore.secondaryText)
                 }
 
                 Text(sampleWord.word)
-                    .font(.custom("Poppins-Bold", size: 15))
+                    .font(themeStore.bold(15))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text(previewBody)
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(themeStore.regular(14))
                     .foregroundColor(.primary.opacity(0.8))
                     .lineLimit(2)
             }
@@ -352,7 +352,7 @@ struct NotificationSettingsView: View {
                     .foregroundColor(color)
             }
             Text(title)
-                .font(.custom("Poppins-Regular", size: 16))
+                .font(themeStore.regular(16))
                 .foregroundColor(.primary)
             Spacer()
             Toggle("", isOn: isOn)
@@ -375,7 +375,7 @@ struct NotificationSettingsView: View {
                     .foregroundColor(color)
             }
             Text(title)
-                .font(.custom("Poppins-Regular", size: 16))
+                .font(themeStore.regular(16))
                 .foregroundColor(.primary)
             Spacer()
             DatePicker("", selection: date, displayedComponents: .hourAndMinute)
@@ -398,11 +398,11 @@ struct NotificationSettingsView: View {
                     .foregroundColor(themeStore.iconBlue)
             }
             Text("Per day")
-                .font(.custom("Poppins-Regular", size: 16))
+                .font(themeStore.regular(16))
                 .foregroundColor(.primary)
             Spacer()
             Stepper("\(value.wrappedValue)", value: value, in: 1...10)
-                .font(.custom("Poppins-Medium", size: 16))
+                .font(themeStore.medium(16))
                 .foregroundColor(.primary)
         }
         .padding(.vertical, 8)
@@ -412,7 +412,7 @@ struct NotificationSettingsView: View {
 
     private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(.custom("Poppins-Bold", size: 18))
+            .font(themeStore.bold(18))
             .foregroundColor(.primary)
     }
 }

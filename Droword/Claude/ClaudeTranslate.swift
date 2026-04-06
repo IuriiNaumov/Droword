@@ -7,6 +7,7 @@ struct TranslationResult: Codable {
     let explanation: String?
     let breakdown: String?
     let transcription: String?
+    let examples: [String]?
 }
 
 @MainActor
@@ -22,7 +23,7 @@ func translateWithClaude(
     ]
 
     let request = try APIClient.makeRequest(endpoint: "translate", body: body)
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await APIClient.perform(request)
     let validated = try APIClient.validateResponse(data, response)
     return try JSONDecoder().decode(TranslationResult.self, from: validated)
 }

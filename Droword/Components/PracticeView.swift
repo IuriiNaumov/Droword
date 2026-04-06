@@ -60,7 +60,7 @@ struct PracticeView: View {
     private var header: some View {
         HStack {
             Text("Practice")
-                .font(.custom("Poppins-Bold", size: 38))
+                .font(themeStore.bold(38))
                 .foregroundColor(themeStore.mainText)
 
             Spacer()

@@ -23,5 +23,9 @@
 	<string>Droword uses the camera to take a profile photo.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Droword accesses your photo library to set a profile photo.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
 </dict>
 </plist>

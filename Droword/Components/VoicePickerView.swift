@@ -38,10 +38,10 @@ struct VoicePickerView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(option.title)
-                            .font(.custom("Poppins-Medium", size: 16))
+                            .font(themeStore.medium(16))
                             .foregroundColor(.primary)
                         Text(option.description)
-                            .font(.custom("Poppins-Regular", size: 13))
+                            .font(themeStore.regular(13))
                             .foregroundColor(themeStore.secondaryText)
                     }
                     Spacer()

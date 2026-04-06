@@ -184,6 +184,9 @@ struct QuizMixedView: View {
                     score: session.correctCount,
                     total: session.total
                 )
+                if session.correctCount == session.total && session.total > 0 {
+                    NotificationCenter.default.post(name: .perfectQuizCompleted, object: nil)
+                }
             }
         }
         .onTapGesture { isInputFocused = false }
@@ -442,7 +445,8 @@ struct QuizMixedView: View {
             }
             let distractors = session.distractors(for: item, from: store.words, reversed: mcReversed)
             let answer = mcReversed ? item.word : item.translation
-            var all = distractors + [answer]
+            // Filter out any distractors that accidentally match the answer
+            var all = distractors.filter { $0.lowercased() != answer.lowercased() } + [answer]
             all.shuffle()
             options = all
 

@@ -51,13 +51,14 @@ struct PremiumView: View {
         let pro: LocalizedStringKey
     }
 
-    private let featureRows: [FeatureRow] = [
-        FeatureRow(title: "AI translations", free: "3 / day", pro: "Unlimited"),
+    private var featureRows: [FeatureRow] {[
+        FeatureRow(title: "AI translations", free: "\(DailyLimitsManager.maxFreeTranslations) / day", pro: "Unlimited"),
         FeatureRow(title: "Voice pronunciation", free: "10 / day", pro: "Unlimited"),
         FeatureRow(title: "Word suggestions", free: "4 / day", pro: "Unlimited"),
         FeatureRow(title: "Themes", free: "Default only", pro: "All themes"),
         FeatureRow(title: "Seasonal effects", free: "—", pro: "All effects"),
-    ]
+        FeatureRow(title: "Streak freeze", free: "—", pro: "1 / week"),
+    ]}
 
     var body: some View {
         Group {
@@ -107,8 +108,23 @@ struct PremiumView: View {
                     comparisonSection
                         .padding(.top, 28)
 
+                    if !hasUsedTrial {
+                        startTrialButton
+                            .padding(.top, 24)
+
+                        HStack {
+                            VStack { Divider() }
+                            Text("or subscribe")
+                                .font(themeStore.regular(13))
+                                .foregroundColor(.secondary)
+                            VStack { Divider() }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                    }
+
                     plansSection
-                        .padding(.top, 28)
+                        .padding(.top, hasUsedTrial ? 28 : 16)
 
                     subscribeButton
                         .padding(.top, 24)
@@ -117,7 +133,7 @@ struct PremiumView: View {
                         Task { await storeKit.restorePurchases() }
                     } label: {
                         Text("Restore purchases")
-                            .font(.custom("Poppins-Regular", size: 13))
+                            .font(themeStore.regular(13))
                             .foregroundColor(.secondary)
                     }
                     .disabled(storeKit.isLoading)
@@ -143,16 +159,16 @@ struct PremiumView: View {
                 .opacity(appeared ? 1.0 : 0)
 
             Text("Droword PRO")
-                .font(.custom("Poppins-Bold", size: 28))
+                .font(themeStore.bold(28))
                 .foregroundColor(.primary)
 
             if let days = trialDaysRemaining, isPremium {
                 Text("Trial: \(days) days remaining", comment: "PRO trial countdown")
-                    .font(.custom("Poppins-Medium", size: 14))
+                    .font(themeStore.medium(14))
                     .foregroundColor(.orange)
             } else {
                 Text(isPremium ? LocalizedStringKey("You have full access") : LocalizedStringKey("Unlock unlimited AI features"))
-                    .font(.custom("Poppins-Regular", size: 15))
+                    .font(themeStore.regular(15))
                     .foregroundColor(.secondary)
             }
         }
@@ -165,11 +181,11 @@ struct PremiumView: View {
                 Text("")
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Free")
-                    .font(.custom("Poppins-Medium", size: 13))
+                    .font(themeStore.medium(13))
                     .foregroundColor(.secondary)
                     .frame(width: 80)
                 Text("PRO")
-                    .font(.custom("Poppins-Bold", size: 13))
+                    .font(themeStore.bold(13))
                     .foregroundColor(themeStore.accentBlue)
                     .frame(width: 80)
             }
@@ -181,17 +197,17 @@ struct PremiumView: View {
                     Divider()
                     HStack {
                         Text(row.title)
-                            .font(.custom("Poppins-Regular", size: 15))
+                            .font(themeStore.regular(15))
                             .foregroundColor(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
                         Text(row.free)
-                            .font(.custom("Poppins-Regular", size: 13))
+                            .font(themeStore.regular(13))
                             .foregroundColor(.secondary)
                             .frame(width: 80)
 
                         Text(row.pro)
-                            .font(.custom("Poppins-Medium", size: 13))
+                            .font(themeStore.medium(13))
                             .foregroundColor(themeStore.accentBlue)
                             .frame(width: 80)
                     }
@@ -213,7 +229,7 @@ struct PremiumView: View {
                         .foregroundColor(themeStore.accentBlue)
 
                     Text(row.title)
-                        .font(.custom("Poppins-Regular", size: 16))
+                        .font(themeStore.regular(16))
                         .foregroundColor(.primary)
                 }
             }
@@ -268,12 +284,12 @@ struct PremiumView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
                         Text(title)
-                            .font(.custom("Poppins-Medium", size: 16))
+                            .font(themeStore.medium(16))
                             .foregroundColor(.primary)
 
                         if let badge {
                             Text(badge)
-                                .font(.custom("Poppins-Bold", size: 10))
+                                .font(themeStore.bold(10))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -281,14 +297,14 @@ struct PremiumView: View {
                         }
                     }
                     Text(detail)
-                        .font(.custom("Poppins-Regular", size: 13))
+                        .font(themeStore.regular(13))
                         .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
                 Text(price)
-                    .font(.custom("Poppins-Bold", size: 18))
+                    .font(themeStore.bold(18))
                     .foregroundColor(.primary)
             }
             .padding(16)
@@ -302,6 +318,45 @@ struct PremiumView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text(plan == .yearly ? "Yearly plan, \(price)" : "Monthly plan, \(price)"))
+        .accessibilityAddTraits(selectedPlan == plan ? .isSelected : [])
+    }
+
+    private var startTrialButton: some View {
+        VStack(spacing: 6) {
+            Button {
+                let today = DateFormatting.dayFormatter.string(from: Date())
+                hasUsedTrial = true
+                trialStartDate = today
+                isPremium = true
+                TrialKeychain.save(startDate: today)
+                Haptics.success()
+                dismiss()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "gift")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("Start 7-Day Free Trial")
+                        .font(themeStore.bold(17))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.orange.gradient)
+                )
+            }
+            .buttonStyle(Duo3DButtonStyle())
+            .accessibilityLabel(Text("Start 7-day free trial"))
+            .accessibilityHint(Text("Activates all PRO features for 7 days"))
+
+            Text("No credit card required")
+                .font(themeStore.regular(12))
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 20)
+        .opacity(appeared ? 1.0 : 0)
     }
 
     private var subscribeButton: some View {
@@ -315,7 +370,7 @@ struct PremiumView: View {
                             .tint(.white)
                     } else {
                         Text("Subscribe")
-                            .font(.custom("Poppins-Bold", size: 17))
+                            .font(themeStore.bold(17))
                     }
                 }
                 .foregroundColor(.white)
@@ -328,10 +383,12 @@ struct PremiumView: View {
             }
             .buttonStyle(Duo3DButtonStyle())
             .disabled(storeKit.isLoading)
+            .accessibilityLabel(Text(storeKit.isLoading ? "Processing" : "Subscribe"))
+            .accessibilityHint(Text("Subscribe to Droword PRO"))
 
             if let error = purchaseError {
                 Text(error)
-                    .font(.custom("Poppins-Regular", size: 12))
+                    .font(themeStore.regular(12))
                     .foregroundColor(Color.accentRed)
                     .multilineTextAlignment(.center)
             }
@@ -350,10 +407,10 @@ struct PremiumView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRO is active")
-                            .font(.custom("Poppins-Bold", size: 17))
+                            .font(themeStore.bold(17))
                             .foregroundColor(.primary)
                         Text("Unlimited access to all features")
-                            .font(.custom("Poppins-Regular", size: 13))
+                            .font(themeStore.regular(13))
                             .foregroundColor(.secondary)
                     }
 
@@ -381,7 +438,7 @@ struct PremiumView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Manage Subscription")
-                        .font(.custom("Poppins-Medium", size: 15))
+                        .font(themeStore.medium(15))
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12, weight: .semibold))
                 }
@@ -397,7 +454,7 @@ struct PremiumView: View {
             .padding(.horizontal, 20)
 
             Text("Subscription renews automatically. You can cancel anytime in Settings → Apple ID → Subscriptions.")
-                .font(.custom("Poppins-Regular", size: 12))
+                .font(themeStore.regular(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -431,11 +488,11 @@ struct PremiumView: View {
     private func subscriptionDetailRow(label: LocalizedStringKey, value: String) -> some View {
         HStack {
             Text(label)
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(.custom("Poppins-Medium", size: 14))
+                .font(themeStore.medium(14))
                 .foregroundColor(.primary)
         }
     }
@@ -466,7 +523,7 @@ struct PremiumView: View {
 
     private var subscriptionDisclosure: some View {
         Text("Payment will be charged to your Apple ID account at confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions in your App Store account settings.")
-            .font(.custom("Poppins-Regular", size: 11))
+            .font(themeStore.regular(11))
             .foregroundColor(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 24)
@@ -475,14 +532,17 @@ struct PremiumView: View {
 
     private var legalLinks: some View {
         HStack(spacing: 4) {
-            Link("Terms of Use", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+            NavigationLink("Terms of Use") {
+                TermsOfUseView()
+                    .environmentObject(themeStore)
+            }
             Text("·")
             NavigationLink("Privacy Policy") {
                 PrivacyPolicyView()
                     .environmentObject(themeStore)
             }
         }
-        .font(.custom("Poppins-Regular", size: 12))
+        .font(themeStore.regular(12))
         .foregroundColor(.secondary)
         .padding(.top, 8)
     }

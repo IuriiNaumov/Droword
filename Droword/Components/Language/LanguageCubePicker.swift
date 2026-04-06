@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 
 struct LanguageCubePicker: View {
+    @EnvironmentObject private var themeStore: ThemeStore
     @Binding var selectedLanguage: String
     var title: LocalizedStringKey
     var languages: [LanguageOption]
@@ -16,7 +17,7 @@ struct LanguageCubePicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.custom("Poppins-Bold", size: 18))
+                .font(themeStore.bold(18))
                 .foregroundColor(.primary)
                 .padding(.horizontal)
 

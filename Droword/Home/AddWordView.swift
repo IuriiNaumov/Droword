@@ -15,6 +15,7 @@ struct AddWordView: View {
     @State private var showOfflineAlert = false
     @State private var showOfflineToast = false
     @State private var showDuplicateAlert = false
+    @State private var showErrorToast = false
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenOfflineAlert) private var hasSeenOfflineAlert: Bool = false
     @FocusState private var focusedField: Field?
@@ -71,14 +72,14 @@ struct AddWordView: View {
                         ZStack {
                             // Hidden text to keep consistent button size
                             Text("Add")
-                                .font(.custom("Poppins-Bold", size: 17))
+                                .font(themeStore.bold(17))
                                 .foregroundColor(.clear)
 
                             if isAdding {
                                 BouncingDotsView()
                             } else {
                                 Text("Add")
-                                    .font(.custom("Poppins-Bold", size: 17))
+                                    .font(themeStore.bold(17))
                                     .foregroundColor(.white)
                             }
                         }
@@ -86,6 +87,8 @@ struct AddWordView: View {
                     }
                     .buttonStyle(Duo3DButtonStyle())
                     .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty || isAdding)
+                    .accessibilityLabel(Text(isAdding ? "Adding word" : "Add word"))
+                    .accessibilityHint(Text("Adds the word to your dictionary"))
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
@@ -101,6 +104,7 @@ struct AddWordView: View {
                         CloseButtonIcon()
                             .environmentObject(themeStore)
                     }
+                    .accessibilityLabel(Text("Close"))
                 }
             }
         }
@@ -150,6 +154,14 @@ struct AddWordView: View {
                 )
                 .zIndex(998)
             }
+            if showErrorToast {
+                BannerToastView(
+                    type: .success,
+                    message: "Saved. Translation will update when available.",
+                    duration: 2.0
+                )
+                .zIndex(997)
+            }
         }
         .onAppear {
             wordPlaceholder = String(localized: wordPlaceholders.randomElement() ?? "Enter a word")
@@ -166,35 +178,46 @@ struct AddWordView: View {
 
     private var wordSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Word or phrase *")
-                    .font(.custom("Poppins-Regular", size: 18))
-                    .foregroundColor(themeStore.secondaryText)
-                Spacer()
-                Text("\(word.count)/40")
-                    .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
-            }
+            Text("Word or phrase *")
+                .font(themeStore.regular(18))
+                .foregroundColor(themeStore.secondaryText)
 
-            FormTextField(
-                title: wordPlaceholder,
-                text: $word,
-                maxLength: 40
-            )
-            .focused($focusedField, equals: .word)
-            .textInputAutocapitalization(.sentences)
-            .disableAutocorrection(true)
-            .onChange(of: word) { _, newValue in
-                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace || $0.isNumber || "'-".contains($0) }
-                if filtered != newValue { word = filtered }
+            ZStack(alignment: .topLeading) {
+                if word.isEmpty {
+                    Text(wordPlaceholder)
+                        .font(themeStore.regular(16))
+                        .foregroundColor(themeStore.secondaryText.opacity(0.5))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 19)
+                }
+                TextEditor(text: $word)
+                    .focused($focusedField, equals: .word)
+                    .font(themeStore.regular(16))
+                    .foregroundColor(themeStore.mainText)
+                    .tint(themeStore.mainAccentColor)
+                    .scrollContentBackground(.hidden)
+                    .textInputAutocapitalization(.sentences)
+                    .disableAutocorrection(true)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 12)
+                    .frame(minHeight: 56)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(themeStore.dividerColor.opacity(0.55))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(focusedField == .word ? themeStore.mainAccentColor : Color.clear, lineWidth: 2)
+            )
         }
     }
 
     private var translationSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Translation")
-                .font(.custom("Poppins-Regular", size: 18))
+                .font(themeStore.regular(18))
                 .foregroundColor(themeStore.secondaryText)
 
             FormTextField(
@@ -202,13 +225,9 @@ struct AddWordView: View {
                 text: $translation,
             )
             .focused($focusedField, equals: .translation)
-            .onChange(of: translation) { _, newValue in
-                let filtered = newValue.filter { $0.isLetter || $0.isWhitespace || $0.isNumber || "'-".contains($0) }
-                if filtered != newValue { translation = filtered }
-            }
 
             Text("Don’t know the translation? I’ll handle it for you")
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(themeStore.secondaryText.opacity(0.6))
                 .padding(.leading, 2)
         }
@@ -217,7 +236,7 @@ struct AddWordView: View {
     private var commentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Memory hint")
-                .font(.custom("Poppins-Regular", size: 18))
+                .font(themeStore.regular(18))
                 .foregroundColor(themeStore.secondaryText.opacity(0.9))
 
             FormTextField(
@@ -267,6 +286,7 @@ struct AddWordView: View {
             }
 
             await MainActor.run {
+                let examplesArray = result.examples ?? [result.example]
                 let newWord = StoredWord(
                     word: trimmedWord,
                     type: result.type.lowercased(),
@@ -278,7 +298,8 @@ struct AddWordView: View {
                     comment: comment,
                     tag: selectedTag,
                     fromLanguage: languageStore.learningLanguage,
-                    toLanguage: languageStore.nativeLanguage
+                    toLanguage: languageStore.nativeLanguage,
+                    examples: examplesArray
                 )
                 store.add(newWord)
                 if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
@@ -290,6 +311,10 @@ struct AddWordView: View {
             #endif
             await MainActor.run {
                 addWordOffline(trimmedWord)
+                showErrorToast = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    showErrorToast = false
+                }
             }
         }
 

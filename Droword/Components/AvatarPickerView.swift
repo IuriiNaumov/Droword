@@ -99,7 +99,7 @@ struct AvatarPickerView: View {
                 }
 
                 Text(title)
-                    .font(.custom("Poppins-Medium", size: 16))
+                    .font(themeStore.medium(16))
                     .foregroundColor(themeStore.mainText)
 
                 Spacer()

@@ -94,6 +94,7 @@ struct ReviewSectionView: View {
                         .tint(primaryText)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text("Play pronunciation"))
             }
 
             HStack(spacing: 8) {
@@ -172,13 +173,13 @@ struct ReviewSectionView: View {
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Button {
                     Haptics.warning()
-                    scheduleNext(for: card, isGotIt: false)
+                    scheduleNext(for: card, quality: .hard)
                     advanceToNext(didReinsert: true)
                 } label: {
-                    Text("Again")
+                    Text("Hard")
                         .font(themeStore.bold(15))
                         .foregroundColor(.white)
                         .padding(.vertical, 13)
@@ -191,20 +192,38 @@ struct ReviewSectionView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    Haptics.success()
-                    let ivl = computeNextInterval(for: card)
-                    scheduleNext(for: card, isGotIt: true)
+                    Haptics.lightImpact()
+                    let ivl = computeNextInterval(for: card, quality: .good)
+                    scheduleNext(for: card, quality: .good)
                     showNextReviewHint(days: ivl)
                 } label: {
-                    Text("Got it")
+                    Text("Good")
                         .font(themeStore.bold(15))
                         .foregroundColor(.white)
-                    .padding(.vertical, 13)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(themeStore.accentGreen)
-                    )
+                        .padding(.vertical, 13)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(themeStore.accentBlue)
+                        )
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    Haptics.success()
+                    let ivl = computeNextInterval(for: card, quality: .easy)
+                    scheduleNext(for: card, quality: .easy)
+                    showNextReviewHint(days: ivl)
+                } label: {
+                    Text("Easy")
+                        .font(themeStore.bold(15))
+                        .foregroundColor(.white)
+                        .padding(.vertical, 13)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(themeStore.accentGreen)
+                        )
                 }
                 .buttonStyle(.plain)
             }
@@ -215,6 +234,8 @@ struct ReviewSectionView: View {
                 .fill(backgroundColor)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Review card: \(card.word)"))
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
@@ -416,7 +437,29 @@ struct ReviewSectionView: View {
         }
     }
 
-    private func scheduleNext(for card: WordCard, isGotIt: Bool) {
+    private enum ReviewQuality {
+        case hard, good, easy
+
+        var q: Double {
+            switch self {
+            case .hard: return 1
+            case .good: return 3
+            case .easy: return 5
+            }
+        }
+
+        var scoreValue: Double {
+            switch self {
+            case .hard: return 0.0
+            case .good: return 0.6
+            case .easy: return 1.0
+            }
+        }
+
+        var isPass: Bool { self != .hard }
+    }
+
+    private func scheduleNext(for card: WordCard, quality: ReviewQuality) {
         guard let w = store.words.first(where: { $0.id == card.id }) else { return }
 
         var ef = max(1.3, w.easeFactor)
@@ -424,20 +467,19 @@ struct ReviewSectionView: View {
         var ivl = w.intervalDays
         var lapses = w.lapses
 
-        let q: Double = isGotIt ? 4 : 1
-        let quality: Double = isGotIt ? 1.0 : 0.0
+        let q = quality.q
 
         let alpha = 0.06
         let prev = languageStore.learningScore
-        languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
+        languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality.scoreValue * alpha))
 
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-        ef = max(1.3, ef)
+        ef = min(3.0, max(1.3, ef))
 
         let now = Date()
         let cal = Calendar.current
 
-        if !isGotIt {
+        if !quality.isPass {
             lapses += 1
             reps = 0
             ivl = 0
@@ -452,11 +494,12 @@ struct ReviewSectionView: View {
         } else {
             reps += 1
             if reps == 1 {
-                ivl = 1
+                ivl = quality == .easy ? 2 : 1
             } else if reps == 2 {
-                ivl = 6
+                ivl = quality == .easy ? 8 : 6
             } else {
-                ivl = max(1, Int(round(Double(ivl) * ef)))
+                let multiplier = quality == .easy ? ef * 1.3 : ef
+                ivl = max(1, Int(round(Double(ivl) * multiplier)))
             }
             let due = cal.date(byAdding: .day, value: ivl, to: now)
             store.updateScheduling(for: card.id,
@@ -468,16 +511,19 @@ struct ReviewSectionView: View {
         }
     }
 
-    private func computeNextInterval(for card: WordCard) -> Int {
+    private func computeNextInterval(for card: WordCard, quality: ReviewQuality) -> Int {
         guard let w = store.words.first(where: { $0.id == card.id }) else { return 1 }
         var ef = max(1.3, w.easeFactor)
-        let q: Double = 4
+        let q = quality.q
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-        ef = max(1.3, ef)
+        ef = min(3.0, max(1.3, ef))
         let reps = w.repetitions + 1
-        if reps == 1 { return 1 }
-        else if reps == 2 { return 6 }
-        else { return max(1, Int(round(Double(w.intervalDays) * ef))) }
+        if reps == 1 { return quality == .easy ? 2 : 1 }
+        else if reps == 2 { return quality == .easy ? 8 : 6 }
+        else {
+            let multiplier = quality == .easy ? ef * 1.3 : ef
+            return max(1, Int(round(Double(w.intervalDays) * multiplier)))
+        }
     }
 
     private func showNextReviewHint(days: Int) {
@@ -500,7 +546,10 @@ struct ReviewSectionView: View {
     private func reinsert(_ card: WordCard, after positions: Int) {
         guard currentIndex < learningQueue.count else { return }
         learningQueue.remove(at: currentIndex)
-        let newIndex = min(currentIndex + positions, learningQueue.count)
+        // Ensure at least 1 card gap so user doesn't see the same card immediately
+        let remaining = learningQueue.count - currentIndex
+        let effectivePositions = remaining > 0 ? max(positions, 1) : 0
+        let newIndex = min(currentIndex + effectivePositions, learningQueue.count)
         learningQueue.insert(card, at: newIndex)
     }
 
@@ -529,7 +578,13 @@ struct ReviewSectionView: View {
         if !isPremium { DailyLimitsManager.recordTTS() }
         Task {
             isPlaying = true
-            try? await AudioManager.shared.playAndWait(text: card.word)
+            do {
+                try await AudioManager.shared.playAndWait(text: card.word)
+            } catch {
+                #if DEBUG
+                print("⚠️ Audio playback failed: \(error.localizedDescription)")
+                #endif
+            }
             withAnimation { isPlaying = false }
         }
     }

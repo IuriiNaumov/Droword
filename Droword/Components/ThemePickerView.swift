@@ -2,55 +2,99 @@ import SwiftUI
 
 struct ThemePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @State private var showPremiumWall = false
 
     var body: some View {
-        NavigationStack {
+        ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 Text("Theme")
                     .sheetTitle()
 
-                VStack(spacing: 12) {
+                wordCardPreview
+                    .padding(.horizontal, 20)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: themeStore.palette)
+
+                // Theme selector
+                VStack(spacing: 10) {
                     ForEach(ThemeStore.Palette.allCases) { palette in
-                        themeRow(palette: palette, isSelected: themeStore.palette == palette) {
-                            guard isPremium else {
-                                showPremiumWall = true
-                                return
-                            }
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                themeStore.set(palette)
-                            }
-                            Haptics.selection()
-                        }
+                        themeOption(palette: palette)
                     }
                 }
                 .padding(.horizontal, 20)
-
-                Spacer()
             }
             .padding(.bottom, 20)
-            .background(themeStore.appBg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
-                }
-            }
-            .fullScreenCover(isPresented: $showPremiumWall) {
-                PremiumView(asWall: true)
-                    .environmentObject(themeStore)
-                    .tint(themeStore.mainAccentColor)
-            }
+        }
+        .background(themeStore.appBg.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
     }
 
-    private func themeRow(palette: ThemeStore.Palette, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    // MARK: - Word Card Preview
+
+    private var wordCardPreview: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Tag badge
+            Text("Travel")
+                .font(themeStore.medium(13))
+                .foregroundColor(themeStore.accentBlue)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 18)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(themeStore.accentBlue, lineWidth: 1)
+                )
+                .padding(.bottom, 2)
+
+            Text("Serendipity")
+                .font(themeStore.bold(24))
+                .foregroundColor(themeStore.mainText)
+
+            Text("/ˌsɛr.ənˈdɪp.ɪ.ti/")
+                .font(themeStore.regular(14))
+                .foregroundColor(themeStore.mainText.opacity(0.8))
+
+            Text("Noun")
+                .font(themeStore.regular(14))
+                .foregroundColor(themeStore.mainText.opacity(0.8))
+                .padding(.bottom, 2)
+
+            Text("Счастливая случайность")
+                .font(themeStore.regular(16))
+                .foregroundColor(themeStore.mainText)
+
+            Text("Finding that book was pure serendipity.")
+                .font(themeStore.regular(16))
+                .foregroundColor(themeStore.mainText)
+                .italic()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(themeStore.cardBg)
+        )
+    }
+
+    // MARK: - Theme Option
+
+    private func themeOption(palette: ThemeStore.Palette) -> some View {
+        let isSelected = themeStore.palette == palette
+
+        return Button {
+            guard isPremium else {
+                showPremiumWall = true
+                return
+            }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                themeStore.set(palette)
+            }
+            Haptics.selection()
+        } label: {
             HStack(spacing: 14) {
                 // Color dots
                 HStack(spacing: 6) {
@@ -61,20 +105,18 @@ struct ThemePickerView: View {
                     }
                 }
 
-                // Title and description
                 VStack(alignment: .leading, spacing: 2) {
                     Text(palette.title)
-                        .font(.custom("Poppins-SemiBold", size: 16))
+                        .font(themeStore.bold(16))
                         .foregroundColor(themeStore.mainText)
 
                     Text(palette.subtitle)
-                        .font(.custom("Poppins-Regular", size: 13))
+                        .font(themeStore.regular(13))
                         .foregroundColor(themeStore.secondaryText)
                 }
 
                 Spacer()
 
-                // Radio button
                 ZStack {
                     Circle()
                         .stroke(isSelected ? themeStore.mainAccentColor : themeStore.secondaryText.opacity(0.3), lineWidth: 1.5)

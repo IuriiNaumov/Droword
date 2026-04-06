@@ -39,7 +39,7 @@ struct QuizCompletionView: View {
                     Spacer(minLength: 40)
 
                     Text(encouragementText)
-                        .font(.custom("Poppins-Bold", size: 28))
+                        .font(themeStore.bold(28))
                         .foregroundColor(themeStore.mainText)
 
                     ZStack {
@@ -54,10 +54,10 @@ struct QuizCompletionView: View {
 
                         VStack(spacing: 2) {
                             Text("\(correct)/\(total)")
-                                .font(.custom("Poppins-Bold", size: 26))
+                                .font(themeStore.bold(26))
                                 .foregroundColor(themeStore.mainText)
                             Text("\(percentage)%")
-                                .font(.custom("Poppins-Medium", size: 14))
+                                .font(themeStore.medium(14))
                                 .foregroundColor(themeStore.secondaryText)
                         }
                     }
@@ -89,18 +89,18 @@ struct QuizCompletionView: View {
                     if !missedWords.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Words to review")
-                                .font(.custom("Poppins-Medium", size: 16))
+                                .font(themeStore.medium(16))
                                 .foregroundColor(themeStore.secondaryText)
                                 .padding(.horizontal, 4)
 
                             ForEach(Array(missedWords.enumerated()), id: \.offset) { _, pair in
                                 HStack {
                                     Text(pair.word)
-                                        .font(.custom("Poppins-Medium", size: 15))
+                                        .font(themeStore.medium(15))
                                         .foregroundColor(themeStore.mainText)
                                     Spacer()
                                     Text(pair.translation)
-                                        .font(.custom("Poppins-Regular", size: 15))
+                                        .font(themeStore.regular(15))
                                         .foregroundColor(themeStore.secondaryText)
                                 }
                                 .padding(.vertical, 10)
@@ -117,7 +117,7 @@ struct QuizCompletionView: View {
 
                     Button(action: { Haptics.mediumImpact(); onRestart() }) {
                         Text("Try Again")
-                            .font(.custom("Poppins-Bold", size: 16))
+                            .font(themeStore.bold(16))
                             .foregroundColor(.white)
                             .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
@@ -153,10 +153,10 @@ struct QuizCompletionView: View {
                 .font(.system(size: 20))
                 .foregroundColor(color)
             Text(value)
-                .font(.custom("Poppins-Bold", size: 18))
+                .font(themeStore.bold(18))
                 .foregroundColor(themeStore.mainText)
             Text(label)
-                .font(.custom("Poppins-Regular", size: 11))
+                .font(themeStore.regular(11))
                 .foregroundColor(themeStore.secondaryText)
         }
         .frame(minWidth: 70)

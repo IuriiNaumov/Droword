@@ -3,6 +3,7 @@ import SwiftUI
 struct ShareWordCardView: View {
     let word: StoredWord
     let backgroundColor: Color
+    var cardWidth: CGFloat = 340
 
     private var primaryText: Color { .mainBlack }
     private var secondaryText: Color { .mainBlack.opacity(0.8) }
@@ -84,7 +85,7 @@ struct ShareWordCardView: View {
             .padding(.top, 8)
         }
         .padding(20)
-        .frame(width: 340, alignment: .leading)
+        .frame(width: cardWidth, alignment: .leading)
         .background(backgroundColor)
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -137,16 +138,16 @@ extension ShareWordCardView {
         }
     }
 
-    static func renderImage(for word: StoredWord, themeStore: ThemeStore) -> UIImage? {
+    static func renderImage(for word: StoredWord, themeStore: ThemeStore, cardWidth: CGFloat = 340) -> UIImage? {
         let bgColor = Color(.secondarySystemBackground)
 
-        let view = ShareWordCardView(word: word, backgroundColor: bgColor)
+        let view = ShareWordCardView(word: word, backgroundColor: bgColor, cardWidth: cardWidth)
 
         let controller = UIHostingController(rootView: view)
         controller.view.backgroundColor = .clear
         controller.safeAreaRegions = SafeAreaRegions()
 
-        let targetSize = controller.sizeThatFits(in: CGSize(width: 340, height: CGFloat.greatestFiniteMagnitude))
+        let targetSize = controller.sizeThatFits(in: CGSize(width: cardWidth, height: CGFloat.greatestFiniteMagnitude))
         controller.view.bounds = CGRect(origin: .zero, size: targetSize)
 
         let renderer = UIGraphicsImageRenderer(size: targetSize)

@@ -44,4 +44,11 @@ enum AppStorageKeys {
     static let reviewAllCaughtUp = "reviewAllCaughtUp"
     static let reviewDismissed = "reviewDismissed"
     static let reviewSessionDate = "reviewSessionDate"
+    static let fontScale = "fontScale"
+    static let hasSeenFirstWords = "hasSeenFirstWords"
+    static let hasSeenStreakPaywall = "hasSeenStreakPaywall"
+    static let hasSeenPerfectQuizPaywall = "hasSeenPerfectQuizPaywall"
+    static let lastCelebratedStreak = "lastCelebratedStreak"
+    static let lastStreakFreezeDate = "lastStreakFreezeDate"
+    static let hasSeenReactionHint = "hasSeenReactionHint"
 }

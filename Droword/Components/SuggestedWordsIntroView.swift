@@ -24,11 +24,11 @@ struct SuggestedWordsIntroView: View {
 
                 VStack(spacing: 8) {
                     Text("Suggested Words")
-                        .font(.custom("Poppins-Bold", size: 26))
+                        .font(themeStore.bold(26))
                         .foregroundColor(themeStore.mainText)
 
                     Text("Smart suggestions just for you")
-                        .font(.custom("Poppins-Regular", size: 15))
+                        .font(themeStore.regular(15))
                         .foregroundColor(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
@@ -55,7 +55,7 @@ struct SuggestedWordsIntroView: View {
                     onDismiss()
                 } label: {
                     Text("Got it!")
-                        .font(.custom("Poppins-Bold", size: 17))
+                        .font(themeStore.bold(17))
                         .foregroundColor(.white)
                 }
                 .duo3DStyle(themeStore.mainAccentColor)
@@ -95,7 +95,7 @@ struct SuggestedWordsIntroView: View {
                 .frame(width: 28)
 
             Text(text)
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(themeStore.mainText.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }

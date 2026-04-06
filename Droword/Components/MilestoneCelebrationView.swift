@@ -42,24 +42,41 @@ enum MilestoneType: Identifiable, Equatable {
         }
     }
 
-    var message: String {
+    func message(wordsCount: Int, daysSinceStart: Int) -> String {
+        let wordsPerWeek = daysSinceStart > 0 ? max(1, wordsCount * 7 / daysSinceStart) : wordsCount
         switch self {
         case .wordCount(let n):
             switch n {
-            case ..<25: return String(localized: "You're off to a great start.")
-            case ..<50: return String(localized: "Your vocabulary is growing fast.")
-            case ..<100: return String(localized: "That's an impressive collection.")
-            case ..<200: return String(localized: "You're becoming a true linguist.")
-            case ..<500: return String(localized: "Half a thousand words. Incredible.")
-            default: return String(localized: "You've reached legendary status.")
+            case ..<25:
+                if wordsPerWeek >= 10 {
+                    return String(localized: "You're learning \(wordsPerWeek) words a week — great pace!")
+                }
+                return String(localized: "You're off to a great start.")
+            case ..<50:
+                return String(localized: "You're learning about \(wordsPerWeek) words a week. Keep it up!")
+            case ..<100:
+                if daysSinceStart <= 30 {
+                    return String(localized: "\(n) words in less than a month — impressive!")
+                }
+                return String(localized: "That's an impressive collection.")
+            case ..<200:
+                return String(localized: "\(n) words at \(wordsPerWeek) per week. You're becoming a true linguist.")
+            case ..<500:
+                return String(localized: "Half a thousand words. That's \(wordsPerWeek) words per week on average!")
+            default:
+                return String(localized: "\(n) words! You've reached legendary status.")
             }
         case .streak(let n):
             switch n {
-            case ..<30: return String(localized: "A full week of learning!")
-            case ..<100: return String(localized: "A whole month. Truly dedicated.")
-            default: return String(localized: "100 days. Unstoppable.")
+            case ..<30:
+                return String(localized: "A full week of learning! \(wordsCount) words and counting.")
+            case ..<100:
+                return String(localized: "A whole month. \(wordsCount) words in your dictionary.")
+            default:
+                return String(localized: "100 days. \(wordsCount) words. Unstoppable.")
             }
-        case .dailyGoal: return String(localized: "You've hit your target for today.")
+        case .dailyGoal:
+            return String(localized: "You've hit your target for today. Total: \(wordsCount) words.")
         }
     }
 }
@@ -67,6 +84,8 @@ enum MilestoneType: Identifiable, Equatable {
 struct MilestoneCelebrationView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     let milestone: MilestoneType
+    var wordsCount: Int = 0
+    var daysSinceStart: Int = 0
     let onDismiss: () -> Void
 
     @State private var emojiScale: CGFloat = 0.3
@@ -89,11 +108,11 @@ struct MilestoneCelebrationView: View {
 
                 VStack(spacing: 8) {
                     Text(milestone.title)
-                        .font(.custom("Poppins-Bold", size: 28))
+                        .font(themeStore.bold(28))
                         .foregroundColor(themeStore.mainText)
 
-                    Text(milestone.message)
-                        .font(.custom("Poppins-Regular", size: 16))
+                    Text(milestone.message(wordsCount: wordsCount, daysSinceStart: daysSinceStart))
+                        .font(themeStore.regular(16))
                         .foregroundColor(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
@@ -104,7 +123,7 @@ struct MilestoneCelebrationView: View {
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .font(.custom("Poppins-Bold", size: 17))
+                        .font(themeStore.bold(17))
                         .foregroundColor(.white)
                 }
                 .duo3DStyle(themeStore.mainAccentColor)

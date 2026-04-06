@@ -18,17 +18,17 @@ struct DictionarySettingsView: View {
                     .sheetTitle()
 
                 VStack(spacing: 0) {
-                    settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Dictionary") {
+                    settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Words") {
                         exportCSV()
                     }
-                    settingsRow(icon: "square.and.arrow.down", color: themeStore.iconGreen, title: "Import Dictionary") {
+                    settingsRow(icon: "square.and.arrow.down", color: themeStore.iconGreen, title: "Import Words") {
                         showImportPicker = true
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Text("Export your words as a CSV file to save a backup or transfer to another device. Use Import to restore words from a previously exported file.")
-                    .font(.custom("Poppins-Regular", size: 13))
+                Text("Works with exports from Anki, Quizlet, and any CSV or TXT file. Minimum: a column named \"Word\". Translations will be added automatically if missing.")
+                    .font(themeStore.regular(13))
                     .foregroundColor(themeStore.secondaryText)
                     .padding(.horizontal, 4)
                     .padding(.top, -8)
@@ -109,7 +109,7 @@ struct DictionarySettingsView: View {
                 }
 
                 Text(title)
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(themeStore.regular(16))
                     .foregroundColor(color == Color.accentRed ? Color.accentRed : .primary)
 
                 Spacer()
@@ -217,11 +217,13 @@ struct DictionarySettingsView: View {
                 return Date()
             }()
 
+            let importedTranslation = field(at: colTranslation, in: row)
+            let importedExample = field(at: colExample, in: row)
             let newWord = StoredWord(
                 word: wordText,
                 type: field(at: colType, in: row) ?? "word",
-                translation: field(at: colTranslation, in: row),
-                example: field(at: colExample, in: row),
+                translation: importedTranslation,
+                example: importedExample,
                 explanation: field(at: colExplanation, in: row),
                 breakdown: field(at: colBreakdown, in: row),
                 transcription: field(at: colTranscription, in: row),
@@ -229,7 +231,9 @@ struct DictionarySettingsView: View {
                 tag: field(at: colTag, in: row),
                 dateAdded: date,
                 fromLanguage: field(at: colFromLang, in: row) ?? languageStore.nativeLanguage,
-                toLanguage: field(at: colToLang, in: row) ?? languageStore.learningLanguage
+                toLanguage: field(at: colToLang, in: row) ?? languageStore.learningLanguage,
+                needsEnrichment: importedTranslation == nil,
+                examples: importedExample != nil ? [importedExample!] : []
             )
             store.add(newWord)
             count += 1

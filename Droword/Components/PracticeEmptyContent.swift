@@ -19,20 +19,20 @@ struct PracticeEmptyContent: View {
                 .scaleEffect(iconScale)
 
             Text(title)
-                .font(.custom("Poppins-Medium", size: 18))
+                .font(themeStore.medium(18))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(.secondary.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .opacity(subtitleOpacity)
 
             Text(tip)
-                .font(.custom("Poppins-Regular", size: 13))
+                .font(themeStore.regular(13))
                 .foregroundColor(.secondary.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)

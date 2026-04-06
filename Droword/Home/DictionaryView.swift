@@ -42,6 +42,7 @@ struct DictionaryView: View {
     @State private var selectedWordIDs: Set<UUID> = []
     @State private var showBulkDeleteConfirmation = false
     @State private var cardAppeared: Set<UUID> = []
+    @AppStorage(AppStorageKeys.hasSeenReactionHint) private var hasSeenReactionHint: Bool = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
     private let horizontalPadding: CGFloat = 20
@@ -77,6 +78,7 @@ struct DictionaryView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
             }
         }
         .padding(.top, 8)
@@ -113,6 +115,7 @@ struct DictionaryView: View {
                                         .foregroundColor(themeStore.secondaryText)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel(Text("Clear search"))
                             }
                         }
                         .padding(.horizontal, 14)
@@ -196,9 +199,16 @@ struct DictionaryView: View {
                                             explanation: word.explanation,
                                             breakdown: word.breakdown,
                                             tag: word.tag,
+                                            examples: word.examples,
+                                            reaction: word.reaction,
                                             storedWord: word
                                         ) {
                                             store.remove(word)
+                                        } onReaction: { emoji in
+                                            store.setReaction(for: word.id, reaction: emoji)
+                                            if !hasSeenReactionHint {
+                                                withAnimation { hasSeenReactionHint = true }
+                                            }
                                         }
                                     }
                                     .opacity(cardAppeared.contains(word.id) ? 1 : 0)
@@ -208,6 +218,19 @@ struct DictionaryView: View {
                                         _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
                                             cardAppeared.insert(word.id)
                                         }
+                                    }
+
+                                    if index == 0 && !hasSeenReactionHint {
+                                        HStack(spacing: 6) {
+                                            Image(systemName: "hand.tap")
+                                                .font(.system(size: 13))
+                                            Text("Double tap the card to add a reaction")
+                                                .font(themeStore.regular(13))
+                                        }
+                                        .foregroundColor(themeStore.secondaryText)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.top, -4)
+                                        .transition(.opacity)
                                     }
                                 }
                             }

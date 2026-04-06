@@ -154,19 +154,31 @@ final class QuizSessionManager: ObservableObject {
     }
 
     func distractors(for item: QuizItem, from allWords: [StoredWord], reversed: Bool = false) -> [String] {
+        let correctAnswer: String
+        let pool: [String]
+
         if reversed {
-            let pool = allWords
+            correctAnswer = item.word.lowercased()
+            pool = allWords
                 .map { $0.word }
-                .filter { !$0.isEmpty && $0.lowercased() != item.word.lowercased() }
-            let unique = Array(Set(pool))
-            return Array(unique.shuffled().prefix(3))
+                .filter { !$0.isEmpty && $0.lowercased() != correctAnswer }
         } else {
-            let pool = allWords
+            correctAnswer = item.translation.lowercased()
+            pool = allWords
                 .compactMap { $0.translation }
-                .filter { !$0.isEmpty && $0.lowercased() != item.translation.lowercased() }
-            let unique = Array(Set(pool))
-            return Array(unique.shuffled().prefix(3))
+                .filter { !$0.isEmpty && $0.lowercased() != correctAnswer }
         }
+
+        // Deduplicate by lowercased form, keep original casing
+        var seen = Set<String>()
+        var unique: [String] = []
+        for item in pool.shuffled() {
+            let key = item.lowercased()
+            if seen.insert(key).inserted {
+                unique.append(item)
+            }
+        }
+        return Array(unique.prefix(3))
     }
 
     func recordAnswer(correct: Bool) {
@@ -304,7 +316,7 @@ final class QuizSessionManager: ObservableObject {
         languageStore.learningScore = max(0.0, min(1.0, prev * (1 - alpha) + quality * alpha))
 
         ef = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-        ef = max(1.3, ef)
+        ef = min(3.0, max(1.3, ef))
 
         let now = Date()
         let cal = Calendar.current

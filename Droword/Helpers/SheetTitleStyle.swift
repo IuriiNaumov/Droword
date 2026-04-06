@@ -1,9 +1,10 @@
 import SwiftUI
 
 struct SheetTitleStyle: ViewModifier {
+    @EnvironmentObject private var themeStore: ThemeStore
     func body(content: Content) -> some View {
         content
-            .font(.custom("Poppins-Bold", size: 24))
+            .font(themeStore.bold(24))
             .foregroundColor(.primary)
             .padding(.top, 12)
             .padding(.bottom, 12)

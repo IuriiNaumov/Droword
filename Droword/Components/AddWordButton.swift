@@ -20,14 +20,14 @@ struct AddWordButton: View {
             } label: {
                 ZStack {
                     Text(title)
-                        .font(.custom("Poppins-Bold", size: 17))
+                        .font(themeStore.bold(17))
                         .foregroundColor(.clear)
 
                     if isLoading {
                         LoadingStagesView()
                     } else {
                         Text(title)
-                            .font(.custom("Poppins-Bold", size: 17))
+                            .font(themeStore.bold(17))
                             .foregroundColor(.white)
                     }
                 }
@@ -39,7 +39,7 @@ struct AddWordButton: View {
 
             if let message = errorMessage {
                 Text(message)
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .transition(.opacity)

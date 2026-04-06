@@ -11,7 +11,7 @@ struct PrivacyPolicyView: View {
                     .sheetTitle()
 
                 Text("Last updated: April 2026")
-                    .font(.custom("Poppins-Regular", size: 13))
+                    .font(themeStore.regular(13))
                     .foregroundColor(.secondary)
                     .padding(.horizontal)
                     .padding(.top, -12)
@@ -97,10 +97,10 @@ struct PrivacyPolicyView: View {
     private func policySection(title: String, body: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.custom("Poppins-Bold", size: 18))
+                .font(themeStore.bold(18))
                 .foregroundColor(.primary)
             Text(body)
-                .font(.custom("Poppins-Regular", size: 14))
+                .font(themeStore.regular(14))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }

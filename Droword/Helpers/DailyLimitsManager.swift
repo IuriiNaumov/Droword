@@ -1,7 +1,15 @@
 import Foundation
 
 struct DailyLimitsManager {
-    static let maxFreeTranslations = 3
+    static var maxFreeTranslations: Int {
+        let firstUseDateStr = UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? ""
+        guard !firstUseDateStr.isEmpty,
+              let firstUse = DateFormatting.dayFormatter.date(from: firstUseDateStr) else {
+            return 7
+        }
+        let daysSinceInstall = Calendar.current.dateComponents([.day], from: firstUse, to: Date()).day ?? 0
+        return daysSinceInstall <= 7 ? 7 : 3
+    }
     static let maxFreeTTS = 10
     static let maxFreeSuggestionFetches = 2
 

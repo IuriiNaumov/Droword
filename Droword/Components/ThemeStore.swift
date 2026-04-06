@@ -16,9 +16,9 @@ final class ThemeStore: ObservableObject {
         }
         var subtitle: String {
             switch self {
-            case .colorful: return "Warm and vibrant"
-            case .duolingo: return "Fresh green accent"
-            case .monochrome: return "Clean and minimal"
+            case .colorful: return String(localized: "Warm and vibrant")
+            case .duolingo: return String(localized: "Fresh green accent")
+            case .monochrome: return String(localized: "Clean and minimal")
             }
         }
     }
@@ -28,6 +28,10 @@ final class ThemeStore: ObservableObject {
             UserDefaults.standard.set(palette.rawValue, forKey: Self.storageKey)
             cached = Self.buildColors(for: palette)
         }
+    }
+
+    @Published var fontScale: CGFloat {
+        didSet { UserDefaults.standard.set(fontScale, forKey: AppStorageKeys.fontScale) }
     }
 
     static private let storageKey = "appThemePalette"
@@ -194,6 +198,8 @@ final class ThemeStore: ObservableObject {
         let p = Palette(rawValue: raw) ?? .colorful
         self.palette = p
         self.cached = Self.buildColors(for: p)
+        let stored = UserDefaults.standard.double(forKey: AppStorageKeys.fontScale)
+        self.fontScale = stored > 0 ? CGFloat(stored) : 1.0
     }
 
     var isMonochrome: Bool { palette == .monochrome }
@@ -248,21 +254,24 @@ final class ThemeStore: ObservableObject {
     }
 
     func bold(_ size: CGFloat) -> Font {
-        isDuolingo
-            ? .system(size: size, weight: .bold, design: .rounded)
-            : .custom("Poppins-Bold", size: size)
+        let s = size * fontScale
+        return isDuolingo
+            ? .system(size: s, weight: .bold, design: .rounded)
+            : .custom("Poppins-Bold", size: s)
     }
 
     func medium(_ size: CGFloat) -> Font {
-        isDuolingo
-            ? .system(size: size, weight: .medium, design: .rounded)
-            : .custom("Poppins-Medium", size: size)
+        let s = size * fontScale
+        return isDuolingo
+            ? .system(size: s, weight: .medium, design: .rounded)
+            : .custom("Poppins-Medium", size: s)
     }
 
     func regular(_ size: CGFloat) -> Font {
-        isDuolingo
-            ? .system(size: size, weight: .regular, design: .rounded)
-            : .custom("Poppins-Regular", size: size)
+        let s = size * fontScale
+        return isDuolingo
+            ? .system(size: s, weight: .regular, design: .rounded)
+            : .custom("Poppins-Regular", size: s)
     }
 
     func resolvedTagColor(_ hex: String?) -> Color {

@@ -19,9 +19,16 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.seasonalEffectsEnabled) private var seasonalEffectsEnabled: Bool = false
     @AppStorage(AppStorageKeys.seasonalAnimationEnabled) private var seasonalAnimationEnabled: Bool = true
     @AppStorage(AppStorageKeys.hasSeenCoachMarks) private var hasSeenCoachMarks: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenFirstWords) private var hasSeenFirstWords: Bool = false
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasEverAddedWord) private var hasEverAddedWord: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenStreakPaywall) private var hasSeenStreakPaywall: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenPerfectQuizPaywall) private var hasSeenPerfectQuizPaywall: Bool = false
+    @AppStorage(AppStorageKeys.lastCelebratedStreak) private var lastCelebratedStreak: Int = 0
+    @State private var showFirstWords = false
     @State private var showSuggestedIntro = false
+    @State private var showMotivationalPaywall = false
+    @State private var pendingStreakPaywall = false
     @State private var showChallenges = false
     @State private var showPremiumFromLimit = false
     @State private var showCoachMarks = false
@@ -30,6 +37,8 @@ struct HomeView: View {
     @State private var cachedRecentWords: [StoredWord] = []
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
+    @State private var reviewTimerDismissed = false
+    @State private var scrollProxy: ScrollViewProxy?
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -70,6 +79,16 @@ struct HomeView: View {
             icon: "rectangle.portrait.on.rectangle.portrait"
         ),
         CoachMarkStep(
+            title: "React to Words",
+            message: "Double tap any card to add an emoji reaction. Tap the reaction to change it. A fun way to mark your favourites!",
+            icon: "hand.tap.fill"
+        ),
+        CoachMarkStep(
+            title: "Smart Repetition",
+            message: "The app uses spaced repetition — you review words right before you'd forget them. Easy words come back less often, hard words more.",
+            icon: "clock.arrow.2.circlepath"
+        ),
+        CoachMarkStep(
             title: "Practice Quizzes",
             message: "Go to Practice for multiple choice, typing, and fill-in-the-blank quizzes. Choose your preferred direction — word to translation or vice versa.",
             icon: "brain.head.profile"
@@ -85,6 +104,41 @@ struct HomeView: View {
             icon: "chart.bar.fill"
         ),
     ]
+
+    @AppStorage(AppStorageKeys.reviewAllCaughtUp) private var reviewAllCaughtUp: Bool = false
+
+    private var dueWordsCount: Int {
+        let now = Date()
+        return store.words.filter { w in
+            guard let due = w.dueDate else { return false }
+            return due <= now
+        }.count
+    }
+
+    private var nextReviewInfo: (count: Int, date: Date)? {
+        let now = Date()
+        let upcoming = store.words.compactMap { w -> Date? in
+            guard let due = w.dueDate, due > now else { return nil }
+            return due
+        }.sorted()
+        guard let earliest = upcoming.first else { return nil }
+        let count = upcoming.filter { Calendar.current.isDate($0, equalTo: earliest, toGranularity: .hour) }.count
+        return (count, earliest)
+    }
+
+    private func timeUntil(_ date: Date) -> String {
+        let seconds = max(0, date.timeIntervalSince(Date()))
+        let minutes = Int(seconds / 60)
+        if minutes < 60 {
+            return String(localized: "\(max(1, minutes)) min")
+        }
+        let hours = minutes / 60
+        if hours < 24 {
+            return String(localized: "\(hours) h")
+        }
+        let days = hours / 24
+        return String(localized: "\(days) d")
+    }
 
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
@@ -159,6 +213,11 @@ struct HomeView: View {
                     .environmentObject(themeStore)
                     .tint(themeStore.mainAccentColor)
             }
+            .fullScreenCover(isPresented: $showMotivationalPaywall) {
+                PremiumView(asWall: true)
+                    .environmentObject(themeStore)
+                    .tint(themeStore.mainAccentColor)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
                 if let word = notification.userInfo?["word"] as? String {
                     sharedWord = word
@@ -167,9 +226,24 @@ struct HomeView: View {
             }
             .overlay {
                 if let milestone = activeMilestone {
-                    MilestoneCelebrationView(milestone: milestone) {
+                    MilestoneCelebrationView(
+                        milestone: milestone,
+                        wordsCount: store.words.count,
+                        daysSinceStart: {
+                            let str = UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? ""
+                            guard let start = DateFormatting.dayFormatter.date(from: str) else { return 1 }
+                            return max(1, Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 1)
+                        }()
+                    ) {
+                        let wasStreak = {
+                            if case .streak = milestone { return true }
+                            return false
+                        }()
                         withAnimation(.easeOut(duration: 0.25)) {
                             activeMilestone = nil
+                        }
+                        if wasStreak && !isPremium && !hasSeenStreakPaywall {
+                            pendingStreakPaywall = true
                         }
                     }
                     .transition(.opacity)
@@ -195,6 +269,17 @@ struct HomeView: View {
                     }
                     .transition(.opacity)
                     .zIndex(102)
+                }
+
+                if showFirstWords {
+                    FirstWordsView {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            showFirstWords = false
+                            hasSeenFirstWords = true
+                        }
+                    }
+                    .transition(.opacity)
+                    .zIndex(103)
                 }
             }
             .overlay(alignment: .top) {
@@ -234,6 +319,21 @@ struct HomeView: View {
                             enrichmentToast = nil
                         }
                     }
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .perfectQuizCompleted)) { _ in
+                guard !isPremium && !hasSeenPerfectQuizPaywall else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    hasSeenPerfectQuizPaywall = true
+                    showMotivationalPaywall = true
+                }
+            }
+            .onChange(of: pendingStreakPaywall) { _, pending in
+                guard pending else { return }
+                pendingStreakPaywall = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    hasSeenStreakPaywall = true
+                    showMotivationalPaywall = true
                 }
             }
         }
@@ -291,9 +391,12 @@ struct HomeView: View {
             Haptics.lightImpact()
             showPremiumFromLimit = true
         }
+        .accessibilityLabel(Text("Daily limit reached"))
+        .accessibilityHint(Text("Tap to upgrade to Pro"))
     }
 
     private var mainContent: some View {
+        ScrollViewReader { proxy in
         ScrollView(showsIndicators: false) {
             VStack(spacing: 28) {
                 ProfileHeaderView()
@@ -307,9 +410,89 @@ struct HomeView: View {
                     DailyChallengeButton(manager: challengeManager)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text("Daily Challenges"))
+                .accessibilityHint(Text("\(challengeManager.completedCount) of \(challengeManager.challenges.count) completed"))
                 .padding(.horizontal, 20)
 
+                if dueWordsCount > 0 && !reviewAllCaughtUp && store.words.count >= 5 {
+                    Button {
+                        Haptics.lightImpact()
+                        withAnimation {
+                            scrollProxy?.scrollTo("reviewSection", anchor: .top)
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(themeStore.accentGold.opacity(0.15))
+                                    .frame(width: 44, height: 44)
+                                Image(systemName: "clock.badge.exclamationmark")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(themeStore.accentGold)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Review")
+                                    .font(themeStore.bold(16))
+                                    .foregroundColor(themeStore.mainText)
+                                Text("\(dueWordsCount) words to review")
+                                    .font(themeStore.regular(13))
+                                    .foregroundColor(themeStore.secondaryText)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeStore.accentGold)
+                        }
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(themeStore.cardBg)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20)
+                }
+
+                if dueWordsCount == 0 && !reviewTimerDismissed, let info = nextReviewInfo {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(themeStore.accentGreen.opacity(0.15))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: "timer")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(themeStore.accentGreen)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Next Review")
+                                .font(themeStore.bold(16))
+                                .foregroundColor(themeStore.mainText)
+                            Text("\(info.count) words to review in \(timeUntil(info.date))")
+                                .font(themeStore.regular(13))
+                                .foregroundColor(themeStore.secondaryText)
+                        }
+                        Spacer()
+                        Button {
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                reviewTimerDismissed = true
+                            }
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(themeStore.secondaryText)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(themeStore.cardBg)
+                    )
+                    .padding(.horizontal, 20)
+                }
+
                 ReviewSectionView()
+                    .id("reviewSection")
                     .padding(.horizontal, 20)
 
                 SuggestedWordsView()
@@ -338,9 +521,13 @@ struct HomeView: View {
                                 comment: word.comment,
                                 explanation: word.explanation,
                                 breakdown: word.breakdown,
-                                tag: word.tag
+                                tag: word.tag,
+                                examples: word.examples,
+                                reaction: word.reaction
                             ) {
                                 store.remove(word)
+                            } onReaction: { emoji in
+                                store.setReaction(for: word.id, reaction: emoji)
                             }
                             .padding(.horizontal, 20)
                             .opacity(recentCardAppeared.contains(word.id) ? 1 : 0)
@@ -380,15 +567,36 @@ struct HomeView: View {
             refreshCachedWordData()
             challengeManager.refreshIfNeeded()
 
-            if !hasSeenCoachMarks {
+            if !hasSeenFirstWords && store.words.isEmpty,
+               StarterWordBank.words(learning: languageStore.learningLanguage, native: languageStore.nativeLanguage) != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showFirstWords = true
+                    }
+                }
+            } else if !hasSeenCoachMarks && hasSeenFirstWords {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     withAnimation(.easeOut(duration: 0.3)) {
                         showCoachMarks = true
                     }
                 }
             }
+
+            // Streak milestone detection
+            let currentStreak = WordsStore.computeCurrentStreak(from: store.words)
+            let streakMilestones = [7, 30, 100, 365]
+            for m in streakMilestones {
+                if currentStreak >= m, lastCelebratedStreak < m {
+                    lastCelebratedStreak = m
+                    activeMilestone = .streak(m)
+                    break
+                }
+            }
         }
         .onChange(of: store.words.count) { refreshCachedWordData() }
+        .onChange(of: store.revision) { refreshCachedWordData() }
+        .onAppear { scrollProxy = proxy }
+        }
     }
 
 }

@@ -71,6 +71,8 @@ struct ProfileHeaderView: View {
                     }
                     .contentShape(Circle())
                     .onTapGesture { showSettings = true }
+                    .accessibilityLabel(Text("Profile photo"))
+                    .accessibilityHint(Text("Opens settings"))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -108,8 +110,21 @@ struct ProfileHeaderView: View {
             let today = DateFormatting.todayString
             if firstUseDate.isEmpty { firstUseDate = today }
 
-            let computed = WordsStore.computeCurrentStreak(from: store.words)
-            currentStreak = max(computed, 1)
+            let isPremiumUser = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
+            if isPremiumUser {
+                let result = WordsStore.computeCurrentStreakWithFreeze(from: store.words)
+                currentStreak = max(result.streak, 1)
+                if let freezeDay = result.freezeDate {
+                    let freezeStr = DateFormatting.dayFormatter.string(from: freezeDay)
+                    let lastFreezeStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
+                    if freezeStr != lastFreezeStr {
+                        UserDefaults.standard.set(freezeStr, forKey: AppStorageKeys.lastStreakFreezeDate)
+                    }
+                }
+            } else {
+                let computed = WordsStore.computeCurrentStreak(from: store.words)
+                currentStreak = max(computed, 1)
+            }
 
             if lastActiveDay != today {
                 daysUsedCount += 1

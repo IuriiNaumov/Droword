@@ -107,5 +107,7 @@ struct QuizMultipleChoiceExercise: View {
         .disabled(hasAnswered)
         .opacity(isIrrelevant ? 0.4 : 1.0)
         .animation(.easeInOut(duration: 0.25), value: hasAnswered)
+        .accessibilityLabel(Text(option))
+        .accessibilityAddTraits(hasAnswered && isThisCorrect ? .isSelected : [])
     }
 }

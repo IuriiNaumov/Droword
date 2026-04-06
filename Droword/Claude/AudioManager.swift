@@ -5,6 +5,9 @@ import CryptoKit
 private final class TTSCache {
     static let shared = TTSCache()
 
+    /// Maximum cache size in bytes (50 MB)
+    private let maxCacheSize: Int = 50 * 1024 * 1024
+
     private let cacheDir: URL = {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let dir = caches.appendingPathComponent("TTSAudioCache", isDirectory: true)
@@ -28,6 +31,35 @@ private final class TTSCache {
         let key = cacheKey(text: text, voice: voice)
         let fileURL = cacheDir.appendingPathComponent(key + ".mp3")
         try? data.write(to: fileURL)
+        trimIfNeeded()
+    }
+
+    /// Removes oldest files when total cache exceeds the limit.
+    private func trimIfNeeded() {
+        let fm = FileManager.default
+        guard let files = try? fm.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]) else { return }
+
+        var totalSize = 0
+        var entries: [(url: URL, date: Date, size: Int)] = []
+
+        for file in files {
+            guard let values = try? file.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+                  let date = values.contentModificationDate,
+                  let size = values.fileSize else { continue }
+            totalSize += size
+            entries.append((url: file, date: date, size: size))
+        }
+
+        guard totalSize > maxCacheSize else { return }
+
+        // Sort oldest first
+        entries.sort { $0.date < $1.date }
+
+        for entry in entries {
+            guard totalSize > maxCacheSize else { break }
+            try? fm.removeItem(at: entry.url)
+            totalSize -= entry.size
+        }
     }
 }
 
@@ -62,14 +94,22 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         do {
             let data = try await fetchAudioData(for: word)
             try playAudio(data: data)
-        } catch { }
+        } catch {
+            #if DEBUG
+            print("⚠️ Audio playback failed for '\(word)': \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func play(text: String, voiceKey: String) async {
         do {
             let data = try await fetchAudioData(for: text, voice: voiceKey)
             try playAudio(data: data)
-        } catch { }
+        } catch {
+            #if DEBUG
+            print("⚠️ Audio playback failed for '\(text)': \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func playAndWait(text: String, rate: Float? = nil) async throws {
@@ -106,6 +146,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
 
         var request = URLRequest(url: ttsEndpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 15
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(APIClient.appKey, forHTTPHeaderField: "X-App-Key")
 
@@ -116,14 +157,8 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw NSError(domain: "TTS", code: -1, userInfo: [NSLocalizedDescriptionKey: "No HTTPURLResponse"])
-        }
-        if http.statusCode != 200 {
-            let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw NSError(domain: "TTS", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: errorText])
-        }
+        let (data, response) = try await APIClient.perform(request)
+        let _ = try APIClient.validateResponse(data, response)
 
         TTSCache.shared.store(data: data, for: text, voice: voice)
 
@@ -157,6 +192,12 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         player?.enableRate = true
         player?.rate = rate ?? effectiveRate
         
+        // Cancel any orphaned continuation from a previous rapid tap
+        if let existing = playbackContinuation {
+            playbackContinuation = nil
+            existing.resume()
+        }
+
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             self.playbackContinuation = cont
             let ok = player?.play() ?? false

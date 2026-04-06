@@ -17,14 +17,14 @@ struct BadgeCardView: View {
                 .scaleEffect(appeared ? 1.0 : 0.6)
 
             Text(badge.title)
-                .font(.custom("Poppins-Medium", size: 11))
+                .font(themeStore.medium(11))
                 .foregroundColor(isUnlocked ? themeStore.mainText : themeStore.secondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
             if isUnlocked {
                 Text(badge.description)
-                    .font(.custom("Poppins-Regular", size: 9))
+                    .font(themeStore.regular(9))
                     .foregroundColor(themeStore.secondaryText)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
@@ -45,7 +45,7 @@ struct BadgeCardView: View {
                 .padding(.horizontal, 4)
 
                 Text("\(currentProgress)/\(badge.requiredCount)")
-                    .font(.custom("Poppins-Regular", size: 9))
+                    .font(themeStore.regular(9))
                     .foregroundColor(themeStore.secondaryText)
             }
         }

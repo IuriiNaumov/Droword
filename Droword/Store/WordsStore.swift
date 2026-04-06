@@ -22,6 +22,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var lapses: Int = 0
     var dueDate: Date? = nil
     var needsEnrichment: Bool = false
+    var examples: [String] = []
+    var reaction: String? = nil
 
     init(
         id: UUID = UUID(),
@@ -42,7 +44,9 @@ struct StoredWord: Identifiable, Codable, Equatable {
         repetitions: Int = 0,
         lapses: Int = 0,
         dueDate: Date? = nil,
-        needsEnrichment: Bool = false
+        needsEnrichment: Bool = false,
+        examples: [String] = [],
+        reaction: String? = nil
     ) {
         self.id = id
         self.word = word
@@ -63,6 +67,38 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.lapses = lapses
         self.dueDate = dueDate
         self.needsEnrichment = needsEnrichment
+        self.examples = examples
+        self.reaction = reaction
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        word = try container.decode(String.self, forKey: .word)
+        type = try container.decode(String.self, forKey: .type)
+        translation = try container.decodeIfPresent(String.self, forKey: .translation)
+        example = try container.decodeIfPresent(String.self, forKey: .example)
+        comment = try container.decodeIfPresent(String.self, forKey: .comment)
+        explanation = try container.decodeIfPresent(String.self, forKey: .explanation)
+        breakdown = try container.decodeIfPresent(String.self, forKey: .breakdown)
+        transcription = try container.decodeIfPresent(String.self, forKey: .transcription)
+        tag = try container.decodeIfPresent(String.self, forKey: .tag)
+        dateAdded = try container.decodeIfPresent(Date.self, forKey: .dateAdded) ?? Date()
+        fromLanguage = try container.decode(String.self, forKey: .fromLanguage)
+        toLanguage = try container.decode(String.self, forKey: .toLanguage)
+        easeFactor = try container.decodeIfPresent(Double.self, forKey: .easeFactor) ?? 2.5
+        intervalDays = try container.decodeIfPresent(Int.self, forKey: .intervalDays) ?? 0
+        repetitions = try container.decodeIfPresent(Int.self, forKey: .repetitions) ?? 0
+        lapses = try container.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
+        dueDate = try container.decodeIfPresent(Date.self, forKey: .dueDate)
+        needsEnrichment = try container.decodeIfPresent(Bool.self, forKey: .needsEnrichment) ?? false
+        let decoded = try container.decodeIfPresent([String].self, forKey: .examples) ?? []
+        if decoded.isEmpty, let ex = example {
+            examples = [ex]
+        } else {
+            examples = decoded
+        }
+        reaction = try container.decodeIfPresent(String.self, forKey: .reaction)
     }
 }
 
@@ -149,11 +185,32 @@ final class WordsStore: ObservableObject {
     }
 
     private func load() {
-        if let data = try? Data(contentsOf: Self.wordsFileURL),
+        // Try primary file
+        if let data = try? Data(contentsOf: Self.wordsFileURL) {
+            do {
+                words = try JSONDecoder().decode([StoredWord].self, from: data)
+                totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+                hasLoaded = true
+                return
+            } catch {
+                #if DEBUG
+                print("⚠️ WordsStore: Failed to decode words.json: \(error)")
+                #endif
+                // Try backup before falling through
+                let backupURL = Self.wordsFileURL.deletingLastPathComponent().appendingPathComponent("words_backup.json")
+                if let backupData = try? Data(contentsOf: backupURL),
+                   let decoded = try? JSONDecoder().decode([StoredWord].self, from: backupData) {
+                    words = decoded
+                    totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+                    hasLoaded = true
+                    return
+                }
+            }
+        }
+
+        // Fallback to UserDefaults (legacy migration path)
+        if let data = sharedDefaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
-            words = decoded
-        } else if let data = sharedDefaults.data(forKey: storageKey),
-                  let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
             words = decoded
         }
 
@@ -185,6 +242,9 @@ final class WordsStore: ObservableObject {
             Task.detached(priority: .utility) {
                 if let data = try? JSONEncoder().encode(copy) {
                     try? data.write(to: fileURL, options: .atomic)
+                    // Keep a rolling backup
+                    let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("words_backup.json")
+                    try? data.write(to: backupURL, options: .atomic)
                 }
                 await MainActor.run {
                     defaults.set(total, forKey: totalKey)
@@ -195,7 +255,14 @@ final class WordsStore: ObservableObject {
         }
     }
     
-    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?) {
+    func setReaction(for id: UUID, reaction: String?) {
+        guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
+        var w = words[idx]
+        w.reaction = reaction
+        words[idx] = w
+    }
+
+    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = []) {
         guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
         var w = words[idx]
         w.translation = translation
@@ -205,6 +272,11 @@ final class WordsStore: ObservableObject {
         w.breakdown = breakdown
         w.transcription = transcription
         w.needsEnrichment = false
+        if examples.isEmpty {
+            w.examples = [example]
+        } else {
+            w.examples = examples
+        }
         words[idx] = w
     }
 
@@ -222,6 +294,46 @@ final class WordsStore: ObservableObject {
             day = prev
         }
         return streak
+    }
+
+    /// Computes streak allowing one gap day per 7-day window (premium freeze).
+    /// Returns the streak count and the date that was frozen (if any).
+    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, freezeDate: Date?) {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let dates = Set(words.map { cal.startOfDay(for: $0.dateAdded) })
+
+        var streak = 0
+        var day = today
+        var freezeDate: Date? = nil
+        let lastFreezeDateStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
+        let lastFreezeDay = DateFormatting.dayFormatter.date(from: lastFreezeDateStr)
+
+        while true {
+            if dates.contains(day) {
+                streak += 1
+            } else if freezeDate == nil {
+                // Allow freeze if 7+ days since last freeze (or never frozen)
+                let canFreeze: Bool
+                if let lastFreeze = lastFreezeDay {
+                    let daysSinceFreeze = cal.dateComponents([.day], from: lastFreeze, to: day).day ?? 0
+                    canFreeze = abs(daysSinceFreeze) >= 7
+                } else {
+                    canFreeze = true
+                }
+                if canFreeze && day != today {
+                    freezeDate = day
+                    streak += 1
+                } else {
+                    break
+                }
+            } else {
+                break
+            }
+            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
+            day = prev
+        }
+        return (streak, freezeDate)
     }
 
     func syncStreakToAppGroup() {

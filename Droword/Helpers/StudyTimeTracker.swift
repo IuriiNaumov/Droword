@@ -10,6 +10,7 @@ final class StudyTimeTracker: ObservableObject {
 
     private let sessionsKey = "StudyTimeTracker.sessions"
     private var sessionStart: Date?
+    private var lastCheckpoint: Date?
     private var tickTimer: Timer?
     private var cachedSessions: [Session]?
 
@@ -30,6 +31,7 @@ final class StudyTimeTracker: ObservableObject {
         tickTimer?.invalidate()
         tickTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
+                self?.checkpointIfNeeded()
                 self?.recalculate()
             }
         }
@@ -40,13 +42,13 @@ final class StudyTimeTracker: ObservableObject {
         tickTimer?.invalidate()
         tickTimer = nil
 
-        let elapsed = Int(Date().timeIntervalSince(start))
-        guard elapsed >= 5 else {
-            sessionStart = nil
-            return
+        let sinceCheckpoint = lastCheckpoint ?? start
+        let elapsed = Int(Date().timeIntervalSince(sinceCheckpoint))
+        if elapsed >= 5 {
+            saveSession(seconds: elapsed)
         }
-        saveSession(seconds: elapsed)
         sessionStart = nil
+        lastCheckpoint = nil
         recalculate()
     }
 
@@ -127,9 +129,20 @@ final class StudyTimeTracker: ObservableObject {
         return totalSecs / max(1, days.count) / 60
     }
 
+    /// Saves accumulated time periodically so it's not lost on crash.
+    private func checkpointIfNeeded() {
+        guard let start = sessionStart else { return }
+        let checkpointFrom = lastCheckpoint ?? start
+        let elapsed = Int(Date().timeIntervalSince(checkpointFrom))
+        guard elapsed >= 60 else { return }
+        saveSession(seconds: elapsed)
+        lastCheckpoint = Date()
+    }
+
     private func activeSeconds() -> Int {
-        guard let start = sessionStart else { return 0 }
-        return Int(Date().timeIntervalSince(start))
+        guard sessionStart != nil else { return 0 }
+        let sinceCheckpoint = lastCheckpoint ?? sessionStart!
+        return Int(Date().timeIntervalSince(sinceCheckpoint))
     }
 
     private func recalculate() {

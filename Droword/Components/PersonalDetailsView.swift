@@ -26,11 +26,11 @@ struct PersonalDetailsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Name *")
-                            .font(.custom("Poppins-Regular", size: 18))
+                            .font(themeStore.regular(18))
                             .foregroundColor(themeStore.secondaryText)
                         Spacer()
                         Text("\(tempName.count)/40")
-                            .font(.custom("Poppins-Regular", size: 14))
+                            .font(themeStore.regular(14))
                             .foregroundColor(themeStore.secondaryText.opacity(0.6))
                     }
 

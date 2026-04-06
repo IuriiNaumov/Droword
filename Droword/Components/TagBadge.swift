@@ -5,7 +5,7 @@ struct TagBadge: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.custom("Poppins-Medium", size: 14))
+            .font(themeStore.medium(14))
             .foregroundColor(themeStore.mainText)
             .padding(.vertical, 4)
             .padding(.horizontal, 8)

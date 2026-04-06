@@ -7,5 +7,6 @@ struct CloseButtonIcon: View {
         Image(systemName: "xmark")
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(themeStore.mainAccentColor)
+            .accessibilityLabel(Text("Close"))
     }
 }

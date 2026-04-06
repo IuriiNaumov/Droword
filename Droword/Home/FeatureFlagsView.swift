@@ -23,7 +23,7 @@ struct FeatureFlagsView: View {
                                 .foregroundColor(themeStore.iconGold)
                         }
                         Text("PRO")
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(.primary)
                         Spacer()
                         Toggle("", isOn: $isPremium)
@@ -50,7 +50,7 @@ struct FeatureFlagsView: View {
                                 .foregroundColor(themeStore.mainAccentColor)
                         }
                         Text("Onboarding")
-                            .font(.custom("Poppins-Regular", size: 16))
+                            .font(themeStore.regular(16))
                             .foregroundColor(.primary)
                         Spacer()
                         Toggle("", isOn: Binding(

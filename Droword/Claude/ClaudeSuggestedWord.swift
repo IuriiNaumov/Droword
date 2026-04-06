@@ -69,7 +69,7 @@ func fetchSuggestionsWithTopic(
     }
 
     let request = try APIClient.makeRequest(endpoint: "suggest", body: body)
-    let (data, response) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await APIClient.perform(request)
     let validated = try APIClient.validateResponse(data, response)
     let container = try JSONDecoder().decode(SuggestionsContainer.self, from: validated)
     return (topic: container.topic, suggestions: container.suggestions)

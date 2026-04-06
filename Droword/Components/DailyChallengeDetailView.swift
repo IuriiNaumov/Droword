@@ -46,22 +46,22 @@ struct DailyChallengeDetailView: View {
 
                 VStack(spacing: 0) {
                     Text("\(manager.completedCount)")
-                        .font(.custom("Poppins-Bold", size: 28))
+                        .font(themeStore.bold(28))
                         .foregroundColor(themeStore.mainText)
                     Text("of \(manager.challenges.count)")
-                        .font(.custom("Poppins-Regular", size: 13))
+                        .font(themeStore.regular(13))
                         .foregroundColor(themeStore.secondaryText)
                 }
             }
 
             if manager.allCompleted {
                 Text("All challenges completed!")
-                    .font(.custom("Poppins-Bold", size: 18))
+                    .font(themeStore.bold(18))
                     .foregroundColor(themeStore.accentGreen)
             }
 
             Text("Total completed: \(manager.totalCompleted)")
-                .font(.custom("Poppins-Regular", size: 13))
+                .font(themeStore.regular(13))
                 .foregroundColor(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -106,7 +106,7 @@ struct DailyChallengeDetailView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(challenge.localizedTitle)
-                        .font(.custom("Poppins-Medium", size: 16))
+                        .font(themeStore.medium(16))
                         .foregroundColor(challenge.isCompleted ? themeStore.secondaryText : themeStore.mainText)
                         .strikethrough(challenge.isCompleted, color: themeStore.secondaryText)
 
@@ -114,7 +114,7 @@ struct DailyChallengeDetailView: View {
                 }
 
                 Text(challenge.localizedDescription)
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText)
 
                 GeometryReader { geo in
@@ -131,7 +131,7 @@ struct DailyChallengeDetailView: View {
                 .frame(height: 6)
 
                 Text("\(challenge.currentValue)/\(challenge.targetValue)")
-                    .font(.custom("Poppins-Regular", size: 12))
+                    .font(themeStore.regular(12))
                     .foregroundColor(themeStore.secondaryText.opacity(0.6))
             }
         }

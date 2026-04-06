@@ -22,6 +22,10 @@ final class WordEnrichmentService {
         startObserving()
     }
 
+    deinit {
+        observeTask?.cancel()
+    }
+
     private func startObserving() {
         if NetworkMonitor.shared.isConnected {
             Task { await enrichPendingWords() }
@@ -75,7 +79,8 @@ final class WordEnrichmentService {
                     type: result.type.lowercased(),
                     explanation: result.explanation,
                     breakdown: result.breakdown,
-                    transcription: result.transcription
+                    transcription: result.transcription,
+                    examples: result.examples ?? [result.example]
                 )
                 enrichedNames.append(word.word)
             } catch {

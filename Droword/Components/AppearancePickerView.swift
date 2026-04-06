@@ -53,7 +53,7 @@ struct AppearancePickerView: View {
                     )
 
                 Text(option.title)
-                    .font(.custom("Poppins-Medium", size: 14))
+                    .font(themeStore.medium(14))
                     .foregroundColor(themeStore.mainText)
 
                 ZStack {

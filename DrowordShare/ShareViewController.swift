@@ -44,14 +44,20 @@ class ShareViewController: UIViewController {
             return
         }
 
-        let selector = sel_registerName("openURL:")
-        var responder: UIResponder? = self
-        while let r = responder {
-            if r.responds(to: selector) {
-                r.perform(selector, with: url)
+        // Save to shared container so the app can pick it up on next launch
+        if let defaults = UserDefaults(suiteName: "group.com.droword.shared") {
+            defaults.set(word, forKey: "pendingSharedWord")
+        }
+
+        // Open the containing app via responder chain (standard Share Extension pattern)
+        var responder: UIResponder? = self as UIResponder
+        while let current = responder {
+            let openURL = NSSelectorFromString("openURL:")
+            if current.responds(to: openURL) {
+                current.perform(openURL, with: url)
                 break
             }
-            responder = r.next
+            responder = current.next
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in

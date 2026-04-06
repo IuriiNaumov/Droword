@@ -15,7 +15,7 @@ struct VoiceAndSpeechSettingsView: View {
                     .sheetTitle()
 
                 Text("Voice")
-                    .font(.custom("Poppins-Bold", size: 18))
+                    .font(themeStore.bold(18))
                     .foregroundColor(.primary)
                     .padding(.horizontal)
 
@@ -32,7 +32,7 @@ struct VoiceAndSpeechSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Speed")
-                        .font(.custom("Poppins-Bold", size: 18))
+                        .font(themeStore.bold(18))
                         .foregroundColor(.primary)
                         .padding(.horizontal)
 

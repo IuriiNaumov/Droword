@@ -18,17 +18,17 @@ struct OnboardingDetailsPage: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("Name")
-                            .font(.custom("Poppins-Medium", size: 14))
+                            .font(themeStore.medium(14))
                             .foregroundColor(themeStore.mainText.opacity(0.75))
                         Spacer()
                         Text("\(tempName.count)/40")
-                            .font(.custom("Poppins-Regular", size: 12))
+                            .font(themeStore.regular(12))
                             .foregroundColor(tempName.count > 40 ? Color.accentRed : themeStore.secondaryText)
                     }
                     .padding(.horizontal, 4)
 
                     TextField("Enter your name", text: $tempName)
-                        .font(.custom("Poppins-Regular", size: 16))
+                        .font(themeStore.regular(16))
                         .textContentType(.name)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.words)

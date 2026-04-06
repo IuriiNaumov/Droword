@@ -130,7 +130,7 @@ struct DetailedStatsView: View {
                     .chartYAxis {
                         AxisMarks(position: .leading) { _ in
                             AxisValueLabel()
-                                .font(.custom("Poppins-Regular", size: 10))
+                                .font(themeStore.regular(10))
                                 .foregroundStyle(themeStore.secondaryText)
                             AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
                                 .foregroundStyle(themeStore.dividerColor)
@@ -139,7 +139,7 @@ struct DetailedStatsView: View {
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .day, count: 3)) { _ in
                             AxisValueLabel(format: .dateTime.day().month(.abbreviated))
-                                .font(.custom("Poppins-Regular", size: 10))
+                                .font(themeStore.regular(10))
                                 .foregroundStyle(themeStore.secondaryText)
                         }
                     }
@@ -147,14 +147,14 @@ struct DetailedStatsView: View {
                     .frame(height: 120)
                 } else {
                     Text("Start learning to see your time chart")
-                        .font(.custom("Poppins-Regular", size: 13))
+                        .font(themeStore.regular(13))
                         .foregroundColor(themeStore.secondaryText)
                         .frame(height: 80)
                         .frame(maxWidth: .infinity)
                 }
 
                 Text("Based on the last 14 days")
-                    .font(.custom("Poppins-Regular", size: 12))
+                    .font(themeStore.regular(12))
                     .foregroundColor(themeStore.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -164,10 +164,10 @@ struct DetailedStatsView: View {
     private func studyTimeStat(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.custom("Poppins-Bold", size: 18))
+                .font(themeStore.bold(18))
                 .foregroundColor(.primary)
             Text(label)
-                .font(.custom("Poppins-Regular", size: 12))
+                .font(themeStore.regular(12))
                 .foregroundColor(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -210,7 +210,7 @@ struct DetailedStatsView: View {
                 .fill(color)
                 .frame(width: 8, height: 8)
             Text("\(title) (\(count))")
-                .font(.custom("Poppins-Regular", size: 13))
+                .font(themeStore.regular(13))
                 .foregroundColor(.primary)
         }
     }
@@ -228,10 +228,10 @@ struct DetailedStatsView: View {
     private func reviewStat(value: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.custom("Poppins-Bold", size: 28))
+                .font(themeStore.bold(28))
                 .foregroundColor(.primary)
             Text(label)
-                .font(.custom("Poppins-Regular", size: 13))
+                .font(themeStore.regular(13))
                 .foregroundColor(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
         }
@@ -265,18 +265,18 @@ struct DetailedStatsView: View {
                                         .fill(Self.pieColors[index % Self.pieColors.count])
                                         .frame(width: 8, height: 8)
                                     Text(LocalizedStringKey(item.tag))
-                                        .font(.custom("Poppins-Regular", size: 13))
+                                        .font(themeStore.regular(13))
                                         .foregroundColor(.primary)
                                         .lineLimit(1)
                                     Spacer()
                                     Text("\(item.count)")
-                                        .font(.custom("Poppins-Bold", size: 13))
+                                        .font(themeStore.bold(13))
                                         .foregroundColor(themeStore.secondaryText)
                                 }
                             }
                             if tags.count > 6 {
                                 Text("+\(tags.count - 6) more", comment: "Additional tags count")
-                                    .font(.custom("Poppins-Regular", size: 12))
+                                    .font(themeStore.regular(12))
                                     .foregroundColor(themeStore.secondaryText)
                             }
                         }
@@ -296,11 +296,11 @@ struct DetailedStatsView: View {
                         ForEach(Array(types.prefix(6).enumerated()), id: \.offset) { _, item in
                             HStack {
                                 Text(item.type)
-                                    .font(.custom("Poppins-Regular", size: 14))
+                                    .font(themeStore.regular(14))
                                     .foregroundColor(.primary)
                                 Spacer()
                                 Text("\(item.count)")
-                                    .font(.custom("Poppins-Bold", size: 14))
+                                    .font(themeStore.bold(14))
                                     .foregroundColor(themeStore.secondaryText)
                             }
                         }
@@ -332,14 +332,14 @@ struct DetailedStatsView: View {
 
     private func factRow(text: LocalizedStringKey) -> some View {
         Text(text)
-            .font(.custom("Poppins-Regular", size: 14))
+            .font(themeStore.regular(14))
             .foregroundColor(.primary)
     }
 
     private func sectionCard<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
-                .font(.custom("Poppins-Bold", size: 18))
+                .font(themeStore.bold(18))
                 .foregroundColor(.primary)
 
             content()

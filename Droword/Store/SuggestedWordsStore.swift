@@ -57,8 +57,8 @@ final class SuggestedWordsStore: ObservableObject {
             transcription: word.transcription,
             comment: nil,
             tag: "Suggested",
-            fromLanguage: languageStore.nativeLanguage,
-            toLanguage: languageStore.learningLanguage
+            fromLanguage: languageStore.learningLanguage,
+            toLanguage: languageStore.nativeLanguage
         )
         store.add(newWord)
         suggestedWords.removeAll { $0.id == word.id }

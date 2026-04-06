@@ -36,7 +36,7 @@ struct OnboardingPageView: View {
 
                 VStack(spacing: 10) {
                     Text(model.title)
-                        .font(.custom("Poppins-Bold", size: 28))
+                        .font(themeStore.bold(28))
                         .foregroundColor(themeStore.mainText)
                         .multilineTextAlignment(.center)
                         .opacity(showTitle ? 1 : 0)
@@ -44,7 +44,7 @@ struct OnboardingPageView: View {
                         .animation(.spring(response: 0.55, dampingFraction: 0.9), value: showTitle)
 
                     Text(model.subtitle)
-                        .font(.custom("Poppins-Regular", size: 16))
+                        .font(themeStore.regular(16))
                         .foregroundColor(themeStore.mainText.opacity(0.75))
                         .multilineTextAlignment(.center)
                         .opacity(showSubtitle ? 1 : 0)

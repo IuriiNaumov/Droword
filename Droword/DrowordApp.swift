@@ -197,16 +197,8 @@ struct DrowordApp: App {
             trialStartDate = keychainDate
         }
 
-        if !hasUsedTrial {
-            let today = df.string(from: Date())
-            hasUsedTrial = true
-            trialStartDate = today
-            isPremium = true
-            TrialKeychain.save(startDate: today)
-            return
-        }
-
-        guard !trialStartDate.isEmpty,
+        // Trial not started yet — don't auto-activate; user starts it from PremiumView
+        guard hasUsedTrial, !trialStartDate.isEmpty,
               let start = df.date(from: trialStartDate) else { return }
 
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
@@ -245,4 +237,5 @@ struct DrowordApp: App {
 extension Notification.Name {
     static let sharedWordReceived = Notification.Name("sharedWordReceived")
     static let copiedToClipboard = Notification.Name("copiedToClipboard")
+    static let perfectQuizCompleted = Notification.Name("perfectQuizCompleted")
 }

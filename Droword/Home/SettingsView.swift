@@ -20,7 +20,8 @@ struct SettingsView: View {
     @State private var showAvatarPicker = false
     @State private var showAppearanceSheet = false
     @State private var showPersonalDetailsSheet = false
-    @State private var showThemeSheet = false
+    
+    @State private var showFontSizeSheet = false
     @State private var path = NavigationPath()
     @State private var showOnboarding = false
     #if DEBUG
@@ -78,9 +79,11 @@ struct SettingsView: View {
 
                         }
                         .onTapGesture { Haptics.lightImpact(); showAvatarPicker = true }
+                        .accessibilityLabel(Text("Profile photo"))
+                        .accessibilityHint(Text("Tap to change your photo"))
 
                         Text(displayName)
-                            .font(.custom("Poppins-Bold", size: 22))
+                            .font(themeStore.bold(22))
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -92,7 +95,7 @@ struct SettingsView: View {
                             #endif
 
                         Text("\(usageDurationString()) with Droword")
-                            .font(.custom("Poppins-Regular", size: 14))
+                            .font(themeStore.regular(14))
                             .foregroundColor(themeStore.secondaryText)
                     }
                     .padding(.top, 32)
@@ -109,6 +112,7 @@ struct SettingsView: View {
 
                         groupedSettingsSection([
                             SettingItem(icon: "moon.fill", color: themeStore.monoDark, title: "Appearance", value: appearanceTitle),
+                            SettingItem(icon: "textformat.size.larger", color: themeStore.accentGold, title: "Font Size", value: themeStore.fontScaleLabel),
                             SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language Pair", value: languageStore.learningLanguage),
                             SettingItem(icon: "globe", color: themeStore.accentBlue, title: "App Language"),
                             SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
@@ -118,6 +122,7 @@ struct SettingsView: View {
                             if item.title == "Language Pair" { path.append(SettingsDestination.language) }
                             if item.title == "App Language" { openAppLanguageSettings() }
                             if item.title == "Appearance" { showAppearanceSheet = true }
+                            if item.title == "Font Size" { showFontSizeSheet = true }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
                             if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
@@ -137,7 +142,7 @@ struct SettingsView: View {
                             SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title, showProBadge: !isPremium),
                             SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off", showProBadge: !isPremium)
                         ]) { item in
-                            if item.title == "Theme" { showThemeSheet = true }
+                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
                             if item.title == "Seasonal effects" { path.append(SettingsDestination.seasonalEffects) }
                         }
 
@@ -174,6 +179,7 @@ struct SettingsView: View {
                         CloseButtonIcon()
                             .environmentObject(themeStore)
                     }
+                    .accessibilityLabel(Text("Close settings"))
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -197,6 +203,8 @@ struct SettingsView: View {
                     PrivacyPolicyView()
                 case .achievements:
                     AchievementsView()
+                case .theme:
+                    ThemePickerView()
                 case .seasonalEffects:
                     SeasonalEffectsSettingsView()
                 case .premium:
@@ -234,12 +242,13 @@ struct SettingsView: View {
                 .presentationDetents([.medium])
                 .preferredColorScheme(appearance.colorScheme)
         }
-        .sheet(isPresented: $showThemeSheet) {
-            ThemePickerView()
+        .sheet(isPresented: $showFontSizeSheet) {
+            FontSizePickerView()
                 .environmentObject(themeStore)
                 .presentationDetents([.medium])
                 .preferredColorScheme(appearance.colorScheme)
         }
+        
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingReplayView()
                 .environmentObject(themeStore)
@@ -262,17 +271,17 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
                         Text("PRO Trial")
-                            .font(.custom("Poppins-Bold", size: 16))
+                            .font(themeStore.bold(16))
                             .foregroundColor(themeStore.mainText)
                         Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
-                            .font(.custom("Poppins-Regular", size: 12))
+                            .font(themeStore.regular(12))
                             .foregroundColor(.orange)
                     } else {
                         Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
-                            .font(.custom("Poppins-Bold", size: 16))
+                            .font(themeStore.bold(16))
                             .foregroundColor(themeStore.mainText)
                         Text(isPremium ? LocalizedStringKey("Unlimited access") : LocalizedStringKey("Unlock unlimited AI features"))
-                            .font(.custom("Poppins-Regular", size: 12))
+                            .font(themeStore.regular(12))
                             .foregroundColor(themeStore.secondaryText)
                     }
                 }
@@ -281,7 +290,7 @@ struct SettingsView: View {
 
                 if !isPremium {
                     Text("Upgrade")
-                        .font(.custom("Poppins-Bold", size: 13))
+                        .font(themeStore.bold(13))
                         .foregroundColor(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
@@ -324,12 +333,12 @@ struct SettingsView: View {
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(item.title)
-                                .font(.custom("Poppins-Regular", size: 16))
+                                .font(themeStore.regular(16))
                                 .foregroundColor(.primary)
 
                             if item.showProBadge {
                                 Text("PRO")
-                                    .font(.custom("Poppins-Bold", size: 9))
+                                    .font(themeStore.bold(9))
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -341,7 +350,7 @@ struct SettingsView: View {
 
                         if let value = item.value {
                             Text(value)
-                                .font(.custom("Poppins-Regular", size: 14))
+                                .font(themeStore.regular(14))
                                 .foregroundColor(themeStore.secondaryText)
                         }
 

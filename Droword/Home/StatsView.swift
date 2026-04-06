@@ -34,6 +34,9 @@ struct StatsView: View {
         )
         .foregroundColor(themeStore.mainText)
         .padding(.horizontal, 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Stats: \(store.totalWordsAdded) total, \(cachedTodayCount) today"))
+        .accessibilityHint(Text("Tap for detailed statistics"))
         .onTapGesture { showDetailedStats = true }
         .onAppear { recalcToday() }
         .onChange(of: store.revision) { recalcToday() }

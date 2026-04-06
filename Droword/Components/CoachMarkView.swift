@@ -43,12 +43,12 @@ struct CoachMarkView: View {
                         .opacity(appeared ? 1.0 : 0)
 
                     Text(step.title)
-                        .font(.custom("Poppins-Bold", size: 22))
+                        .font(themeStore.bold(22))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
 
                     Text(step.message)
-                        .font(.custom("Poppins-Regular", size: 15))
+                        .font(themeStore.regular(15))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -57,7 +57,7 @@ struct CoachMarkView: View {
                         advance()
                     } label: {
                         Text(isLast ? "Get Started" : "Next")
-                            .font(.custom("Poppins-Bold", size: 16))
+                            .font(themeStore.bold(16))
                             .foregroundColor(.black)
                             .padding(.vertical, 14)
                             .frame(maxWidth: .infinity)
@@ -74,7 +74,7 @@ struct CoachMarkView: View {
                             onComplete()
                         } label: {
                             Text("Skip tour")
-                                .font(.custom("Poppins-Regular", size: 13))
+                                .font(themeStore.regular(13))
                                 .foregroundColor(.white.opacity(0.5))
                         }
                     }

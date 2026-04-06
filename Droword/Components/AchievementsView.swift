@@ -27,11 +27,11 @@ struct AchievementsView: View {
 
                 VStack(spacing: 6) {
                     Text("\(unlockedCount)/\(BadgeStore.allBadges.count)")
-                        .font(.custom("Poppins-Bold", size: 32))
+                        .font(themeStore.bold(32))
                         .foregroundColor(themeStore.mainText)
 
                     Text("achievements unlocked")
-                        .font(.custom("Poppins-Regular", size: 14))
+                        .font(themeStore.regular(14))
                         .foregroundColor(themeStore.secondaryText)
                 }
 
@@ -40,7 +40,7 @@ struct AchievementsView: View {
                     if !badges.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category.title)
-                                .font(.custom("Poppins-Bold", size: 18))
+                                .font(themeStore.bold(18))
                                 .foregroundColor(.primary)
                                 .padding(.horizontal, 20)
 

@@ -32,7 +32,7 @@ struct LanguageCube: View {
                     .font(.system(size: 42))
 
                 Text(language.name)
-                    .font(.custom("Poppins-Medium", size: 14))
+                    .font(themeStore.medium(14))
                     .foregroundColor(textColor)
             }
             .frame(height: 110)

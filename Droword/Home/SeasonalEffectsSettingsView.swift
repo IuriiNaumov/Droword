@@ -15,7 +15,7 @@ struct SeasonalEffectsSettingsView: View {
                     .sheetTitle()
 
                 Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 8)
@@ -47,7 +47,7 @@ struct SeasonalEffectsSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Current season")
-                        .font(.custom("Poppins-Bold", size: 18))
+                        .font(themeStore.bold(18))
                         .foregroundColor(.primary)
 
                     let season = Season.current
@@ -55,7 +55,7 @@ struct SeasonalEffectsSettingsView: View {
                         Text(season.shapes.first?.emoji ?? "")
                             .font(.system(size: 28))
                         Text(seasonName(season))
-                            .font(.custom("Poppins-Medium", size: 16))
+                            .font(themeStore.medium(16))
                             .foregroundColor(.primary)
                     }
                 }
@@ -104,7 +104,7 @@ struct SeasonalEffectsSettingsView: View {
                     .foregroundColor(color)
             }
             Text(title)
-                .font(.custom("Poppins-Regular", size: 16))
+                .font(themeStore.regular(16))
                 .foregroundColor(.primary)
             Spacer()
             Toggle("", isOn: isOn)

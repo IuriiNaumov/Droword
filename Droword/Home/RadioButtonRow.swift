@@ -24,7 +24,7 @@ struct RadioButtonRow: View {
                 }
 
                 Text(title)
-                    .font(.custom("Poppins-Regular", size: 15))
+                    .font(themeStore.regular(15))
                     .foregroundColor(.primary)
 
                 Spacer()
