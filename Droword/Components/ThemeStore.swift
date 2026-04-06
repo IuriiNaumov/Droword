@@ -100,7 +100,7 @@ final class ThemeStore: ObservableObject {
             accentRed: {
                 switch palette {
                 case .colorful: return Color("AccentRed")
-                case .duolingo: return Color(hex: "#FFB347")
+                case .duolingo: return Color(hex: "#FF4B4B")
                 case .monochrome: return Color("MonoMedium")
                 }
             }(),
