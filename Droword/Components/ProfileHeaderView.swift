@@ -84,12 +84,12 @@ struct ProfileHeaderView: View {
                         if isPremium {
                             Text("PRO")
                                 .font(themeStore.bold(10))
-                                .foregroundColor(themeStore.accentBlue)
+                                .foregroundColor(colorScheme == .dark ? .white : themeStore.accentBlue)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(themeStore.accentBlueSoft)
+                                        .fill(colorScheme == .dark ? themeStore.accentBlue : themeStore.accentBlueSoft)
                                 )
                         }
                     }

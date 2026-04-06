@@ -2,8 +2,13 @@ import SwiftUI
 import AVFoundation
 import UIKit
 
+extension Notification.Name {
+    static let dismissReactionPicker = Notification.Name("dismissReactionPicker")
+}
+
 struct WordCardView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
 
     let word: String
     let translation: String?
@@ -41,6 +46,7 @@ struct WordCardView: View {
 
 
 
+    @State private var cardID = UUID()
     @State private var isExpanded = true
     @State private var isPlaying = false
     @State private var showPremiumWall = false
@@ -68,13 +74,23 @@ struct WordCardView: View {
         themeStore.mainText.opacity(0.8)
     }
 
+    private var pickerReactions: [String] {
+        guard let reaction = reaction, !Self.availableReactions.contains(reaction) else {
+            return Self.availableReactions
+        }
+        return [reaction] + Self.availableReactions
+    }
+
     var body: some View {
         cardContent
             .overlay(alignment: .topTrailing) {
                 if let reaction = reaction {
                     Button {
                         Haptics.lightImpact(intensity: 0.4)
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                        if !showReactionPicker {
+                            NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
+                        }
+                        withAnimation(.spring(response: 0.18, dampingFraction: 0.75)) {
                             showReactionPicker.toggle()
                         }
                     } label: {
@@ -83,7 +99,7 @@ struct WordCardView: View {
                             .padding(6)
                             .background(
                                 Circle()
-                                    .fill(themeStore.accentBlueSoft)
+                                    .fill(colorScheme == .dark ? themeStore.accentBlue : themeStore.accentBlueSoft)
                             )
                     }
                     .buttonStyle(.plain)
@@ -94,7 +110,7 @@ struct WordCardView: View {
             .overlay(alignment: .top) {
                 if showReactionPicker, onReaction != nil {
                     HStack(spacing: 4) {
-                        ForEach(Self.availableReactions, id: \.self) { emoji in
+                        ForEach(pickerReactions, id: \.self) { emoji in
                             Button {
                                 Haptics.lightImpact()
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -194,14 +210,15 @@ struct WordCardView: View {
                 }
             }
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: reaction)
-        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: showReactionPicker)
+        .animation(.spring(response: 0.18, dampingFraction: 0.75), value: showReactionPicker)
         .padding(.top, reaction != nil ? 14 : 12)
         .padding(.bottom, 0)
         .onTapGesture(count: 2) {
             guard onReaction != nil else { return }
             Haptics.lightImpact(intensity: 0.4)
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                showReactionPicker.toggle()
+            NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.75)) {
+                showReactionPicker = true
             }
         }
         .onTapGesture {
@@ -216,8 +233,15 @@ struct WordCardView: View {
             } else {
                 Haptics.lightImpact(intensity: 0.3)
             }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            withAnimation(.smooth(duration: 0.35)) {
                 isExpanded.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .dismissReactionPicker)) { note in
+            guard showReactionPicker else { return }
+            if let senderID = note.object as? UUID, senderID == cardID { return }
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                showReactionPicker = false
             }
         }
         .onAppear {
