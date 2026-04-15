@@ -542,11 +542,28 @@ struct HomeView: View {
                     }
                     .padding(.top, 4)
                 } else {
-                    EmptyListView(
-                        icon: "heart.fill",
-                        title: hasEverAddedWord ? "Add a word" : "Add your first word",
-                        subtitle: hasEverAddedWord ? "Your recent words will appear here." : "That's all it takes to start learning."
-                    )
+                    VStack(spacing: 14) {
+                        Button {
+                            Haptics.lightImpact()
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                showAddWordView = true
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                Text(hasEverAddedWord ? "Add a word" : "Add your first word")
+                            }
+                            .duo3DStyle(themeStore.mainAccentColor)
+                        }
+                        .buttonStyle(Duo3DButtonStyle())
+                        .padding(.horizontal, 20)
+
+                        Text(hasEverAddedWord ? "Your recent words will appear here." : "That's all it takes to start learning.")
+                            .font(themeStore.regular(14))
+                            .foregroundColor(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
                     .padding(.top, 40)
                 }
             }

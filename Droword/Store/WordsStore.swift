@@ -144,7 +144,11 @@ final class WordsStore: ObservableObject {
     }
 
     func add(_ word: StoredWord) {
-        words.append(word)
+        var w = word
+        if w.dueDate == nil {
+            w.dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
+        }
+        words.append(w)
         totalWordsAdded += 1
         UserDefaults.standard.set(true, forKey: AppStorageKeys.hasEverAddedWord)
     }

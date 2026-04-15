@@ -130,8 +130,10 @@ struct DrowordApp: App {
         switch paletteRaw {
         case "duolingo":
             tintColor = UIColor(red: 0.345, green: 0.8, blue: 0.008, alpha: 1)
-        case "monochrome":
-            tintColor = UIColor(named: "MonoMedium") ?? .gray
+        case "sunset":
+            tintColor = UIColor(red: 0.91, green: 0.51, blue: 0.36, alpha: 1)
+        case "glass":
+            tintColor = UIColor.systemBlue
         default:
             tintColor = UIColor(named: "AccentBlue") ?? .systemBlue
         }

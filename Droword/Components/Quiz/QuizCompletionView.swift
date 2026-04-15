@@ -18,7 +18,7 @@ struct QuizCompletionView: View {
     private var scoreColor: Color {
         switch percentage {
         case 70...100: return themeStore.accentGreen
-        case 40..<70: return themeStore.isMonochrome ? Color("MonoMedium") : Color(red: 1.0, green: 0.902, blue: 0.655)
+        case 40..<70: return themeStore.isSunset ? themeStore.accentGold : Color(red: 1.0, green: 0.902, blue: 0.655)
         default: return themeStore.accentRed
         }
     }

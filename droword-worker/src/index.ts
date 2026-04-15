@@ -238,6 +238,112 @@ STRICT:
   }
 }
 
+// ─── /extract-words ───
+async function handleExtractWords(request: Request, env: Env): Promise<Response> {
+  const { image, learningLanguage, nativeLanguage } = await request.json<{
+    image: string;
+    learningLanguage: string;
+    nativeLanguage: string;
+  }>();
+
+  if (!image || !learningLanguage || !nativeLanguage) {
+    return errorResponse("Missing required fields: image, learningLanguage, nativeLanguage", 400);
+  }
+
+  const prompt = `You are a vocabulary extraction assistant.
+
+Look at this image carefully. It contains words, a vocabulary list, a textbook page, or handwritten notes.
+
+TASK:
+Extract all word–translation pairs you can find in the image.
+
+The words are in ${learningLanguage} with translations in any language.
+Translate each word into ${nativeLanguage}.
+
+For each word provide:
+- word: the word in ${learningLanguage} (if the word is in a different script like romaji/pinyin, keep it as shown)
+- translation: translation in ${nativeLanguage}
+- type: part of speech in ${nativeLanguage} (noun, verb, adjective, etc.) or null
+- transcription: IPA transcription in /…/ format if applicable, or null
+
+STRICT RULES:
+- Return ONLY valid JSON
+- translation must be in ${nativeLanguage}
+- If a word already has a translation visible in the image but it's not in ${nativeLanguage}, translate it to ${nativeLanguage}
+- Skip headers, numbers, and non-word content
+- If no words are found, return empty array
+
+{
+  "words": [
+    { "word": "...", "translation": "...", "type": "...", "transcription": "..." }
+  ]
+}`;
+
+  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      system: "You always return strictly valid JSON without explanations.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/jpeg",
+                data: image,
+              },
+            },
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!anthropicResponse.ok) {
+    const text = await anthropicResponse.text();
+    return errorResponse(`Anthropic API error: ${text}`, anthropicResponse.status);
+  }
+
+  const claude = await anthropicResponse.json<{
+    content?: { type: string; text?: string }[];
+    error?: { message: string };
+  }>();
+
+  if (claude.error) {
+    return errorResponse(`Claude error: ${claude.error.message}`, 502);
+  }
+
+  const text = claude.content?.find((c) => c.type === "text")?.text;
+  if (!text) {
+    return errorResponse("Empty response from Claude", 502);
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return errorResponse("Invalid JSON from Claude", 502);
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+    return jsonResponse(parsed);
+  } catch {
+    return errorResponse("Failed to parse Claude response", 502);
+  }
+}
+
 // ─── /tts ───
 async function handleTTS(request: Request, env: Env): Promise<Response> {
   const { text, voice, format } = await request.json<{
@@ -308,6 +414,8 @@ export default {
           return await handleSuggest(request, env);
         case "/tts":
           return await handleTTS(request, env);
+        case "/extract-words":
+          return await handleExtractWords(request, env);
         default:
           return errorResponse("Not found", 404);
       }

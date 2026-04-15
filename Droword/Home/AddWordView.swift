@@ -16,6 +16,7 @@ struct AddWordView: View {
     @State private var showOfflineToast = false
     @State private var showDuplicateAlert = false
     @State private var showErrorToast = false
+    @State private var showScanWords = false
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenOfflineAlert) private var hasSeenOfflineAlert: Bool = false
     @FocusState private var focusedField: Field?
@@ -106,6 +107,24 @@ struct AddWordView: View {
                     }
                     .accessibilityLabel(Text("Close"))
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Haptics.lightImpact()
+                        showScanWords = true
+                    } label: {
+                        Image(systemName: "doc.text.viewfinder")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(themeStore.mainAccentColor)
+                    }
+                    .accessibilityLabel(Text("Scan words from photo"))
+                }
+            }
+            .fullScreenCover(isPresented: $showScanWords) {
+                ScanWordsView(store: store)
+                    .environmentObject(themeStore)
+                    .environmentObject(languageStore)
+                    .tint(themeStore.mainAccentColor)
+                    .transaction { $0.disablesAnimations = true }
             }
         }
 

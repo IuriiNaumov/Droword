@@ -417,9 +417,11 @@ struct WordCardView: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(backgroundColor)
+                .fill(themeStore.isGlass ? Color.clear : backgroundColor)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .shadow(color: themeStore.cardShadowColor, radius: themeStore.cardShadowRadius, x: 0, y: 3)
     }
 
     private var headerRow: some View {

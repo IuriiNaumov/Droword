@@ -357,7 +357,8 @@ struct ReviewSectionView: View {
     private func prepareSession() {
         let now = Date()
         let due = store.words.filter { w in
-            if let due = w.dueDate { return due <= now } else { return true }
+            guard let due = w.dueDate else { return false }
+            return due <= now
         }
         learningQueue = due.map { word in
             WordCard(
@@ -393,7 +394,8 @@ struct ReviewSectionView: View {
         // Add newly added words that are due for review
         let now = Date()
         let newDue = store.words.filter { w in
-            !queueIDs.contains(w.id) && (w.dueDate == nil || w.dueDate! <= now)
+            guard let due = w.dueDate else { return false }
+            return !queueIDs.contains(w.id) && due <= now
         }
         for word in newDue {
             learningQueue.append(

@@ -17,7 +17,7 @@ struct ThemePickerView: View {
 
                 // Theme selector
                 VStack(spacing: 10) {
-                    ForEach(ThemeStore.Palette.allCases) { palette in
+                    ForEach(availablePalettes) { palette in
                         themeOption(palette: palette)
                     }
                 }
@@ -76,8 +76,10 @@ struct ThemePickerView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .shadow(color: themeStore.cardShadowColor, radius: themeStore.cardShadowRadius, x: 0, y: 3)
     }
 
     // MARK: - Theme Option
@@ -147,14 +149,26 @@ struct ThemePickerView: View {
         .buttonStyle(.plain)
     }
 
+    private var availablePalettes: [ThemeStore.Palette] {
+        ThemeStore.Palette.allCases.filter { palette in
+            if palette.requiresIOS26 {
+                if #available(iOS 26, *) { return true }
+                return false
+            }
+            return true
+        }
+    }
+
     private func accentColors(for palette: ThemeStore.Palette) -> [Color] {
         switch palette {
         case .colorful:
             return [Color(hex: "#5B9BD5"), Color(hex: "#D86B94"), Color(hex: "#EBA130")]
         case .duolingo:
             return [Color(hex: "#58CC02"), Color(hex: "#2EC4B6"), Color(hex: "#CE82FF")]
-        case .monochrome:
-            return [Color(hex: "#8E8E93"), Color(hex: "#AEAEB2"), Color(hex: "#3D3D3D")]
+        case .sunset:
+            return [Color(hex: "#E8825C"), Color(hex: "#F0967A"), Color(hex: "#F0A850")]
+        case .glass:
+            return [Color(hex: "#007AFF"), Color(hex: "#AF52DE"), Color(hex: "#FF9500")]
         }
     }
 }
