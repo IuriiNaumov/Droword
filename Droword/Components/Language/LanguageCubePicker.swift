@@ -50,10 +50,7 @@ struct LanguageCubePicker: View {
     LanguageCubePicker(
         selectedLanguage: .constant("Español"),
         title: "I speak",
-        languages: [
-            LanguageOption(name: "English", flag: "🇬🇧", color: Color.accentBlue),
-            LanguageOption(name: "Español", flag: "🇲🇽", color: Color.accentBlue),
-            LanguageOption(name: "Русский", flag: "🇷🇺", color: Color.accentBlue)
-        ]
+        languages: LanguageCatalog.availableLanguages
     )
+    .environmentObject(ThemeStore())
 }

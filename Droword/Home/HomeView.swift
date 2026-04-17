@@ -39,6 +39,13 @@ struct HomeView: View {
     @State private var lastSuggestionTodayCount: Int?
     @State private var reviewTimerDismissed = false
     @State private var scrollProxy: ScrollViewProxy?
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var iconCircleFill: Color {
+        themeStore.isMonochrome
+            ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+            : themeStore.appBg
+    }
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -457,11 +464,11 @@ struct HomeView: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle()
-                                .fill(themeStore.accentGreen.opacity(0.15))
+                                .fill(iconCircleFill)
                                 .frame(width: 44, height: 44)
                             Image(systemName: "timer")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(themeStore.accentGreen)
+                                .foregroundColor(themeStore.mainAccentColor)
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Next Review")
@@ -479,7 +486,7 @@ struct HomeView: View {
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundColor(themeStore.mainAccentColor)
                         }
                         .buttonStyle(.plain)
                     }
@@ -497,6 +504,9 @@ struct HomeView: View {
 
                 SuggestedWordsView()
                     .environmentObject(suggested)
+                    .padding(.horizontal, 20)
+
+                WordPacksSectionView()
                     .padding(.horizontal, 20)
 
                 if !cachedRecentWords.isEmpty {

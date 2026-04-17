@@ -1,19 +1,21 @@
 import SwiftUI
 
 struct LoadingStagesView: View {
-    @State private var phase: CGFloat = 0
+    var dotSize: CGFloat = 8
+    var bounceHeight: CGFloat = 6
+    var spacing: CGFloat = 6
+    var color: Color = .white
+
+    @State private var animating = false
     @State private var isActive = false
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: spacing) {
             ForEach(0..<3, id: \.self) { index in
-                let offset: CGFloat = index % 2 == 0
-                    ? -6 * sin(phase)
-                    : 6 * sin(phase)
                 Circle()
-                    .fill(Color.white)
-                    .frame(width: 8, height: 8)
-                    .offset(y: offset)
+                    .fill(color)
+                    .frame(width: dotSize, height: dotSize)
+                    .offset(y: animating ? (index % 2 == 0 ? -bounceHeight : bounceHeight) : 0)
             }
         }
         .onAppear {
@@ -28,21 +30,20 @@ struct LoadingStagesView: View {
     private func startBounce() {
         guard isActive else { return }
 
-        withAnimation(.easeInOut(duration: 0.4)) {
-            phase = .pi
+        withAnimation(.easeInOut(duration: 0.35)) {
+            animating = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             guard isActive else { return }
             Haptics.lightImpact()
-            withAnimation(.easeInOut(duration: 0.4)) {
-                phase = 2 * .pi
+            withAnimation(.easeInOut(duration: 0.35)) {
+                animating = false
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 guard isActive else { return }
                 Haptics.lightImpact()
-                phase = 0
                 startBounce()
             }
         }

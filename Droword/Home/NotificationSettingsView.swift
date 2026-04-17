@@ -4,6 +4,7 @@ import UserNotifications
 struct NotificationSettingsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var languageStore: LanguageStore
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage(AppStorageKeys.notifGlobalEnabled) private var globalEnabled: Bool = true
@@ -266,11 +267,27 @@ struct NotificationSettingsView: View {
         }
     }
 
+    private static let arigatouTranslations: [String: String] = [
+        "English": "Thank you",
+        "Español": "Gracias",
+        "Русский": "Спасибо",
+        "Français": "Merci",
+        "Deutsch": "Danke",
+        "Italiano": "Grazie",
+        "Português": "Obrigado",
+        "한국어": "감사합니다",
+        "中文": "谢谢",
+        "日本語": "Thank you",
+        "العربية": "شكراً",
+        "हिन्दी": "धन्यवाद",
+    ]
+
     private var sampleWord: (word: String, transcription: String?, translation: String?) {
-        if let word = store.words.first {
-            return (word.word, word.transcription, word.translation)
+        if languageStore.nativeLanguage == "日本語" {
+            return ("Thank you", "/θæŋk juː/", "ありがとう")
         }
-        return ("Hello", "/həˈloʊ/", "Привет")
+        let translation = Self.arigatouTranslations[languageStore.nativeLanguage] ?? "Thank you"
+        return ("ありがとう", "/aɾiɡatoː/", translation)
     }
 
     private var previewBody: String {

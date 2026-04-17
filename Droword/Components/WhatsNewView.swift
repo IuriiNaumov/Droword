@@ -40,6 +40,12 @@ struct WhatsNewView: View {
             color: themeStore.iconGold,
             title: "Achievements & Streaks",
             description: "Track your progress with badges, daily challenges and streak calendar."
+        ),
+        WhatsNewFeature(
+            icon: "rectangle.stack.fill",
+            color: themeStore.accentBlue,
+            title: "Word Packs",
+            description: "Themed vocabulary sets — basics, food, travel and more."
         )
     ]}
 

@@ -175,7 +175,9 @@ struct ProfileHeaderView: View {
 
         if years >= 1 {
             if months > 0 {
-                return String(localized: "\(years) years \(months) months")
+                let y = String(localized: "\(years) years")
+                let m = String(localized: "\(months) months")
+                return "\(y) \(m)"
             } else {
                 return String(localized: "\(years) years")
             }

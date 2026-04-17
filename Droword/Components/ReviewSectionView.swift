@@ -283,7 +283,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundColor(themeStore.mainAccentColor)
                 }
                 .buttonStyle(.plain)
             }

@@ -15,7 +15,7 @@ struct Duo3DStyle: ViewModifier {
                 ZStack {
                     if themeStore.isDuolingo && !isDisabled {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(themeStore.buttonShadow)
+                            .fill(darkerShade(of: bgColor, by: 0.18))
                             .offset(y: 4)
 
                         RoundedRectangle(cornerRadius: 16, style: .continuous)

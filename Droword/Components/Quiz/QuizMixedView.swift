@@ -408,6 +408,30 @@ struct QuizMixedView: View {
 
     private func restoreOrStartSession() {
         if session.restoreSession() {
+            // Remove quiz items whose words were deleted from the store
+            let existingIDs = Set(store.words.map(\.id))
+            let staleIDs = session.queue.filter { !existingIDs.contains($0.id) }.map(\.id)
+
+            if !staleIDs.isEmpty {
+                for staleID in staleIDs {
+                    if let idx = session.queue.firstIndex(where: { $0.id == staleID }) {
+                        if idx < session.currentIndex {
+                            session.currentIndex = max(0, session.currentIndex - 1)
+                        }
+                        session.queue.remove(at: idx)
+                    }
+                    session.exerciseTypes.removeValue(forKey: staleID)
+                    session.answerResults.removeValue(forKey: staleID)
+                    session.directionMap.removeValue(forKey: staleID)
+                }
+
+                if session.queue.isEmpty || session.currentIndex >= session.queue.count {
+                    session.clearSavedSession()
+                    startSession()
+                    return
+                }
+            }
+
             prepareCurrentQuestion()
         } else {
             startSession()

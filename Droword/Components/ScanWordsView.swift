@@ -47,12 +47,8 @@ struct ScanWordsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(themeStore.mainAccentColor)
-                    }
-                    .accessibilityLabel(Text("Back"))
+                    SettingsBackButton()
+                        .environmentObject(themeStore)
                 }
             }
         }
@@ -149,9 +145,15 @@ struct ScanWordsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
 
-            VStack(spacing: 12) {
-                ProgressView()
-                    .tint(themeStore.mainAccentColor)
+            VStack(spacing: 16) {
+                LoadingStagesView(
+                    dotSize: 14,
+                    bounceHeight: 10,
+                    spacing: 10,
+                    color: themeStore.mainAccentColor
+                )
+                .frame(height: 34)
+
                 Text("Extracting words from photo…")
                     .font(themeStore.regular(15))
                     .foregroundColor(themeStore.secondaryText)
@@ -186,7 +188,7 @@ struct ScanWordsView: View {
                 }
             }
 
-            if !visibleWords.isEmpty {
+            if visibleWords.count > 1 {
                 Button {
                     Haptics.lightImpact()
                     addAllWords()
