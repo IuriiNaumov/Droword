@@ -47,8 +47,9 @@ struct BannerToastView: View {
                 .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(themeStore.toastBg)
+                        .fill(themeStore.isGlass ? Color.clear : themeStore.toastBg)
                 )
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
                 .padding(.top, 20)
                 .transition(
                     .move(edge: .top)

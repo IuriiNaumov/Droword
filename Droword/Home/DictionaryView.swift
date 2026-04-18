@@ -122,8 +122,9 @@ struct DictionaryView: View {
                         .padding(.vertical, 12)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(themeStore.cardBg)
+                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                         )
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
                         .padding(.horizontal, horizontalPadding)
 
                         TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)

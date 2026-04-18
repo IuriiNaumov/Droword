@@ -139,12 +139,13 @@ struct ThemePickerView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(themeStore.cardBg)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(isSelected ? themeStore.mainAccentColor : Color.clear, lineWidth: 1.5)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         }
         .buttonStyle(.plain)
     }

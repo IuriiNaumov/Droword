@@ -348,8 +348,9 @@ struct DetailedStatsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
     }
 }
 

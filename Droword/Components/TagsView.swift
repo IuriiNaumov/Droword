@@ -94,11 +94,14 @@ struct TagsView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(
-                                    themeStore.isMonochrome && isSelected && !dimmed
-                                        ? themeStore.mainText.opacity(0.85)
-                                        : baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32))
+                                    themeStore.isGlass
+                                        ? Color.clear
+                                        : (themeStore.isMonochrome && isSelected && !dimmed
+                                            ? themeStore.mainText.opacity(0.85)
+                                            : baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32)))
                                 )
                         )
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .stroke(isDeleteMode && tag.isCustom ? Color.accentRed.opacity(0.4) : Color.clear, lineWidth: 1.5)

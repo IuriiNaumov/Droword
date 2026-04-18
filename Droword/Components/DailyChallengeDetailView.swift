@@ -68,8 +68,9 @@ struct DailyChallengeDetailView: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
     }
 
     private var overallProgress: Double {
@@ -138,7 +139,8 @@ struct DailyChallengeDetailView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
     }
 }

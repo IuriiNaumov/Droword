@@ -54,12 +54,13 @@ struct BadgeCardView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(isUnlocked ? themeStore.accentGold.opacity(0.3) : themeStore.dividerColor, lineWidth: 1)
+                        .stroke(themeStore.isGlass ? Color.clear : (isUnlocked ? themeStore.accentGold.opacity(0.3) : themeStore.dividerColor), lineWidth: 1)
                 )
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7).delay(Double.random(in: 0...0.3))) {
                 appeared = true

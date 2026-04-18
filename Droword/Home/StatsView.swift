@@ -30,8 +30,9 @@ struct StatsView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 24))
         .foregroundColor(themeStore.mainText)
         .padding(.horizontal, 20)
         .accessibilityElement(children: .combine)

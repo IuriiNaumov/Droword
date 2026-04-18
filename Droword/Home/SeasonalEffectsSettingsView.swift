@@ -65,13 +65,14 @@ struct SeasonalEffectsSettingsView: View {
                 if seasonalEffectsEnabled {
                     ZStack {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(themeStore.cardBg)
+                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                             .frame(height: 180)
                         SeasonalOverlayView(animated: seasonalAnimationEnabled)
                             .frame(height: 180)
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                             .allowsHitTesting(false)
                     }
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
                     .transition(.opacity)
                 }
             }

@@ -231,9 +231,10 @@ struct ReviewSectionView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(backgroundColor)
+                .fill(themeStore.isGlass ? Color.clear : backgroundColor)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Review card: \(card.word)"))
         .fullScreenCover(isPresented: $showPremiumWall) {
@@ -321,8 +322,9 @@ struct ReviewSectionView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         .fullScreenCover(isPresented: $showPaywallFromReview) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)

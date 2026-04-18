@@ -82,12 +82,13 @@ struct QuizSentenceBuildingExercise: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.cardBg)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(borderColor, lineWidth: hasAnswered ? 2 : 1)
+                    .stroke(themeStore.isGlass && !hasAnswered ? Color.clear : borderColor, lineWidth: hasAnswered ? 2 : 1)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
 
             if hasAnswered && !isCorrect {
                 QuizFeedbackBadge(
@@ -126,12 +127,13 @@ struct QuizSentenceBuildingExercise: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(themeStore.cardBg)
+                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(themeStore.dividerColor, lineWidth: 1)
+                                .stroke(themeStore.isGlass ? Color.clear : themeStore.dividerColor, lineWidth: 1)
                         )
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
                 .disabled(hasAnswered)

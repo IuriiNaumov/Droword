@@ -20,12 +20,16 @@ struct Duo3DStyle: ViewModifier {
 
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(bgColor)
+                    } else if themeStore.isGlass {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isDisabled ? themeStore.secondaryText.opacity(0.4) : bgColor.opacity(0.6))
                     } else {
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(isDisabled ? themeStore.secondaryText.opacity(0.4) : bgColor)
                     }
                 }
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isDisabled, cornerRadius: 16))
     }
 }
 

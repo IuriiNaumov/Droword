@@ -98,8 +98,9 @@ struct FontSizePickerView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(themeStore.cardBg)
+                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                     )
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
                 }
                 .padding(.horizontal, 20)
 
@@ -152,8 +153,9 @@ struct FontSizePickerView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
     }
 
     // MARK: - Helpers

@@ -22,10 +22,13 @@ struct StatCardView: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.isMonochrome
-                      ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-                      : themeStore.appBg)
+                .fill(themeStore.isGlass
+                      ? Color.clear
+                      : (themeStore.isMonochrome
+                         ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+                         : themeStore.appBg))
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: value)
     }
 }

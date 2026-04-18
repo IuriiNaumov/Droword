@@ -46,8 +46,9 @@ struct LanguageSelectionView: View {
                 .padding(.horizontal, 20)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(themeStore.cardBg)
+                        .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 )
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
 
                 LanguageCubePicker(
                     selectedLanguage: $languageStore.nativeLanguage,

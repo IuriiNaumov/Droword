@@ -739,12 +739,13 @@ struct QuizMixedView: View {
         .padding(.horizontal, 20)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(themeStore.cardBg)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(themeStore.dividerColor, lineWidth: 1)
+                        .stroke(themeStore.isGlass ? Color.clear : themeStore.dividerColor, lineWidth: 1)
                 )
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
     }
 
     private var notEnoughState: some View {

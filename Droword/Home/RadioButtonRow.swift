@@ -33,8 +33,9 @@ struct RadioButtonRow: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.cardBg)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }

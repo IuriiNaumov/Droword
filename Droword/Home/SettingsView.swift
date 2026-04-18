@@ -305,8 +305,9 @@ struct SettingsView: View {
             .padding(.vertical, 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(themeStore.accentBlueSoft)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.accentBlueSoft)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         }
         .buttonStyle(Duo3DButtonStyle())
     }
@@ -360,12 +361,13 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 20)
-                    .background(themeStore.cardBg)
+                    .background(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 }
                 .buttonStyle(.plain)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         .padding(.horizontal, 20)
     }
 
