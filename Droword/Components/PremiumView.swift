@@ -33,32 +33,36 @@ struct PremiumView: View {
     private var yearlyPrice: String {
         storeKit.yearlyProduct?.displayPrice ?? "$62.99"
     }
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        return f
+    }()
+
     private var yearlyMonthly: String {
         if let product = storeKit.yearlyProduct {
             let monthly = product.price / 12
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.locale = product.priceFormatStyle.locale
-            return formatter.string(from: monthly as NSDecimalNumber) ?? "$3.33"
+            Self.currencyFormatter.locale = product.priceFormatStyle.locale
+            return Self.currencyFormatter.string(from: monthly as NSDecimalNumber) ?? "$3.33"
         }
         return "$3.33"
     }
 
     private struct FeatureRow: Identifiable {
-        let id = UUID()
+        let id: Int
         let title: LocalizedStringKey
         let free: LocalizedStringKey
         let pro: LocalizedStringKey
     }
 
-    private var featureRows: [FeatureRow] {[
-        FeatureRow(title: "AI translations", free: "\(DailyLimitsManager.maxFreeTranslations) / day", pro: "Unlimited"),
-        FeatureRow(title: "Voice pronunciation", free: "10 / day", pro: "Unlimited"),
-        FeatureRow(title: "Word suggestions", free: "4 / day", pro: "Unlimited"),
-        FeatureRow(title: "Themes", free: "Default only", pro: "All themes"),
-        FeatureRow(title: "Seasonal effects", free: "—", pro: "All effects"),
-        FeatureRow(title: "Streak freeze", free: "—", pro: "1 / week"),
-    ]}
+    private static let featureRows: [FeatureRow] = [
+        FeatureRow(id: 0, title: "AI translations", free: "\(DailyLimitsManager.maxFreeTranslations) / day", pro: "Unlimited"),
+        FeatureRow(id: 1, title: "Voice pronunciation", free: "10 / day", pro: "Unlimited"),
+        FeatureRow(id: 2, title: "Word suggestions", free: "4 / day", pro: "Unlimited"),
+        FeatureRow(id: 3, title: "Themes", free: "Default only", pro: "All themes"),
+        FeatureRow(id: 4, title: "Seasonal effects", free: "—", pro: "All effects"),
+        FeatureRow(id: 5, title: "Streak freeze", free: "—", pro: "1 / week"),
+    ]
 
     var body: some View {
         Group {
@@ -192,7 +196,7 @@ struct PremiumView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
             
-            ForEach(featureRows) { row in
+            ForEach(Self.featureRows) { row in
                 VStack(spacing: 0) {
                     Divider()
                     HStack {
@@ -222,7 +226,7 @@ struct PremiumView: View {
 
     private var proActiveFeatures: some View {
         VStack(alignment: .leading, spacing: 14) {
-            ForEach(featureRows) { row in
+            ForEach(Self.featureRows) { row in
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 14, weight: .bold))

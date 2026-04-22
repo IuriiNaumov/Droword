@@ -48,7 +48,7 @@ async function handleTranslate(request: Request, env: Env): Promise<Response> {
 
   const exampleGuideline = levelGuidelines[cefrLevel] || levelGuidelines["A1"];
 
-  const prompt = `You are a linguist.
+  const prompt = `You are a friendly language tutor.
 
 Translate and explain the word "${word}".
 
@@ -57,12 +57,20 @@ Target language: ${nativeLanguage}
 Learner's CEFR level: ${cefrLevel}
 
 STRICT RULES:
-- translation → only ${nativeLanguage}
-- type → only ${nativeLanguage}
-- explanation → short and clear, only ${nativeLanguage}. Adapt complexity to ${cefrLevel} level.
-- breakdown → only ${nativeLanguage} or null
+- translation → only ${nativeLanguage}. Give the most common, natural translation.
+- type → part of speech, only ${nativeLanguage} (e.g. "существительное", "глагол" for Russian).
+- explanation → 1–2 short sentences in ${nativeLanguage}. Write like you're explaining to a friend — casual, clear, helpful. Focus on when and how the word is used, not a dictionary definition. Adapt to ${cefrLevel} level.
+- breakdown → only ${nativeLanguage} or null. Brief etymology or word structure if helpful.
 - example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match CEFR ${cefrLevel} level. ${exampleGuideline}
-- transcription → IPA phonemic transcription in slashes, e.g., /paˈlaβɾa/. Always use /…/ format (never square brackets). Use only standard IPA symbols. Return null if not applicable.
+- transcription → phonetic transcription that helps the learner pronounce the word correctly.
+  For ${learningLanguage}, use the most practical transcription system:
+  • Japanese → if the word contains kanji, show hiragana reading (e.g. "たべる" for 食べる). If the word is already in hiragana or katakana, show romaji (e.g. "kiku" for きく, "terebi" for テレビ)
+  • Chinese → use pinyin with tones (e.g. "chī fàn")
+  • Korean → use romanization (e.g. "meo-gda")
+  • Arabic → use simplified transliteration (e.g. "akala")
+  • For European languages (English, French, Spanish, German, Italian, Portuguese, etc.) → use IPA in slashes (e.g. /pəˈteɪtoʊ/, /ʃɛʁʃe/)
+  • Hindi → use IAST or simplified transliteration
+  Return null if not applicable.
 - Do not mix languages inside fields.
 
 Return ONLY valid JSON:
@@ -159,12 +167,18 @@ TASK:
 - Provide a short example sentence in the learning language, appropriate for ${cefrLevel} level.
 - Provide a short one‑sentence explanation in the native language.
 - Provide a brief breakdown/etymology in the native language if relevant (optional).
-- Provide transcription in IPA using /…/ slashes if relevant (optional).
+- Provide transcription that helps the learner pronounce the word correctly.
 
 STRICT:
 - word and example → only ${learningLanguage}
 - translation, explanation, breakdown → only ${nativeLanguage}
-- transcription → IPA phonemic transcription in slashes /…/ format only (never square brackets)
+- transcription → use the most practical system for ${learningLanguage}:
+  • Japanese → if the word contains kanji, show hiragana reading. If already hiragana/katakana, show romaji
+  • Chinese → pinyin with tones (e.g. "chī fàn")
+  • Korean → romanization (e.g. "meo-gda")
+  • Arabic → simplified transliteration
+  • European languages (English, French, Spanish, German, Italian, Portuguese, etc.) → IPA in slashes (e.g. /pəˈteɪtoʊ/)
+  • Hindi → IAST or simplified transliteration
 - valid JSON only
 
 {

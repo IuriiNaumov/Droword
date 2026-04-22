@@ -319,6 +319,12 @@ final class ThemeStore: ObservableObject {
             : .custom("Poppins-Regular", size: s)
     }
 
+    func iconCircleFill(colorScheme: ColorScheme) -> Color {
+        isMonochrome
+            ? mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+            : appBg
+    }
+
     func resolvedTagColor(_ hex: String?) -> Color {
         guard !isSunset else { return Color(hex: "#E8825C") }
         guard !isGlass else { return accentBlue }
@@ -327,6 +333,59 @@ final class ThemeStore: ObservableObject {
     }
 
     func set(_ newPalette: Palette) { palette = newPalette }
+
+    // MARK: - Preview Colors (for theme picker carousel)
+
+    struct PreviewColors {
+        let accentBlue: Color
+        let accentGreen: Color
+        let accentGold: Color
+        let accentPink: Color
+        let mainAccentColor: Color
+        let appBg: Color
+        let cardBg: Color
+        let mainText: Color
+        let secondaryText: Color
+        let buttonShadow: Color
+        let isGlass: Bool
+        let isDuolingo: Bool
+
+        func bold(_ size: CGFloat) -> Font {
+            isDuolingo
+                ? .system(size: size, weight: .bold, design: .rounded)
+                : .custom("Poppins-Bold", size: size)
+        }
+
+        func medium(_ size: CGFloat) -> Font {
+            isDuolingo
+                ? .system(size: size, weight: .medium, design: .rounded)
+                : .custom("Poppins-Medium", size: size)
+        }
+
+        func regular(_ size: CGFloat) -> Font {
+            isDuolingo
+                ? .system(size: size, weight: .regular, design: .rounded)
+                : .custom("Poppins-Regular", size: size)
+        }
+    }
+
+    static func previewColors(for palette: Palette) -> PreviewColors {
+        let c = buildColors(for: palette)
+        return PreviewColors(
+            accentBlue: c.accentBlue,
+            accentGreen: c.accentGreen,
+            accentGold: c.accentGold,
+            accentPink: c.accentPink,
+            mainAccentColor: c.mainAccentColor,
+            appBg: c.appBg,
+            cardBg: c.cardBg,
+            mainText: c.mainText,
+            secondaryText: c.secondaryText,
+            buttonShadow: c.buttonShadow,
+            isGlass: palette == .glass,
+            isDuolingo: palette == .duolingo
+        )
+    }
 }
 // MARK: - Glass Card Modifier
 

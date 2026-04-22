@@ -33,6 +33,8 @@ final class QuizSessionManager: ObservableObject {
     @Published var answeredCount: Int = 0
     
     var maxSessionSize = 10
+    /// The number of items in the original session (before retries are appended)
+    @Published var originalTotal: Int = 0
 
     var currentItem: QuizItem? {
         guard currentIndex < queue.count else { return nil }
@@ -49,6 +51,7 @@ final class QuizSessionManager: ObservableObject {
     func prepareMixedSession(from words: [StoredWord], filterTag: String? = nil) {
         var filtered = words
             .filter { $0.translation != nil && !$0.translation!.isEmpty }
+            .filter { $0.word.components(separatedBy: .whitespaces).count <= 3 }
 
         if let tag = filterTag, !tag.isEmpty {
             filtered = filtered.filter { $0.tag == tag }
@@ -92,26 +95,15 @@ final class QuizSessionManager: ObservableObject {
         bestStreak = 0
         answerResults = [:]
         orderedResults = []
+        originalTotal = queue.count
 
         exerciseTypes = [:]
 
         let matchingCandidateIndex: Int? = queue.count >= 4 ? Int.random(in: 0..<queue.count) : nil
 
-        let sentenceCandidates = queue.indices.filter { i in
-            let item = queue[i]
-            guard let ex = item.example, !ex.isEmpty else { return false }
-            let words = ex.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-            return words.count >= 3 && words.count <= 12
-        }
-        let sentenceBuildingIndex: Int? = sentenceCandidates.filter { $0 != matchingCandidateIndex }.randomElement()
-
         for (index, item) in queue.enumerated() {
             if index == matchingCandidateIndex {
                 exerciseTypes[item.id] = .matching
-                continue
-            }
-            if index == sentenceBuildingIndex {
-                exerciseTypes[item.id] = .sentenceBuilding
                 continue
             }
 
@@ -120,16 +112,29 @@ final class QuizSessionManager: ObservableObject {
                 && !item.example!.isEmpty
                 && item.example!.localizedCaseInsensitiveContains(item.word)
 
-            if reps >= 2 {
+            // Progressive difficulty based on repetition count:
+            // reps 0   → MC only (first encounter, recognition)
+            // reps 1   → MC or typing 50/50 (reinforcement)
+            // reps 2-3 → typing, or cloze if eligible (active recall)
+            // reps 4+  → typing/cloze with cloze bias (context mastery)
+            switch reps {
+            case 0:
+                exerciseTypes[item.id] = .multipleChoice
+            case 1:
+                exerciseTypes[item.id] = Bool.random() ? .multipleChoice : .typing
+            case 2...3:
                 if isClozeEligible {
                     exerciseTypes[item.id] = Bool.random() ? .typing : .cloze
                 } else {
                     exerciseTypes[item.id] = .typing
                 }
-            } else if isClozeEligible {
-                exerciseTypes[item.id] = ExerciseType.allCases.randomElement() ?? .multipleChoice
-            } else {
-                exerciseTypes[item.id] = Bool.random() ? .multipleChoice : .typing
+            default:
+                if isClozeEligible {
+                    // 70% cloze, 30% typing at mastery stage
+                    exerciseTypes[item.id] = Int.random(in: 0..<10) < 7 ? .cloze : .typing
+                } else {
+                    exerciseTypes[item.id] = .typing
+                }
             }
         }
 
@@ -219,6 +224,7 @@ final class QuizSessionManager: ObservableObject {
         let exerciseTypes: [String: String]
         let directionMap: [String: Bool]
         let orderedResults: [Bool]
+        var originalTotal: Int?
     }
 
     func saveSession() {
@@ -232,7 +238,8 @@ final class QuizSessionManager: ObservableObject {
             answerResults: Dictionary(uniqueKeysWithValues: answerResults.map { ($0.key.uuidString, $0.value) }),
             exerciseTypes: Dictionary(uniqueKeysWithValues: exerciseTypes.map { ($0.key.uuidString, $0.value.rawValue) }),
             directionMap: Dictionary(uniqueKeysWithValues: directionMap.map { ($0.key.uuidString, $0.value) }),
-            orderedResults: orderedResults
+            orderedResults: orderedResults,
+            originalTotal: originalTotal
         )
         if let data = try? JSONEncoder().encode(snapshot) {
             UserDefaults.standard.set(data, forKey: Self.savedSessionKey)
@@ -261,13 +268,15 @@ final class QuizSessionManager: ObservableObject {
         exerciseTypes = Dictionary(uniqueKeysWithValues: snapshot.exerciseTypes.compactMap { key, val in
             guard let uuid = UUID(uuidString: key),
                   let type = ExerciseType(rawValue: val) else { return nil }
-            return (uuid, type)
+            // Remap removed exercise types to multipleChoice
+            return (uuid, type == .sentenceBuilding ? .multipleChoice : type)
         })
         directionMap = Dictionary(uniqueKeysWithValues: snapshot.directionMap.compactMap { key, val in
             guard let uuid = UUID(uuidString: key) else { return nil }
             return (uuid, val)
         })
         orderedResults = snapshot.orderedResults
+        originalTotal = snapshot.originalTotal ?? snapshot.queue.count
         return true
     }
 

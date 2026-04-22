@@ -12,6 +12,7 @@ enum SettingsDestination: Hashable {
     case privacyPolicy
     case achievements
     case seasonalEffects
+    case appCustomization
     case premium
     case whatsNew
 }

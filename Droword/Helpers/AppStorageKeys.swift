@@ -51,4 +51,7 @@ enum AppStorageKeys {
     static let lastCelebratedStreak = "lastCelebratedStreak"
     static let lastStreakFreezeDate = "lastStreakFreezeDate"
     static let hasSeenReactionHint = "hasSeenReactionHint"
+    static let showWordPacks = "showWordPacks"
+    static let wordPacksExpanded = "wordPacksExpanded"
+    static let hasSeenWordPacksHint = "hasSeenWordPacksHint"
 }

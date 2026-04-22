@@ -51,7 +51,7 @@ struct QuizTypingExercise: View {
                     .multilineTextAlignment(.center)
 
                 if !isReversed, let tr = item.transcription, !tr.isEmpty {
-                    Text(tr)
+                    Text("[\(tr)]")
                         .font(themeStore.regular(14))
                         .foregroundColor(themeStore.secondaryText)
                 }

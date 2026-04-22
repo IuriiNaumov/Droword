@@ -35,6 +35,8 @@ struct HomeView: View {
     @State private var enrichmentToast: String?
     @State private var copiedToast = false
     @State private var cachedRecentWords: [StoredWord] = []
+    @State private var cachedDueWordsCount: Int = 0
+    @State private var cachedNextReviewInfo: (count: Int, date: Date)? = nil
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
     @State private var reviewTimerDismissed = false
@@ -42,9 +44,7 @@ struct HomeView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var iconCircleFill: Color {
-        themeStore.isMonochrome
-            ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-            : themeStore.appBg
+        themeStore.iconCircleFill(colorScheme: colorScheme)
     }
 
     enum Tab: String, CaseIterable, Identifiable {
@@ -114,24 +114,9 @@ struct HomeView: View {
 
     @AppStorage(AppStorageKeys.reviewAllCaughtUp) private var reviewAllCaughtUp: Bool = false
 
-    private var dueWordsCount: Int {
-        let now = Date()
-        return store.words.filter { w in
-            guard let due = w.dueDate else { return false }
-            return due <= now
-        }.count
-    }
+    private var dueWordsCount: Int { cachedDueWordsCount }
 
-    private var nextReviewInfo: (count: Int, date: Date)? {
-        let now = Date()
-        let upcoming = store.words.compactMap { w -> Date? in
-            guard let due = w.dueDate, due > now else { return nil }
-            return due
-        }.sorted()
-        guard let earliest = upcoming.first else { return nil }
-        let count = upcoming.filter { Calendar.current.isDate($0, equalTo: earliest, toGranularity: .hour) }.count
-        return (count, earliest)
-    }
+    private var nextReviewInfo: (count: Int, date: Date)? { cachedNextReviewInfo }
 
     private func timeUntil(_ date: Date) -> String {
         let seconds = max(0, date.timeIntervalSince(Date()))
@@ -147,8 +132,57 @@ struct HomeView: View {
         return String(localized: "\(days) d")
     }
 
+    private func longIntervalHint(for date: Date) -> LocalizedStringKey? {
+        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
+        guard days >= 3 else { return nil }
+
+        let hints: [LocalizedStringKey]
+        if days >= 30 {
+            hints = [
+                "You've mastered these words so well, they need a long break 💪",
+                "Your brain locked these in tight. See you in a month!",
+                "These words are basically muscle memory now 🧠",
+                "Practice paid off — these words are deeply stored"
+            ]
+        } else if days >= 14 {
+            hints = [
+                "Great progress — these words are sticking 🎯",
+                "Your practice sessions are really paying off",
+                "These words are getting into long-term memory 🧩",
+                "Almost mastered — just a couple more reviews to go"
+            ]
+        } else {
+            hints = [
+                "Words are settling in nicely, keep it up ✨",
+                "Spaced repetition is working its magic",
+                "You're building strong memory foundations 🌱",
+                "Right on track — see you in a few days"
+            ]
+        }
+
+        let index = abs(date.hashValue) % hints.count
+        return hints[index]
+    }
+
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
+
+        let now = Date()
+        cachedDueWordsCount = store.words.filter { w in
+            guard let due = w.dueDate else { return false }
+            return due <= now
+        }.count
+
+        let upcoming = store.words.compactMap { w -> Date? in
+            guard let due = w.dueDate, due > now else { return nil }
+            return due
+        }.sorted()
+        if let earliest = upcoming.first {
+            let count = upcoming.filter { Calendar.current.isDate($0, equalTo: earliest, toGranularity: .hour) }.count
+            cachedNextReviewInfo = (count, earliest)
+        } else {
+            cachedNextReviewInfo = nil
+        }
     }
 
     private var todayWordsCount: Int {
@@ -295,7 +329,7 @@ struct HomeView: View {
                         .zIndex(200)
                 }
                 if copiedToast {
-                    BannerToastView(type: .success, message: "Copied", duration: 1.5)
+                    BannerToastView(type: .success, message: String(localized: "Copied"), duration: 1.5)
                         .zIndex(201)
                 }
             }
@@ -383,17 +417,23 @@ struct HomeView: View {
     }
 
     private var enrichmentLimitBanner: some View {
-        StatusBannerView(
-            icon: "clock.fill",
-            iconColor: themeStore.accentGold,
-            title: "Daily limit reached",
-            subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
-        )
+        HStack(spacing: 12) {
+            StatusBannerView(
+                icon: "clock.fill",
+                iconColor: themeStore.accentGold,
+                title: "Daily limit reached",
+                subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
+            )
+            Image(systemName: "chevron.right")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(themeStore.accentBlue)
+        }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.accentGold.opacity(0.12))
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
         .onTapGesture {
             Haptics.lightImpact()
             showPremiumFromLimit = true
@@ -409,6 +449,8 @@ struct HomeView: View {
                 ProfileHeaderView()
                     .padding(.bottom, 60)
                 StatsView()
+
+                WordPacksSectionView()
 
                 Button {
                     Haptics.lightImpact()
@@ -431,7 +473,7 @@ struct HomeView: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(themeStore.accentGold.opacity(0.15))
+                                    .fill(iconCircleFill)
                                     .frame(width: 44, height: 44)
                                 Image(systemName: "clock.badge.exclamationmark")
                                     .font(.system(size: 18, weight: .semibold))
@@ -448,7 +490,7 @@ struct HomeView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.accentGold)
+                                .foregroundColor(themeStore.accentBlue)
                         }
                         .padding(16)
                         .background(
@@ -469,15 +511,21 @@ struct HomeView: View {
                                 .frame(width: 44, height: 44)
                             Image(systemName: "timer")
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(themeStore.mainAccentColor)
+                                .foregroundColor(themeStore.accentBlue)
                         }
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("Next Review")
                                 .font(themeStore.bold(16))
                                 .foregroundColor(themeStore.mainText)
                             Text("\(info.count) words to review in \(timeUntil(info.date))")
                                 .font(themeStore.regular(13))
                                 .foregroundColor(themeStore.secondaryText)
+                            if let hint = longIntervalHint(for: info.date) {
+                                Text(hint)
+                                    .font(themeStore.regular(12))
+                                    .foregroundColor(themeStore.accentGold)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         Spacer()
                         Button {
@@ -487,7 +535,7 @@ struct HomeView: View {
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.mainAccentColor)
+                                .foregroundColor(themeStore.accentBlue)
                         }
                         .buttonStyle(.plain)
                     }
@@ -508,15 +556,12 @@ struct HomeView: View {
                     .environmentObject(suggested)
                     .padding(.horizontal, 20)
 
-                WordPacksSectionView()
-                    .padding(.horizontal, 20)
-
                 if !cachedRecentWords.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recently added")
                             .font(themeStore.bold(24))
                             .foregroundColor(themeStore.mainText)
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 36)
 
                         if !isPremium && !DailyLimitsManager.canTranslate {
                             enrichmentLimitBanner

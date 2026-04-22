@@ -6,9 +6,7 @@ struct DailyChallengeButton: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var iconCircleFill: Color {
-        themeStore.isMonochrome
-            ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-            : themeStore.appBg
+        themeStore.iconCircleFill(colorScheme: colorScheme)
     }
 
     var body: some View {

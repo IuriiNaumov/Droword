@@ -43,11 +43,12 @@ struct StreakCalendarView: View {
 
     @State private var displayedMonth: Date = Date()
     @State private var cachedMonthData: MonthData? = nil
+    @State private var cachedEarliestDate: Date? = nil
 
-    private var weekdaySymbols: [String] {
+    private static let weekdaySymbols: [String] = {
         let symbols = Calendar.current.shortStandaloneWeekdaySymbols
         return Array(symbols[1...]) + [symbols[0]]  // Mon–Sun order
-    }
+    }()
 
 
     var body: some View {
@@ -63,12 +64,14 @@ struct StreakCalendarView: View {
             monthCalendarView
         }
         .onAppear {
+            rebuildEarliestDate()
             rebuildMilestones()
             rebuildCurrentStreakDates()
             rebuildMonthCalendar()
             rebuildStats()
         }
         .onChange(of: store.words.count) {
+            rebuildEarliestDate()
             rebuildMilestones()
             rebuildCurrentStreakDates()
             rebuildMonthCalendar()
@@ -155,7 +158,7 @@ struct StreakCalendarView: View {
     }
 
     private var canGoBack: Bool {
-        guard let earliest = store.words.map({ $0.dateAdded }).min() else { return false }
+        guard let earliest = cachedEarliestDate else { return false }
         let cal = Calendar.current
         let earliestMonth = cal.dateInterval(of: .month, for: earliest)?.start ?? earliest
         let currentDisplayStart = cal.dateInterval(of: .month, for: displayedMonth)?.start ?? displayedMonth
@@ -171,7 +174,7 @@ struct StreakCalendarView: View {
 
     private var weekdayHeaderRow: some View {
         HStack(spacing: 0) {
-            ForEach(weekdaySymbols, id: \.self) { day in
+            ForEach(Self.weekdaySymbols, id: \.self) { day in
                 Text(day)
                     .font(themeStore.regular(11))
                     .foregroundColor(themeStore.secondaryText)
@@ -273,6 +276,12 @@ struct StreakCalendarView: View {
     }
 
 
+    private static let monthTitleFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "LLLL yyyy"
+        return f
+    }()
+
     private static let selectedDayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "EEEE, d MMMM yyyy"
@@ -333,6 +342,10 @@ struct StreakCalendarView: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 12))
+    }
+
+    private func rebuildEarliestDate() {
+        cachedEarliestDate = store.words.lazy.map(\.dateAdded).min()
     }
 
     private func rebuildMonthCalendar() {
@@ -400,9 +413,7 @@ struct StreakCalendarView: View {
             }
         }
 
-        let df = DateFormatter()
-        df.dateFormat = "LLLL yyyy"
-        let title = df.string(from: firstOfMonth)
+        let title = Self.monthTitleFormatter.string(from: firstOfMonth)
 
         cachedMonthData = MonthData(
             year: year, month: month, title: title,

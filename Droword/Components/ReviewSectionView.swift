@@ -23,7 +23,7 @@ struct ReviewSectionView: View {
 
     var body: some View {
         Group {
-        if allCaughtUp && !dismissed {
+        if allCaughtUp && !dismissed && totalDue > 0 {
             allCaughtUpBanner
                 .transition(.opacity)
         } else if !allCaughtUp && currentIndex < learningQueue.count {
@@ -248,9 +248,7 @@ struct ReviewSectionView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     private var iconCircleFill: Color {
-        themeStore.isMonochrome
-            ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-            : themeStore.appBg
+        themeStore.iconCircleFill(colorScheme: colorScheme)
     }
 
     private var allCaughtUpBanner: some View {
@@ -284,7 +282,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(themeStore.mainAccentColor)
+                        .foregroundColor(themeStore.accentBlue)
                 }
                 .buttonStyle(.plain)
             }
@@ -575,22 +573,12 @@ struct ReviewSectionView: View {
 
 
     private func playAudio() {
-        guard isPremium || DailyLimitsManager.canPlayTTS else {
-            showPremiumWall = true
-            return
-        }
-        if !isPremium { DailyLimitsManager.recordTTS() }
-        Task {
-            isPlaying = true
-            do {
-                try await AudioManager.shared.playAndWait(text: card.word)
-            } catch {
-                #if DEBUG
-                print("⚠️ Audio playback failed: \(error.localizedDescription)")
-                #endif
-            }
-            withAnimation { isPlaying = false }
-        }
+        TTSPlayer.play(
+            word: card.word,
+            isPremium: isPremium,
+            onNeedsPremium: { showPremiumWall = true },
+            onPlayingChanged: { isPlaying = $0 }
+        )
     }
 
     private func highlightedExample(example: String, target: String) -> AttributedString {

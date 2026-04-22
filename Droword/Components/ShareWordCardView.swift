@@ -32,7 +32,7 @@ struct ShareWordCardView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if let transcription = word.transcription, !transcription.isEmpty {
-                Text(transcription)
+                Text("[\(transcription)]")
                     .font(.custom("Poppins-Regular", size: 14))
                     .foregroundColor(secondaryText)
             }

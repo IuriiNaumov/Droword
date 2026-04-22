@@ -8,12 +8,18 @@ struct StatusBannerView: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundColor(iconColor)
-                .frame(width: 28)
+            ZStack {
+                Circle()
+                    .fill(themeStore.iconCircleFill(colorScheme: colorScheme))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(iconColor)
+            }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

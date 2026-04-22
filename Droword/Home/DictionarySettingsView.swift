@@ -10,12 +10,28 @@ struct DictionarySettingsView: View {
     @State private var csvFileURL: URL?
     @State private var showImportPicker = false
     @State private var importedCount: Int?
+    @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Dictionary")
                     .sheetTitle()
+
+                sectionHeader("Home Screen")
+
+                VStack(spacing: 0) {
+                    toggleRow(icon: "rectangle.stack.fill", color: themeStore.accentBlue, title: "Show Word Packs", isOn: $showWordPacks)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                Text("Word packs on the home screen.")
+                    .font(themeStore.regular(13))
+                    .foregroundColor(themeStore.secondaryText)
+                    .padding(.horizontal, 4)
+                    .padding(.top, -8)
+
+                sectionHeader("Data")
 
                 VStack(spacing: 0) {
                     settingsRow(icon: "square.and.arrow.up", color: themeStore.iconBlue, title: "Export Words") {
@@ -93,6 +109,12 @@ struct DictionarySettingsView: View {
         }
     }
 
+    private func sectionHeader(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(themeStore.bold(18))
+            .foregroundColor(.primary)
+    }
+
     private func settingsRow(icon: String, color: Color, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button {
             Haptics.selection()
@@ -123,6 +145,32 @@ struct DictionarySettingsView: View {
             .background(themeStore.cardBg)
         }
         .buttonStyle(.plain)
+    }
+
+    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(color)
+            }
+
+            Text(title)
+                .font(themeStore.regular(16))
+                .foregroundColor(themeStore.mainText)
+
+            Spacer()
+
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .tint(themeStore.mainAccentColor)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 20)
+        .background(themeStore.cardBg)
     }
 
     private func exportCSV() {

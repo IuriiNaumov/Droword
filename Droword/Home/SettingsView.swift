@@ -18,7 +18,6 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.trialStartDate) private var trialStartDate: String = ""
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
-    @State private var showAppearanceSheet = false
     @State private var showPersonalDetailsSheet = false
     
     @State private var showFontSizeSheet = false
@@ -32,10 +31,6 @@ struct SettingsView: View {
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
-    }
-
-    private var appearanceTitle: String {
-        appearance.title
     }
 
     private var displayName: String {
@@ -111,17 +106,15 @@ struct SettingsView: View {
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "moon.fill", color: themeStore.monoDark, title: "Appearance", value: appearanceTitle),
                             SettingItem(icon: "textformat.size.larger", color: themeStore.accentGold, title: "Font Size", value: themeStore.fontScaleLabel),
                             SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language Pair", value: languageStore.learningLanguage),
-                            SettingItem(icon: "globe", color: themeStore.accentBlue, title: "App Language"),
+                            SettingItem(icon: "paintbrush.fill", color: themeStore.iconPurple, title: "App customization", showProBadge: !isPremium),
                             SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
                             SettingItem(icon: "mic.fill", color: themeStore.iconBlue, title: "Voice & Speech"),
                             SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
                         ]) { item in
                             if item.title == "Language Pair" { path.append(SettingsDestination.language) }
-                            if item.title == "App Language" { openAppLanguageSettings() }
-                            if item.title == "Appearance" { showAppearanceSheet = true }
+                            if item.title == "App customization" { path.append(SettingsDestination.appCustomization) }
                             if item.title == "Font Size" { showFontSizeSheet = true }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
@@ -139,11 +132,9 @@ struct SettingsView: View {
                         #endif
 
                         groupedSettingsSection([
-                            SettingItem(icon: "paintpalette.fill", color: themeStore.iconPurple, title: "Theme", value: themeStore.title, showProBadge: !isPremium),
-                            SettingItem(icon: "sparkles", color: themeStore.iconPink, title: "Seasonal effects", value: seasonalEffectsEnabled ? "On" : "Off", showProBadge: !isPremium)
-                        ]) { item in
-                            if item.title == "Theme" { path.append(SettingsDestination.theme) }
-                            if item.title == "Seasonal effects" { path.append(SettingsDestination.seasonalEffects) }
+                            SettingItem(icon: "globe", color: themeStore.accentBlue, title: "App Language")
+                        ]) { _ in
+                            openAppLanguageSettings()
                         }
 
                         groupedSettingsSection([
@@ -207,6 +198,8 @@ struct SettingsView: View {
                     ThemePickerView()
                 case .seasonalEffects:
                     SeasonalEffectsSettingsView()
+                case .appCustomization:
+                    AppCustomizationView()
                 case .premium:
                     PremiumView()
                 case .whatsNew:
@@ -232,12 +225,6 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showPersonalDetailsSheet) {
             PersonalDetailsView()
-                .environmentObject(themeStore)
-                .presentationDetents([.medium])
-                .preferredColorScheme(appearance.colorScheme)
-        }
-        .sheet(isPresented: $showAppearanceSheet) {
-            AppearancePickerView()
                 .environmentObject(themeStore)
                 .presentationDetents([.medium])
                 .preferredColorScheme(appearance.colorScheme)

@@ -1,27 +1,5 @@
 import SwiftUI
 
-enum DictionarySortOption: String, CaseIterable {
-    case newestFirst = "Newest"
-    case oldestFirst = "Oldest"
-    case alphabeticalAZ = "A → Z"
-    case alphabeticalZA = "Z → A"
-    case masteryHigh = "Best known"
-    case masteryLow = "Least known"
-    case dueSoonest = "Due soon"
-
-    var displayName: LocalizedStringKey {
-        switch self {
-        case .newestFirst:     return "Newest"
-        case .oldestFirst:     return "Oldest"
-        case .alphabeticalAZ:  return "A → Z"
-        case .alphabeticalZA:  return "Z → A"
-        case .masteryHigh:     return "Best known"
-        case .masteryLow:      return "Least known"
-        case .dueSoonest:      return "Due soon"
-        }
-    }
-}
-
 struct DictionaryView: View {
     @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var store: WordsStore
@@ -59,27 +37,28 @@ struct DictionaryView: View {
                 .font(themeStore.bold(38))
                 .foregroundColor(themeStore.mainText)
             Spacer()
-            if !store.words.isEmpty {
-                Button {
-                    Haptics.selection()
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isSelectMode.toggle()
-                        if !isSelectMode { selectedWordIDs.removeAll() }
-                    }
-                } label: {
-                    Text(isSelectMode ? "Done" : "Select")
-                        .font(themeStore.medium(15))
-                        .foregroundColor(isSelectMode ? .white : themeStore.mainText)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(isSelectMode ? themeStore.mainAccentColor : themeStore.cardBg)
-                        )
+            Button {
+                Haptics.selection()
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isSelectMode.toggle()
+                    if !isSelectMode { selectedWordIDs.removeAll() }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
+            } label: {
+                Text(isSelectMode ? "Done" : "Select")
+                    .font(themeStore.medium(15))
+                    .foregroundColor(store.words.isEmpty ? themeStore.secondaryText : (isSelectMode ? .white : themeStore.mainText))
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(isSelectMode ? themeStore.mainAccentColor : (themeStore.isGlass ? Color.clear : themeStore.cardBg))
+                    )
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelectMode, cornerRadius: 12))
             }
+            .buttonStyle(.plain)
+            .disabled(store.words.isEmpty)
+            .opacity(store.words.isEmpty ? 0.5 : 1)
+            .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
         }
         .padding(.top, 8)
         .padding(.horizontal, horizontalPadding)
@@ -88,19 +67,45 @@ struct DictionaryView: View {
     var body: some View {
         Group {
             if store.words.isEmpty {
-                VStack(spacing: 0) {
-                    headerView
-
-                    EmptyListView(
-                        icon: "book.closed",
-                        title: "Your word garden is waiting",
-                        subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
-                    )
-                }
-            } else {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         headerView
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(themeStore.secondaryText)
+                            TextField("Search words, translations, examples...", text: $searchText)
+                                .font(themeStore.regular(16))
+                                .foregroundColor(themeStore.mainText)
+                                .disableAutocorrection(true)
+                                .disabled(true)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+                        )
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+                        .padding(.horizontal, horizontalPadding)
+
+                        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
+                            .padding(.horizontal, horizontalPadding)
+
+                        EmptyListView(
+                            icon: "book.closed",
+                            title: "Your word garden is waiting",
+                            subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
+                        )
+                    }
+                    .iPadContentWidth(1000)
+                }
+            } else {
+                ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        headerView
+                            .id("dictionaryTop")
 
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
@@ -238,10 +243,15 @@ struct DictionaryView: View {
                         }
                         .padding(.horizontal, horizontalPadding)
                         .padding(.bottom, 40)
+                        .animation(.spring(), value: store.words.count)
                         .id(themeStore.palette)
                     }
                     .iPadContentWidth(1000)
                 }
+                .onChange(of: selectedTag) {
+                    proxy.scrollTo("dictionaryTop", anchor: .top)
+                }
+                } // ScrollViewReader
             }
         }
         .overlay(alignment: .bottom) {
@@ -300,7 +310,7 @@ struct DictionaryView: View {
         .onAppear {
             recalculateFiltered()
         }
-        .onChange(of: selectedTag) { cardAppeared.removeAll(); recalculateFiltered() }
+        .onChange(of: selectedTag) { recalculateFiltered(); animateCardsIn() }
         .onChange(of: store.revision) { recalculateFiltered() }
         .onChange(of: searchText) {
             searchDebounceTask?.cancel()
@@ -310,9 +320,8 @@ struct DictionaryView: View {
                 debouncedSearch = searchText
             }
         }
-        .onChange(of: debouncedSearch) { cardAppeared.removeAll(); recalculateFiltered() }
-        .onChange(of: sortOption) { cardAppeared.removeAll(); recalculateFiltered() }
-        .animation(.spring(), value: store.words.count)
+        .onChange(of: debouncedSearch) { recalculateFiltered(); animateCardsIn() }
+        .onChange(of: sortOption) { recalculateFiltered(); animateCardsIn() }
     }
 
     private func recalculateFiltered() {
@@ -364,6 +373,16 @@ struct DictionaryView: View {
         cachedSearch = search
         cachedSort = sortOption
         cachedRevision = store.revision
+    }
+
+    private func animateCardsIn() {
+        cardAppeared.removeAll()
+        for (i, word) in cachedFiltered.enumerated() {
+            let delay = Double(min(i, 15)) * 0.04
+            _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
+                cardAppeared.insert(word.id)
+            }
+        }
     }
 }
 

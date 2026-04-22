@@ -6,22 +6,28 @@ struct WordPacksSectionView: View {
     @EnvironmentObject private var store: WordsStore
 
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
+    @AppStorage(AppStorageKeys.hasSeenWordPacksHint) private var hasSeenHint: Bool = false
 
     @State private var selectedPack: WordPack?
     @State private var showPremiumWall = false
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         let packs = WordPacksData.allPacks
         let learning = languageStore.learningLanguage
         let native = languageStore.nativeLanguage
 
-        // Only show packs that have data for current language pair
+        // Filter out packs with no data AND completed packs
         let availablePacks = packs.filter {
             WordPacksData.words(packID: $0.id, learning: learning, native: native) != nil
+            && !WordPackTracker.isCompleted(packID: $0.id, learning: learning, native: native)
         }
 
-        if !availablePacks.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
+        if !availablePacks.isEmpty && showWordPacks {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header
                 HStack(spacing: 8) {
                     Text("Word Packs")
                         .font(themeStore.bold(24))
@@ -35,12 +41,15 @@ struct WordPacksSectionView: View {
                             .padding(.vertical, 2)
                             .background(Capsule().fill(themeStore.accentBlue))
                     }
+
+                    Spacer()
                 }
 
+                // Mini pack cards — scrollable row
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
+                    HStack(spacing: 12) {
                         ForEach(availablePacks) { pack in
-                            packCard(pack, learning: learning, native: native)
+                            miniPackCard(pack, learning: learning, native: native)
                                 .onTapGesture {
                                     Haptics.lightImpact()
                                     if isPremium {
@@ -52,7 +61,28 @@ struct WordPacksSectionView: View {
                         }
                     }
                 }
+
+                // One-time hint
+                if !hasSeenHint {
+                    Text("You can hide this section in Dictionary settings.")
+                        .font(themeStore.regular(13))
+                        .foregroundColor(themeStore.secondaryText)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    hasSeenHint = true
+                                }
+                            }
+                        }
+                }
             }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+            )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 24))
+            .padding(.horizontal, 20)
             .fullScreenCover(item: $selectedPack) { pack in
                 WordPackDetailView(pack: pack)
                     .environmentObject(themeStore)
@@ -67,51 +97,33 @@ struct WordPacksSectionView: View {
         }
     }
 
-    // MARK: - Pack Card
+    // MARK: - Mini Pack Card (StatCardView style)
 
-    private func packCard(_ pack: WordPack, learning: String, native: String) -> some View {
+    private func miniPackCard(_ pack: WordPack, learning: String, native: String) -> some View {
         let color = WordPacksData.packColor(for: pack, themeStore: themeStore)
-        let isCompleted = WordPackTracker.isCompleted(packID: pack.id, learning: learning, native: native)
 
-        return VStack(alignment: .leading, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: pack.icon)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(color)
-            }
+        return VStack(spacing: 6) {
+            Image(systemName: pack.icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(color)
 
             Text(pack.titleKey)
-                .font(themeStore.bold(15))
-                .foregroundColor(themeStore.mainText)
+                .font(themeStore.medium(13))
+                .foregroundColor(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
                 .lineLimit(1)
-
-            HStack(spacing: 4) {
-                if isCompleted {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(themeStore.accentGreen)
-
-                    Text("Done")
-                        .font(themeStore.medium(12))
-                        .foregroundColor(themeStore.accentGreen)
-                } else {
-                    Text("\(pack.wordCount) words")
-                        .font(themeStore.regular(12))
-                        .foregroundColor(themeStore.secondaryText)
-                }
-            }
+                .minimumScaleFactor(0.8)
         }
-        .padding(16)
-        .frame(width: 140, alignment: .leading)
+        .frame(width: 100)
+        .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(themeStore.isGlass
+                      ? Color.clear
+                      : (themeStore.isMonochrome
+                         ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
+                         : themeStore.appBg))
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
     }
 }
 

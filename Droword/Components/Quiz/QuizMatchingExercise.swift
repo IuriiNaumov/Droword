@@ -6,6 +6,8 @@ struct QuizMatchingExercise: View {
     let item: QuizSessionManager.QuizItem
     let hasAnswered: Bool
     let isCorrect: Bool
+    let wrongAttempts: Int
+    let maxAttempts: Int
 
     @Binding var matchingPairs: [(word: String, translation: String)]
     @Binding var matchedPairs: Set<String>
@@ -23,10 +25,22 @@ struct QuizMatchingExercise: View {
         VStack(spacing: 0) {
             Spacer()
 
-            Text("Match the pairs")
-                .font(themeStore.regular(14))
-                .foregroundColor(themeStore.secondaryText.opacity(0.7))
-                .padding(.bottom, 24)
+            VStack(spacing: 8) {
+                Text("Match the pairs")
+                    .font(themeStore.regular(14))
+                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+
+                HStack(spacing: 4) {
+                    let remaining = maxAttempts - wrongAttempts
+                    ForEach(0..<maxAttempts, id: \.self) { i in
+                        Image(systemName: i < remaining ? "heart.fill" : "heart")
+                            .font(.system(size: 14))
+                            .foregroundColor(i < remaining ? themeStore.accentRed : themeStore.secondaryText.opacity(0.3))
+                    }
+                }
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: wrongAttempts)
+            }
+            .padding(.bottom, 24)
 
             HStack(spacing: 12) {
                 VStack(spacing: 10) {
@@ -43,13 +57,22 @@ struct QuizMatchingExercise: View {
             }
             .padding(.horizontal, 24)
 
-            if hasAnswered && isCorrect {
-                QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
-                    text: String(localized: "Correct!"),
-                    color: themeStore.accentGreen
-                )
-                .padding(.top, 16)
+            if hasAnswered {
+                if isCorrect {
+                    QuizFeedbackBadge(
+                        icon: "checkmark.circle.fill",
+                        text: String(localized: "Correct!"),
+                        color: themeStore.accentGreen
+                    )
+                    .padding(.top, 16)
+                } else {
+                    QuizFeedbackBadge(
+                        icon: "xmark.circle.fill",
+                        text: String(localized: "No lives left"),
+                        color: themeStore.accentRed
+                    )
+                    .padding(.top, 16)
+                }
             }
 
             Spacer()
@@ -88,8 +111,9 @@ struct QuizMatchingExercise: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(bgColor)
+                        .fill(themeStore.isGlass && !isMatched && !isWrong && !isSelected ? Color.clear : bgColor)
                 )
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isMatched && !isWrong && !isSelected, cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(borderColor, lineWidth: isSelected ? 2 : 1)

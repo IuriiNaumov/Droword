@@ -76,7 +76,7 @@ struct PersonalDetailsView: View {
             }
             .overlay {
                 if showToast {
-                    BannerToastView(type: .success, message: "Saved", duration: 1.5)
+                    BannerToastView(type: .success, message: String(localized: "Saved"), duration: 1.5)
                 }
             }
         }

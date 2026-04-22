@@ -36,33 +36,13 @@ struct WordPackDetailView: View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Header
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(color.opacity(0.15))
-                                .frame(width: 48, height: 48)
-
-                            Image(systemName: pack.icon)
-                                .font(.system(size: 22, weight: .semibold))
-                                .foregroundColor(color)
-                        }
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(pack.titleKey)
-                                .font(themeStore.bold(22))
-                                .foregroundColor(themeStore.mainText)
-
-                            Text(pack.descriptionKey)
-                                .font(themeStore.regular(14))
-                                .foregroundColor(themeStore.secondaryText)
-                        }
-                    }
+                    Text(pack.titleKey)
+                        .sheetTitle()
 
                     if !visibleWords.isEmpty {
                         HStack {
                             Text("\(visibleWords.count) words")
-                                .font(themeStore.bold(16))
+                                .font(themeStore.bold(20))
                                 .foregroundColor(themeStore.mainText)
 
                             Spacer()
@@ -74,7 +54,7 @@ struct WordPackDetailView: View {
                             }
                         }
 
-                        // Add all button (only when more than 1 visible)
+
                         if visibleWords.count > 1 {
                             Button {
                                 Haptics.lightImpact()
@@ -95,7 +75,6 @@ struct WordPackDetailView: View {
                         }
                     }
 
-                    // Completion state
                     if visibleWords.isEmpty {
                         completionView
                     }
@@ -108,8 +87,10 @@ struct WordPackDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    SettingsBackButton()
-                        .environmentObject(themeStore)
+                    Button { dismiss() } label: {
+                        CloseButtonIcon()
+                            .environmentObject(themeStore)
+                    }
                 }
             }
         }
@@ -117,8 +98,6 @@ struct WordPackDetailView: View {
             detectAlreadyAdded()
         }
     }
-
-    // MARK: - Word Card
 
     private func wordCard(_ word: StarterWord) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -131,7 +110,7 @@ struct WordPackDetailView: View {
                 .foregroundColor(themeStore.secondaryText)
 
             if let transcription = word.transcription, !transcription.isEmpty {
-                Text("/\(transcription)/")
+                Text("[\(transcription)]")
                     .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText.opacity(0.7))
             }

@@ -168,7 +168,7 @@ struct AddWordView: View {
             if showOfflineToast {
                 BannerToastView(
                     type: .success,
-                    message: "Saved offline — will update when connected",
+                    message: String(localized: "Saved offline — will update when connected"),
                     duration: 1.3
                 )
                 .zIndex(998)
@@ -176,7 +176,7 @@ struct AddWordView: View {
             if showErrorToast {
                 BannerToastView(
                     type: .success,
-                    message: "Saved. Translation will update when available.",
+                    message: String(localized: "Saved. Translation will update when available."),
                     duration: 2.0
                 )
                 .zIndex(997)
@@ -288,7 +288,7 @@ struct AddWordView: View {
 
         guard NetworkMonitor.shared.isConnected else {
             if hasSeenOfflineAlert {
-                addWordOfflineWithToast(trimmedWord)
+                addWordOffline(trimmedWord, showToast: true)
             } else {
                 showOfflineAlert = true
             }
@@ -340,7 +340,7 @@ struct AddWordView: View {
         await MainActor.run { isAdding = false }
     }
 
-    private func addWordOffline(_ trimmedWord: String) {
+    private func addWordOffline(_ trimmedWord: String, showToast: Bool = false) {
         let newWord = StoredWord(
             word: trimmedWord,
             type: "",
@@ -354,62 +354,15 @@ struct AddWordView: View {
         )
         store.add(newWord)
         if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
-        dismiss()
-    }
-
-    private func addWordOfflineWithToast(_ trimmedWord: String) {
-        let newWord = StoredWord(
-            word: trimmedWord,
-            type: "",
-            translation: translation.isEmpty ? nil : translation,
-            example: nil,
-            comment: comment.isEmpty ? nil : comment,
-            tag: selectedTag,
-            fromLanguage: languageStore.learningLanguage,
-            toLanguage: languageStore.nativeLanguage,
-            needsEnrichment: true
-        )
-        store.add(newWord)
-        if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
-        showOfflineToast = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        if showToast {
+            showOfflineToast = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+        } else {
             dismiss()
         }
     }
 
 
-}
-
-private struct BouncingDotsView: View {
-    @State private var phase: Bool = false
-
-    var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<4, id: \.self) { index in
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: 7, height: 7)
-                    .offset(y: dotOffset(for: index))
-            }
-        }
-        .frame(height: 20)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 0.45).repeatForever(autoreverses: true)) {
-                phase.toggle()
-            }
-        }
-    }
-
-    private func dotOffset(for index: Int) -> CGFloat {
-        // Even dots (0, 2) go up when phase is true, odd (1, 3) go down
-        let up = index.isMultiple(of: 2)
-        let offset: CGFloat = 5
-        if up {
-            return phase ? -offset : offset
-        } else {
-            return phase ? offset : -offset
-        }
-    }
 }
 
 #Preview {

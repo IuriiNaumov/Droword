@@ -268,7 +268,7 @@ struct ScanWordsView: View {
                 .foregroundColor(themeStore.secondaryText)
 
             if let transcription = word.transcription, !transcription.isEmpty {
-                Text(transcription)
+                Text("[\(transcription)]")
                     .font(themeStore.regular(14))
                     .foregroundColor(themeStore.secondaryText.opacity(0.7))
             }

@@ -9,6 +9,8 @@ struct SuggestedWordsView: View {
 
     private var accent: Color { themeStore.accentBlue }
 
+    @State private var cachedExamples: [String: AttributedString] = [:]
+
     var body: some View {
         if suggested.isLoading || !suggested.suggestedWords.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
@@ -16,6 +18,7 @@ struct SuggestedWordsView: View {
                     Text("Suggestions")
                         .font(themeStore.bold(24))
                         .foregroundColor(themeStore.mainText)
+                        .padding(.leading, 16)
                         .padding(.top, 8)
                 }
 
@@ -34,8 +37,9 @@ struct SuggestedWordsView: View {
                                     .font(themeStore.regular(16))
                                     .foregroundColor(themeStore.secondaryText)
 
-                                if let example = word.example {
-                                    Text(highlightedExample(example, word: word.word))
+                                if let _ = word.example,
+                                   let attributed = cachedExamples[word.id.uuidString] {
+                                    Text(attributed)
                                         .font(themeStore.regular(16))
                                         .foregroundColor(themeStore.mainText)
                                 }
@@ -92,16 +96,23 @@ struct SuggestedWordsView: View {
             .padding(.bottom, 8)
             .animation(.easeInOut(duration: 0.3), value: suggested.isLoading)
             .transition(.opacity.combined(with: .slide))
+            .onAppear { rebuildExampleCache() }
+            .onChange(of: suggested.suggestedWords.count) { rebuildExampleCache() }
         }
     }
 
-    private func highlightedExample(_ text: String, word: String) -> AttributedString {
-        var attributed = AttributedString(text)
-        if let range = attributed.range(of: word, options: .caseInsensitive) {
-            attributed[range].foregroundColor = UIColor(themeStore.accentGold)
-            attributed[range].font = UIFont(name: themeStore.fontBold, size: 16) ?? .boldSystemFont(ofSize: 16)
+    private func rebuildExampleCache() {
+        var cache: [String: AttributedString] = [:]
+        for word in suggested.suggestedWords {
+            guard let example = word.example else { continue }
+            var attributed = AttributedString(example)
+            if let range = attributed.range(of: word.word, options: .caseInsensitive) {
+                attributed[range].foregroundColor = UIColor(themeStore.accentGold)
+                attributed[range].font = UIFont(name: themeStore.fontBold, size: 16) ?? .boldSystemFont(ofSize: 16)
+            }
+            cache[word.id.uuidString] = attributed
         }
-        return attributed
+        cachedExamples = cache
     }
 }
 

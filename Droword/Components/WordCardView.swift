@@ -292,7 +292,7 @@ struct WordCardView: View {
             headerRow
 
             if let transcription = transcription, !transcription.isEmpty {
-                Text(transcription)
+                Text("[\(transcription)]")
                     .font(themeStore.regular(14))
                     .foregroundColor(secondaryTextColor)
             }
@@ -448,27 +448,12 @@ struct WordCardView: View {
     }
 
     private func playAudio() {
-        guard isPremium || DailyLimitsManager.canPlayTTS else {
-            showPremiumWall = true
-            return
-        }
-        if !isPremium {
-            DailyLimitsManager.recordTTS()
-        }
-        Task {
-            Haptics.selection()
-            isPlaying = true
-            do {
-                try await AudioManager.shared.playAndWait(text: word)
-            } catch {
-                #if DEBUG
-                print("⚠️ Audio playback failed for '\(word)': \(error.localizedDescription)")
-                #endif
-            }
-            withAnimation {
-                isPlaying = false
-            }
-        }
+        TTSPlayer.play(
+            word: word,
+            isPremium: isPremium,
+            onNeedsPremium: { showPremiumWall = true },
+            onPlayingChanged: { isPlaying = $0 }
+        )
     }
 
     private func shareWord() {
@@ -519,83 +504,11 @@ struct WordCardView: View {
     }
 
     private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
-        var attributedString = AttributedString(comment)
-        if let range = attributedString.range(of: word, options: .caseInsensitive) {
-            attributedString[range].foregroundColor = UIColor(Color("AccentGold"))
-            attributedString[range].font = .custom("Poppins-Bold", size: 16)
-        }
-        return attributedString
+        HighlightedExample.make(example: comment, word: word)
     }
 }
 
-// MARK: - Emoji Keyboard
 
-private struct EmojiKeyboardField: UIViewRepresentable {
-    @Binding var isPresented: Bool
-    let onEmojiSelected: (String) -> Void
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onEmojiSelected: onEmojiSelected, isPresented: $isPresented)
-    }
-
-    func makeUIView(context: Context) -> UITextField {
-        let field = EmojiTextField()
-        field.delegate = context.coordinator
-        field.textContentType = .none
-        field.autocorrectionType = .no
-        field.returnKeyType = .done
-        return field
-    }
-
-    func updateUIView(_ uiView: UITextField, context: Context) {
-        if isPresented && !uiView.isFirstResponder {
-            DispatchQueue.main.async {
-                uiView.becomeFirstResponder()
-            }
-        } else if !isPresented && uiView.isFirstResponder {
-            DispatchQueue.main.async {
-                uiView.resignFirstResponder()
-            }
-        }
-    }
-
-    class Coordinator: NSObject, UITextFieldDelegate {
-        let onEmojiSelected: (String) -> Void
-        @Binding var isPresented: Bool
-
-        init(onEmojiSelected: @escaping (String) -> Void, isPresented: Binding<Bool>) {
-            self.onEmojiSelected = onEmojiSelected
-            self._isPresented = isPresented
-        }
-
-        func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-            if !string.isEmpty && string.unicodeScalars.allSatisfy({ $0.properties.isEmoji && $0.properties.isEmojiPresentation }) {
-                onEmojiSelected(string)
-                textField.text = ""
-                isPresented = false
-                return false
-            }
-            return false
-        }
-
-        func textFieldDidEndEditing(_ textField: UITextField) {
-            isPresented = false
-        }
-    }
-}
-
-private class EmojiTextField: UITextField {
-    override var textInputMode: UITextInputMode? {
-        for mode in UITextInputMode.activeInputModes {
-            if mode.primaryLanguage == "emoji" {
-                return mode
-            }
-        }
-        return super.textInputMode
-    }
-
-    override var textInputContextIdentifier: String? { "" }
-}
 
 #Preview {
     VStack(spacing: 20) {

@@ -1,20 +1,5 @@
 import SwiftUI
 
-struct WordCard: Identifiable {
-    let id: UUID
-    let word: String
-    let partOfSpeech: String
-    let example: String
-    let translation: String
-    let explanation: String?
-    let breakdown: String?
-    let transcription: String?
-    let tag: String?
-    let fromLanguage: String?
-    let toLanguage: String?
-    let comment: String?
-}
-
 enum QuizDirection: String, CaseIterable {
     case normal = "Word → Translation"
     case reversed = "Translation → Word"
@@ -26,9 +11,7 @@ struct PracticeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
 
-    private var hasEnoughWords: Bool {
-        store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count >= 4
-    }
+    @State private var hasEnoughWords: Bool = false
 
     var body: some View {
         ZStack {
@@ -46,15 +29,12 @@ struct PracticeView: View {
             }
             .iPadContentWidth()
         }
+        .onAppear { recalcHasEnough() }
+        .onChange(of: store.words.count) { recalcHasEnough() }
     }
 
-    private var practiceEmptyState: some View {
-        PracticeEmptyContent(
-            icon: "rectangle.stack.badge.plus",
-            title: "Not enough words yet",
-            subtitle: "Add at least 4 words with translations to start practicing.",
-            tip: "Tip: grab words from movies, chats, or walks — learning feels alive that way."
-        )
+    private func recalcHasEnough() {
+        hasEnoughWords = store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count >= 4
     }
 
     private var header: some View {
@@ -67,7 +47,19 @@ struct PracticeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
+        .transaction { $0.animation = nil }
     }
+
+    private var practiceEmptyState: some View {
+        PracticeEmptyContent(
+            icon: "rectangle.stack.badge.plus",
+            title: "Not enough words yet",
+            subtitle: "Add at least 4 words with translations to start practicing.",
+            tip: "Tip: grab words from movies, chats, or walks — learning feels alive that way."
+        )
+    }
+
+
 }
 
 

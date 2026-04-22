@@ -9,66 +9,19 @@ struct DetailedStatsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
-    private var dueToday: Int {
-        let today = Calendar.current.startOfDay(for: Date())
-        return store.words.filter { w in
-            if let due = w.dueDate { return due <= today }
-            return true
-        }.count
-    }
+    @State private var dueToday: Int = 0
+    @State private var masteryBreakdown: (new: Int, learning: Int, known: Int) = (0, 0, 0)
+    @State private var totalLapses: Int = 0
+    @State private var averageEase: Double = 0
+    @State private var bestDay: (date: Date, count: Int)? = nil
+    @State private var tagDistribution: [(tag: String, count: Int)] = []
+    @State private var typeDistribution: [(type: String, count: Int)] = []
 
-    private var masteryBreakdown: (new: Int, learning: Int, known: Int) {
-        var n = 0, l = 0, k = 0
-        for w in store.words {
-            switch w.repetitions {
-            case 0: n += 1
-            case 1...2: l += 1
-            default: k += 1
-            }
-        }
-        return (n, l, k)
-    }
-
-    private var totalLapses: Int {
-        store.words.reduce(0) { $0 + $1.lapses }
-    }
-
-    private var averageEase: Double {
-        guard !store.words.isEmpty else { return 0 }
-        let sum = store.words.reduce(0.0) { $0 + $1.easeFactor }
-        return sum / Double(store.words.count)
-    }
-
-    private var bestDay: (date: Date, count: Int)? {
-        let cal = Calendar.current
-        let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
-        guard let best = grouped.max(by: { $0.value.count < $1.value.count }) else { return nil }
-        return (best.key, best.value.count)
-    }
-
-    private var tagDistribution: [(tag: String, count: Int)] {
-        var dict: [String: Int] = [:]
-        for w in store.words {
-            let tag = w.tag ?? String(localized: "No tag")
-            dict[tag, default: 0] += 1
-        }
-        return dict.sorted { $0.value > $1.value }.map { (tag: $0.key, count: $0.value) }
-    }
-
-    private var typeDistribution: [(type: String, count: Int)] {
-        var dict: [String: Int] = [:]
-        for w in store.words {
-            let t = w.type.isEmpty ? String(localized: "Other") : w.type.capitalized
-            dict[t, default: 0] += 1
-        }
-        return dict.sorted { $0.value > $1.value }.map { (type: $0.key, count: $0.value) }
-    }
-
-    private var dateFormatter: DateFormatter {
+    private static let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
         return f
-    }
+    }()
 
     private static let pieColors: [Color] = [
         Color.accentBlue, Color.accentGreen, Color.accentGold, Color.accentPurple, Color.accentPink, Color.accentBlue, Color.accentGold, Color.accentRed, .indigo, .mint
@@ -101,7 +54,51 @@ struct DetailedStatsView: View {
                     }
                 }
             }
+            .onAppear { recalculate() }
         }
+    }
+
+    private func recalculate() {
+        let words = store.words
+        let today = Calendar.current.startOfDay(for: Date())
+
+        dueToday = words.filter { w in
+            if let due = w.dueDate { return due <= today }
+            return true
+        }.count
+
+        var n = 0, l = 0, k = 0
+        var lapses = 0
+        var easeSum = 0.0
+        for w in words {
+            switch w.repetitions {
+            case 0: n += 1
+            case 1...2: l += 1
+            default: k += 1
+            }
+            lapses += w.lapses
+            easeSum += w.easeFactor
+        }
+        masteryBreakdown = (n, l, k)
+        totalLapses = lapses
+        averageEase = words.isEmpty ? 0 : easeSum / Double(words.count)
+
+        let cal = Calendar.current
+        let grouped = Dictionary(grouping: words) { cal.startOfDay(for: $0.dateAdded) }
+        if let best = grouped.max(by: { $0.value.count < $1.value.count }) {
+            bestDay = (best.key, best.value.count)
+        } else {
+            bestDay = nil
+        }
+
+        var tagDict: [String: Int] = [:]
+        var typeDict: [String: Int] = [:]
+        for w in words {
+            tagDict[w.tag ?? String(localized: "No tag"), default: 0] += 1
+            typeDict[w.type.isEmpty ? String(localized: "Other") : w.type.capitalized, default: 0] += 1
+        }
+        tagDistribution = tagDict.sorted { $0.value > $1.value }.map { (tag: $0.key, count: $0.value) }
+        typeDistribution = typeDict.sorted { $0.value > $1.value }.map { (type: $0.key, count: $0.value) }
     }
 
     private var studyTimeSection: some View {
@@ -314,7 +311,7 @@ struct DetailedStatsView: View {
         sectionCard(title: "Fun facts") {
             VStack(alignment: .leading, spacing: 10) {
                 if let best = bestDay {
-                    factRow(text: "Best day: \(dateFormatter.string(from: best.date)) (\(best.count) words)")
+                    factRow(text: "Best day: \(Self.dateFormatter.string(from: best.date)) (\(best.count) words)")
                 }
 
                 if let first = store.words.map({ $0.dateAdded }).min() {
