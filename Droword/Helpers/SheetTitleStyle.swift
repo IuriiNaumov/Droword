@@ -5,7 +5,7 @@ struct SheetTitleStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(themeStore.bold(24))
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
             .padding(.top, 12)
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, alignment: .center)

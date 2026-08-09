@@ -17,7 +17,7 @@ struct SuggestedWordsView: View {
                 if suggested.topic != nil {
                     Text("Suggestions")
                         .font(themeStore.bold(24))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                         .padding(.leading, 16)
                         .padding(.top, 8)
                 }
@@ -31,17 +31,17 @@ struct SuggestedWordsView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(word.word.capitalized)
                                     .font(themeStore.bold(24))
-                                    .foregroundColor(themeStore.mainText)
+                                    .foregroundStyle(themeStore.mainText)
 
                                 Text(word.translation)
                                     .font(themeStore.regular(16))
-                                    .foregroundColor(themeStore.secondaryText)
+                                    .foregroundStyle(themeStore.secondaryText)
 
                                 if let _ = word.example,
                                    let attributed = cachedExamples[word.id.uuidString] {
                                     Text(attributed)
                                         .font(themeStore.regular(16))
-                                        .foregroundColor(themeStore.mainText)
+                                        .foregroundStyle(themeStore.mainText)
                                 }
 
                                 HStack {
@@ -56,7 +56,7 @@ struct SuggestedWordsView: View {
                                             Text("Add")
                                         }
                                         .font(themeStore.medium(13))
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         .padding(.vertical, 6)
                                         .padding(.horizontal, 12)
                                         .background(accent)
@@ -76,7 +76,7 @@ struct SuggestedWordsView: View {
                                             Text("Already know")
                                         }
                                         .font(themeStore.regular(13))
-                                        .foregroundColor(accent)
+                                        .foregroundStyle(accent)
                                     }
                                 }
                                 .padding(.top, 10)

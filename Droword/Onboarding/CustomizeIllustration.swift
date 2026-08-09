@@ -23,7 +23,7 @@ struct CustomizeIllustration: View {
                         // Kanji
                         Text("茶")
                             .font(.system(size: 32, weight: .bold, design: .serif))
-                            .foregroundColor(themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.mainAccentColor)
 
                         Spacer()
 
@@ -65,7 +65,7 @@ struct CustomizeIllustration: View {
                     // Translation
                     Text("tea")
                         .font(.custom("Poppins-Regular", size: 12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
                 .padding(14)
             }
@@ -94,7 +94,7 @@ struct CustomizeIllustration: View {
                 // Main sparkle star
                 Image(systemName: "sparkle")
                     .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(Color(red: 0.96, green: 0.82, blue: 0.13))
+                    .foregroundStyle(Color(red: 0.96, green: 0.82, blue: 0.13))
                     .offset(y: -18)
             }
             .rotationEffect(.degrees(-45))
@@ -144,7 +144,7 @@ struct CustomizeIllustration: View {
             // Bottom label pill
             Text("Change the look anytime")
                 .font(.custom("Poppins-Medium", size: 11))
-                .foregroundColor(themeStore.mainText.opacity(0.6))
+                .foregroundStyle(themeStore.mainText.opacity(0.6))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(

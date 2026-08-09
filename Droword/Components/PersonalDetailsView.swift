@@ -27,11 +27,11 @@ struct PersonalDetailsView: View {
                     HStack {
                         Text("Name *")
                             .font(themeStore.regular(18))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                         Spacer()
                         Text("\(tempName.count)/40")
                             .font(themeStore.regular(14))
-                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                            .foregroundStyle(themeStore.secondaryText.opacity(0.6))
                     }
 
                     FormTextField(

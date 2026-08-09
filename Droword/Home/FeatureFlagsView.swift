@@ -20,11 +20,11 @@ struct FeatureFlagsView: View {
                                 .frame(width: 36, height: 36)
                             Image(systemName: "sparkles")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.iconGold)
+                                .foregroundStyle(themeStore.iconGold)
                         }
                         Text("PRO")
                             .font(themeStore.regular(16))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Toggle("", isOn: $isPremium)
                             .labelsHidden()
@@ -47,11 +47,11 @@ struct FeatureFlagsView: View {
                                 .frame(width: 36, height: 36)
                             Image(systemName: "hand.wave.fill")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.mainAccentColor)
+                                .foregroundStyle(themeStore.mainAccentColor)
                         }
                         Text("Onboarding")
                             .font(themeStore.regular(16))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Toggle("", isOn: Binding(
                             get: { !hasCompletedOnboarding },

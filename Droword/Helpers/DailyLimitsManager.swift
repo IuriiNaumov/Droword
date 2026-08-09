@@ -13,12 +13,17 @@ struct DailyLimitsManager {
     static let maxFreeTTS = 10
     static let maxFreeSuggestionFetches = 2
     static let maxFreePhotoScans = 1
+    /// A pedagogical cap (not a paywall): learning too many brand-new words in a
+    /// single day floods future review sessions. Popular SRS apps default to a
+    /// similar daily intake. Applies to everyone.
+    static let maxNewWordsPerDay = 12
 
     private static let dateKey = "dailyLimits.date"
     private static let translationsKey = "dailyLimits.translations"
     private static let ttsKey = "dailyLimits.tts"
     private static let goldenKey = "dailyLimits.goldenFetches"
     private static let photoScansKey = "dailyLimits.photoScans"
+    private static let newWordsKey = "dailyLimits.newWords"
 
     private static func resetIfNeeded() {
         let today = DateFormatting.todayString
@@ -29,7 +34,24 @@ struct DailyLimitsManager {
             UserDefaults.standard.set(0, forKey: ttsKey)
             UserDefaults.standard.set(0, forKey: goldenKey)
             UserDefaults.standard.set(0, forKey: photoScansKey)
+            UserDefaults.standard.set(0, forKey: newWordsKey)
         }
+    }
+
+    static var newWordsIntroducedToday: Int {
+        resetIfNeeded()
+        return UserDefaults.standard.integer(forKey: newWordsKey)
+    }
+
+    static var newWordsRemainingToday: Int {
+        max(0, maxNewWordsPerDay - newWordsIntroducedToday)
+    }
+
+    static func recordNewWordsIntroduced(_ count: Int) {
+        guard count > 0 else { return }
+        resetIfNeeded()
+        let current = UserDefaults.standard.integer(forKey: newWordsKey)
+        UserDefaults.standard.set(current + count, forKey: newWordsKey)
     }
 
     static var translationsUsedToday: Int {

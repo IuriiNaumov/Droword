@@ -37,15 +37,14 @@ struct HomeView: View {
     @State private var cachedRecentWords: [StoredWord] = []
     @State private var cachedDueWordsCount: Int = 0
     @State private var cachedNextReviewInfo: (count: Int, date: Date)? = nil
+    @State private var cachedNewWords: [StoredWord] = []
+    @State private var showLearnNewWords = false
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
     @State private var reviewTimerDismissed = false
     @State private var scrollProxy: ScrollViewProxy?
     @Environment(\.colorScheme) private var colorScheme
 
-    private var iconCircleFill: Color {
-        themeStore.iconCircleFill(colorScheme: colorScheme)
-    }
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -112,73 +111,37 @@ struct HomeView: View {
         ),
     ]
 
-    @AppStorage(AppStorageKeys.reviewAllCaughtUp) private var reviewAllCaughtUp: Bool = false
 
     private var dueWordsCount: Int { cachedDueWordsCount }
 
+    /// How many new words the user may still learn today (capped by the daily
+    /// new-word allowance). Zero once the daily intake is reached.
+    private var newWordsLearnableToday: Int {
+        min(cachedNewWords.count, DailyLimitsManager.newWordsRemainingToday)
+    }
+
     private var nextReviewInfo: (count: Int, date: Date)? { cachedNextReviewInfo }
-
-    private func timeUntil(_ date: Date) -> String {
-        let seconds = max(0, date.timeIntervalSince(Date()))
-        let minutes = Int(seconds / 60)
-        if minutes < 60 {
-            return String(localized: "\(max(1, minutes)) min")
-        }
-        let hours = minutes / 60
-        if hours < 24 {
-            return String(localized: "\(hours) h")
-        }
-        let days = hours / 24
-        return String(localized: "\(days) d")
-    }
-
-    private func longIntervalHint(for date: Date) -> LocalizedStringKey? {
-        let days = max(0, Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0)
-        guard days >= 3 else { return nil }
-
-        let hints: [LocalizedStringKey]
-        if days >= 30 {
-            hints = [
-                "You've mastered these words so well, they need a long break 💪",
-                "Your brain locked these in tight. See you in a month!",
-                "These words are basically muscle memory now 🧠",
-                "Practice paid off — these words are deeply stored"
-            ]
-        } else if days >= 14 {
-            hints = [
-                "Great progress — these words are sticking 🎯",
-                "Your practice sessions are really paying off",
-                "These words are getting into long-term memory 🧩",
-                "Almost mastered — just a couple more reviews to go"
-            ]
-        } else {
-            hints = [
-                "Words are settling in nicely, keep it up ✨",
-                "Spaced repetition is working its magic",
-                "You're building strong memory foundations 🌱",
-                "Right on track — see you in a few days"
-            ]
-        }
-
-        let index = abs(date.hashValue) % hints.count
-        return hints[index]
-    }
 
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
+        cachedNewWords = store.newWords
 
         let now = Date()
         cachedDueWordsCount = store.words.filter { w in
-            guard let due = w.dueDate else { return false }
+            guard w.introduced, let due = w.dueDate else { return false }
             return due <= now
         }.count
 
         let upcoming = store.words.compactMap { w -> Date? in
-            guard let due = w.dueDate, due > now else { return nil }
+            guard w.introduced, let due = w.dueDate, due > now else { return nil }
             return due
         }.sorted()
         if let earliest = upcoming.first {
-            let count = upcoming.filter { Calendar.current.isDate($0, equalTo: earliest, toGranularity: .hour) }.count
+            // Count everything due within an hour of the earliest — the natural
+            // "next batch" — rather than bucketing by wall-clock hour (which
+            // would split 14:59 and 15:01 into different groups).
+            let windowEnd = earliest.addingTimeInterval(3600)
+            let count = upcoming.filter { $0 <= windowEnd }.count
             cachedNextReviewInfo = (count, earliest)
         } else {
             cachedNextReviewInfo = nil
@@ -227,6 +190,9 @@ struct HomeView: View {
             .background(themeStore.appBg.ignoresSafeArea())
             .onChange(of: selectedTab) { _, newValue in
                 Haptics.selection()
+                // Dismiss any open reaction picker when switching tabs
+                // (object: nil closes pickers on every card).
+                NotificationCenter.default.post(name: .dismissReactionPicker, object: nil)
                 if newValue == .add {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                         showAddWordView = true
@@ -258,6 +224,16 @@ struct HomeView: View {
                 PremiumView(asWall: true)
                     .environmentObject(themeStore)
                     .tint(themeStore.mainAccentColor)
+            }
+            .fullScreenCover(isPresented: $showLearnNewWords) {
+                LearnNewWordsView(words: cachedNewWords) { learnedIDs in
+                    store.markIntroduced(ids: learnedIDs)
+                    DailyLimitsManager.recordNewWordsIntroduced(learnedIDs.count)
+                    refreshCachedWordData()
+                }
+                .environmentObject(themeStore)
+                .environmentObject(store)
+                .tint(themeStore.mainAccentColor)
             }
             .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
                 if let word = notification.userInfo?["word"] as? String {
@@ -338,7 +314,8 @@ struct HomeView: View {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     copiedToast = true
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(2))
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         copiedToast = false
                     }
@@ -355,7 +332,8 @@ struct HomeView: View {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         enrichmentToast = message
                     }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(3.5))
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                             enrichmentToast = nil
                         }
@@ -364,7 +342,8 @@ struct HomeView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .perfectQuizCompleted)) { _ in
                 guard !isPremium && !hasSeenPerfectQuizPaywall else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(2))
                     hasSeenPerfectQuizPaywall = true
                     showMotivationalPaywall = true
                 }
@@ -372,7 +351,8 @@ struct HomeView: View {
             .onChange(of: pendingStreakPaywall) { _, pending in
                 guard pending else { return }
                 pendingStreakPaywall = false
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.5))
                     hasSeenStreakPaywall = true
                     showMotivationalPaywall = true
                 }
@@ -381,7 +361,8 @@ struct HomeView: View {
         .onChange(of: suggested.suggestedWords.count) { _, newCount in
             if newCount > 0 && !hasSeenSuggestedIntro {
                 hasSeenSuggestedIntro = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.5))
                     withAnimation(.easeOut(duration: 0.3)) {
                         showSuggestedIntro = true
                     }
@@ -426,7 +407,7 @@ struct HomeView: View {
             )
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(themeStore.accentBlue)
+                .foregroundStyle(themeStore.accentBlue)
         }
         .padding(16)
         .background(
@@ -458,94 +439,23 @@ struct HomeView: View {
                 } label: {
                     DailyChallengeButton(manager: challengeManager)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableButtonStyle())
                 .accessibilityLabel(Text("Daily Challenges"))
                 .accessibilityHint(Text("\(challengeManager.completedCount) of \(challengeManager.challenges.count) completed"))
                 .padding(.horizontal, 20)
 
-                if dueWordsCount > 0 && !reviewAllCaughtUp && store.words.count >= 5 {
-                    Button {
+                if newWordsLearnableToday > 0 {
+                    LearnNewWordsCard(count: newWordsLearnableToday) {
                         Haptics.lightImpact()
-                        withAnimation {
-                            scrollProxy?.scrollTo("reviewSection", anchor: .top)
-                        }
-                    } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(iconCircleFill)
-                                    .frame(width: 44, height: 44)
-                                Image(systemName: "clock.badge.exclamationmark")
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundColor(themeStore.accentGold)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Review")
-                                    .font(themeStore.bold(16))
-                                    .foregroundColor(themeStore.mainText)
-                                Text("\(dueWordsCount) words to review")
-                                    .font(themeStore.regular(13))
-                                    .foregroundColor(themeStore.secondaryText)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.accentBlue)
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                        )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+                        showLearnNewWords = true
                     }
-                    .buttonStyle(.plain)
                     .padding(.horizontal, 20)
                 }
 
                 if dueWordsCount == 0 && !reviewTimerDismissed, let info = nextReviewInfo {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(iconCircleFill)
-                                .frame(width: 44, height: 44)
-                            Image(systemName: "timer")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(themeStore.accentBlue)
-                        }
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Next Review")
-                                .font(themeStore.bold(16))
-                                .foregroundColor(themeStore.mainText)
-                            Text("\(info.count) words to review in \(timeUntil(info.date))")
-                                .font(themeStore.regular(13))
-                                .foregroundColor(themeStore.secondaryText)
-                            if let hint = longIntervalHint(for: info.date) {
-                                Text(hint)
-                                    .font(themeStore.regular(12))
-                                    .foregroundColor(themeStore.accentGold)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        Spacer()
-                        Button {
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                reviewTimerDismissed = true
-                            }
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(themeStore.accentBlue)
-                        }
-                        .buttonStyle(.plain)
+                    HomeNextReviewCard(count: info.count, date: info.date) {
+                        reviewTimerDismissed = true
                     }
-                    .padding(16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-                    .padding(.horizontal, 20)
                 }
 
                 ReviewSectionView()
@@ -560,7 +470,7 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recently added")
                             .font(themeStore.bold(24))
-                            .foregroundColor(themeStore.mainText)
+                            .foregroundStyle(themeStore.mainText)
                             .padding(.horizontal, 36)
 
                         if !isPremium && !DailyLimitsManager.canTranslate {
@@ -580,6 +490,10 @@ struct HomeView: View {
                                 breakdown: word.breakdown,
                                 tag: word.tag,
                                 examples: word.examples,
+                                collocations: word.collocations,
+                                synonyms: word.synonyms,
+                                antonyms: word.antonyms,
+                                mnemonic: word.mnemonic,
                                 reaction: word.reaction
                             ) {
                                 store.remove(word)
@@ -617,7 +531,7 @@ struct HomeView: View {
 
                         Text(hasEverAddedWord ? "Your recent words will appear here." : "That's all it takes to start learning.")
                             .font(themeStore.regular(14))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
                     }
@@ -643,13 +557,15 @@ struct HomeView: View {
 
             if !hasSeenFirstWords && store.words.isEmpty,
                StarterWordBank.words(learning: languageStore.learningLanguage, native: languageStore.nativeLanguage) != nil {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.6))
                     withAnimation(.easeOut(duration: 0.3)) {
                         showFirstWords = true
                     }
                 }
             } else if !hasSeenCoachMarks && hasSeenFirstWords {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.8))
                     withAnimation(.easeOut(duration: 0.3)) {
                         showCoachMarks = true
                     }
@@ -667,8 +583,18 @@ struct HomeView: View {
                 }
             }
         }
-        .onChange(of: store.words.count) { refreshCachedWordData() }
-        .onChange(of: store.revision) { refreshCachedWordData() }
+        .onChange(of: store.words.count) { _, _ in refreshCachedWordData() }
+        .onChange(of: store.revision) { _, _ in refreshCachedWordData() }
+        .task {
+            // Re-evaluate due status over time so the "Next Review" countdown
+            // stays accurate and flips to "Review due" the moment a word comes
+            // due, even while the user sits on Home. Auto-cancels on disappear.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(30))
+                if Task.isCancelled { return }
+                await MainActor.run { refreshCachedWordData() }
+            }
+        }
         .onAppear { scrollProxy = proxy }
         }
     }

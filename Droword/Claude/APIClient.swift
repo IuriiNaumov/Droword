@@ -18,7 +18,7 @@ enum APIError: LocalizedError {
 }
 
 enum APIClient {
-    static let baseURL = "https://droword-api.droword-api.workers.dev"
+    static let baseURL = "https://droword-api.droword.workers.dev"
 
     /// App key decoded at runtime via XOR to avoid plain-text in the binary.
     static var appKey: String {

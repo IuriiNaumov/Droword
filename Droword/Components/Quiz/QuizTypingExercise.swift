@@ -47,18 +47,18 @@ struct QuizTypingExercise: View {
             VStack(spacing: 8) {
                 Text(prompt)
                     .font(themeStore.bold(28))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !isReversed, let tr = item.transcription, !tr.isEmpty {
                     Text("[\(tr)]")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Text(isReversed ? "Type the word" : "Type the translation")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -72,7 +72,7 @@ struct QuizTypingExercise: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
                     .background(fieldBackground)
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(borderColor, lineWidth: hasAnswered ? 2.5 : 1.5)

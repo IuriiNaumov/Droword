@@ -626,8 +626,10 @@
 				INFOPLIST_FILE = Droword/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Droword;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo for your profile avatar";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a photo from your library for your profile avatar";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Droword uses the camera to take a profile photo and scan words from photos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Droword uses the microphone so you can practice pronouncing words out loud.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Droword accesses your photo library to set a profile photo and scan words from images.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Droword uses speech recognition to check how you pronounce the words you're learning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -671,8 +673,10 @@
 				INFOPLIST_FILE = Droword/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Droword;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Take a photo for your profile avatar";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Choose a photo from your library for your profile avatar";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Droword uses the camera to take a profile photo and scan words from photos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Droword uses the microphone so you can practice pronouncing words out loud.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Droword accesses your photo library to set a profile photo and scan words from images.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Droword uses speech recognition to check how you pronounce the words you're learning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -120,7 +120,7 @@ struct PremiumView: View {
                             VStack { Divider() }
                             Text("or subscribe")
                                 .font(themeStore.regular(13))
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                             VStack { Divider() }
                         }
                         .padding(.horizontal, 20)
@@ -138,7 +138,7 @@ struct PremiumView: View {
                     } label: {
                         Text("Restore purchases")
                             .font(themeStore.regular(13))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .disabled(storeKit.isLoading)
                     .padding(.top, 12)
@@ -158,22 +158,22 @@ struct PremiumView: View {
         VStack(spacing: 12) {
             Image(systemName: "sparkles")
                 .font(.system(size: 40, weight: .medium))
-                .foregroundColor(themeStore.accentBlue)
+                .foregroundStyle(themeStore.accentBlue)
                 .scaleEffect(appeared ? 1.0 : 0.5)
                 .opacity(appeared ? 1.0 : 0)
 
             Text("Droword PRO")
                 .font(themeStore.bold(28))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
 
             if let days = trialDaysRemaining, isPremium {
                 Text("Trial: \(days) days remaining", comment: "PRO trial countdown")
                     .font(themeStore.medium(14))
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             } else {
                 Text(isPremium ? LocalizedStringKey("You have full access") : LocalizedStringKey("Unlock unlimited AI features"))
                     .font(themeStore.regular(15))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)
@@ -186,11 +186,11 @@ struct PremiumView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text("Free")
                     .font(themeStore.medium(13))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(width: 80)
                 Text("PRO")
                     .font(themeStore.bold(13))
-                    .foregroundColor(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.accentBlue)
                     .frame(width: 80)
             }
             .padding(.horizontal, 20)
@@ -202,17 +202,17 @@ struct PremiumView: View {
                     HStack {
                         Text(row.title)
                             .font(themeStore.regular(15))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
                         Text(row.free)
                             .font(themeStore.regular(13))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .frame(width: 80)
 
                         Text(row.pro)
                             .font(themeStore.medium(13))
-                            .foregroundColor(themeStore.accentBlue)
+                            .foregroundStyle(themeStore.accentBlue)
                             .frame(width: 80)
                     }
                     .padding(.vertical, 12)
@@ -230,11 +230,11 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(themeStore.accentBlue)
+                        .foregroundStyle(themeStore.accentBlue)
 
                     Text(row.title)
                         .font(themeStore.regular(16))
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
             }
         }
@@ -289,12 +289,12 @@ struct PremiumView: View {
                     HStack(spacing: 8) {
                         Text(title)
                             .font(themeStore.medium(16))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
 
                         if let badge {
                             Text(badge)
                                 .font(themeStore.bold(10))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(Color("AccentGreen")))
@@ -302,14 +302,14 @@ struct PremiumView: View {
                     }
                     Text(detail)
                         .font(themeStore.regular(13))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 Text(price)
                     .font(themeStore.bold(18))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             .padding(16)
             .background(
@@ -343,7 +343,7 @@ struct PremiumView: View {
                     Text("Start 7-Day Free Trial")
                         .font(themeStore.bold(17))
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
@@ -357,7 +357,7 @@ struct PremiumView: View {
 
             Text("No credit card required")
                 .font(themeStore.regular(12))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 20)
         .opacity(appeared ? 1.0 : 0)
@@ -377,7 +377,7 @@ struct PremiumView: View {
                             .font(themeStore.bold(17))
                     }
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
@@ -393,7 +393,7 @@ struct PremiumView: View {
             if let error = purchaseError {
                 Text(error)
                     .font(themeStore.regular(12))
-                    .foregroundColor(Color.accentRed)
+                    .foregroundStyle(Color.accentRed)
                     .multilineTextAlignment(.center)
             }
         }
@@ -407,15 +407,15 @@ struct PremiumView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(themeStore.accentBlue)
+                        .foregroundStyle(themeStore.accentBlue)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRO is active")
                             .font(themeStore.bold(17))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Text("Unlimited access to all features")
                             .font(themeStore.regular(13))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
 
 
@@ -446,7 +446,7 @@ struct PremiumView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
@@ -459,7 +459,7 @@ struct PremiumView: View {
 
             Text("Subscription renews automatically. You can cancel anytime in Settings → Apple ID → Subscriptions.")
                 .font(themeStore.regular(12))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.top, 4)
@@ -493,11 +493,11 @@ struct PremiumView: View {
         HStack {
             Text(label)
                 .font(themeStore.regular(14))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             Text(value)
                 .font(themeStore.medium(14))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 
@@ -528,7 +528,7 @@ struct PremiumView: View {
     private var subscriptionDisclosure: some View {
         Text("Payment will be charged to your Apple ID account at confirmation of purchase. Subscription automatically renews unless it is canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. You can manage and cancel your subscriptions in your App Store account settings.")
             .font(themeStore.regular(11))
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 24)
             .padding(.top, 8)
@@ -547,7 +547,7 @@ struct PremiumView: View {
             }
         }
         .font(themeStore.regular(12))
-        .foregroundColor(.secondary)
+        .foregroundStyle(.secondary)
         .padding(.top, 8)
     }
 

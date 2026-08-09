@@ -20,11 +20,11 @@ struct AddTagView: View {
                     HStack {
                         Text("Name")
                             .font(themeStore.regular(18))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                         Spacer()
                         Text("\(name.count)/40")
                             .font(themeStore.regular(14))
-                            .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                            .foregroundStyle(themeStore.secondaryText.opacity(0.6))
                     }
 
                     FormTextField(
@@ -37,7 +37,7 @@ struct AddTagView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Color")
                         .font(themeStore.regular(18))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
 
                     FormTextField(
                         title: "e.g. #FFAA33",
@@ -56,7 +56,7 @@ struct AddTagView: View {
 
                     Text("Suggested")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .padding(.top, 4)
 
                     HStack(spacing: 12) {

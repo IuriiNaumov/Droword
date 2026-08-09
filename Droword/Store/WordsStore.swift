@@ -23,7 +23,15 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var dueDate: Date? = nil
     var needsEnrichment: Bool = false
     var examples: [String] = []
+    var collocations: [String] = []
+    var synonyms: [String] = []
+    var antonyms: [String] = []
+    var mnemonic: String? = nil
     var reaction: String? = nil
+    /// Whether the user has gone through the "learn / introduce" step for this
+    /// word. New words wait in the Learn section until introduced, and only then
+    /// enter spaced-repetition review.
+    var introduced: Bool = false
 
     init(
         id: UUID = UUID(),
@@ -46,7 +54,12 @@ struct StoredWord: Identifiable, Codable, Equatable {
         dueDate: Date? = nil,
         needsEnrichment: Bool = false,
         examples: [String] = [],
-        reaction: String? = nil
+        collocations: [String] = [],
+        synonyms: [String] = [],
+        antonyms: [String] = [],
+        mnemonic: String? = nil,
+        reaction: String? = nil,
+        introduced: Bool = false
     ) {
         self.id = id
         self.word = word
@@ -68,7 +81,12 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.dueDate = dueDate
         self.needsEnrichment = needsEnrichment
         self.examples = examples
+        self.collocations = collocations
+        self.synonyms = synonyms
+        self.antonyms = antonyms
+        self.mnemonic = mnemonic
         self.reaction = reaction
+        self.introduced = introduced
     }
 
     init(from decoder: Decoder) throws {
@@ -98,7 +116,12 @@ struct StoredWord: Identifiable, Codable, Equatable {
         } else {
             examples = decoded
         }
+        collocations = try container.decodeIfPresent([String].self, forKey: .collocations) ?? []
         reaction = try container.decodeIfPresent(String.self, forKey: .reaction)
+        // Migration: words that already have review progress are treated as
+        // already introduced, so existing users don't get flooded with
+        // "new words to learn".
+        introduced = try container.decodeIfPresent(Bool.self, forKey: .introduced) ?? (repetitions > 0 || intervalDays > 0)
     }
 }
 
@@ -266,7 +289,7 @@ final class WordsStore: ObservableObject {
         words[idx] = w
     }
 
-    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = []) {
+    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil) {
         guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
         var w = words[idx]
         w.translation = translation
@@ -275,6 +298,10 @@ final class WordsStore: ObservableObject {
         w.explanation = explanation
         w.breakdown = breakdown
         w.transcription = transcription
+        w.collocations = collocations
+        w.synonyms = synonyms
+        w.antonyms = antonyms
+        w.mnemonic = mnemonic
         w.needsEnrichment = false
         if examples.isEmpty {
             w.examples = [example]
@@ -344,6 +371,27 @@ final class WordsStore: ObservableObject {
         let streak = Self.computeCurrentStreak(from: words)
         sharedDefaults.set(streak, forKey: AppStorageKeys.currentStreak)
         UserDefaults.standard.set(streak, forKey: AppStorageKeys.currentStreak)
+    }
+
+    /// Words the user has added but not yet gone through the "learn" step for,
+    /// oldest first (FIFO), and only those that already have a translation ready.
+    var newWords: [StoredWord] {
+        words
+            .filter { !$0.introduced && ($0.translation?.isEmpty == false) }
+            .sorted { $0.dateAdded < $1.dateAdded }
+    }
+
+    /// Marks words as introduced and makes them due for their first recall now,
+    /// so they enter the review flow immediately after being learned.
+    func markIntroduced(ids: [UUID]) {
+        let now = Date()
+        for id in ids {
+            guard let idx = words.firstIndex(where: { $0.id == id }) else { continue }
+            var w = words[idx]
+            w.introduced = true
+            w.dueDate = now
+            words[idx] = w
+        }
     }
 
     func updateScheduling(for id: UUID,

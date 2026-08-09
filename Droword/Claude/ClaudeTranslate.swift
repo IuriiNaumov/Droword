@@ -8,6 +8,10 @@ struct TranslationResult: Codable {
     let breakdown: String?
     let transcription: String?
     let examples: [String]?
+    let collocations: [String]?
+    let synonyms: [String]?
+    let antonyms: [String]?
+    let mnemonic: String?
 }
 
 @MainActor

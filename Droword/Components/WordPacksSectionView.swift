@@ -31,12 +31,12 @@ struct WordPacksSectionView: View {
                 HStack(spacing: 8) {
                     Text("Word Packs")
                         .font(themeStore.bold(24))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     if !isPremium {
                         Text("PRO")
                             .font(themeStore.bold(9))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Capsule().fill(themeStore.accentBlue))
@@ -66,7 +66,7 @@ struct WordPacksSectionView: View {
                 if !hasSeenHint {
                     Text("You can hide this section in Dictionary settings.")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .onAppear {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                                 withAnimation(.easeOut(duration: 0.3)) {
@@ -82,6 +82,7 @@ struct WordPacksSectionView: View {
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 24))
+            .cardDepth(cornerRadius: 24)
             .padding(.horizontal, 20)
             .fullScreenCover(item: $selectedPack) { pack in
                 WordPackDetailView(pack: pack)
@@ -105,16 +106,17 @@ struct WordPacksSectionView: View {
         return VStack(spacing: 6) {
             Image(systemName: pack.icon)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(color)
+                .foregroundStyle(color)
 
             Text(pack.titleKey)
                 .font(themeStore.medium(13))
-                .foregroundColor(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
+                .foregroundStyle(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .truncationMode(.tail)
         }
-        .frame(width: 100)
         .padding(.vertical, 16)
+        .padding(.horizontal, 16)
+        .frame(minWidth: 96, maxWidth: 150)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(themeStore.isGlass
@@ -124,6 +126,7 @@ struct WordPacksSectionView: View {
                          : themeStore.appBg))
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
     }
 }
 

@@ -30,19 +30,21 @@ struct VoicePickerView: View {
                             Circle()
                                 .fill(themeStore.mainAccentColor)
                                 .frame(width: 22, height: 22)
+                                .transition(.scale.combined(with: .opacity))
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
+                                .transition(.scale.combined(with: .opacity))
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(option.title)
                             .font(themeStore.medium(16))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Text(option.description)
                             .font(themeStore.regular(13))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                     Spacer()
 
@@ -68,10 +70,12 @@ struct VoicePickerView: View {
     }
 
     private func select(_ option: VoiceOption) {
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+        guard option.key != selectedKey else { return }
+        Haptics.selection()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
             selectedKey = option.key
         }
-      
+
         UserDefaults.standard.set(selectedKey, forKey: AppStorageKeys.ttsVoice)
     }
 

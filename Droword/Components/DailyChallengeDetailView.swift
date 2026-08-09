@@ -47,22 +47,22 @@ struct DailyChallengeDetailView: View {
                 VStack(spacing: 0) {
                     Text("\(manager.completedCount)")
                         .font(themeStore.bold(28))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                     Text("of \(manager.challenges.count)")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
             }
 
             if manager.allCompleted {
                 Text("All challenges completed!")
                     .font(themeStore.bold(18))
-                    .foregroundColor(themeStore.accentGreen)
+                    .foregroundStyle(themeStore.accentGreen)
             }
 
             Text("Total completed: \(manager.totalCompleted)")
                 .font(themeStore.regular(13))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
@@ -71,6 +71,7 @@ struct DailyChallengeDetailView: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .cardDepth(cornerRadius: 20)
     }
 
     private var overallProgress: Double {
@@ -96,11 +97,11 @@ struct DailyChallengeDetailView: View {
                 if challenge.isCompleted {
                     Image(systemName: "checkmark")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.accentGreen)
                 } else {
                     Image(systemName: challenge.type.icon)
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(themeStore.mainText.opacity(0.7))
+                        .foregroundStyle(themeStore.mainText.opacity(0.7))
                 }
             }
 
@@ -108,7 +109,7 @@ struct DailyChallengeDetailView: View {
                 HStack {
                     Text(challenge.localizedTitle)
                         .font(themeStore.medium(16))
-                        .foregroundColor(challenge.isCompleted ? themeStore.secondaryText : themeStore.mainText)
+                        .foregroundStyle(challenge.isCompleted ? themeStore.secondaryText : themeStore.mainText)
                         .strikethrough(challenge.isCompleted, color: themeStore.secondaryText)
 
                     Spacer()
@@ -116,7 +117,7 @@ struct DailyChallengeDetailView: View {
 
                 Text(challenge.localizedDescription)
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
 
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
@@ -133,7 +134,7 @@ struct DailyChallengeDetailView: View {
 
                 Text("\(challenge.currentValue)/\(challenge.targetValue)")
                     .font(themeStore.regular(12))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.6))
             }
         }
         .padding(16)

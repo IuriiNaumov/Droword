@@ -12,7 +12,7 @@ struct PrivacyPolicyView: View {
 
                 Text("Last updated: April 2026")
                     .font(themeStore.regular(13))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal)
                     .padding(.top, -12)
 
@@ -98,10 +98,10 @@ struct PrivacyPolicyView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(themeStore.bold(18))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Text(body)
                 .font(themeStore.regular(14))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding()

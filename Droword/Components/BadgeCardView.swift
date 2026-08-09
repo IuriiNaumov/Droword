@@ -18,14 +18,14 @@ struct BadgeCardView: View {
 
             Text(badge.title)
                 .font(themeStore.medium(11))
-                .foregroundColor(isUnlocked ? themeStore.mainText : themeStore.secondaryText)
+                .foregroundStyle(isUnlocked ? themeStore.mainText : themeStore.secondaryText)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
 
             if isUnlocked {
                 Text(badge.description)
                     .font(themeStore.regular(9))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.7)
@@ -46,7 +46,7 @@ struct BadgeCardView: View {
 
                 Text("\(currentProgress)/\(badge.requiredCount)")
                     .font(themeStore.regular(9))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
         }
         .padding(.vertical, 12)

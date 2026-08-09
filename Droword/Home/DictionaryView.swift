@@ -35,7 +35,7 @@ struct DictionaryView: View {
         HStack {
             Text("Dictionary")
                 .font(themeStore.bold(38))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
             Spacer()
             Button {
                 Haptics.selection()
@@ -46,7 +46,7 @@ struct DictionaryView: View {
             } label: {
                 Text(isSelectMode ? "Done" : "Select")
                     .font(themeStore.medium(15))
-                    .foregroundColor(store.words.isEmpty ? themeStore.secondaryText : (isSelectMode ? .white : themeStore.mainText))
+                    .foregroundStyle(store.words.isEmpty ? themeStore.secondaryText : (isSelectMode ? .white : themeStore.mainText))
                     .padding(.vertical, 8)
                     .padding(.horizontal, 16)
                     .background(
@@ -73,10 +73,10 @@ struct DictionaryView: View {
 
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                             TextField("Search words, translations, examples...", text: $searchText)
                                 .font(themeStore.regular(16))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
                                 .disableAutocorrection(true)
                                 .disabled(true)
                         }
@@ -109,15 +109,15 @@ struct DictionaryView: View {
 
                         HStack(spacing: 10) {
                             Image(systemName: "magnifyingglass")
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                             TextField("Search words, translations, examples...", text: $searchText)
                                 .font(themeStore.regular(16))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
                                 .disableAutocorrection(true)
                             if !searchText.isEmpty {
                                 Button(action: { Haptics.lightImpact(intensity: 0.4); searchText = "" }) {
                                     Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(themeStore.secondaryText)
+                                        .foregroundStyle(themeStore.secondaryText)
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel(Text("Clear search"))
@@ -165,10 +165,10 @@ struct DictionaryView: View {
                                         HStack(spacing: 10) {
                                             Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
                                                 .font(.system(size: 22))
-                                                .foregroundColor(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
+                                                .foregroundStyle(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
                                             Text("Select all (\(filteredWords.count))")
                                                 .font(themeStore.medium(15))
-                                                .foregroundColor(themeStore.mainText)
+                                                .foregroundStyle(themeStore.mainText)
                                             Spacer()
                                         }
                                         .padding(.vertical, 8)
@@ -189,7 +189,7 @@ struct DictionaryView: View {
                                             } label: {
                                                 Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
                                                     .font(.system(size: 22))
-                                                    .foregroundColor(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
+                                                    .foregroundStyle(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
                                             }
                                             .buttonStyle(.plain)
                                             .transition(.move(edge: .leading).combined(with: .opacity))
@@ -206,6 +206,10 @@ struct DictionaryView: View {
                                             breakdown: word.breakdown,
                                             tag: word.tag,
                                             examples: word.examples,
+                                            collocations: word.collocations,
+                                            synonyms: word.synonyms,
+                                            antonyms: word.antonyms,
+                                            mnemonic: word.mnemonic,
                                             reaction: word.reaction,
                                             storedWord: word
                                         ) {
@@ -233,7 +237,7 @@ struct DictionaryView: View {
                                             Text("Double tap the card to add a reaction")
                                                 .font(themeStore.regular(13))
                                         }
-                                        .foregroundColor(themeStore.secondaryText)
+                                        .foregroundStyle(themeStore.secondaryText)
                                         .frame(maxWidth: .infinity)
                                         .padding(.top, -4)
                                         .transition(.opacity)
@@ -266,7 +270,7 @@ struct DictionaryView: View {
                         Text("Delete \(selectedWordIDs.count) words")
                             .font(themeStore.bold(16))
                     }
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
                     .background(
@@ -306,6 +310,7 @@ struct DictionaryView: View {
             AddTagView()
                 .presentationDetents([.fraction(0.65)])
                 .presentationDragIndicator(.visible)
+                .presentationCornerRadius(DesignRadius.dialog)
         }
         .onAppear {
             recalculateFiltered()
@@ -364,6 +369,13 @@ struct DictionaryView: View {
             result.sort { $0.repetitions > $1.repetitions }
         case .masteryLow:
             result.sort { $0.repetitions < $1.repetitions }
+        case .hardest:
+            // Hardest first: the lower the ease factor, the more the word has
+            // been struggled with. Break ties by more lapses.
+            result.sort {
+                if $0.easeFactor != $1.easeFactor { return $0.easeFactor < $1.easeFactor }
+                return $0.lapses > $1.lapses
+            }
         case .dueSoonest:
             result.sort { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
         }

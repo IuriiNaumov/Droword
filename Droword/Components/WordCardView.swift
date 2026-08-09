@@ -20,6 +20,10 @@ struct WordCardView: View {
     let breakdown: String?
     let tag: String?
     let examples: [String]
+    let collocations: [String]
+    let synonyms: [String]
+    let antonyms: [String]
+    let mnemonic: String?
     let reaction: String?
     let storedWord: StoredWord?
     let onDelete: () -> Void
@@ -27,7 +31,10 @@ struct WordCardView: View {
 
     static let availableReactions = ["❤️", "👍", "🔥", "⭐️", "🤔", "😅"]
 
-    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil) {
+    private static let revealTransition: AnyTransition =
+        .opacity.combined(with: .offset(y: -8))
+
+    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil) {
         self.word = word
         self.translation = translation
         self.type = type
@@ -38,6 +45,10 @@ struct WordCardView: View {
         self.breakdown = breakdown
         self.tag = tag
         self.examples = examples
+        self.collocations = collocations
+        self.synonyms = synonyms
+        self.antonyms = antonyms
+        self.mnemonic = mnemonic
         self.reaction = reaction
         self.storedWord = storedWord
         self.onDelete = onDelete
@@ -83,6 +94,20 @@ struct WordCardView: View {
 
     var body: some View {
         cardContent
+            .overlay {
+                // Dim the card behind the reaction picker to focus attention on
+                // the emoji, iMessage-style. Tapping the scrim dismisses it.
+                if showReactionPicker {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.black.opacity(colorScheme == .dark ? 0.4 : 0.14))
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                showReactionPicker = false
+                            }
+                        }
+                }
+            }
             .overlay(alignment: .topTrailing) {
                 if let reaction = reaction {
                     Button {
@@ -90,7 +115,7 @@ struct WordCardView: View {
                         if !showReactionPicker {
                             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
                         }
-                        withAnimation(.spring(response: 0.18, dampingFraction: 0.75)) {
+                        withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
                             showReactionPicker.toggle()
                         }
                     } label: {
@@ -102,62 +127,38 @@ struct WordCardView: View {
                                     .fill(colorScheme == .dark ? themeStore.accentBlue : themeStore.accentBlueSoft)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ReactionButtonStyle())
                     .offset(x: 8, y: -22)
-                    .transition(.scale.combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.2, anchor: .center).combined(with: .opacity),
+                        removal: .scale(scale: 0.6).combined(with: .opacity)
+                    ))
                 }
             }
             .overlay(alignment: .top) {
                 if showReactionPicker, onReaction != nil {
-                    HStack(spacing: 4) {
-                        ForEach(pickerReactions, id: \.self) { emoji in
-                            Button {
-                                Haptics.lightImpact()
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    onReaction?(reaction == emoji ? nil : emoji)
-                                    showReactionPicker = false
-                                }
-                            } label: {
-                                Text(emoji)
-                                    .font(.system(size: 28))
-                                    .padding(4)
-                                    .background(
-                                        Circle()
-                                            .fill(reaction == emoji ? themeStore.accentBlueSoft : Color.clear)
-                                    )
+                    ReactionPickerBar(
+                        reactions: pickerReactions,
+                        current: reaction,
+                        onSelect: { emoji in
+                            Haptics.lightImpact()
+                            withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
+                                onReaction?(reaction == emoji ? nil : emoji)
+                                showReactionPicker = false
                             }
-                            .buttonStyle(.plain)
-                        }
-
-                        Button {
+                        },
+                        onCustom: {
                             Haptics.lightImpact()
                             showEmojiKeyboard = true
-                        } label: {
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(themeStore.secondaryText)
-                                .frame(width: 36, height: 36)
-                                .background(
-                                    Circle()
-                                        .fill(themeStore.mainText.opacity(0.08))
-                                )
                         }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(.ultraThickMaterial)
-                            .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
                     )
-                    .transition(.scale(scale: 0.7, anchor: .bottom).combined(with: .opacity))
+                    .transition(.scale(scale: 0.65, anchor: .bottomTrailing).combined(with: .opacity))
                     .offset(y: -52)
                     .zIndex(10)
                     .overlay {
                         EmojiKeyboardField(isPresented: $showEmojiKeyboard) { emoji in
                             Haptics.lightImpact()
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
                                 onReaction?(emoji)
                                 showReactionPicker = false
                             }
@@ -209,21 +210,23 @@ struct WordCardView: View {
                     Label("Copy all", systemImage: "doc.on.doc.fill")
                 }
             }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: reaction)
-        .animation(.spring(response: 0.18, dampingFraction: 0.75), value: showReactionPicker)
+        .animation(.spring(response: 0.4, dampingFraction: 0.58), value: reaction)
+        .animation(.spring(response: 0.32, dampingFraction: 0.72), value: showReactionPicker)
         .padding(.top, reaction != nil ? 14 : 12)
         .padding(.bottom, 0)
         .onTapGesture(count: 2) {
             guard onReaction != nil else { return }
             Haptics.lightImpact(intensity: 0.4)
             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
-            withAnimation(.spring(response: 0.18, dampingFraction: 0.75)) {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
                 showReactionPicker = true
             }
         }
         .onTapGesture {
+            // Any tap on a card dismisses an open reaction picker on other cards.
+            NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
             if showReactionPicker {
-                withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                     showReactionPicker = false
                 }
                 return
@@ -233,7 +236,7 @@ struct WordCardView: View {
             } else {
                 Haptics.lightImpact(intensity: 0.3)
             }
-            withAnimation(.smooth(duration: 0.35)) {
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.9)) {
                 isExpanded.toggle()
             }
         }
@@ -243,6 +246,11 @@ struct WordCardView: View {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
                 showReactionPicker = false
             }
+        }
+        .onDisappear {
+            // Reset the picker when the card scrolls out of view or its tab
+            // is switched away, so it never lingers when the card returns.
+            showReactionPicker = false
         }
         .onAppear {
             if let example = example {
@@ -279,7 +287,7 @@ struct WordCardView: View {
             if let tag = tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
                     .font(themeStore.medium(13))
-                    .foregroundColor(themeStore.colorForTag(tag))
+                    .foregroundStyle(themeStore.colorForTag(tag))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 18)
                     .overlay(
@@ -294,39 +302,39 @@ struct WordCardView: View {
             if let transcription = transcription, !transcription.isEmpty {
                 Text("[\(transcription)]")
                     .font(themeStore.regular(14))
-                    .foregroundColor(secondaryTextColor)
+                    .foregroundStyle(secondaryTextColor)
             }
 
             if let type = type, !type.isEmpty, isExpanded {
                 Text(type.capitalized)
                     .font(themeStore.regular(14))
-                    .foregroundColor(secondaryTextColor)
+                    .foregroundStyle(secondaryTextColor)
                     .padding(.bottom, 2)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(Self.revealTransition)
             }
 
             if let translation = translation {
                 Text(translation)
                     .font(themeStore.regular(16))
-                    .foregroundColor(primaryTextColor)
+                    .foregroundStyle(primaryTextColor)
             }
 
             if isExpanded {
                 if let _ = example {
                     Text(highlightedExample)
                         .font(themeStore.regular(16))
-                        .foregroundColor(primaryTextColor)
+                        .foregroundStyle(primaryTextColor)
                         .fixedSize(horizontal: false, vertical: true)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .transition(Self.revealTransition)
 
                     if examples.count > 1 {
                         if showAllExamples {
                             ForEach(Array(highlightedExtraExamples.enumerated()), id: \.offset) { _, attr in
                                 Text(attr)
                                     .font(themeStore.regular(16))
-                                    .foregroundColor(primaryTextColor)
+                                    .foregroundStyle(primaryTextColor)
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                    .transition(Self.revealTransition)
                             }
                         }
 
@@ -342,7 +350,7 @@ struct WordCardView: View {
                                 Image(systemName: showAllExamples ? "chevron.up" : "chevron.down")
                                     .font(.system(size: 11, weight: .semibold))
                             }
-                            .foregroundColor(themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.mainAccentColor)
                         }
                         .buttonStyle(.plain)
                         .transition(.opacity)
@@ -352,29 +360,90 @@ struct WordCardView: View {
                 if let explanation = explanation {
                     Text(explanation)
                         .font(themeStore.regular(16))
-                        .foregroundColor(primaryTextColor)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .foregroundStyle(primaryTextColor)
+                        .transition(Self.revealTransition)
                 }
 
                 if let breakdown = breakdown {
                     Text(breakdown)
                         .font(themeStore.regular(16))
-                        .foregroundColor(primaryTextColor)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+                        .foregroundStyle(primaryTextColor)
+                        .transition(Self.revealTransition)
+                }
+
+                if !collocations.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Common phrases")
+                            .font(themeStore.medium(13))
+                            .foregroundStyle(themeStore.secondaryText)
+                        Text(collocations.joined(separator: "  ·  "))
+                            .font(themeStore.regular(15))
+                            .foregroundStyle(primaryTextColor)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+                    .transition(Self.revealTransition)
+                }
+
+                if !synonyms.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Synonyms")
+                            .font(themeStore.medium(13))
+                            .foregroundStyle(themeStore.secondaryText)
+                        Text(synonyms.joined(separator: "  ·  "))
+                            .font(themeStore.regular(15))
+                            .foregroundStyle(primaryTextColor)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+                    .transition(Self.revealTransition)
+                }
+
+                if !antonyms.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Opposites")
+                            .font(themeStore.medium(13))
+                            .foregroundStyle(themeStore.secondaryText)
+                        Text(antonyms.joined(separator: "  ·  "))
+                            .font(themeStore.regular(15))
+                            .foregroundStyle(primaryTextColor)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+                    .transition(Self.revealTransition)
+                }
+
+                if let mnemonic = mnemonic, !mnemonic.isEmpty {
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "lightbulb.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(themeStore.accentGold)
+                            .padding(.top, 1)
+                        Text(mnemonic)
+                            .font(themeStore.regular(14))
+                            .foregroundStyle(secondaryTextColor)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+                    .transition(Self.revealTransition)
                 }
 
                 if let comment = comment, !comment.isEmpty {
                     HStack(alignment: .top, spacing: 6) {
                         Image(systemName: "brain.head.profile")
                             .font(.system(size: 14))
-                            .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                            .foregroundStyle(themeStore.secondaryText.opacity(0.7))
                             .padding(.top, 2)
                         Text(comment)
                             .font(themeStore.regular(16))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                     .padding(.top, 4)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(Self.revealTransition)
                 }
             }
 
@@ -398,7 +467,7 @@ struct WordCardView: View {
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 16))
-                            .foregroundColor(secondaryTextColor)
+                            .foregroundStyle(secondaryTextColor)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text("Share word"))
@@ -406,7 +475,7 @@ struct WordCardView: View {
                 Spacer()
                 Button(action: { Haptics.warning(); onDelete() }) {
                     Image(systemName: "trash.fill")
-                        .foregroundColor(Color.accentRed)
+                        .foregroundStyle(Color.accentRed)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Delete word"))
@@ -429,7 +498,7 @@ struct WordCardView: View {
 
             Text(word)
                 .font(themeStore.bold(24))
-                .foregroundColor(primaryTextColor)
+                .foregroundStyle(primaryTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
@@ -505,6 +574,79 @@ struct WordCardView: View {
 
     private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
         HighlightedExample.make(example: comment, word: word)
+    }
+}
+
+/// Button style that gives reactions a tactile "squish" on press, like iMessage.
+private struct ReactionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.82 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.55), value: configuration.isPressed)
+    }
+}
+
+/// iMessage-style reaction bar: the emoji cascade in one-by-one with a springy
+/// pop, and each responds to touch with a squish.
+private struct ReactionPickerBar: View {
+    let reactions: [String]
+    let current: String?
+    let onSelect: (String) -> Void
+    let onCustom: () -> Void
+
+    @EnvironmentObject private var themeStore: ThemeStore
+    @State private var appeared = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(Array(reactions.enumerated()), id: \.element) { index, emoji in
+                Button {
+                    onSelect(emoji)
+                } label: {
+                    Text(emoji)
+                        .font(.system(size: 28))
+                        .padding(4)
+                        .background(
+                            Circle()
+                                .fill(current == emoji ? themeStore.accentBlueSoft : Color.clear)
+                        )
+                }
+                .buttonStyle(ReactionButtonStyle())
+                .scaleEffect(appeared ? 1 : 0.2)
+                .opacity(appeared ? 1 : 0)
+                .animation(cascade(index), value: appeared)
+            }
+
+            Button {
+                onCustom()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(themeStore.mainText.opacity(0.08))
+                    )
+            }
+            .buttonStyle(ReactionButtonStyle())
+            .scaleEffect(appeared ? 1 : 0.2)
+            .opacity(appeared ? 1 : 0)
+            .animation(cascade(reactions.count), value: appeared)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            Capsule()
+                .fill(.ultraThickMaterial)
+        )
+        .onAppear { appeared = true }
+    }
+
+    /// Springy pop with a per-index delay so items enter left-to-right.
+    private func cascade(_ index: Int) -> Animation {
+        .spring(response: 0.34, dampingFraction: 0.6)
+        .delay(Double(index) * 0.035)
     }
 }
 

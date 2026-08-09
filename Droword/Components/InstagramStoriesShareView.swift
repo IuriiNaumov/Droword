@@ -40,10 +40,10 @@ struct InstagramStoriesTemplateView: View {
                 VStack(spacing: 4) {
                     Text("Droword")
                         .font(.custom("Poppins-Bold", size: 28))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                     Text("Word of the day")
                         .font(.custom("Poppins-Regular", size: 14))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(.white.opacity(0.7))
                 }
 
                 Spacer()
@@ -60,7 +60,7 @@ struct InstagramStoriesTemplateView: View {
 
                 Text("Learn vocabulary smarter")
                     .font(.custom("Poppins-Medium", size: 14))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.6))
                     .padding(.bottom, 80)
             }
         }

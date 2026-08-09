@@ -29,11 +29,11 @@ struct ThemePickerView: View {
                 VStack(spacing: 4) {
                     Text(selectedPalette.title)
                         .font(themeStore.bold(20))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text(selectedPalette.subtitle)
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Button {
@@ -109,7 +109,7 @@ struct ThemePickerView: View {
                         .overlay(
                             Image(systemName: "person.fill")
                                 .font(.system(size: 16))
-                                .foregroundColor(c.mainAccentColor)
+                                .foregroundStyle(c.mainAccentColor)
                         )
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -139,7 +139,7 @@ struct ThemePickerView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Travel")
                         .font(c.medium(11))
-                        .foregroundColor(c.accentBlue)
+                        .foregroundStyle(c.accentBlue)
                         .padding(.vertical, 3)
                         .padding(.horizontal, 10)
                         .overlay(
@@ -149,26 +149,26 @@ struct ThemePickerView: View {
 
                     Text("Serendipity")
                         .font(c.bold(18))
-                        .foregroundColor(c.mainText)
+                        .foregroundStyle(c.mainText)
 
                     Text("/ˌsɛr.ənˈdɪp.ɪ.ti/")
                         .font(c.regular(11))
-                        .foregroundColor(c.mainText.opacity(0.7))
+                        .foregroundStyle(c.mainText.opacity(0.7))
 
                     Text("Noun")
                         .font(c.regular(11))
-                        .foregroundColor(c.mainText.opacity(0.7))
+                        .foregroundStyle(c.mainText.opacity(0.7))
 
                     Divider()
                         .background(c.secondaryText.opacity(0.2))
 
                     Text("Счастливая случайность")
                         .font(c.regular(12))
-                        .foregroundColor(c.mainText)
+                        .foregroundStyle(c.mainText)
 
                     Text("Finding that book was pure serendipity.")
                         .font(c.regular(12))
-                        .foregroundColor(c.mainText)
+                        .foregroundStyle(c.mainText)
                         .italic()
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -222,10 +222,10 @@ struct ThemePickerView: View {
         VStack(spacing: 3) {
             Text(value)
                 .font(c.bold(16))
-                .foregroundColor(c.mainText)
+                .foregroundStyle(c.mainText)
             Text(title)
                 .font(c.medium(10))
-                .foregroundColor(c.secondaryText)
+                .foregroundStyle(c.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)

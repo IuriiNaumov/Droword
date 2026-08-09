@@ -100,7 +100,7 @@ struct OnboardingReplayView: View {
                 } label: {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(themeStore.mainAccentColor))
                 }
@@ -112,7 +112,7 @@ struct OnboardingReplayView: View {
                 } label: {
                     Image(systemName: "checkmark")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(themeStore.mainAccentColor))
                 }

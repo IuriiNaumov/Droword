@@ -82,11 +82,11 @@ struct ScanWordsView: View {
             VStack(spacing: 8) {
                 Image(systemName: "doc.text.viewfinder")
                     .font(.system(size: 48, weight: .light))
-                    .foregroundColor(themeStore.mainAccentColor)
+                    .foregroundStyle(themeStore.mainAccentColor)
 
                 Text("Take a photo of a word list, textbook page, or handout")
                     .font(themeStore.regular(15))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
             }
@@ -113,7 +113,7 @@ struct ScanWordsView: View {
                     Text("Choose from library")
                 }
                 .font(themeStore.bold(17))
-                .foregroundColor(themeStore.mainAccentColor)
+                .foregroundStyle(themeStore.mainAccentColor)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)
                 .background(
@@ -126,7 +126,7 @@ struct ScanWordsView: View {
             if let errorMessage {
                 Text(errorMessage)
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.accentRed)
+                    .foregroundStyle(themeStore.accentRed)
                     .multilineTextAlignment(.center)
                     .padding(.top, 8)
             }
@@ -156,7 +156,7 @@ struct ScanWordsView: View {
 
                 Text("Extracting words from photo…")
                     .font(themeStore.regular(15))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
             .padding(.vertical, 20)
         }
@@ -177,14 +177,14 @@ struct ScanWordsView: View {
             HStack {
                 Text("\(visibleWords.count) words found")
                     .font(themeStore.bold(16))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
 
                 Spacer()
 
                 if addedCount > 0 {
                     Text("\(addedCount) added")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.accentGreen)
                 }
             }
 
@@ -211,15 +211,15 @@ struct ScanWordsView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.accentGreen)
 
                     Text("All done!")
                         .font(themeStore.bold(18))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("\(addedCount) words added to your dictionary")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
 
                     Button {
                         Haptics.lightImpact()
@@ -245,7 +245,7 @@ struct ScanWordsView: View {
                     Text("Scan another photo")
                 }
                 .font(themeStore.bold(17))
-                .foregroundColor(themeStore.mainAccentColor)
+                .foregroundStyle(themeStore.mainAccentColor)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)
                 .background(
@@ -261,16 +261,16 @@ struct ScanWordsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(word.word)
                 .font(themeStore.bold(22))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Text(word.translation)
                 .font(themeStore.regular(16))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
 
             if let transcription = word.transcription, !transcription.isEmpty {
                 Text("[\(transcription)]")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
             }
 
             HStack {
@@ -284,7 +284,7 @@ struct ScanWordsView: View {
                         Text("Add")
                     }
                     .font(themeStore.medium(13))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 12)
                     .background(themeStore.accentBlue)
@@ -303,7 +303,7 @@ struct ScanWordsView: View {
                         Text("Skip")
                     }
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.accentBlue)
                 }
             }
             .padding(.top, 10)

@@ -12,13 +12,13 @@ struct StatsView: View {
             HStack {
                 Text("Stats")
                     .font(themeStore.bold(24))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.accentBlue)
             }
 
             HStack(spacing: 12) {
@@ -33,7 +33,8 @@ struct StatsView: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 24))
-        .foregroundColor(themeStore.mainText)
+        .cardDepth(cornerRadius: 24)
+        .foregroundStyle(themeStore.mainText)
         .padding(.horizontal, 20)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("Stats: \(store.totalWordsAdded) total, \(cachedTodayCount) today"))

@@ -21,6 +21,25 @@ struct ReviewSectionView: View {
     private var totalDue: Int { learningQueue.count }
     private var remaining: Int { max(0, learningQueue.count - currentIndex) }
 
+    /// Which way the current card quizzes the user.
+    /// `recognition`: show the word, recall the meaning (easier).
+    /// `production`: show the meaning, recall the word itself (harder, deeper).
+    private enum ReviewDirection { case recognition, production }
+    @State private var currentDirection: ReviewDirection = .recognition
+
+    private var displayedCardID: UUID? {
+        currentIndex < learningQueue.count ? learningQueue[currentIndex].id : nil
+    }
+
+    /// Picks the quiz direction for the card now on screen. The first-ever review
+    /// of a word is always recognition (you must recognise before you can
+    /// produce); afterwards production is mixed in ~50% to train active recall.
+    private func pickDirection() {
+        guard let id = displayedCardID else { return }
+        let reps = store.words.first(where: { $0.id == id })?.repetitions ?? 0
+        currentDirection = reps < 1 ? .recognition : (Bool.random() ? .production : .recognition)
+    }
+
     var body: some View {
         Group {
         if allCaughtUp && !dismissed && totalDue > 0 {
@@ -31,11 +50,11 @@ struct ReviewSectionView: View {
                 HStack(alignment: .firstTextBaseline) {
                     Text("Review")
                         .font(themeStore.bold(24))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("\(remaining) words")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
 
                     Spacer()
                 }
@@ -47,8 +66,18 @@ struct ReviewSectionView: View {
             }
         }
         }
-        .onAppear { prepareSessionIfNeeded() }
+        .onAppear { refreshDueState() }
         .onChange(of: store.words.count) { handleWordsChanged() }
+        .onChange(of: displayedCardID) { pickDirection() }
+        .task {
+            // Self-heal while the view is on screen: pull words whose dueDate
+            // crosses `now` (time-based) without relying on navigation or edits.
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 30_000_000_000)
+                if Task.isCancelled { break }
+                refreshDueState()
+            }
+        }
     }
 
 
@@ -67,12 +96,22 @@ struct ReviewSectionView: View {
         themeStore.mainText.opacity(0.8)
     }
 
+    private var audioButton: some View {
+        Button(action: { Haptics.selection(); playAudio() }) {
+            SoundWavesView(isPlaying: isPlaying)
+                .frame(width: 24, height: 24)
+                .tint(primaryText)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Play pronunciation"))
+    }
+
     private var reviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let tag = card.tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
                     .font(themeStore.medium(13))
-                    .foregroundColor(themeStore.colorForTag(tag))
+                    .foregroundStyle(themeStore.colorForTag(tag))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 18)
                     .overlay(
@@ -81,61 +120,96 @@ struct ReviewSectionView: View {
                     )
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(card.word)
+            // PROMPT — recognition shows the word, production shows the meaning.
+            if currentDirection == .recognition {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(card.word)
+                        .font(themeStore.bold(24))
+                        .foregroundStyle(primaryText)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    audioButton
+                }
+
+                HStack(spacing: 8) {
+                    if let tr = card.transcription, !tr.isEmpty {
+                        Text(tr)
+                            .font(themeStore.regular(14))
+                            .foregroundStyle(secondaryText)
+                    }
+                    Text(card.partOfSpeech.capitalized)
+                        .font(themeStore.regular(14))
+                        .foregroundStyle(secondaryText)
+                }
+            } else {
+                Text(card.translation)
                     .font(themeStore.bold(24))
-                    .foregroundColor(primaryText)
+                    .foregroundStyle(primaryText)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
-                Spacer()
-                Button(action: { Haptics.selection(); playAudio() }) {
-                    SoundWavesView(isPlaying: isPlaying)
-                        .frame(width: 24, height: 24)
-                        .tint(primaryText)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Play pronunciation"))
-            }
 
-            HStack(spacing: 8) {
-                if let tr = card.transcription, !tr.isEmpty {
-                    Text(tr)
+                HStack(spacing: 6) {
+                    Image(systemName: "pencil.and.outline")
+                        .font(.system(size: 12, weight: .medium))
+                    Text("Recall the word")
                         .font(themeStore.regular(14))
-                        .foregroundColor(secondaryText)
+                    if !card.partOfSpeech.isEmpty {
+                        Text("·")
+                            .font(themeStore.regular(14))
+                        Text(card.partOfSpeech.capitalized)
+                            .font(themeStore.regular(14))
+                    }
                 }
-                Text(card.partOfSpeech.capitalized)
-                    .font(themeStore.regular(14))
-                    .foregroundColor(secondaryText)
+                .foregroundStyle(secondaryText)
             }
 
             if showTranslation {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(card.translation)
-                        .font(themeStore.medium(17))
-                        .foregroundColor(primaryText)
+                    // The answer: meaning for recognition, the word itself for production.
+                    if currentDirection == .recognition {
+                        Text(card.translation)
+                            .font(themeStore.medium(17))
+                            .foregroundStyle(primaryText)
+                    } else {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(card.word)
+                                .font(themeStore.bold(22))
+                                .foregroundStyle(primaryText)
+                                .lineLimit(nil)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer()
+                            audioButton
+                        }
+                        if let tr = card.transcription, !tr.isEmpty {
+                            Text(tr)
+                                .font(themeStore.regular(14))
+                                .foregroundStyle(secondaryText)
+                        }
+                    }
 
                     if let comment = card.comment, !comment.isEmpty {
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "brain.head.profile")
                                 .font(.system(size: 13))
-                                .foregroundColor(secondaryText.opacity(0.7))
+                                .foregroundStyle(secondaryText.opacity(0.7))
                                 .padding(.top, 1)
                             Text(comment)
                                 .font(themeStore.regular(14))
-                                .foregroundColor(secondaryText)
+                                .foregroundStyle(secondaryText)
                         }
                     }
 
                     if card.example != "Add an example later" {
                         Text(highlightedExample(example: card.example, target: card.word))
                             .font(themeStore.regular(15))
-                            .foregroundColor(primaryText)
+                            .foregroundStyle(primaryText)
                     }
 
                     if let explanation = card.explanation, !explanation.isEmpty {
                         Text(explanation)
                             .font(themeStore.regular(14))
-                            .foregroundColor(secondaryText)
+                            .foregroundStyle(secondaryText)
                     }
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -147,10 +221,10 @@ struct ReviewSectionView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "eye")
                             .font(.system(size: 14))
-                        Text("Show translation")
+                        Text(currentDirection == .production ? "Show word" : "Show translation")
                             .font(themeStore.medium(15))
                     }
-                    .foregroundColor(primaryText.opacity(0.7))
+                    .foregroundStyle(primaryText.opacity(0.7))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(
@@ -168,7 +242,7 @@ struct ReviewSectionView: View {
                     Text(text)
                         .font(themeStore.medium(13))
                 }
-                .foregroundColor(themeStore.accentGreen)
+                .foregroundStyle(themeStore.accentGreen)
                 .frame(maxWidth: .infinity)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
@@ -181,7 +255,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Text("Hard")
                         .font(themeStore.bold(15))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.vertical, 13)
                         .frame(maxWidth: .infinity)
                         .background(
@@ -199,7 +273,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Text("Good")
                         .font(themeStore.bold(15))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.vertical, 13)
                         .frame(maxWidth: .infinity)
                         .background(
@@ -217,7 +291,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Text("Easy")
                         .font(themeStore.bold(15))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.vertical, 13)
                         .frame(maxWidth: .infinity)
                         .background(
@@ -235,6 +309,7 @@ struct ReviewSectionView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .cardDepth(cornerRadius: 20)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Review card: \(card.word)"))
         .fullScreenCover(isPresented: $showPremiumWall) {
@@ -261,16 +336,16 @@ struct ReviewSectionView: View {
 
                     Image(systemName: "checkmark")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.accentGreen)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("All caught up!")
                         .font(themeStore.bold(16))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                     Text("You reviewed \(totalDue) words.\nNew reviews will appear when it's time to practice.")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Spacer()
@@ -282,7 +357,7 @@ struct ReviewSectionView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(themeStore.accentBlue)
+                        .foregroundStyle(themeStore.accentBlue)
                 }
                 .buttonStyle(.plain)
             }
@@ -306,7 +381,7 @@ struct ReviewSectionView: View {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundColor(darkerShade(of: themeStore.accentGold, by: 0.5))
+                    .foregroundStyle(darkerShade(of: themeStore.accentGold, by: 0.5))
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -330,36 +405,39 @@ struct ReviewSectionView: View {
         }
     }
 
-    private func prepareSessionIfNeeded() {
-        // Session is in progress — keep it
-        if !learningQueue.isEmpty {
+    /// Reconciles the on-screen review state with the ground truth in `store.words`
+    /// (any word with `dueDate <= now`). This is the SAME source Home's due counter
+    /// uses, so the CTA card and this section can never disagree.
+    private func refreshDueState() {
+        // An active, not-yet-finished session is preserved; we only append words
+        // that have newly become due so we don't discard the user's progress.
+        if !allCaughtUp && currentIndex < learningQueue.count {
+            pullNewlyDue()
             return
         }
 
-        // Session was completed — check if new words became due since then
-        if allCaughtUp {
-            let sessionDate = Date(timeIntervalSince1970: sessionDateRaw)
-            let now = Date()
-            let newDue = store.words.contains { w in
-                if let due = w.dueDate { return due > sessionDate && due <= now }
-                return false
-            }
-            if newDue {
-                // New words are due — start fresh session
-                prepareSession()
-            }
-            return
+        // Otherwise (empty queue, finished/exhausted session, or "all caught up"),
+        // rebuild from scratch whenever real due words exist. This clears the trap
+        // where a stale non-empty queue blocked rebuilding.
+        let now = Date()
+        let hasDue = store.words.contains { w in
+            guard w.introduced, let due = w.dueDate else { return false }
+            return due <= now
         }
-
-        prepareSession()
+        if hasDue {
+            prepareSession()
+        }
     }
 
     private func prepareSession() {
         let now = Date()
-        let due = store.words.filter { w in
-            guard let due = w.dueDate else { return false }
-            return due <= now
-        }
+        let due = store.words
+            .filter { w in
+                guard w.introduced, let due = w.dueDate else { return false }
+                return due <= now
+            }
+            // Show the most overdue words first.
+            .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
         learningQueue = due.map { word in
             WordCard(
                 id: word.id,
@@ -394,7 +472,7 @@ struct ReviewSectionView: View {
         // Add newly added words that are due for review
         let now = Date()
         let newDue = store.words.filter { w in
-            guard let due = w.dueDate else { return false }
+            guard w.introduced, let due = w.dueDate else { return false }
             return !queueIDs.contains(w.id) && due <= now
         }
         for word in newDue {
@@ -439,26 +517,62 @@ struct ReviewSectionView: View {
         }
     }
 
+    private func makeCard(from word: StoredWord) -> WordCard {
+        WordCard(
+            id: word.id,
+            word: word.word,
+            partOfSpeech: word.type.isEmpty ? "word" : word.type,
+            example: word.example ?? "Add an example later",
+            translation: word.translation ?? "No translation yet",
+            explanation: word.explanation,
+            breakdown: word.breakdown,
+            transcription: word.transcription,
+            tag: word.tag,
+            fromLanguage: word.fromLanguage,
+            toLanguage: word.toLanguage,
+            comment: word.comment
+        )
+    }
+
+    /// Appends words that have become due since the queue was built, and clears
+    /// the "all caught up" state so the review card reappears.
+    private func pullNewlyDue() {
+        let now = Date()
+        let queueIDs = Set(learningQueue.map { $0.id })
+        let newDue = store.words.filter { w in
+            guard w.introduced, let due = w.dueDate else { return false }
+            return !queueIDs.contains(w.id) && due <= now
+        }
+        guard !newDue.isEmpty else { return }
+
+        withAnimation(.easeInOut(duration: 0.25)) {
+            learningQueue.append(contentsOf: newDue.map(makeCard))
+            if allCaughtUp {
+                allCaughtUp = false
+                dismissed = false
+            }
+            showTranslation = false
+        }
+    }
+
     private enum ReviewQuality {
         case hard, good, easy
 
         var q: Double {
             switch self {
-            case .hard: return 1
-            case .good: return 3
+            case .hard: return 3   // struggled, but not forgotten
+            case .good: return 4   // recalled correctly → EF stays stable
             case .easy: return 5
             }
         }
 
         var scoreValue: Double {
             switch self {
-            case .hard: return 0.0
-            case .good: return 0.6
+            case .hard: return 0.3
+            case .good: return 0.7
             case .easy: return 1.0
             }
         }
-
-        var isPass: Bool { self != .hard }
     }
 
     private func scheduleNext(for card: WordCard, quality: ReviewQuality) {
@@ -467,7 +581,7 @@ struct ReviewSectionView: View {
         var ef = max(1.3, w.easeFactor)
         var reps = w.repetitions
         var ivl = w.intervalDays
-        var lapses = w.lapses
+        let lapses = w.lapses
 
         let q = quality.q
 
@@ -481,10 +595,11 @@ struct ReviewSectionView: View {
         let now = Date()
         let cal = Calendar.current
 
-        if !quality.isPass {
-            lapses += 1
-            reps = 0
-            ivl = 0
+        if quality == .hard {
+            // Struggled but not forgotten: keep the card in today's session and
+            // re-drill it shortly, WITHOUT wiping accumulated progress
+            // (repetitions / interval / lapses are preserved). Only the ease
+            // factor takes the usual small SM-2 penalty.
             reinsert(card, after: 2)
             let due = cal.date(byAdding: .minute, value: 10, to: now)
             store.updateScheduling(for: card.id,
@@ -494,6 +609,7 @@ struct ReviewSectionView: View {
                                    lapses: lapses,
                                    dueDate: due)
         } else {
+            // Good / Easy: advance the schedule.
             reps += 1
             if reps == 1 {
                 ivl = quality == .easy ? 2 : 1

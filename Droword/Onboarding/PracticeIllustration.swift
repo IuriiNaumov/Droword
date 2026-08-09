@@ -18,7 +18,7 @@ struct PracticeIllustration: View {
                     HStack {
                         Text("2/7")
                             .font(.custom("Poppins-SemiBold", size: 12))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                         Spacer()
                     }
                     .padding(.horizontal, 20)
@@ -46,11 +46,11 @@ struct PracticeIllustration: View {
                 VStack(spacing: 6) {
                     Text("tea")
                         .font(.custom("Poppins-Bold", size: 26))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("Type the word")
                         .font(.custom("Poppins-Regular", size: 12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Spacer()
@@ -59,7 +59,7 @@ struct PracticeIllustration: View {
                 HStack(spacing: 0) {
                     Text("お茶")
                         .font(.system(size: 18, weight: .medium, design: .serif))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     // Cursor
                     RoundedRectangle(cornerRadius: 1, style: .continuous)
@@ -87,7 +87,7 @@ struct PracticeIllustration: View {
                         .font(.system(size: 10))
                     Text("Hint: お..., 2 letters")
                         .font(.custom("Poppins-Medium", size: 11))
-                        .foregroundColor(themeStore.mainText.opacity(0.8))
+                        .foregroundStyle(themeStore.mainText.opacity(0.8))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
@@ -102,7 +102,7 @@ struct PracticeIllustration: View {
                 // Check button
                 Text("Check")
                     .font(.custom("Poppins-Bold", size: 15))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(

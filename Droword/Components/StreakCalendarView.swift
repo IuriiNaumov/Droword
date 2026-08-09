@@ -98,10 +98,10 @@ struct StreakCalendarView: View {
         VStack(spacing: 2) {
             Text(value)
                 .font(themeStore.bold(18))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
             Text(label)
                 .font(themeStore.regular(11))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -129,7 +129,9 @@ struct StreakCalendarView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(canGoBack ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .foregroundStyle(canGoBack ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .disabled(!canGoBack)
 
@@ -137,7 +139,7 @@ struct StreakCalendarView: View {
 
             Text(cachedMonthData?.title ?? "")
                 .font(themeStore.bold(17))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Spacer()
 
@@ -151,7 +153,9 @@ struct StreakCalendarView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(canGoForward ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .foregroundStyle(canGoForward ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
             .disabled(!canGoForward)
         }
@@ -177,7 +181,7 @@ struct StreakCalendarView: View {
             ForEach(Self.weekdaySymbols, id: \.self) { day in
                 Text(day)
                     .font(themeStore.regular(11))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -236,7 +240,7 @@ struct StreakCalendarView: View {
 
                 Text("\(dayNum)")
                     .font(themeStore.medium(13))
-                    .foregroundColor(day.isFuture
+                    .foregroundStyle(day.isFuture
                         ? themeStore.secondaryText.opacity(0.3)
                         : themeStore.mainText)
             }
@@ -293,12 +297,12 @@ struct StreakCalendarView: View {
             HStack {
                 Text(Self.selectedDayFormatter.string(from: day.date))
                     .font(themeStore.medium(14))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                 Spacer()
                 if day.isToday {
                     Text("Today")
                         .font(themeStore.medium(12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
                         .background(
@@ -316,7 +320,7 @@ struct StreakCalendarView: View {
                         Image(systemName: "text.book.closed")
                     }
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                 }
                 if day.studyMinutes > 0 {
                     Label {
@@ -325,12 +329,12 @@ struct StreakCalendarView: View {
                         Image(systemName: "clock")
                     }
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                 }
                 if day.count == 0 && day.studyMinutes == 0 {
                     Text("No activity")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
             }
 

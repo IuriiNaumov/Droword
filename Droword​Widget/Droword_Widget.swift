@@ -233,7 +233,7 @@ struct DrowordWidgetEntryView: View {
                                 .font(.system(size: 11))
                             Text("\(entry.currentStreak)")
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
-                                .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
+                                .foregroundStyle(Color(red: 1.0, green: 0.55, blue: 0.0))
                         }
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -273,7 +273,7 @@ struct DrowordWidgetEntryView: View {
 
                         Text("\(entry.dueCount)")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
 
                     Text("\(entry.dueCount == 1 ? "word" : "words") to review")
@@ -292,12 +292,12 @@ struct DrowordWidgetEntryView: View {
                         VStack(spacing: 1) {
                             Text(word)
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundColor(Color(.label))
+                                .foregroundStyle(Color(.label))
                                 .lineLimit(1)
                             if let tr = entry.featuredTranslation {
                                 Text(tr)
                                     .font(.system(size: 9, weight: .regular, design: .rounded))
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
                         }
@@ -315,23 +315,23 @@ struct DrowordWidgetEntryView: View {
 
                         Image(systemName: "checkmark")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
 
                     Text("All caught up!")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
 
                     if let word = entry.featuredWord {
                         VStack(spacing: 1) {
                             Text(word)
                                 .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundColor(Color(.label))
+                                .foregroundStyle(Color(.label))
                                 .lineLimit(1)
                             if let tr = entry.featuredTranslation {
                                 Text(tr)
                                     .font(.system(size: 9, weight: .regular, design: .rounded))
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
                         }
@@ -356,7 +356,7 @@ struct DrowordWidgetEntryView: View {
 
                         Image(systemName: "plus")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
 
                     Text("Add Word")
@@ -372,7 +372,7 @@ struct DrowordWidgetEntryView: View {
 
                 Text("Droword")
                     .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary.opacity(0.5))
+                    .foregroundStyle(.secondary.opacity(0.5))
             }
         }
     }
@@ -407,10 +407,10 @@ struct DrowordMediumWidgetView: View {
                             .font(.system(size: 22))
                         Text("\(entry.currentStreak)")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(red: 1.0, green: 0.55, blue: 0.0))
+                            .foregroundStyle(Color(red: 1.0, green: 0.55, blue: 0.0))
                         Text(entry.currentStreak == 1 ? "day" : "days")
                             .font(.system(size: 10, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
 
                     if entry.dueCount > 0 {
@@ -420,7 +420,7 @@ struct DrowordMediumWidgetView: View {
                                 .frame(width: 8, height: 8)
                             Text("\(entry.dueCount) due")
                                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundColor(Color(.label))
+                                .foregroundStyle(Color(.label))
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -432,10 +432,10 @@ struct DrowordMediumWidgetView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 10))
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                             Text("All done")
                                 .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -448,20 +448,20 @@ struct DrowordMediumWidgetView: View {
                 VStack(spacing: 6) {
                     Text("Word of the Day")
                         .font(.system(size: 10, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .textCase(.uppercase)
 
                     if let word = entry.featuredWord {
                         Text(word)
                             .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(.label))
+                            .foregroundStyle(Color(.label))
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
 
                         if let translation = entry.featuredTranslation {
                             Text(translation)
                                 .font(.system(size: 13, weight: .regular, design: .rounded))
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                                 .lineLimit(2)
                                 .minimumScaleFactor(0.8)
                                 .multilineTextAlignment(.center)
@@ -469,12 +469,12 @@ struct DrowordMediumWidgetView: View {
                     } else {
                         Text("Add your first word!")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
 
                     Text("Droword")
                         .font(.system(size: 9, weight: .medium, design: .rounded))
-                        .foregroundColor(.secondary.opacity(0.4))
+                        .foregroundStyle(.secondary.opacity(0.4))
                 }
                 .frame(maxWidth: .infinity)
             }

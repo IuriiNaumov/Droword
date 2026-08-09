@@ -20,24 +20,24 @@ struct DailyChallengeButton: View {
 
                 Image(systemName: allDone ? "checkmark" : "trophy.fill")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(allDone ? themeStore.accentGreen : themeStore.iconGold)
+                    .foregroundStyle(allDone ? themeStore.accentGreen : themeStore.iconGold)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Daily Challenges")
                     .font(themeStore.bold(16))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
 
                 Text("\(manager.completedCount)/\(manager.challenges.count) challenges done")
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(themeStore.accentBlue)
+                .foregroundStyle(themeStore.accentBlue)
         }
         .padding(16)
         .background(
@@ -45,6 +45,7 @@ struct DailyChallengeButton: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
     }
 }
 

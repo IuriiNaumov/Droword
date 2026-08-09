@@ -93,7 +93,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     func play(word: String) async {
         do {
             let data = try await fetchAudioData(for: word)
-            try playAudio(data: data)
+            try await playAudio(data: data)
         } catch {
             #if DEBUG
             print("⚠️ Audio playback failed for '\(word)': \(error.localizedDescription)")
@@ -104,7 +104,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     func play(text: String, voiceKey: String) async {
         do {
             let data = try await fetchAudioData(for: text, voice: voiceKey)
-            try playAudio(data: data)
+            try await playAudio(data: data)
         } catch {
             #if DEBUG
             print("⚠️ Audio playback failed for '\(text)': \(error.localizedDescription)")
@@ -150,11 +150,16 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.addValue(APIClient.appKey, forHTTPHeaderField: "X-App-Key")
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "text": text,
             "voice": voice,
             "format": "mp3"
         ]
+        // Tell the backend which language this is so TTS uses a native accent
+        // (otherwise Japanese/etc. can be read with an English accent).
+        if let language = UserDefaults.standard.string(forKey: "learningLanguage"), !language.isEmpty {
+            body["language"] = language
+        }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await APIClient.perform(request)
@@ -169,10 +174,20 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return try await fetchAudioData(for: text, voice: currentVoice)
     }
 
-    private func playAudio(data: Data) throws {
+    /// Configures and activates the shared audio session off the main thread.
+    /// `AVAudioSession.setActive(_:)` can block, so running it here (nonisolated,
+    /// on the concurrent executor) avoids the main-thread UI unresponsiveness warning.
+    private nonisolated func activateSession(mixWithOthers: Bool) throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        let options: AVAudioSession.CategoryOptions = mixWithOthers ? [.mixWithOthers] : []
+        try session.setCategory(.playback, mode: .default, options: options)
         try session.setActive(true)
+    }
+
+    private func playAudio(data: Data) async throws {
+        try await Task.detached { [self] in
+            try activateSession(mixWithOthers: true)
+        }.value
 
         player = try AVAudioPlayer(data: data)
         player?.prepareToPlay()
@@ -182,9 +197,9 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     }
 
     private func playAudioSync(data: Data, rate: Float? = nil) async throws {
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playback, mode: .default, options: [])
-        try session.setActive(true)
+        try await Task.detached { [self] in
+            try activateSession(mixWithOthers: false)
+        }.value
 
         player = try AVAudioPlayer(data: data)
         player?.delegate = self

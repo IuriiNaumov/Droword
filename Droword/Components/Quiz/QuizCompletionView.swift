@@ -40,7 +40,11 @@ struct QuizCompletionView: View {
 
                     Text(encouragementText)
                         .font(themeStore.bold(28))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
+
+                    if percentage == 100 {
+                        PerfectLessonBadge()
+                    }
 
                     ZStack {
                         Circle()
@@ -55,10 +59,10 @@ struct QuizCompletionView: View {
                         VStack(spacing: 2) {
                             Text("\(correct)/\(total)")
                                 .font(themeStore.bold(26))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
                             Text("\(percentage)%")
                                 .font(themeStore.medium(14))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                         }
                     }
 
@@ -90,18 +94,18 @@ struct QuizCompletionView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Words to review")
                                 .font(themeStore.medium(16))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                                 .padding(.horizontal, 4)
 
                             ForEach(Array(missedWords.enumerated()), id: \.offset) { _, pair in
                                 HStack {
                                     Text(pair.word)
                                         .font(themeStore.medium(15))
-                                        .foregroundColor(themeStore.mainText)
+                                        .foregroundStyle(themeStore.mainText)
                                     Spacer()
                                     Text(pair.translation)
                                         .font(themeStore.regular(15))
-                                        .foregroundColor(themeStore.secondaryText)
+                                        .foregroundStyle(themeStore.secondaryText)
                                 }
                                 .padding(.vertical, 10)
                                 .padding(.horizontal, 14)
@@ -118,7 +122,7 @@ struct QuizCompletionView: View {
                     Button(action: { Haptics.mediumImpact(); onRestart() }) {
                         Text("Try Again")
                             .font(themeStore.bold(16))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(.vertical, 16)
                             .frame(maxWidth: .infinity)
                             .background(
@@ -126,7 +130,7 @@ struct QuizCompletionView: View {
                                     .fill(themeStore.mainAccentColor)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableButtonStyle())
                     .padding(.horizontal, 40)
                     .padding(.top, 8)
 
@@ -144,6 +148,18 @@ struct QuizCompletionView: View {
             withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
                 animatedProgress = Double(percentage) / 100.0
             }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
+                if percentage == 100 {
+                    Haptics.success()
+                    try? await Task.sleep(for: .milliseconds(180))
+                    Haptics.success()
+                } else if percentage >= 70 {
+                    Haptics.success()
+                } else {
+                    Haptics.lightImpact()
+                }
+            }
         }
     }
 
@@ -151,13 +167,13 @@ struct QuizCompletionView: View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(color)
+                .foregroundStyle(color)
             Text(value)
                 .font(themeStore.bold(18))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
             Text(label)
                 .font(themeStore.regular(11))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
         }
         .frame(minWidth: 70)
     }

@@ -54,7 +54,7 @@ struct AppearancePickerView: View {
 
                 Text(option.title)
                     .font(themeStore.medium(14))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
 
                 ZStack {
                     Circle()
@@ -68,7 +68,7 @@ struct AppearancePickerView: View {
 
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)

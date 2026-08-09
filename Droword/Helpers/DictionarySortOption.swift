@@ -7,6 +7,7 @@ enum DictionarySortOption: String, CaseIterable {
     case alphabeticalZA = "Z → A"
     case masteryHigh = "Best known"
     case masteryLow = "Least known"
+    case hardest = "Hardest"
     case dueSoonest = "Due soon"
 
     var displayName: LocalizedStringKey {
@@ -17,6 +18,7 @@ enum DictionarySortOption: String, CaseIterable {
         case .alphabeticalZA:  return "Z → A"
         case .masteryHigh:     return "Best known"
         case .masteryLow:      return "Least known"
+        case .hardest:         return "Hardest"
         case .dueSoonest:      return "Due soon"
         }
     }

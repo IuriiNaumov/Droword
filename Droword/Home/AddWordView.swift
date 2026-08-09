@@ -74,14 +74,14 @@ struct AddWordView: View {
                             // Hidden text to keep consistent button size
                             Text("Add")
                                 .font(themeStore.bold(17))
-                                .foregroundColor(.clear)
+                                .foregroundStyle(.clear)
 
                             if isAdding {
                                 BouncingDotsView()
                             } else {
                                 Text("Add")
                                     .font(themeStore.bold(17))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                         }
                         .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -114,7 +114,7 @@ struct AddWordView: View {
                     } label: {
                         Image(systemName: "doc.text.viewfinder")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.mainAccentColor)
                     }
                     .accessibilityLabel(Text("Scan words from photo"))
                 }
@@ -199,20 +199,20 @@ struct AddWordView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Word or phrase *")
                 .font(themeStore.regular(18))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
 
             ZStack(alignment: .topLeading) {
                 if word.isEmpty {
                     Text(wordPlaceholder)
                         .font(themeStore.regular(16))
-                        .foregroundColor(themeStore.secondaryText.opacity(0.5))
+                        .foregroundStyle(themeStore.secondaryText.opacity(0.5))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 19)
                 }
                 TextEditor(text: $word)
                     .focused($focusedField, equals: .word)
                     .font(themeStore.regular(16))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .tint(themeStore.mainAccentColor)
                     .scrollContentBackground(.hidden)
                     .textInputAutocapitalization(.sentences)
@@ -237,7 +237,7 @@ struct AddWordView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Translation")
                 .font(themeStore.regular(18))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
 
             FormTextField(
                 title: translationPlaceholder,
@@ -247,7 +247,7 @@ struct AddWordView: View {
 
             Text("Don’t know the translation? I’ll handle it for you")
                 .font(themeStore.regular(14))
-                .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                .foregroundStyle(themeStore.secondaryText.opacity(0.6))
                 .padding(.leading, 2)
         }
     }
@@ -256,7 +256,7 @@ struct AddWordView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Memory hint")
                 .font(themeStore.regular(18))
-                .foregroundColor(themeStore.secondaryText.opacity(0.9))
+                .foregroundStyle(themeStore.secondaryText.opacity(0.9))
 
             FormTextField(
                 title: commentPlaceholder,
@@ -318,7 +318,8 @@ struct AddWordView: View {
                     tag: selectedTag,
                     fromLanguage: languageStore.learningLanguage,
                     toLanguage: languageStore.nativeLanguage,
-                    examples: examplesArray
+                    examples: examplesArray,
+                    collocations: result.collocations ?? []
                 )
                 store.add(newWord)
                 if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }

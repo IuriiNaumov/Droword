@@ -7,6 +7,7 @@ struct ProfileHeaderView: View {
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var showStats = false
+    @State private var streakPulse: CGFloat = 1.0
     private let cuteTags: [String] = [
         "keep it up",
         "proud of you",
@@ -65,7 +66,7 @@ struct ProfileHeaderView: View {
                                 .overlay(
                                     Image(systemName: "person.fill")
                                         .font(.system(size: 26, weight: .semibold))
-                                        .foregroundColor(themeStore.mainText)
+                                        .foregroundStyle(themeStore.mainText)
                                 )
                         }
                     }
@@ -79,12 +80,12 @@ struct ProfileHeaderView: View {
                     HStack(alignment: .center, spacing: 8) {
                         Text(displayName)
                             .font(themeStore.bold(18))
-                            .foregroundColor(themeStore.mainText)
+                            .foregroundStyle(themeStore.mainText)
 
                         if isPremium {
                             Text("PRO")
                                 .font(themeStore.bold(10))
-                                .foregroundColor(colorScheme == .dark ? .white : themeStore.accentBlue)
+                                .foregroundStyle(colorScheme == .dark ? .white : themeStore.accentBlue)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(
@@ -96,11 +97,39 @@ struct ProfileHeaderView: View {
 
                     Text("\(usageDurationString()) with Droword")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
 
                 }
 
                 Spacer()
+
+                HStack(spacing: 5) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(themeStore.accentRed)
+                    Text("\(currentStreak)")
+                        .font(themeStore.bold(17))
+                        .foregroundStyle(themeStore.mainText)
+                        .contentTransition(.numericText())
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(
+                    Capsule()
+                        .fill(themeStore.accentRed.opacity(0.12))
+                )
+                .scaleEffect(streakPulse)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
+                .onChange(of: currentStreak) { oldValue, newValue in
+                    guard newValue > oldValue else { return }
+                    Haptics.lightImpact()
+                    streakPulse = 1.35
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.45)) {
+                        streakPulse = 1.0
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(Text("Streak: \(currentStreak) days"))
             }
 
         }

@@ -37,12 +37,12 @@ struct DrowordWidgetEntryView: View {
 
                     Image(systemName: "plus")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
 
                 Text("Add Word")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.2))
+                    .foregroundStyle(Color(red: 0.2, green: 0.2, blue: 0.2))
             }
         }
     }

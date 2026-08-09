@@ -28,14 +28,14 @@ struct QuizMatchingExercise: View {
             VStack(spacing: 8) {
                 Text("Match the pairs")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
 
                 HStack(spacing: 4) {
                     let remaining = maxAttempts - wrongAttempts
                     ForEach(0..<maxAttempts, id: \.self) { i in
                         Image(systemName: i < remaining ? "heart.fill" : "heart")
                             .font(.system(size: 14))
-                            .foregroundColor(i < remaining ? themeStore.accentRed : themeStore.secondaryText.opacity(0.3))
+                            .foregroundStyle(i < remaining ? themeStore.accentRed : themeStore.secondaryText.opacity(0.3))
                     }
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: wrongAttempts)
@@ -103,7 +103,7 @@ struct QuizMatchingExercise: View {
         } label: {
             Text(text)
                 .font(themeStore.medium(14))
-                .foregroundColor(isMatched ? themeStore.secondaryText : themeStore.mainText)
+                .foregroundStyle(isMatched ? themeStore.secondaryText : themeStore.mainText)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, minHeight: 44)

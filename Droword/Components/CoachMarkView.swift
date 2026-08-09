@@ -38,18 +38,18 @@ struct CoachMarkView: View {
 
                     Image(systemName: step.icon)
                         .font(.system(size: 40, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .scaleEffect(appeared ? 1.0 : 0.5)
                         .opacity(appeared ? 1.0 : 0)
 
                     Text(step.title)
                         .font(themeStore.bold(22))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
                     Text(step.message)
                         .font(themeStore.regular(15))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
@@ -58,7 +58,7 @@ struct CoachMarkView: View {
                     } label: {
                         Text(isLast ? "Get Started" : "Next")
                             .font(themeStore.bold(16))
-                            .foregroundColor(.black)
+                            .foregroundStyle(.black)
                             .padding(.vertical, 14)
                             .frame(maxWidth: .infinity)
                             .background(
@@ -75,7 +75,7 @@ struct CoachMarkView: View {
                         } label: {
                             Text("Skip tour")
                                 .font(themeStore.regular(13))
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.5))
                         }
                     }
                 }

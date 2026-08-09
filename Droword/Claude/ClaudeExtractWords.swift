@@ -54,7 +54,7 @@ func extractWordsFromImage(
     ]
 
     var request = try APIClient.makeRequest(endpoint: "extract-words", body: body)
-    request.timeoutInterval = 30
+    request.timeoutInterval = 60
     let (data, response) = try await APIClient.perform(request)
     let validated = try APIClient.validateResponse(data, response)
     let result = try JSONDecoder().decode(ExtractedWordsResponse.self, from: validated)

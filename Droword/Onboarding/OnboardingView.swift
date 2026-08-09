@@ -33,7 +33,7 @@ struct OnboardingView: View {
         )
     ]}
 
-    private var totalPages: Int { pages.count + 2 }
+    private var totalPages: Int { pages.count + 3 }
 
     var body: some View {
         GeometryReader { geo in
@@ -60,8 +60,14 @@ struct OnboardingView: View {
                             .padding(.horizontal, 18)
                             .padding(.top, 24)
 
-                        OnboardingDetailsPage()
+                        OnboardingLevelPage()
+                            .environmentObject(languageStore)
                             .tag(pages.count + 1)
+                            .padding(.horizontal, 18)
+                            .padding(.top, 24)
+
+                        OnboardingDetailsPage()
+                            .tag(pages.count + 2)
                             .padding(.horizontal, 28)
                             .padding(.top, 24)
                     }
@@ -102,7 +108,7 @@ struct OnboardingView: View {
                             }) {
                                 Image(systemName: "chevron.left")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(themeStore.mainAccentColor)
+                                    .foregroundStyle(themeStore.mainAccentColor)
                                     .frame(height: 22)
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
@@ -126,7 +132,7 @@ struct OnboardingView: View {
                             }) {
                                 Text("Skip")
                                     .font(themeStore.regular(16))
-                                    .foregroundColor(themeStore.mainText.opacity(0.75))
+                                    .foregroundStyle(themeStore.mainText.opacity(0.75))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .background(
@@ -160,7 +166,7 @@ struct OnboardingView: View {
             Button(action: next) {
                 Image(systemName: page == totalPages - 1 ? (canProceedOnCurrentPage ? "checkmark" : "xmark") : "arrow.right")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(width: 56, height: 56)
                     .background(Circle().fill(themeStore.mainAccentColor))
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
@@ -179,6 +185,8 @@ struct OnboardingView: View {
             let learning = languageStore.learningLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
             return !native.isEmpty && !learning.isEmpty && native != learning
         case pages.count + 1:
+            return true
+        case pages.count + 2:
             let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
             return !trimmedName.isEmpty && trimmedName.count <= 40
         default:

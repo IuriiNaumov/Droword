@@ -43,14 +43,14 @@ struct WordPackDetailView: View {
                         HStack {
                             Text("\(visibleWords.count) words")
                                 .font(themeStore.bold(20))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
 
                             Spacer()
 
                             if addedCount > 0 {
                                 Text("\(addedCount) added")
                                     .font(themeStore.regular(13))
-                                    .foregroundColor(themeStore.accentGreen)
+                                    .foregroundStyle(themeStore.accentGreen)
                             }
                         }
 
@@ -103,21 +103,21 @@ struct WordPackDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(word.word)
                 .font(themeStore.bold(22))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Text(word.translation)
                 .font(themeStore.regular(16))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
 
             if let transcription = word.transcription, !transcription.isEmpty {
                 Text("[\(transcription)]")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
             }
 
             Text(word.type)
                 .font(themeStore.regular(13))
-                .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                .foregroundStyle(themeStore.secondaryText.opacity(0.6))
 
             HStack {
                 Button {
@@ -130,7 +130,7 @@ struct WordPackDetailView: View {
                         Text("Add")
                     }
                     .font(themeStore.medium(13))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 12)
                     .background(color)
@@ -150,7 +150,7 @@ struct WordPackDetailView: View {
                         Text("Skip")
                     }
                     .font(themeStore.regular(13))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 }
             }
             .padding(.top, 10)
@@ -170,20 +170,20 @@ struct WordPackDetailView: View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 40))
-                .foregroundColor(themeStore.accentGreen)
+                .foregroundStyle(themeStore.accentGreen)
 
             Text("All done!")
                 .font(themeStore.bold(18))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             if addedCount > 0 {
                 Text("\(addedCount) words added to your dictionary")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             } else {
                 Text("All words already in your dictionary")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
 
             Button {
@@ -216,6 +216,9 @@ struct WordPackDetailView: View {
         store.add(newWord)
         addedWordIDs.insert(word.word)
         addedCount += 1
+        // Kick off enrichment right away so Claude fills in translation,
+        // examples and explanation without waiting for a relaunch.
+        NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
         checkCompletion()
     }
 

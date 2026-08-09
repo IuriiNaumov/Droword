@@ -23,13 +23,13 @@ struct FontSizePickerView: View {
                     // Current size label
                     Text(themeStore.fontScaleLabel)
                         .font(themeStore.medium(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .animation(.none, value: themeStore.fontScale)
 
                     HStack(spacing: 16) {
                         Text("A")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
 
                         GeometryReader { geo in
                             let trackWidth = geo.size.width
@@ -67,7 +67,6 @@ struct FontSizePickerView: View {
                                 Circle()
                                     .fill(themeStore.mainAccentColor)
                                     .frame(width: thumbSize, height: thumbSize)
-                                    .shadow(color: themeStore.mainAccentColor.opacity(0.3), radius: 4, y: 2)
                                     .offset(x: thumbX)
                                     .gesture(
                                         DragGesture(minimumDistance: 0)
@@ -92,7 +91,7 @@ struct FontSizePickerView: View {
 
                         Text("A")
                             .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
@@ -129,24 +128,24 @@ struct FontSizePickerView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Serendipity")
                 .font(themeStore.bold(24))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Text("/ˌsɛr.ənˈdɪp.ɪ.ti/")
                 .font(themeStore.regular(14))
-                .foregroundColor(themeStore.mainText.opacity(0.8))
+                .foregroundStyle(themeStore.mainText.opacity(0.8))
 
             Text("Noun")
                 .font(themeStore.regular(14))
-                .foregroundColor(themeStore.mainText.opacity(0.8))
+                .foregroundStyle(themeStore.mainText.opacity(0.8))
                 .padding(.bottom, 2)
 
             Text("Счастливая случайность")
                 .font(themeStore.regular(16))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Text("Finding that book was pure serendipity.")
                 .font(themeStore.regular(16))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
                 .italic()
         }
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -16,7 +16,7 @@ struct ShareWordCardView: View {
             if let tag = word.tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
                     .font(.custom("Poppins-Medium", size: 13))
-                    .foregroundColor(Self.tagColor(for: tag))
+                    .foregroundStyle(Self.tagColor(for: tag))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 18)
                     .overlay(
@@ -28,51 +28,51 @@ struct ShareWordCardView: View {
 
             Text(word.word)
                 .font(.custom("Poppins-Bold", size: 24))
-                .foregroundColor(primaryText)
+                .foregroundStyle(primaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let transcription = word.transcription, !transcription.isEmpty {
                 Text("[\(transcription)]")
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(secondaryText)
+                    .foregroundStyle(secondaryText)
             }
 
             if !word.type.isEmpty {
                 Text(word.type.capitalized)
                     .font(.custom("Poppins-Regular", size: 14))
-                    .foregroundColor(secondaryText)
+                    .foregroundStyle(secondaryText)
                     .padding(.bottom, 2)
             }
 
             if let translation = word.translation, !translation.isEmpty {
                 Text(translation)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(primaryText)
+                    .foregroundStyle(primaryText)
             }
 
             if let example = word.example, !example.isEmpty {
                 Text(highlightedExample(example: example, target: word.word))
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(primaryText)
+                    .foregroundStyle(primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let explanation = word.explanation, !explanation.isEmpty {
                 Text(explanation)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(primaryText)
+                    .foregroundStyle(primaryText)
             }
 
             if let breakdown = word.breakdown, !breakdown.isEmpty {
                 Text(breakdown)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(primaryText)
+                    .foregroundStyle(primaryText)
             }
 
             if let comment = word.comment, !comment.isEmpty {
                 Text(comment)
                     .font(.custom("Poppins-Regular", size: 16))
-                    .foregroundColor(Color.mainGrey)
+                    .foregroundStyle(Color.mainGrey)
                     .padding(.top, 4)
             }
 
@@ -80,7 +80,7 @@ struct ShareWordCardView: View {
                 Spacer()
                 Text("Droword")
                     .font(.custom("Poppins-Bold", size: 13))
-                    .foregroundColor(subtleText)
+                    .foregroundStyle(subtleText)
             }
             .padding(.top, 8)
         }

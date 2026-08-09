@@ -3,6 +3,10 @@ import SwiftUI
 
 extension Notification.Name {
     static let wordsEnriched = Notification.Name("wordsEnriched")
+    /// Posted when a word needing enrichment is added while the app is running,
+    /// so pending words can be sent to Claude immediately instead of waiting for
+    /// the next launch or network reconnect.
+    static let triggerEnrichment = Notification.Name("triggerEnrichment")
 }
 
 @MainActor
@@ -10,6 +14,7 @@ final class WordEnrichmentService {
     private let store: WordsStore
     private let languageStore: LanguageStore
     private var observeTask: Task<Void, Never>?
+    private var triggerTask: Task<Void, Never>?
     private var isEnriching = false
 
     private var isPremium: Bool {
@@ -24,6 +29,7 @@ final class WordEnrichmentService {
 
     deinit {
         observeTask?.cancel()
+        triggerTask?.cancel()
     }
 
     private func startObserving() {
@@ -41,6 +47,14 @@ final class WordEnrichmentService {
                     await enrichPendingWords()
                 }
                 wasConnected = connected
+            }
+        }
+
+        // Enrich immediately when a pending word is added while the app is running.
+        triggerTask = Task { [weak self] in
+            for await _ in NotificationCenter.default.notifications(named: .triggerEnrichment) {
+                guard let self else { return }
+                self.retryEnrichment()
             }
         }
     }
@@ -80,7 +94,8 @@ final class WordEnrichmentService {
                     explanation: result.explanation,
                     breakdown: result.breakdown,
                     transcription: result.transcription,
-                    examples: result.examples ?? [result.example]
+                    examples: result.examples ?? [result.example],
+                    collocations: result.collocations ?? []
                 )
                 enrichedNames.append(word.word)
             } catch {

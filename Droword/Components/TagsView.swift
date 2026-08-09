@@ -74,18 +74,18 @@ struct TagsView: View {
                             if isDeleteMode && tag.isCustom {
                                 Image(systemName: "minus.circle.fill")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Color.accentRed)
+                                    .foregroundStyle(Color.accentRed)
                                     .transition(.scale.combined(with: .opacity))
                             }
 
                             Text(LocalizedStringKey(tag.name))
                                 .font(themeStore.medium(compact ? 13 : 15))
-                                .foregroundColor(textColor)
+                                .foregroundStyle(textColor)
 
                             if isDeleteMode && !tag.isCustom {
                                 Image(systemName: "lock.fill")
                                     .font(.system(size: 10))
-                                    .foregroundColor(textColor.opacity(0.5))
+                                    .foregroundStyle(textColor.opacity(0.5))
                                     .transition(.scale.combined(with: .opacity))
                             }
                         }
@@ -134,7 +134,7 @@ struct TagsView: View {
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                                 .frame(width: 32, height: 32)
                                 .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
                         }
@@ -146,7 +146,7 @@ struct TagsView: View {
                         Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(isDeleteMode ? .white : themeStore.secondaryText)
+                                .foregroundStyle(isDeleteMode ? .white : themeStore.secondaryText)
                                 .frame(width: 32, height: 32)
                                 .background(
                                     Circle().fill(isDeleteMode ? Color("AccentGreen") : themeStore.secondaryText.opacity(0.15))
@@ -158,7 +158,7 @@ struct TagsView: View {
                     Button(action: { onAddTag?() }) {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                             .frame(width: 32, height: 32)
                             .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
                     }
@@ -205,7 +205,7 @@ private struct WiggleEffect: ViewModifier {
         VStack(alignment: .leading, spacing: 20) {
             Text("Light Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(Color("MainBlack"))
+                .foregroundStyle(Color("MainBlack"))
                 .padding(.horizontal)
 
             TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)
@@ -218,7 +218,7 @@ private struct WiggleEffect: ViewModifier {
         VStack(alignment: .leading, spacing: 20) {
             Text("Dark Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal)
 
             TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)

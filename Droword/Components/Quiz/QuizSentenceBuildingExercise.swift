@@ -19,11 +19,11 @@ struct QuizSentenceBuildingExercise: View {
             VStack(spacing: 8) {
                 Text("Build the sentence")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
 
                 Text(item.translation)
                     .font(themeStore.bold(22))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
             }
@@ -51,7 +51,7 @@ struct QuizSentenceBuildingExercise: View {
                 if selectedSentenceWords.isEmpty {
                     Text("Tap words to build the sentence")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText.opacity(0.4))
+                        .foregroundStyle(themeStore.secondaryText.opacity(0.4))
                         .padding(.vertical, 8)
                 } else {
                     ForEach(Array(selectedSentenceWords.enumerated()), id: \.offset) { index, word in
@@ -65,7 +65,7 @@ struct QuizSentenceBuildingExercise: View {
                         } label: {
                             Text(word)
                                 .font(themeStore.medium(15))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(
@@ -122,7 +122,7 @@ struct QuizSentenceBuildingExercise: View {
                 } label: {
                     Text(word)
                         .font(themeStore.medium(15))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(

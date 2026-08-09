@@ -25,11 +25,11 @@ struct SuggestedWordsIntroView: View {
                 VStack(spacing: 8) {
                     Text("Suggested Words")
                         .font(themeStore.bold(26))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("Smart suggestions just for you")
                         .font(themeStore.regular(15))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .opacity(textOpacity)
@@ -56,7 +56,7 @@ struct SuggestedWordsIntroView: View {
                 } label: {
                     Text("Got it!")
                         .font(themeStore.bold(17))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
@@ -91,12 +91,12 @@ struct SuggestedWordsIntroView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(darkerShade(of: accent, by: 0.3))
+                .foregroundStyle(darkerShade(of: accent, by: 0.3))
                 .frame(width: 28)
 
             Text(text)
                 .font(themeStore.regular(14))
-                .foregroundColor(themeStore.mainText.opacity(0.85))
+                .foregroundStyle(themeStore.mainText.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

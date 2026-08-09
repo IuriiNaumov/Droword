@@ -31,7 +31,7 @@ struct DictionaryIllustration: View {
                 // Category tag
                 Text("Anime")
                     .font(.custom("Poppins-SemiBold", size: 10))
-                    .foregroundColor(themeStore.accentPurple)
+                    .foregroundStyle(themeStore.accentPurple)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 4)
                     .background(
@@ -43,13 +43,13 @@ struct DictionaryIllustration: View {
                 // Big kanji
                 Text("茶")
                     .font(.system(size: 48, weight: .bold, design: .serif))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .padding(.bottom, 2)
 
                 // Phonetic
                 Text("/otʃa/")
                     .font(.custom("Poppins-Regular", size: 11))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .padding(.bottom, 8)
 
                 // Divider
@@ -61,12 +61,12 @@ struct DictionaryIllustration: View {
                 // Translation
                 Text("tea")
                     .font(.custom("Poppins-SemiBold", size: 15))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .padding(.bottom, 6)
 
                 Text("Noun")
                     .font(.custom("Poppins-SemiBold", size: 9))
-                    .foregroundColor(themeStore.accentGreen)
+                    .foregroundStyle(themeStore.accentGreen)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 3)
                     .background(

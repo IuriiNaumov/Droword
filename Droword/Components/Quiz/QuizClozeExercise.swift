@@ -39,7 +39,7 @@ struct QuizClozeExercise: View {
             VStack(spacing: 12) {
                 Text("Fill in the blank")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
 
                 if let parts = clozeSentence {
                     clozeTextBlock(before: parts.before, after: parts.after)
@@ -50,7 +50,7 @@ struct QuizClozeExercise: View {
                 if !item.translation.isEmpty {
                     Text("(\(item.translation))")
                         .font(themeStore.medium(16))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .padding(.top, 4)
                 }
             }
@@ -65,7 +65,7 @@ struct QuizClozeExercise: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 18)
                     .background(fieldBackground)
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .stroke(borderColor, lineWidth: hasAnswered ? 2.5 : 1.5)
@@ -88,11 +88,18 @@ struct QuizClozeExercise: View {
         }
     }
 
-    private var clozeSentence: (before: String, after: String)? {
+    private var clozeMatch: (range: Range<String.Index>, form: String)? {
         guard let example = item.example else { return nil }
-        guard let range = example.range(of: item.word, options: .caseInsensitive) else { return nil }
-        let before = String(example[example.startIndex..<range.lowerBound])
-        let after = String(example[range.upperBound..<example.endIndex])
+        return ClozeMatcher.find(word: item.word, in: example)
+    }
+
+    /// The exact surface form to blank/reveal (may be an inflection of the word).
+    private var clozeForm: String { clozeMatch?.form ?? item.word }
+
+    private var clozeSentence: (before: String, after: String)? {
+        guard let example = item.example, let match = clozeMatch else { return nil }
+        let before = String(example[example.startIndex..<match.range.lowerBound])
+        let after = String(example[match.range.upperBound..<example.endIndex])
         return (before, after)
     }
 
@@ -105,12 +112,12 @@ struct QuizClozeExercise: View {
         return HStack(spacing: 0) {
             Text(before)
                 .font(themeStore.regular(18))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             if clozeRevealed {
                 Text(" \(item.word) ")
                     .font(themeStore.bold(18))
-                    .foregroundColor(wordColor)
+                    .foregroundStyle(wordColor)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(
@@ -127,22 +134,22 @@ struct QuizClozeExercise: View {
 
             Text(after)
                 .font(themeStore.regular(18))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.6), value: clozeRevealed)
     }
 
     private var clozeBlank: some View {
-        let firstLetter = item.word.first.map { String($0) } ?? ""
-        let blanks = String(repeating: "_", count: max(2, item.word.count - 1))
+        let firstLetter = clozeForm.first.map { String($0) } ?? ""
+        let blanks = String(repeating: "_", count: max(2, clozeForm.count - 1))
 
         return HStack(spacing: 2) {
             Text(" \(firstLetter)")
                 .font(themeStore.bold(18))
-                .foregroundColor(themeStore.accentBlue)
+                .foregroundStyle(themeStore.accentBlue)
             Text("\(blanks) ")
                 .font(themeStore.bold(18))
-                .foregroundColor(themeStore.accentBlue.opacity(0.4))
+                .foregroundStyle(themeStore.accentBlue.opacity(0.4))
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 2)

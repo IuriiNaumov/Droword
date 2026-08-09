@@ -18,16 +18,16 @@ struct StatusBannerView: View {
                     .frame(width: 44, height: 44)
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(iconColor)
+                    .foregroundStyle(iconColor)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(themeStore.bold(16))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                 Text(subtitle)
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
 
             Spacer()

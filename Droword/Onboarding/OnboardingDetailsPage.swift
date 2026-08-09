@@ -19,11 +19,11 @@ struct OnboardingDetailsPage: View {
                     HStack {
                         Text("Name")
                             .font(themeStore.medium(14))
-                            .foregroundColor(themeStore.mainText.opacity(0.75))
+                            .foregroundStyle(themeStore.mainText.opacity(0.75))
                         Spacer()
                         Text("\(tempName.count)/40")
                             .font(themeStore.regular(12))
-                            .foregroundColor(tempName.count > 40 ? Color.accentRed : themeStore.secondaryText)
+                            .foregroundStyle(tempName.count > 40 ? Color.accentRed : themeStore.secondaryText)
                     }
                     .padding(.horizontal, 4)
 

@@ -21,14 +21,14 @@ struct AddWordButton: View {
                 ZStack {
                     Text(title)
                         .font(themeStore.bold(17))
-                        .foregroundColor(.clear)
+                        .foregroundStyle(.clear)
 
                     if isLoading {
                         LoadingStagesView()
                     } else {
                         Text(title)
                             .font(themeStore.bold(17))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                     }
                 }
 
@@ -40,7 +40,7 @@ struct AddWordButton: View {
             if let message = errorMessage {
                 Text(message)
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .transition(.opacity)
             }

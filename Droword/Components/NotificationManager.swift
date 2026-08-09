@@ -112,6 +112,7 @@ final class NotificationManager {
 
         scheduleDailyReminder(prefs: prefs)
         scheduleVocabNotifications(prefs: prefs, allWords: allWords)
+        scheduleReviewDueNotifications(allWords: allWords)
 
         if let lastActive = lastActiveDate {
             scheduleInactivityReminders(lastActive: lastActive)
@@ -309,6 +310,65 @@ final class NotificationManager {
         }
 
         return slots
+    }
+
+    private enum ReviewDueIDs {
+        static let prefix = "notif.reviewdue."
+    }
+
+    /// Schedules one notification per upcoming day on which introduced words
+    /// become due for review, fired at that day's earliest due time. This is the
+    /// core retention loop: users come back exactly when their memory needs it.
+    private func scheduleReviewDueNotifications(allWords: [StoredWord]) {
+        let cal = Calendar.current
+        let now = Date()
+
+        // Only words already introduced and scheduled for a future review.
+        let upcoming = allWords.compactMap { w -> Date? in
+            guard w.introduced, let due = w.dueDate, due > now else { return nil }
+            return due
+        }
+        guard !upcoming.isEmpty else { return }
+
+        // Group future due dates by calendar day, keeping the earliest time and
+        // the count for each day. Cap at the next 7 days to respect the pending
+        // notification limit.
+        var perDay: [Date: (earliest: Date, count: Int)] = [:]
+        for due in upcoming {
+            let day = cal.startOfDay(for: due)
+            if let existing = perDay[day] {
+                perDay[day] = (min(existing.earliest, due), existing.count + 1)
+            } else {
+                perDay[day] = (due, 1)
+            }
+        }
+
+        let sortedDays = perDay.keys.sorted().prefix(7)
+
+        for (i, day) in sortedDays.enumerated() {
+            guard let info = perDay[day] else { continue }
+            let fireDate = max(info.earliest, now.addingTimeInterval(60))
+
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Time to review 📚")
+            if info.count == 1 {
+                content.body = String(localized: "1 word is ready to review.")
+            } else {
+                content.body = String(localized: "\(info.count) words are ready to review.")
+            }
+            content.sound = .default
+            content.badge = NSNumber(value: info.count)
+
+            var comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            comps.second = 0
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: "\(ReviewDueIDs.prefix)\(i)",
+                content: content,
+                trigger: trigger
+            )
+            UNUserNotificationCenter.current().add(request)
+        }
     }
 
     func scheduleInactivityReminders(lastActive: Date) {

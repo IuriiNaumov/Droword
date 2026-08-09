@@ -9,6 +9,8 @@ final class QuizSessionManager: ObservableObject {
         case cloze
         case matching
         case sentenceBuilding
+        case listening
+        case speaking
     }
 
     struct QuizItem: Identifiable, Codable {
@@ -110,7 +112,7 @@ final class QuizSessionManager: ObservableObject {
             let reps = wordReps[item.id] ?? 0
             let isClozeEligible = item.example != nil
                 && !item.example!.isEmpty
-                && item.example!.localizedCaseInsensitiveContains(item.word)
+                && ClozeMatcher.find(word: item.word, in: item.example!) != nil
 
             // Progressive difficulty based on repetition count:
             // reps 0   → MC only (first encounter, recognition)
@@ -138,7 +140,21 @@ final class QuizSessionManager: ObservableObject {
             }
         }
 
-        let nonCloze = queue.filter { exerciseTypes[$0.id] != .cloze }
+        // Occasionally swap in audio-based exercises for variety.
+        // Listening needs network (TTS); speaking always offers a skip fallback.
+        let swappable = queue.indices.filter { exerciseTypes[queue[$0].id] != .matching }.shuffled()
+        var usedForAudio = Set<Int>()
+        if NetworkMonitor.shared.isConnected, queue.count >= 4, let idx = swappable.first {
+            exerciseTypes[queue[idx].id] = .listening
+            usedForAudio.insert(idx)
+        }
+        if queue.count >= 6, let idx = swappable.first(where: { !usedForAudio.contains($0) }) {
+            exerciseTypes[queue[idx].id] = .speaking
+            usedForAudio.insert(idx)
+        }
+
+        let directionExcluded: Set<ExerciseType> = [.cloze, .listening, .speaking]
+        let nonCloze = queue.filter { !directionExcluded.contains(exerciseTypes[$0.id] ?? .multipleChoice) }
         let halfReversed = nonCloze.count / 2
         var reversedFlags = Array(repeating: true, count: halfReversed)
             + Array(repeating: false, count: nonCloze.count - halfReversed)
@@ -288,10 +304,16 @@ final class QuizSessionManager: ObservableObject {
         UserDefaults.standard.data(forKey: Self.savedSessionKey) != nil
     }
 
+    /// - Parameter strong: `true` when the answer came from active recall
+    ///   (typing / cloze without a typo). Recognition-level answers
+    ///   (multiple choice, listening, matching, speaking) pass `false`.
+    ///   A strong answer earns `q = 5`, which lets the ease factor grow;
+    ///   recognition holds ease steady at `q = 4`.
     static func applyScheduling(
         for wordID: UUID,
         correct: Bool,
         isAlmostCorrect: Bool = false,
+        strong: Bool = false,
         store: WordsStore,
         languageStore: LanguageStore
     ) {
@@ -307,6 +329,8 @@ final class QuizSessionManager: ObservableObject {
             q = 1
         } else if isAlmostCorrect {
             q = 3
+        } else if strong {
+            q = 5
         } else {
             q = 4
         }
@@ -343,16 +367,96 @@ final class QuizSessionManager: ObservableObject {
                                    dueDate: due)
         } else {
             reps += 1
-            if reps == 1 { ivl = 1 }
-            else if reps == 2 { ivl = 6 }
-            else { ivl = max(1, Int(round(Double(ivl) * ef))) }
-            let due = cal.date(byAdding: .day, value: ivl, to: now)
-            store.updateScheduling(for: wordID,
-                                   easeFactor: ef,
-                                   intervalDays: ivl,
-                                   repetitions: reps,
-                                   lapses: lapses,
-                                   dueDate: due)
+            if reps == 1 {
+                // First success: a full day only if it came from active recall.
+                // A recognition-only pass (multiple choice / listening / matching)
+                // gets a same-day recall check instead, so the word must actually
+                // be produced before earning the 1-day interval.
+                if strong {
+                    ivl = 1
+                    let due = cal.date(byAdding: .day, value: 1, to: now)
+                    store.updateScheduling(for: wordID,
+                                           easeFactor: ef,
+                                           intervalDays: ivl,
+                                           repetitions: reps,
+                                           lapses: lapses,
+                                           dueDate: due)
+                } else {
+                    ivl = 0
+                    let due = cal.date(byAdding: .hour, value: 8, to: now)
+                    store.updateScheduling(for: wordID,
+                                           easeFactor: ef,
+                                           intervalDays: ivl,
+                                           repetitions: reps,
+                                           lapses: lapses,
+                                           dueDate: due)
+                }
+            } else {
+                if reps == 2 { ivl = 6 }
+                else { ivl = max(1, Int(round(Double(ivl) * ef))) }
+                let due = cal.date(byAdding: .day, value: ivl, to: now)
+                store.updateScheduling(for: wordID,
+                                       easeFactor: ef,
+                                       intervalDays: ivl,
+                                       repetitions: reps,
+                                       lapses: lapses,
+                                       dueDate: due)
+            }
         }
+    }
+}
+
+/// Locates the target word inside an example sentence for cloze exercises.
+/// Used by session setup (eligibility), the cloze view (blanking) and the
+/// answer check, so all three agree on exactly which surface form to blank.
+enum ClozeMatcher {
+    /// Returns the range of the matched span in `example` and its surface form,
+    /// or `nil` if the word can't be located safely.
+    static func find(word: String, in example: String) -> (range: Range<String.Index>, form: String)? {
+        let target = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty else { return nil }
+
+        // 1. Exact match, ignoring case and diacritics.
+        if let r = example.range(of: target, options: [.caseInsensitive, .diacriticInsensitive]) {
+            return (r, String(example[r]))
+        }
+
+        // 2. Simple inflection (plurals and other short-suffix changes only).
+        //    Conservative on purpose: the token must differ from the word by
+        //    just a small suffix (≥80% overlap), so we never blank a different
+        //    word that merely shares a stem (e.g. "comer" vs "comedor"). Scripts
+        //    without whitespace-delimited words (CJK) fall through to nil here.
+        let fWord = target.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+        guard fWord.count >= 4 else { return nil }
+
+        for token in tokens(in: example) {
+            let fTok = token.text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+            guard fTok.count >= 4 else { continue }
+            let shorter = Double(min(fTok.count, fWord.count))
+            let longer = Double(max(fTok.count, fWord.count))
+            guard shorter / longer >= 0.8 else { continue }
+            if fTok.hasPrefix(fWord) || fWord.hasPrefix(fTok) {
+                return (token.range, token.text)
+            }
+        }
+        return nil
+    }
+
+    /// Splits a string into maximal runs of letters, keeping their ranges.
+    private static func tokens(in s: String) -> [(range: Range<String.Index>, text: String)] {
+        var result: [(Range<String.Index>, String)] = []
+        var i = s.startIndex
+        while i < s.endIndex {
+            if s[i].isLetter {
+                let start = i
+                var j = i
+                while j < s.endIndex && s[j].isLetter { j = s.index(after: j) }
+                result.append((start..<j, String(s[start..<j])))
+                i = j
+            } else {
+                i = s.index(after: i)
+            }
+        }
+        return result
     }
 }

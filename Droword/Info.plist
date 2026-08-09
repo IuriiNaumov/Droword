@@ -13,19 +13,15 @@
 			</array>
 		</dict>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Poppins-Medium.ttf</string>
 		<string>Poppins-Regular.ttf</string>
 		<string>Poppins-Bold.ttf</string>
-	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>Droword uses the camera to take a profile photo and scan words from photos.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Droword accesses your photo library to set a profile photo and scan words from images.</string>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>instagram-stories</string>
 	</array>
 </dict>
 </plist>

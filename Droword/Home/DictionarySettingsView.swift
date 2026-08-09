@@ -27,7 +27,7 @@ struct DictionarySettingsView: View {
 
                 Text("Word packs on the home screen.")
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .padding(.horizontal, 4)
                     .padding(.top, -8)
 
@@ -45,7 +45,7 @@ struct DictionarySettingsView: View {
 
                 Text("Works with exports from Anki, Quizlet, and any CSV or TXT file. Minimum: a column named \"Word\". Translations will be added automatically if missing.")
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .padding(.horizontal, 4)
                     .padding(.top, -8)
 
@@ -112,7 +112,7 @@ struct DictionarySettingsView: View {
     private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(themeStore.bold(18))
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
     }
 
     private func settingsRow(icon: String, color: Color, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
@@ -127,18 +127,18 @@ struct DictionarySettingsView: View {
                         .frame(width: 36, height: 36)
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(color)
+                        .foregroundStyle(color)
                 }
 
                 Text(title)
                     .font(themeStore.regular(16))
-                    .foregroundColor(color == Color.accentRed ? Color.accentRed : .primary)
+                    .foregroundStyle(color == Color.accentRed ? Color.accentRed : .primary)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.6))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.6))
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 20)
@@ -155,12 +155,12 @@ struct DictionarySettingsView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
 
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Spacer()
 

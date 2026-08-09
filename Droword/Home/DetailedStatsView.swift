@@ -145,14 +145,14 @@ struct DetailedStatsView: View {
                 } else {
                     Text("Start learning to see your time chart")
                         .font(themeStore.regular(13))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .frame(height: 80)
                         .frame(maxWidth: .infinity)
                 }
 
                 Text("Based on the last 14 days")
                     .font(themeStore.regular(12))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -162,10 +162,10 @@ struct DetailedStatsView: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(themeStore.bold(18))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Text(label)
                 .font(themeStore.regular(12))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
@@ -208,7 +208,7 @@ struct DetailedStatsView: View {
                 .frame(width: 8, height: 8)
             Text("\(title) (\(count))")
                 .font(themeStore.regular(13))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 
@@ -226,10 +226,10 @@ struct DetailedStatsView: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(themeStore.bold(28))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Text(label)
                 .font(themeStore.regular(13))
-                .foregroundColor(themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -263,18 +263,18 @@ struct DetailedStatsView: View {
                                         .frame(width: 8, height: 8)
                                     Text(LocalizedStringKey(item.tag))
                                         .font(themeStore.regular(13))
-                                        .foregroundColor(.primary)
+                                        .foregroundStyle(.primary)
                                         .lineLimit(1)
                                     Spacer()
                                     Text("\(item.count)")
                                         .font(themeStore.bold(13))
-                                        .foregroundColor(themeStore.secondaryText)
+                                        .foregroundStyle(themeStore.secondaryText)
                                 }
                             }
                             if tags.count > 6 {
                                 Text("+\(tags.count - 6) more", comment: "Additional tags count")
                                     .font(themeStore.regular(12))
-                                    .foregroundColor(themeStore.secondaryText)
+                                    .foregroundStyle(themeStore.secondaryText)
                             }
                         }
                     }
@@ -294,11 +294,11 @@ struct DetailedStatsView: View {
                             HStack {
                                 Text(item.type)
                                     .font(themeStore.regular(14))
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                                 Spacer()
                                 Text("\(item.count)")
                                     .font(themeStore.bold(14))
-                                    .foregroundColor(themeStore.secondaryText)
+                                    .foregroundStyle(themeStore.secondaryText)
                             }
                         }
                     }
@@ -330,14 +330,14 @@ struct DetailedStatsView: View {
     private func factRow(text: LocalizedStringKey) -> some View {
         Text(text)
             .font(themeStore.regular(14))
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
     }
 
     private func sectionCard<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(themeStore.bold(18))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
 
             content()
         }
@@ -348,6 +348,7 @@ struct DetailedStatsView: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
     }
 }
 

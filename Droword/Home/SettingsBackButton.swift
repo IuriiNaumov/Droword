@@ -8,7 +8,7 @@ struct SettingsBackButton: View {
         Button { dismiss() } label: {
             Image(systemName: "chevron.left")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(themeStore.mainAccentColor)
+                .foregroundStyle(themeStore.mainAccentColor)
         }
         .buttonStyle(.plain)
     }

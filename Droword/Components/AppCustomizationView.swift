@@ -22,7 +22,7 @@ struct AppCustomizationView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Background")
                                 .font(themeStore.bold(16))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 16)
 
@@ -45,7 +45,7 @@ struct AppCustomizationView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("App icon")
                             .font(themeStore.bold(16))
-                            .foregroundColor(themeStore.mainText)
+                            .foregroundStyle(themeStore.mainText)
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
 
@@ -72,22 +72,22 @@ struct AppCustomizationView: View {
                                     .frame(width: 36, height: 36)
                                 Image(systemName: appearance == .dark ? "moon.fill" : (appearance == .light ? "sun.max.fill" : "circle.lefthalf.filled"))
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(themeStore.monoDark)
+                                    .foregroundStyle(themeStore.monoDark)
                             }
 
                             Text("Mode")
                                 .font(themeStore.regular(16))
-                                .foregroundColor(themeStore.mainText)
+                                .foregroundStyle(themeStore.mainText)
 
                             Spacer()
 
                             Text(appearance.title)
                                 .font(themeStore.regular(14))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
 
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(themeStore.accentBlue)
+                                .foregroundStyle(themeStore.accentBlue)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
@@ -105,18 +105,18 @@ struct AppCustomizationView: View {
                                     .frame(width: 36, height: 36)
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(themeStore.iconPink)
+                                    .foregroundStyle(themeStore.iconPink)
                             }
 
                             HStack(spacing: 6) {
                                 Text("Seasonal effects")
                                     .font(themeStore.regular(16))
-                                    .foregroundColor(themeStore.mainText)
+                                    .foregroundStyle(themeStore.mainText)
 
                                 if !isPremium {
                                     Text("PRO")
                                         .font(themeStore.bold(9))
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(Capsule().fill(themeStore.accentBlue))
@@ -127,11 +127,11 @@ struct AppCustomizationView: View {
 
                             Text(seasonalEffectsEnabled ? "On" : "Off")
                                 .font(themeStore.regular(14))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
 
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(themeStore.accentBlue)
+                                .foregroundStyle(themeStore.accentBlue)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
@@ -156,6 +156,8 @@ struct AppCustomizationView: View {
             AppearancePickerView()
                 .environmentObject(themeStore)
                 .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(DesignRadius.dialog)
         }
     }
 
@@ -196,7 +198,7 @@ struct AppCustomizationView: View {
                     .overlay(
                         Image(systemName: "app.fill")
                             .font(.system(size: 28))
-                            .foregroundColor(themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.mainAccentColor)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -206,7 +208,7 @@ struct AppCustomizationView: View {
 
             Text(name)
                 .font(themeStore.regular(12))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
         }
     }
 

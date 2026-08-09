@@ -33,11 +33,11 @@ struct FirstWordsView: View {
                 VStack(spacing: 8) {
                     Text("Start with these words")
                         .font(themeStore.bold(24))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("Tap any word to add it to your dictionary")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .opacity(textOpacity)
@@ -55,7 +55,7 @@ struct FirstWordsView: View {
                 } label: {
                     Text(addedWords.isEmpty ? "Skip" : "Continue")
                         .font(themeStore.bold(17))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
@@ -94,18 +94,18 @@ struct FirstWordsView: View {
                 HStack(spacing: 6) {
                     Text(starter.word)
                         .font(themeStore.bold(17))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     if let transcription = starter.transcription {
                         Text("[\(transcription)]")
                             .font(themeStore.regular(12))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                 }
 
                 Text(starter.translation)
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
             }
 
             Spacer()
@@ -129,7 +129,7 @@ struct FirstWordsView: View {
             } label: {
                 Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
                     .font(.system(size: 28, weight: .medium))
-                    .foregroundColor(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
+                    .foregroundStyle(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
             }
             .buttonStyle(.plain)
         }

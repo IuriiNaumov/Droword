@@ -28,11 +28,11 @@ struct AchievementsView: View {
                 VStack(spacing: 6) {
                     Text("\(unlockedCount)/\(BadgeStore.allBadges.count)")
                         .font(themeStore.bold(32))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("achievements unlocked")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 ForEach(BadgeCategory.allCases, id: \.rawValue) { category in
@@ -41,7 +41,7 @@ struct AchievementsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category.title)
                                 .font(themeStore.bold(18))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .padding(.horizontal, 20)
 
                             LazyVGrid(columns: columns, spacing: 12) {

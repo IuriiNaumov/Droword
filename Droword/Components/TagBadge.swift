@@ -6,7 +6,7 @@ struct TagBadge: View {
     var body: some View {
         Text(text)
             .font(themeStore.medium(14))
-            .foregroundColor(themeStore.mainText)
+            .foregroundStyle(themeStore.mainText)
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
             .background(

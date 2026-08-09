@@ -12,11 +12,12 @@ struct StatCardView: View {
         VStack(spacing: 6) {
             Text(value)
                 .font(themeStore.bold(22))
-                .foregroundColor(themeStore.isMonochrome ? .white : themeStore.mainText)
+                .foregroundStyle(themeStore.isMonochrome ? .white : themeStore.mainText)
+                .contentTransition(.numericText())
 
             Text(title)
                 .font(themeStore.medium(13))
-                .foregroundColor(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
+                .foregroundStyle(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
@@ -29,6 +30,7 @@ struct StatCardView: View {
                          : themeStore.appBg))
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: value)
     }
 }

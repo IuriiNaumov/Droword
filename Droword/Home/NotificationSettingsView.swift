@@ -181,7 +181,7 @@ struct NotificationSettingsView: View {
                                     Text("End time must be after start time")
                                         .font(themeStore.regular(12))
                                 }
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .padding(.horizontal, 20)
                                 .padding(.top, 6)
                             }
@@ -189,7 +189,7 @@ struct NotificationSettingsView: View {
                             if store.words.isEmpty {
                                 Text("Add words to receive vocabulary notifications")
                                     .font(themeStore.regular(12))
-                                    .foregroundColor(themeStore.secondaryText)
+                                    .foregroundStyle(themeStore.secondaryText)
                                     .padding(.horizontal, 20)
                                     .padding(.top, 6)
                             }
@@ -212,7 +212,7 @@ struct NotificationSettingsView: View {
 
                     Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
                         .font(themeStore.regular(12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .padding(.horizontal, 8)
                 }
             }
@@ -318,21 +318,21 @@ struct NotificationSettingsView: View {
                 HStack {
                     Text("DROWORD")
                         .font(themeStore.bold(12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                     Spacer()
                     Text("now")
                         .font(themeStore.regular(12))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Text(sampleWord.word)
                     .font(themeStore.bold(15))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
 
                 Text(previewBody)
                     .font(themeStore.regular(14))
-                    .foregroundColor(.primary.opacity(0.8))
+                    .foregroundStyle(.primary.opacity(0.8))
                     .lineLimit(2)
             }
         }
@@ -366,11 +366,11 @@ struct NotificationSettingsView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
@@ -389,11 +389,11 @@ struct NotificationSettingsView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             DatePicker("", selection: date, displayedComponents: .hourAndMinute)
                 .labelsHidden()
@@ -412,15 +412,15 @@ struct NotificationSettingsView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: "number")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(themeStore.iconBlue)
+                    .foregroundStyle(themeStore.iconBlue)
             }
             Text("Per day")
                 .font(themeStore.regular(16))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             Stepper("\(value.wrappedValue)", value: value, in: 1...10)
                 .font(themeStore.medium(16))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 20)
@@ -430,6 +430,6 @@ struct NotificationSettingsView: View {
     private func sectionHeader(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(themeStore.bold(18))
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
     }
 }

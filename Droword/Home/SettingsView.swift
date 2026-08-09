@@ -66,7 +66,7 @@ struct SettingsView: View {
                                     .overlay(
                                         Image(systemName: "person.fill")
                                             .font(.system(size: 40, weight: .medium))
-                                            .foregroundColor(themeStore.mainText.opacity(0.7))
+                                            .foregroundStyle(themeStore.mainText.opacity(0.7))
                                     )
                                     
                             }
@@ -79,7 +79,7 @@ struct SettingsView: View {
 
                         Text(displayName)
                             .font(themeStore.bold(22))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity, alignment: .center)
                             #if DEBUG
@@ -91,7 +91,7 @@ struct SettingsView: View {
 
                         Text("\(usageDurationString()) with Droword")
                             .font(themeStore.regular(14))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                     .padding(.top, 32)
 
@@ -221,18 +221,24 @@ struct SettingsView: View {
                 }
             }
             .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(DesignRadius.dialog)
             .preferredColorScheme(appearance.colorScheme)
         }
         .sheet(isPresented: $showPersonalDetailsSheet) {
             PersonalDetailsView()
                 .environmentObject(themeStore)
                 .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(DesignRadius.dialog)
                 .preferredColorScheme(appearance.colorScheme)
         }
         .sheet(isPresented: $showFontSizeSheet) {
             FontSizePickerView()
                 .environmentObject(themeStore)
                 .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .presentationCornerRadius(DesignRadius.dialog)
                 .preferredColorScheme(appearance.colorScheme)
         }
         
@@ -253,23 +259,23 @@ struct SettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.accentBlue)
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
                         Text("PRO Trial")
                             .font(themeStore.bold(16))
-                            .foregroundColor(themeStore.mainText)
+                            .foregroundStyle(themeStore.mainText)
                         Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
                             .font(themeStore.regular(12))
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                     } else {
                         Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
                             .font(themeStore.bold(16))
-                            .foregroundColor(themeStore.mainText)
+                            .foregroundStyle(themeStore.mainText)
                         Text(isPremium ? LocalizedStringKey("Unlimited access") : LocalizedStringKey("Unlock unlimited AI features"))
                             .font(themeStore.regular(12))
-                            .foregroundColor(themeStore.secondaryText)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                 }
 
@@ -278,14 +284,14 @@ struct SettingsView: View {
                 if !isPremium {
                     Text("Upgrade")
                         .font(themeStore.bold(13))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
                         .background(Capsule().fill(themeStore.accentBlue))
                 } else {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 22))
-                        .foregroundColor(themeStore.accentBlue)
+                        .foregroundStyle(themeStore.accentBlue)
                 }
             }
             .padding(.horizontal, 18)
@@ -316,18 +322,18 @@ struct SettingsView: View {
                                 .frame(width: 36, height: 36)
                             Image(systemName: item.icon)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(item.color)
+                                .foregroundStyle(item.color)
                         }
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(item.title)
                                 .font(themeStore.regular(16))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
 
                             if item.showProBadge {
                                 Text("PRO")
                                     .font(themeStore.bold(9))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(Capsule().fill(themeStore.accentBlue))
@@ -339,12 +345,12 @@ struct SettingsView: View {
                         if let value = item.value {
                             Text(value)
                                 .font(themeStore.regular(14))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                         }
 
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(themeStore.accentBlue)
+                            .foregroundStyle(themeStore.accentBlue)
                     }
                     .padding(.vertical, 14)
                     .padding(.horizontal, 20)
@@ -355,6 +361,7 @@ struct SettingsView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
         .padding(.horizontal, 20)
     }
 

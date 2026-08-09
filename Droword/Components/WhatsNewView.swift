@@ -55,11 +55,11 @@ struct WhatsNewView: View {
                 VStack(spacing: 8) {
                     Text("What's New")
                         .font(themeStore.bold(28))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text("Version \(appVersion)")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
                 .padding(.top, 24)
 
@@ -91,16 +91,16 @@ struct WhatsNewView: View {
                     .frame(width: 48, height: 48)
                 Image(systemName: feature.icon)
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(feature.color)
+                    .foregroundStyle(feature.color)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature.title)
                     .font(themeStore.medium(16))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                 Text(feature.description)
                     .font(themeStore.regular(13))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -112,6 +112,7 @@ struct WhatsNewView: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .cardDepth(cornerRadius: 16)
     }
 
     private var appVersion: String {

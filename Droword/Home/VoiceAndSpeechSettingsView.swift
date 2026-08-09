@@ -16,7 +16,7 @@ struct VoiceAndSpeechSettingsView: View {
 
                 Text("Voice")
                     .font(themeStore.bold(18))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal)
 
                 VoicePickerView(
@@ -33,7 +33,7 @@ struct VoiceAndSpeechSettingsView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Speed")
                         .font(themeStore.bold(18))
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .padding(.horizontal)
 
                     VStack(spacing: 8) {

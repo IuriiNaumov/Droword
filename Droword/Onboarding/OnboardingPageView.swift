@@ -37,7 +37,7 @@ struct OnboardingPageView: View {
                 VStack(spacing: 10) {
                     Text(model.title)
                         .font(themeStore.bold(28))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                         .multilineTextAlignment(.center)
                         .opacity(showTitle ? 1 : 0)
                         .offset(y: showTitle ? 0 : 12)
@@ -45,7 +45,7 @@ struct OnboardingPageView: View {
 
                     Text(model.subtitle)
                         .font(themeStore.regular(16))
-                        .foregroundColor(themeStore.mainText.opacity(0.75))
+                        .foregroundStyle(themeStore.mainText.opacity(0.75))
                         .multilineTextAlignment(.center)
                         .opacity(showSubtitle ? 1 : 0)
                         .offset(y: showSubtitle ? 0 : 12)

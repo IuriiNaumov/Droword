@@ -16,18 +16,18 @@ struct EmptyListView: View {
         VStack(spacing: 18) {
             Image(systemName: icon)
                 .font(.system(size: 44))
-                .foregroundColor(themeStore.secondaryText.opacity(0.35))
+                .foregroundStyle(themeStore.secondaryText.opacity(0.35))
                 .scaleEffect(iconScale)
 
             Text(title)
                 .font(themeStore.medium(18))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
                 .font(themeStore.regular(14))
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundStyle(.secondary.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .opacity(subtitleOpacity)
@@ -35,7 +35,7 @@ struct EmptyListView: View {
             if let tip {
                 Text(tip)
                     .font(themeStore.regular(13))
-                    .foregroundColor(.secondary.opacity(0.7))
+                    .foregroundStyle(.secondary.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                     .opacity(subtitleOpacity)

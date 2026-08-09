@@ -33,7 +33,7 @@ struct LanguageCube: View {
 
                 Text(language.name)
                     .font(themeStore.medium(14))
-                    .foregroundColor(textColor)
+                    .foregroundStyle(textColor)
             }
             .frame(height: 110)
             .frame(maxWidth: .infinity)

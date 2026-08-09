@@ -39,19 +39,19 @@ struct CustomAlertView: View {
                         .frame(width: 56, height: 56)
                     Image(systemName: icon)
                         .font(.system(size: 26, weight: .semibold))
-                        .foregroundColor(iconColor)
+                        .foregroundStyle(iconColor)
                         .symbolRenderingMode(.hierarchical)
                 }
                 .padding(.top, 4)
 
                 Text(title)
                     .font(themeStore.bold(18))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 Text(message)
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -62,7 +62,7 @@ struct CustomAlertView: View {
                     } label: {
                         Text(primaryButton.title)
                             .font(themeStore.bold(15))
-                            .foregroundColor(buttonTextColor(primaryButton.style))
+                            .foregroundStyle(buttonTextColor(primaryButton.style))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 13)
                             .background(
@@ -79,7 +79,7 @@ struct CustomAlertView: View {
                         } label: {
                             Text(secondary.title)
                                 .font(themeStore.medium(14))
-                                .foregroundColor(themeStore.secondaryText)
+                                .foregroundStyle(themeStore.secondaryText)
                         }
                         .buttonStyle(.plain)
                     }

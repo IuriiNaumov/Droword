@@ -22,7 +22,7 @@ struct FormTextField: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 19)
-            .foregroundColor(themeStore.mainText)
+            .foregroundStyle(themeStore.mainText)
             .tint(themeStore.mainAccentColor)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)

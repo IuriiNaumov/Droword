@@ -16,7 +16,7 @@ struct SeasonalEffectsSettingsView: View {
 
                 Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText)
+                    .foregroundStyle(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 8)
 
@@ -48,7 +48,7 @@ struct SeasonalEffectsSettingsView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Current season")
                         .font(themeStore.bold(18))
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     let season = Season.current
                     HStack(spacing: 8) {
@@ -56,7 +56,7 @@ struct SeasonalEffectsSettingsView: View {
                             .font(.system(size: 28))
                         Text(seasonName(season))
                             .font(themeStore.medium(16))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
                 .padding(.horizontal, 8)
@@ -102,11 +102,11 @@ struct SeasonalEffectsSettingsView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()

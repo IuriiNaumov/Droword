@@ -28,18 +28,18 @@ struct QuizMultipleChoiceExercise: View {
             VStack(spacing: 8) {
                 Text(prompt)
                     .font(themeStore.bold(28))
-                    .foregroundColor(themeStore.mainText)
+                    .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
                 if !isReversed, let tr = item.transcription, !tr.isEmpty {
                     Text("[\(tr)]")
                         .font(themeStore.regular(14))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Text(isReversed ? "Choose the correct word" : "Choose the correct translation")
                     .font(themeStore.regular(14))
-                    .foregroundColor(themeStore.secondaryText.opacity(0.7))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
                     .padding(.top, 8)
             }
             .padding(.bottom, 32)
@@ -81,18 +81,18 @@ struct QuizMultipleChoiceExercise: View {
             HStack {
                 Text(option)
                     .font(themeStore.medium(16))
-                    .foregroundColor(textColor)
+                    .foregroundStyle(textColor)
 
                 Spacer()
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
@@ -106,7 +106,8 @@ struct QuizMultipleChoiceExercise: View {
         .buttonStyle(.plain)
         .disabled(hasAnswered)
         .opacity(isIrrelevant ? 0.4 : 1.0)
-        .animation(.easeInOut(duration: 0.25), value: hasAnswered)
+        .scaleEffect(hasAnswered && isThisCorrect ? 1.05 : 1.0)
+        .animation(.spring(response: 0.35, dampingFraction: 0.5), value: hasAnswered)
         .accessibilityLabel(Text(option))
         .accessibilityAddTraits(hasAnswered && isThisCorrect ? .isSelected : [])
     }

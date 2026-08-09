@@ -41,7 +41,7 @@ struct PracticeView: View {
         HStack {
             Text("Practice")
                 .font(themeStore.bold(38))
-                .foregroundColor(themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
 
             Spacer()
         }

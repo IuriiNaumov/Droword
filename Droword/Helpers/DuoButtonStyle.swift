@@ -8,7 +8,7 @@ struct Duo3DStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(themeStore.bold(17))
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .background(

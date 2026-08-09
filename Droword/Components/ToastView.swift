@@ -36,12 +36,12 @@ struct BannerToastView: View {
                 HStack(spacing: 10) {
 
                     Image(systemName: type.icon)
-                        .foregroundColor(themeStore.toastText)
+                        .foregroundStyle(themeStore.toastText)
                         .font(.system(size: 18, weight: .semibold))
 
                     Text(message ?? type.text)
                         .font(themeStore.medium(15))
-                        .foregroundColor(themeStore.toastText)
+                        .foregroundStyle(themeStore.toastText)
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
@@ -78,7 +78,7 @@ struct BannerToastView: View {
         VStack(spacing: 30) {
             Text("Light Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(Color.mainBlack)
+                .foregroundStyle(Color.mainBlack)
                 .padding(.top, 40)
 
             BannerToastView(type: .success, message: nil, duration: 60)
@@ -99,7 +99,7 @@ struct BannerToastView: View {
         VStack(spacing: 30) {
             Text("Dark Mode")
                 .font(.custom("Poppins-Bold", size: 22))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.top, 40)
 
             BannerToastView(type: .success, message: nil, duration: 60)

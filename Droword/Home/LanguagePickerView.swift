@@ -33,22 +33,31 @@ struct LanguageSelectionView: View {
                 Text("Language Preferences")
                     .sheetTitle()
 
-                HStack(spacing: 10) {
-                    Text(flag(for: languageStore.nativeLanguage))
-                        .font(.system(size: 28))
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(themeStore.accentBlue)
-                    Text(flag(for: languageStore.learningLanguage))
-                        .font(.system(size: 28))
+                VStack(spacing: 10) {
+                    HStack(spacing: 10) {
+                        Text(flag(for: languageStore.nativeLanguage))
+                            .font(.system(size: 28))
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(themeStore.accentBlue)
+                        Text(flag(for: languageStore.learningLanguage))
+                            .font(.system(size: 28))
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+                    )
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
+
+                    Text(LanguageLevels.localizedLabel(forCode: languageStore.learningLevel))
+                        .font(themeStore.bold(13))
+                        .foregroundStyle(themeStore.mainAccentColor)
+                        .padding(.vertical, 5)
+                        .padding(.horizontal, 14)
+                        .background(Capsule().fill(themeStore.mainAccentColor.opacity(0.15)))
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 20)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
 
                 LanguageCubePicker(
                     selectedLanguage: $languageStore.nativeLanguage,
@@ -63,6 +72,8 @@ struct LanguageSelectionView: View {
                     languages: LanguageCatalog.availableLanguages,
                     blockedLanguage: languageStore.nativeLanguage
                 )
+
+                LanguageLevelPicker()
             }
             .padding(.bottom, 50)
         }

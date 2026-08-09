@@ -109,11 +109,11 @@ struct MilestoneCelebrationView: View {
                 VStack(spacing: 8) {
                     Text(milestone.title)
                         .font(themeStore.bold(28))
-                        .foregroundColor(themeStore.mainText)
+                        .foregroundStyle(themeStore.mainText)
 
                     Text(milestone.message(wordsCount: wordsCount, daysSinceStart: daysSinceStart))
                         .font(themeStore.regular(16))
-                        .foregroundColor(themeStore.secondaryText)
+                        .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .opacity(textOpacity)
@@ -124,7 +124,7 @@ struct MilestoneCelebrationView: View {
                 } label: {
                     Text("Continue")
                         .font(themeStore.bold(17))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
