@@ -123,10 +123,10 @@ struct DictionarySettingsView: View {
             action()
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(color == Color.accentRed ? Color.accentRed : themeStore.mainText)
-                    .frame(width: 28, height: 28)
+                MenuSymbol(
+                    systemName: icon,
+                    color: color == Color.accentRed ? Color.accentRed : nil
+                )
 
                 Text(title)
                     .font(themeStore.regular(16))
@@ -146,25 +146,30 @@ struct DictionarySettingsView: View {
     }
 
     private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(themeStore.mainText)
-                .frame(width: 28, height: 28)
+        Button {
+            isOn.wrappedValue.toggle()
+            Haptics.menuTap()
+        } label: {
+            HStack(spacing: 14) {
+                MenuSymbol(systemName: icon)
 
-            Text(title)
-                .font(themeStore.regular(16))
-                .foregroundStyle(themeStore.mainText)
+                Text(title)
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
 
-            Spacer()
+                Spacer()
 
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(themeStore.mainAccentColor)
+                Toggle("", isOn: isOn)
+                    .labelsHidden()
+                    .tint(themeStore.mainAccentColor)
+                    .allowsHitTesting(false)
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(themeStore.cardBg)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
-        .background(themeStore.cardBg)
+        .buttonStyle(.plain)
     }
 
     private func exportCSV() {

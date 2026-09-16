@@ -233,32 +233,39 @@ struct StreakCalendarView: View {
     private func monthDayCell(day: DayActivity) -> some View {
         let dayNum = Calendar.current.component(.day, from: day.date)
         let isSelected = selectedDay?.date == day.date
+        let isStreakDay = !day.isFuture && day.count > 0 && currentStreakDates.contains(day.date)
 
         return VStack(spacing: 1) {
             ZStack {
                 Circle()
-                    .fill(monthCellColor(for: day))
+                    .fill(isStreakDay ? Color.clear : monthCellColor(for: day))
                     .frame(width: isSelected ? 38 : 34, height: isSelected ? 38 : 34)
 
-                Text("\(dayNum)")
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(day.isFuture
-                        ? themeStore.secondaryText.opacity(0.3)
-                        : themeStore.mainText)
+                if isStreakDay {
+                    BurningFlameIcon(size: isSelected ? 20 : 18)
+                } else {
+                    Text("\(dayNum)")
+                        .font(themeStore.medium(13))
+                        .foregroundStyle(day.isFuture
+                            ? themeStore.secondaryText.opacity(0.3)
+                            : themeStore.mainText)
+                }
             }
 
             if day.isStreakMilestone {
                 Text("⭐")
                     .font(.system(size: 8))
                     .frame(height: 10)
-            } else if !day.isFuture && day.count > 0 && currentStreakDates.contains(day.date) {
-                Text("🔥")
-                    .font(.system(size: 8))
+            } else if isStreakDay {
+                Text("\(dayNum)")
+                    .font(themeStore.regular(10))
+                    .foregroundStyle(themeStore.mainText)
                     .frame(height: 10)
             } else {
                 Color.clear.frame(height: 10)
             }
         }
+        .accessibilityLabel(Text("\(dayNum)"))
         .frame(minHeight: 48)
         .contentShape(Rectangle())
         .onTapGesture {
@@ -278,9 +285,6 @@ struct StreakCalendarView: View {
         if day.isFuture { return Color.clear }
         if day.count == 0 { return themeStore.secondaryText.opacity(0.08) }
         let intensity = min(1.0, Double(day.count) / Double(max(cachedMaxCount, 3)))
-        if currentStreakDates.contains(day.date) {
-            return StreakFireStyle.red.opacity(0.35 + intensity * 0.55)
-        }
         return themeStore.accentGreen.opacity(0.3 + intensity * 0.7)
     }
 

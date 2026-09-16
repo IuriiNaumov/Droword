@@ -87,25 +87,48 @@ struct DictionaryView: View {
 
     private var populatedDictionary: some View {
         ScrollViewReader { proxy in
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    dictionaryHeader(showsSelect: true)
-                        .id("dictionaryTop")
-                    DictionarySearchBar(
-                        searchText: $searchText,
-                        isFocused: $isSearchFocused,
-                        enabled: true
-                    )
-                    tagsRow
-                    wordGrid
+            Group {
+                if showsDictionaryFilterEmpty {
+                    VStack(spacing: 16) {
+                        dictionaryHeader(showsSelect: true)
+                            .id("dictionaryTop")
+                        DictionarySearchBar(
+                            searchText: $searchText,
+                            isFocused: $isSearchFocused,
+                            enabled: true
+                        )
+                        tagsRow
+                        Spacer(minLength: 0)
+                    }
+                    .iPadContentWidth(1000)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay {
+                        dictionaryEmptyFilter
+                            .iPadContentWidth(1000)
+                            .allowsHitTesting(false)
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            dictionaryHeader(showsSelect: true)
+                                .id("dictionaryTop")
+                            DictionarySearchBar(
+                                searchText: $searchText,
+                                isFocused: $isSearchFocused,
+                                enabled: true
+                            )
+                            tagsRow
+                            wordGrid
+                        }
+                        .iPadContentWidth(1000)
+                    }
+                    .refreshable { await runDictionaryRefresh() }
+                    .scrollDismissesKeyboard(.immediately)
                 }
-                .iPadContentWidth(1000)
             }
             .onChange(of: selectedTag) {
                 proxy.scrollTo("dictionaryTop", anchor: .top)
             }
-            .refreshable { await runDictionaryRefresh() }
-            .scrollDismissesKeyboard(.immediately)
         }
     }
 
@@ -169,31 +192,27 @@ struct DictionaryView: View {
 
     private var wordGrid: some View {
         LazyVGrid(columns: gridColumns, spacing: 12) {
-            if filteredWords.isEmpty {
-                dictionaryEmptyFilter
-            } else {
-                if isSelectMode {
-                    selectAllRow
-                }
-                ForEach(Array(filteredWords.enumerated()), id: \.element.id) { index, word in
-                    DictionaryWordRow(
-                        word: word,
-                        index: index,
-                        isSelectMode: isSelectMode,
-                        isSelected: selectedWordIDs.contains(word.id),
-                        hasAppeared: cardAppeared.contains(word.id),
-                        showReactionHint: index == 0 && !hasSeenReactionHint,
-                        onToggleSelect: { toggleSelection(word.id) },
-                        onDelete: { store.remove(word) },
-                        onReaction: { emoji in
-                            store.setReaction(for: word.id, reaction: emoji)
-                            if !hasSeenReactionHint {
-                                withAnimation { hasSeenReactionHint = true }
-                            }
-                        },
-                        onAppearCard: { appearCard(word.id, index: index) }
-                    )
-                }
+            if isSelectMode {
+                selectAllRow
+            }
+            ForEach(Array(filteredWords.enumerated()), id: \.element.id) { index, word in
+                DictionaryWordRow(
+                    word: word,
+                    index: index,
+                    isSelectMode: isSelectMode,
+                    isSelected: selectedWordIDs.contains(word.id),
+                    hasAppeared: cardAppeared.contains(word.id),
+                    showReactionHint: index == 0 && !hasSeenReactionHint,
+                    onToggleSelect: { toggleSelection(word.id) },
+                    onDelete: { store.remove(word) },
+                    onReaction: { emoji in
+                        store.setReaction(for: word.id, reaction: emoji)
+                        if !hasSeenReactionHint {
+                            withAnimation { hasSeenReactionHint = true }
+                        }
+                    },
+                    onAppearCard: { appearCard(word.id, index: index) }
+                )
             }
         }
         .padding(.horizontal, horizontalPadding)
@@ -202,22 +221,26 @@ struct DictionaryView: View {
         .id(themeStore.palette)
     }
 
+    private var showsDictionaryFilterEmpty: Bool {
+        filteredWords.isEmpty && (
+            !(selectedTag ?? "").isEmpty || !searchText.isEmpty
+        )
+    }
+
     @ViewBuilder
     private var dictionaryEmptyFilter: some View {
         if let tag = selectedTag, !tag.isEmpty {
             EmptyListView(
-                icon: "tag",
+                icon: nil,
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
             )
-            .frame(minHeight: 300)
         } else if !searchText.isEmpty {
             EmptyListView(
                 icon: "magnifyingglass",
                 title: DuoChaosCopy.dictionaryEmpty(tag: nil).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: nil).subtitle
             )
-            .frame(minHeight: 300)
         }
     }
 

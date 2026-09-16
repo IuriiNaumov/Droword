@@ -352,22 +352,37 @@ def bg_forest() -> Image.Image:
 
 
 def bg_english() -> Image.Image:
-    img = new_canvas(rgb("FFFFFF"))
+    """Union Jack — UK, not US."""
+    blue, white, red = rgb("012169"), rgb("FFFFFF"), rgb("C8102E")
+    img = new_canvas(blue)
     d = ImageDraw.Draw(img)
-    stripe_h = SIZE / 13
-    for i in range(13):
-        if i % 2 == 0:
-            d.rectangle((0, i * stripe_h, SIZE, (i + 1) * stripe_h), fill=rgb("B22234"))
-    canton_w, canton_h = SIZE * 0.40, stripe_h * 7
-    d.rectangle((0, 0, canton_w, canton_h), fill=rgb("3C3B6E"))
-    for row in range(9):
-        cols = 6 if row % 2 == 0 else 5
-        for col in range(cols):
-            ox = canton_w / (6 + 0.5)
-            x = ox * (col + (1 if row % 2 == 0 else 1.5))
-            y = canton_h / 10 * (row + 1)
-            draw_stars(d, x, y, 14, rgb("FFFFFF"), 5)
+    d.line((0, 0, SIZE, SIZE), fill=white, width=int(SIZE * 0.26))
+    d.line((SIZE, 0, 0, SIZE), fill=white, width=int(SIZE * 0.26))
+    d.line((0, 0, SIZE, SIZE), fill=red, width=int(SIZE * 0.09))
+    d.line((SIZE, 0, 0, SIZE), fill=red, width=int(SIZE * 0.09))
+    cross = SIZE * 0.28
+    bar = SIZE * 0.16
+    mid = SIZE / 2
+    d.rectangle((mid - cross / 2, 0, mid + cross / 2, SIZE), fill=white)
+    d.rectangle((0, mid - cross / 2, SIZE, mid + cross / 2), fill=white)
+    d.rectangle((mid - bar / 2, 0, mid + bar / 2, SIZE), fill=red)
+    d.rectangle((0, mid - bar / 2, SIZE, mid + bar / 2), fill=red)
     return gloss(img, 22)
+
+
+def bg_portuguese() -> Image.Image:
+    """Portugal flag: green hoist, red fly, gold sphere."""
+    img = new_canvas(rgb("DA291C"))
+    d = ImageDraw.Draw(img)
+    d.rectangle((0, 0, SIZE * 0.40, SIZE), fill=rgb("046A38"))
+    cx, cy = SIZE * 0.40, SIZE / 2
+    r = SIZE * 0.17
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=rgb("F1B517"))
+    inner = r * 0.58
+    d.ellipse((cx - inner, cy - inner, cx + inner, cy + inner), fill=rgb("DA291C"))
+    ring = r * 0.78
+    d.ellipse((cx - ring, cy - ring, cx + ring, cy + ring), outline=rgb("FFFFFF"), width=10)
+    return gloss(img, 24)
 
 
 def bg_spanish() -> Image.Image:
@@ -500,6 +515,7 @@ def main() -> None:
     save("AppIconJapanese", compose(bg_japanese(), rgb("1C1C1E")))
     save("AppIconChinese", compose(bg_chinese(), rgb("FFFFFF")))
     save("AppIconKorean", compose(bg_korean(), rgb("1C1C1E")))
+    save("AppIconPortuguese", compose(bg_portuguese(), rgb("FFFFFF")))
 
 
 if __name__ == "__main__":

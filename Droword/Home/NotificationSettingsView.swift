@@ -405,30 +405,32 @@ struct NotificationSettingsView: View {
     }
 
     private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(themeStore.mainText)
-                .frame(width: 28, height: 28)
-            Text(title)
-                .font(themeStore.regular(16))
-                .foregroundStyle(themeStore.mainText)
-            Spacer()
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(themeStore.mainAccentColor)
+        Button {
+            isOn.wrappedValue.toggle()
+            Haptics.menuTap()
+        } label: {
+            HStack(spacing: 14) {
+                MenuSymbol(systemName: icon)
+                Text(title)
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
+                Spacer()
+                Toggle("", isOn: isOn)
+                    .labelsHidden()
+                    .tint(themeStore.mainAccentColor)
+                    .allowsHitTesting(false)
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(themeStore.cardBg)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
-        .background(themeStore.cardBg)
+        .buttonStyle(.plain)
     }
 
     private func timePickerRow(icon: String, color: Color = .clear, title: LocalizedStringKey, date: Binding<Date>) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(themeStore.mainText)
-                .frame(width: 28, height: 28)
+            MenuSymbol(systemName: icon)
             Text(title)
                 .font(themeStore.regular(16))
                 .foregroundStyle(themeStore.mainText)
@@ -444,10 +446,7 @@ struct NotificationSettingsView: View {
 
     private func frequencyRow(value: Binding<Int>) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: "number")
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(themeStore.mainText)
-                .frame(width: 28, height: 28)
+            MenuSymbol(systemName: "number")
             Text("Per day")
                 .font(themeStore.regular(16))
                 .foregroundStyle(themeStore.mainText)

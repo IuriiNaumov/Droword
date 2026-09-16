@@ -23,12 +23,10 @@ struct QuizProgressHeader: View {
                         .transition(.scale.combined(with: .opacity))
                 } else if session.currentStreak >= 2 {
                     HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(themeStore.accentGreen)
+                        BurningFlameIcon(size: 14)
                         Text("\(session.currentStreak)")
                             .font(themeStore.bold(14))
-                            .foregroundStyle(themeStore.accentGreen)
+                            .foregroundStyle(StreakFireStyle.red)
                     }
                     .scaleEffect(streakScale)
                     .transition(.scale.combined(with: .opacity))

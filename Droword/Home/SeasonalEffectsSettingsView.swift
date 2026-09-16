@@ -95,22 +95,27 @@ struct SeasonalEffectsSettingsView: View {
     }
 
     private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(themeStore.mainText)
-                .frame(width: 28, height: 28)
-            Text(title)
-                .font(themeStore.regular(16))
-                .foregroundStyle(themeStore.mainText)
-            Spacer()
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(themeStore.mainAccentColor)
+        Button {
+            isOn.wrappedValue.toggle()
+            Haptics.menuTap()
+        } label: {
+            HStack(spacing: 14) {
+                MenuSymbol(systemName: icon)
+                Text(title)
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
+                Spacer()
+                Toggle("", isOn: isOn)
+                    .labelsHidden()
+                    .tint(themeStore.mainAccentColor)
+                    .allowsHitTesting(false)
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(themeStore.cardBg)
+            .contentShape(Rectangle())
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 18)
-        .background(themeStore.cardBg)
+        .buttonStyle(.plain)
     }
 
     private func seasonName(_ season: Season) -> String {

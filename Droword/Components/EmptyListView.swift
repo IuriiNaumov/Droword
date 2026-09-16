@@ -3,7 +3,7 @@ import SwiftUI
 struct EmptyListView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
-    var icon: String = "text.badge.plus"
+    var icon: String? = "text.badge.plus"
     var illustration: AnyView? = nil
     var title: String = String(localized: "Your word garden is waiting")
     var subtitle: String = String(localized: "Add a couple of words — and we'll begin the journey.")
@@ -15,15 +15,19 @@ struct EmptyListView: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Group {
-                if let illustration {
-                    illustration
-                } else {
-                    HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+            Spacer(minLength: 0)
+
+            if illustration != nil || icon != nil {
+                Group {
+                    if let illustration {
+                        illustration
+                    } else if let icon {
+                        HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+                    }
                 }
+                .frame(width: 176, height: 176)
+                .scaleEffect(iconScale)
             }
-            .frame(width: 176, height: 176)
-            .scaleEffect(iconScale)
 
             Text(title)
                 .font(themeStore.display(20))
@@ -53,11 +57,15 @@ struct EmptyListView: View {
                     .padding(.horizontal, 28)
                     .opacity(subtitleOpacity)
             }
+
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
-                iconScale = 1.0
+            if illustration != nil || icon != nil {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
+                    iconScale = 1.0
+                }
             }
             withAnimation(.easeOut(duration: 0.35).delay(0.1)) {
                 titleOpacity = 1.0

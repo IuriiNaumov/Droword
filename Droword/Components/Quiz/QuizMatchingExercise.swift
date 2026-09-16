@@ -87,7 +87,9 @@ struct QuizMatchingExercise: View {
         let isMatched = matchedPairIDs.contains(pair.id)
         let isSelected = (isWord && selectedMatchWordID == pair.id)
             || (!isWord && selectedMatchTranslationID == pair.id)
-        let isWrong = matchingWrongIDs?.0 == pair.id || matchingWrongIDs?.1 == pair.id
+        let isWrong = isWord
+            ? matchingWrongIDs?.0 == pair.id
+            : matchingWrongIDs?.1 == pair.id
         let text = isWord ? pair.word : pair.translation
 
         var bgColor: Color {

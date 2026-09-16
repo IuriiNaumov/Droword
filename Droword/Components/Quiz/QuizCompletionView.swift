@@ -132,12 +132,10 @@ struct QuizCompletionView: View {
     private var streakRow: some View {
         HStack(spacing: 24) {
             VStack(spacing: 4) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(themeStore.accentGreen)
+                BurningFlameIcon(size: 20)
                 Text("\(bestStreak)")
                     .font(themeStore.bold(18))
-                    .foregroundStyle(themeStore.accentGreen)
+                    .foregroundStyle(StreakFireStyle.red)
                 Text("Best streak")
                     .font(themeStore.regular(11))
                     .foregroundStyle(themeStore.secondaryText)

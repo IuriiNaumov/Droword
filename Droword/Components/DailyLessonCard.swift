@@ -5,11 +5,10 @@ struct DailyLessonCard: View {
 
     let plan: DailyLessonPlan
     var onStart: () -> Void
-    var onEditVibe: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(plan.title)
                         .font(themeStore.bold(22))
@@ -23,26 +22,35 @@ struct DailyLessonCard: View {
 
                 Spacer(minLength: 8)
 
-                if plan.isDone {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(themeStore.accentGreen)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(themeStore.accentGreen.opacity(0.14))
-                        )
-                } else {
-                    Text("~\(plan.minutes) min")
-                        .font(themeStore.bold(13))
-                        .foregroundStyle(themeStore.mainAccentColor)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(themeStore.mainAccentColor.opacity(0.14))
-                        )
+                HStack(spacing: 8) {
+                    if !plan.isDone {
+                        Text("~\(plan.minutes) min")
+                            .font(themeStore.bold(13))
+                            .foregroundStyle(themeStore.mainAccentColor)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(themeStore.mainAccentColor.opacity(0.14))
+                            )
+                    }
+
+                    if plan.isDone {
+                        Button {
+                            Haptics.softTap()
+                            onStart()
+                        } label: {
+                            MenuSymbol(
+                                systemName: "arrow.clockwise",
+                                color: themeStore.mainAccentColor,
+                                size: 15,
+                                weight: .semibold,
+                                frameSize: 32
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text("Once more"))
+                    }
                 }
             }
 
@@ -66,18 +74,7 @@ struct DailyLessonCard: View {
                 }
             }
 
-            if plan.isDone {
-                Button {
-                    Haptics.softTap()
-                    onStart()
-                } label: {
-                    Text("Once more")
-                        .font(themeStore.medium(14))
-                        .foregroundStyle(themeStore.mainAccentColor)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-            } else {
+            if !plan.isDone {
                 Button {
                     Haptics.buttonPress()
                     onStart()
@@ -93,19 +90,6 @@ struct DailyLessonCard: View {
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(!plan.canStart)
             }
-
-            if let onEditVibe {
-                Button {
-                    Haptics.softTap()
-                    onEditVibe()
-                } label: {
-                    Text("Tune learning vibe")
-                        .font(themeStore.medium(13))
-                        .foregroundStyle(themeStore.mainAccentColor)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-            }
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -114,7 +98,7 @@ struct DailyLessonCard: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("\(plan.title). \(plan.subtitle)"))
     }
 }

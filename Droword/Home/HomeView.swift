@@ -48,7 +48,6 @@ struct HomeView: View {
     @State private var showDailyLesson = false
     @State private var showStory = false
     @State private var showStreakCalendar = false
-    @State private var showLearningVibe = false
     @State private var chatSceneTarget: ChatSceneTarget?
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
@@ -176,13 +175,6 @@ struct HomeView: View {
             .environmentObject(languageStore)
             .environmentObject(themeStore)
             .environmentObject(badgeStore)
-            .tint(themeStore.mainAccentColor)
-        }
-        .fullScreenCover(isPresented: $showLearningVibe) {
-            NavigationStack {
-                LearningPreferencesView(showsClose: true)
-            }
-            .environmentObject(themeStore)
             .tint(themeStore.mainAccentColor)
         }
         .fullScreenCover(isPresented: $showStory) {
@@ -420,9 +412,6 @@ struct HomeView: View {
                     ),
                     onStart: {
                         showDailyLesson = true
-                    },
-                    onEditVibe: {
-                        showLearningVibe = true
                     }
                 )
                 .padding(.horizontal, 20)

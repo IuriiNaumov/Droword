@@ -33,27 +33,32 @@ struct FeatureFlagsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
 
                 VStack(spacing: 0) {
-                    HStack(spacing: 14) {
-                        Image(systemName: "hand.wave")
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundStyle(themeStore.mainText)
-                            .frame(width: 28, height: 28)
-                        Text("Onboarding")
-                            .font(themeStore.regular(16))
-                            .foregroundStyle(themeStore.mainText)
-                        Spacer()
-                        Toggle("", isOn: Binding(
-                            get: { !hasCompletedOnboarding },
-                            set: { newValue in
-                                hasCompletedOnboarding = !newValue
-                            }
-                        ))
-                            .labelsHidden()
-                            .tint(themeStore.mainAccentColor)
+                    Button {
+                        hasCompletedOnboarding.toggle()
+                        Haptics.menuTap()
+                    } label: {
+                        HStack(spacing: 14) {
+                            MenuSymbol(systemName: "hand.wave")
+                            Text("Onboarding")
+                                .font(themeStore.regular(16))
+                                .foregroundStyle(themeStore.mainText)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { !hasCompletedOnboarding },
+                                set: { newValue in
+                                    hasCompletedOnboarding = !newValue
+                                }
+                            ))
+                                .labelsHidden()
+                                .tint(themeStore.mainAccentColor)
+                                .allowsHitTesting(false)
+                        }
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 18)
+                        .background(themeStore.cardBg)
+                        .contentShape(Rectangle())
                     }
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 18)
-                    .background(themeStore.cardBg)
+                    .buttonStyle(.plain)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
             }

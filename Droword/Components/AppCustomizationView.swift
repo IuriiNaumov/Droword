@@ -313,10 +313,10 @@ struct AppCustomizationView: View {
             showAppearanceSheet = true
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: "circle.lefthalf.filled")
-                    .font(.system(size: 22, weight: .regular))
-                    .foregroundStyle(themeStore.mainText)
-                    .frame(width: 28, height: 28)
+                MenuSymbol(
+                    systemName: "circle.lefthalf.filled",
+                    size: 22
+                )
 
                 Text("Mode")
                     .font(themeStore.regular(17))
@@ -349,10 +349,7 @@ struct AppCustomizationView: View {
     ) -> some View {
         NavigationLink(value: destination) {
             HStack(spacing: 14) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundStyle(themeStore.mainText)
-                    .frame(width: 28, height: 28)
+                MenuSymbol(systemName: systemImage)
 
                 HStack(spacing: 6) {
                     Text(title)

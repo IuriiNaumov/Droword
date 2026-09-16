@@ -2,37 +2,40 @@ import SwiftUI
 
 struct SplashView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var onFinished: () -> Void
 
-    private let letters = ["D", "r", "o", "w", "o", "r", "d"]
-
-    @State private var revealedCount = 0
-    @State private var blobsOn = false
-    @State private var sparksOn = false
+    /// 1 = letters sit as droword, 0 = dro / ord are spread away from w.
+    @State private var join: CGFloat = 1
+    @State private var wOn = false
+    @State private var sidesOn = false
+    @State private var wPulse: CGFloat = 1
+    @State private var wAppear: CGFloat = 0.4
     @State private var settled = false
     @State private var squeeze = false
     @State private var fly = false
 
+    private let travel: CGFloat = 78
+
+    private var splashBg: Color {
+        colorScheme == .dark ? .black : .white
+    }
+
+    private var splashText: Color {
+        colorScheme == .dark ? .white : .black
+    }
+
+    private var split: CGFloat { (1 - join) * travel }
+
     var body: some View {
         ZStack {
-            themeStore.appBg.ignoresSafeArea()
+            splashBg.ignoresSafeArea()
 
-            if !reduceMotion {
-                SplashMeshBackground(on: blobsOn, fly: fly)
-            }
-
-            ZStack {
-                if !reduceMotion {
-                    SplashSparks(on: sparksOn, fly: fly)
-                }
-
-                wordmark
-            }
-            .scaleEffect(wordScale)
-            .opacity(fly ? 0 : 1)
-            .blur(radius: fly ? 14 : 0)
+            wordmark
+                .scaleEffect(wordScale)
+                .opacity(fly ? 0 : 1)
         }
         .opacity(fly ? 0 : 1)
         .allowsHitTesting(false)
@@ -50,25 +53,37 @@ struct SplashView: View {
 
     private var wordmark: some View {
         HStack(spacing: -1.6) {
-            ForEach(letters.indices, id: \.self) { index in
-                let shown = reduceMotion || revealedCount > index
-                Text(letters[index])
-                    .opacity(shown ? 1 : 0)
-                    .offset(y: shown ? 0 : 22)
-                    .scaleEffect(shown ? 1 : 0.42)
-                    .blur(radius: shown ? 0 : 7)
-            }
+            splashLetter("d", x: -split, on: sidesOn)
+            splashLetter("r", x: -split, on: sidesOn)
+            splashLetter("o", x: -split, on: sidesOn)
+
+            Text("w")
+                .opacity(wOn ? 1 : 0)
+                .scaleEffect(wAppear * wPulse)
+                .zIndex(1)
+
+            splashLetter("o", x: split, on: sidesOn)
+            splashLetter("r", x: split, on: sidesOn)
+            splashLetter("d", x: split, on: sidesOn)
         }
         .font(themeStore.display(48))
-        .foregroundStyle(themeStore.mainText)
+        .foregroundStyle(splashText)
+    }
+
+    private func splashLetter(_ text: String, x: CGFloat, on: Bool) -> some View {
+        Text(text)
+            .offset(x: x)
+            .opacity(on ? 1 : 0)
+            .scaleEffect(on ? 1 : 0.55)
     }
 
     @MainActor
     private func play() async {
         if reduceMotion {
-            revealedCount = letters.count
-            blobsOn = true
-            sparksOn = true
+            wOn = true
+            wAppear = 1
+            sidesOn = true
+            join = 1
             settled = true
             Haptics.softTap()
             try? await Task.sleep(for: .milliseconds(520))
@@ -76,27 +91,36 @@ struct SplashView: View {
             return
         }
 
+        withAnimation(.spring(response: 0.46, dampingFraction: 0.68)) {
+            wOn = true
+            wAppear = 1
+        }
+        Haptics.softTap()
+        try? await Task.sleep(for: .milliseconds(380))
+
         Haptics.splash()
-
-        withAnimation(.easeOut(duration: 0.7)) {
-            blobsOn = true
+        withAnimation(.spring(response: 0.58, dampingFraction: 0.78)) {
+            sidesOn = true
+            join = 0
         }
 
-        try? await Task.sleep(for: .milliseconds(90))
-        for index in letters.indices {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.68)) {
-                revealedCount = index + 1
-            }
-            try? await Task.sleep(for: .milliseconds(64))
+        try? await Task.sleep(for: .milliseconds(720))
+
+        withAnimation(.spring(response: 0.62, dampingFraction: 0.76)) {
+            join = 1
         }
 
-        try? await Task.sleep(for: .milliseconds(70))
-        withAnimation(.spring(response: 0.62, dampingFraction: 0.78)) {
+        try? await Task.sleep(for: .milliseconds(480))
+        Haptics.success()
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.55)) {
+            wPulse = 1.16
             settled = true
-            sparksOn = true
+        }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.72).delay(0.08)) {
+            wPulse = 1
         }
 
-        try? await Task.sleep(for: .milliseconds(980))
+        try? await Task.sleep(for: .milliseconds(900))
         await finish()
     }
 
@@ -124,106 +148,14 @@ struct SplashView: View {
     }
 }
 
-private struct SplashMeshBackground: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    var on: Bool
-    var fly: Bool
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            ZStack {
-                meshBlob(
-                    color: themeStore.mainAccentColor,
-                    size: 360,
-                    x: cos(t * 0.38) * 30 - 36,
-                    y: sin(t * 0.26) * 22 - 18
-                )
-                meshBlob(
-                    color: themeStore.accentPink,
-                    size: 300,
-                    x: sin(t * 0.3) * 34 + 48,
-                    y: cos(t * 0.22) * 20 + 28
-                )
-                meshBlob(
-                    color: themeStore.accentGold,
-                    size: 250,
-                    x: cos(t * 0.22) * 18 + 8,
-                    y: sin(t * 0.32) * 26 - 54
-                )
-            }
-            .opacity(on ? (fly ? 0 : 1) : 0)
-            .scaleEffect(on ? (fly ? 1.55 : 1) : 0.45)
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
-    }
-
-    private func meshBlob(color: Color, size: CGFloat, x: CGFloat, y: CGFloat) -> some View {
-        Circle()
-            .fill(color.opacity(0.34))
-            .frame(width: size, height: size)
-            .blur(radius: 56)
-            .offset(x: x, y: y)
-    }
-}
-
-private struct SplashSparks: View {
-    @EnvironmentObject private var themeStore: ThemeStore
-    var on: Bool
-    var fly: Bool
-
-    private let sparks: [SplashSpark] = [
-        .init(id: 0, x: -122, y: -36, size: 15, speed: 2.4, phase: 0.2),
-        .init(id: 1, x: -56, y: -58, size: 10, speed: 3.1, phase: 1.1),
-        .init(id: 2, x: 22, y: -50, size: 13, speed: 2.7, phase: 0.6),
-        .init(id: 3, x: 114, y: -26, size: 16, speed: 2.2, phase: 1.8),
-        .init(id: 4, x: 132, y: 24, size: 9, speed: 3.4, phase: 0.4),
-        .init(id: 5, x: 64, y: 50, size: 12, speed: 2.8, phase: 1.4),
-        .init(id: 6, x: -92, y: 38, size: 11, speed: 3.0, phase: 0.9),
-        .init(id: 7, x: -6, y: 54, size: 8, speed: 3.6, phase: 2.1),
-        .init(id: 8, x: -148, y: 8, size: 7, speed: 2.9, phase: 0.5),
-        .init(id: 9, x: 148, y: -8, size: 8, speed: 2.5, phase: 1.6)
-    ]
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
-            let now = timeline.date.timeIntervalSinceReferenceDate
-            let burst: CGFloat = fly ? 2.35 : 1
-            ForEach(sparks) { spark in
-                let wave = (sin(now * spark.speed + spark.phase) + 1) / 2
-                Image(systemName: "sparkle")
-                    .font(.system(size: spark.size, weight: .bold))
-                    .foregroundStyle(sparkColor(spark.id))
-                    .opacity(on ? (fly ? 0 : 0.16 + wave * 0.84) : 0)
-                    .scaleEffect(on ? (fly ? 0.2 : 0.45 + wave * 0.6) : 0.2)
-                    .offset(x: spark.x * burst, y: spark.y * burst)
-            }
-        }
-        .animation(.easeOut(duration: 0.45), value: on)
-        .animation(.easeIn(duration: 0.4), value: fly)
-        .accessibilityHidden(true)
-    }
-
-    private func sparkColor(_ id: Int) -> Color {
-        switch id % 3 {
-        case 0: return themeStore.accentGold
-        case 1: return themeStore.mainAccentColor
-        default: return themeStore.accentPink.opacity(0.9)
-        }
-    }
-}
-
-private struct SplashSpark: Identifiable {
-    let id: Int
-    let x: CGFloat
-    let y: CGFloat
-    let size: CGFloat
-    let speed: Double
-    let phase: Double
-}
-
-#Preview {
+#Preview("Light") {
     SplashView(onFinished: {})
         .environmentObject(ThemeStore())
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    SplashView(onFinished: {})
+        .environmentObject(ThemeStore())
+        .preferredColorScheme(.dark)
 }

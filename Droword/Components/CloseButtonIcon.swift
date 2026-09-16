@@ -4,10 +4,14 @@ struct CloseButtonIcon: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        Image(systemName: "xmark")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(themeStore.mainAccentColor)
-            .accessibilityLabel(Text("Close"))
+        MenuSymbol(
+            systemName: "xmark",
+            color: themeStore.mainAccentColor,
+            size: 14,
+            weight: .semibold,
+            frameSize: 22
+        )
+        .accessibilityLabel(Text("Close"))
     }
 }
 
@@ -17,6 +21,7 @@ struct CloseButton: View {
 
     var body: some View {
         Button {
+            Haptics.menuTap()
             if let action {
                 action()
             } else {

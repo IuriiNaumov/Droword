@@ -17,6 +17,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     case japanese
     case chinese
     case korean
+    case portuguese
 
     var id: String { rawValue }
 
@@ -37,6 +38,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .japanese: return String(localized: "Japanese")
         case .chinese: return String(localized: "Chinese")
         case .korean: return String(localized: "Korean")
+        case .portuguese: return String(localized: "Portuguese")
         }
     }
 
@@ -57,6 +59,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .japanese: return "AppIconJapanese"
         case .chinese: return "AppIconChinese"
         case .korean: return "AppIconKorean"
+        case .portuguese: return "AppIconPortuguese"
         }
     }
 
@@ -72,13 +75,14 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .sun: return Color(hex: "#E85D2C")
         case .ocean: return Color(hex: "#2EC4B6")
         case .forest: return Color(hex: "#58CC02")
-        case .english: return Color(hex: "#3C3B6E")
+        case .english: return Color(hex: "#012169")
         case .spanish: return Color(hex: "#C60B1E")
         case .french: return Color(hex: "#002395")
         case .german: return Color(hex: "#DD0000")
         case .japanese: return Color(hex: "#BC002D")
         case .chinese: return Color(hex: "#DE2910")
         case .korean: return Color(hex: "#0047A0")
+        case .portuguese: return Color(hex: "#046A38")
         }
     }
 

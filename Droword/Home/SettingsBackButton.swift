@@ -5,10 +5,17 @@ struct SettingsBackButton: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        Button { dismiss() } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(themeStore.mainAccentColor)
+        Button {
+            Haptics.menuTap()
+            dismiss()
+        } label: {
+            MenuSymbol(
+                systemName: "chevron.left",
+                color: themeStore.mainAccentColor,
+                size: 14,
+                weight: .semibold,
+                frameSize: 22
+            )
         }
         .buttonStyle(.plain)
         .accessibilityLabel(Text("Back"))

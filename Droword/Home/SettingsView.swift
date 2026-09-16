@@ -283,9 +283,12 @@ struct SettingsView: View {
             path.append(SettingsDestination.premium)
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(themeStore.accentBlue)
+                MenuSymbol(
+                    systemName: "sparkles",
+                    color: themeStore.accentBlue,
+                    size: 22,
+                    weight: .medium
+                )
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let days = trialDaysRemaining, isPremium {
@@ -342,10 +345,7 @@ struct SettingsView: View {
                     onTap?(item)
                 } label: {
                     HStack(spacing: 14) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 18, weight: .regular))
-                            .foregroundStyle(themeStore.mainText)
-                            .frame(width: 28, height: 28, alignment: .center)
+                        MenuSymbol(systemName: item.icon)
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(item.title)
