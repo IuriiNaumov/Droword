@@ -14,7 +14,6 @@ enum TrialKeychain {
             kSecAttrAccount as String: account
         ]
 
-        // Delete any existing item first
         SecItemDelete(query as CFDictionary)
 
         var addQuery = query

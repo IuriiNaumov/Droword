@@ -40,6 +40,7 @@ struct SoundWavesView: View {
 
     private func tick() {
         guard animating else { return }
+        Haptics.soundWave()
         withAnimation(.easeInOut(duration: 0.3)) {
             barHeights = barHeights.map { _ in CGFloat.random(in: minHeight...maxHeight) }
         }

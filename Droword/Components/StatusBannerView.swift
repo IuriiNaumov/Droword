@@ -4,22 +4,16 @@ struct StatusBannerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     let icon: String
-    let iconColor: Color
+    var iconColor: Color? = nil
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
 
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(themeStore.iconCircleFill(colorScheme: colorScheme))
-                    .frame(width: 44, height: 44)
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(iconColor ?? themeStore.mainText)
+                .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

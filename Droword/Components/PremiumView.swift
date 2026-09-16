@@ -71,10 +71,7 @@ struct PremiumView: View {
                     premiumContent
                         .toolbar {
                             ToolbarItem(placement: .navigationBarLeading) {
-                                Button { dismiss() } label: {
-                                    CloseButtonIcon()
-                                        .environmentObject(themeStore)
-                                }
+                                CloseButton()
                             }
                         }
                 }
@@ -151,32 +148,42 @@ struct PremiumView: View {
             .padding(.bottom, 50)
             .iPadContentWidth(600)
         }
-        .background(Color(.systemBackground).ignoresSafeArea())
+        .background(themeStore.appBg.ignoresSafeArea())
     }
 
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 40, weight: .medium))
-                .foregroundStyle(themeStore.accentBlue)
-                .scaleEffect(appeared ? 1.0 : 0.5)
+        VStack(spacing: 16) {
+            SparkleCluster(size: 132)
+                .scaleEffect(appeared ? 1.0 : 0.6)
                 .opacity(appeared ? 1.0 : 0)
 
-            Text("Droword PRO")
-                .font(themeStore.bold(28))
-                .foregroundStyle(.primary)
+            if isPremium {
+                Text("DROWORD PRO IS YOURS")
+                    .font(themeStore.bold(26))
+                    .foregroundStyle(themeStore.mainText)
+                    .multilineTextAlignment(.center)
 
-            if let days = trialDaysRemaining, isPremium {
-                Text("Trial: \(days) days remaining", comment: "PRO trial countdown")
-                    .font(themeStore.medium(14))
-                    .foregroundStyle(.orange)
+                if let days = trialDaysRemaining {
+                    Text("Trial · \(days) days left", comment: "PRO trial countdown")
+                        .font(themeStore.regular(15))
+                        .foregroundStyle(themeStore.secondaryText)
+                } else {
+                    Text("Unlimited AI, themes, and extras")
+                        .font(themeStore.regular(15))
+                        .foregroundStyle(themeStore.secondaryText)
+                }
             } else {
-                Text(isPremium ? LocalizedStringKey("You have full access") : LocalizedStringKey("Unlock unlimited AI features"))
+                Text("Droword PRO")
+                    .font(themeStore.bold(28))
+                    .foregroundStyle(themeStore.mainText)
+
+                Text("Unlock unlimited AI features")
                     .font(themeStore.regular(15))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(themeStore.secondaryText)
             }
         }
         .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
     }
 
     private var comparisonSection: some View {
@@ -195,7 +202,7 @@ struct PremiumView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
-            
+
             ForEach(Self.featureRows) { row in
                 VStack(spacing: 0) {
                     Divider()
@@ -225,21 +232,85 @@ struct PremiumView: View {
     }
 
     private var proActiveFeatures: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ForEach(Self.featureRows) { row in
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(themeStore.accentBlue)
+        VStack(spacing: 12) {
+            proFeatureCard(
+                titlePrefix: "Unlimited",
+                titleAccent: "AI",
+                rows: [
+                    ("wand.and.stars", "AI translations", "No daily cap — translate whenever"),
+                    ("speaker.wave.2.fill", "Voice pronunciation", "Unlimited TTS playback"),
+                    ("lightbulb.fill", "Word suggestions", "Fresh ideas without limits")
+                ]
+            )
 
-                    Text(row.title)
-                        .font(themeStore.regular(16))
-                        .foregroundStyle(.primary)
+            proFeatureCard(
+                titlePrefix: "More",
+                titleAccent: "style",
+                rows: [
+                    ("paintpalette.fill", "All themes", "Sunset, Green Owl, Liquid Glass"),
+                    ("sparkles", "Seasonal effects", "Atmosphere that matches the season"),
+                    ("flame.fill", "Streak freeze", "One missed day a week, no drama")
+                ]
+            )
+        }
+        .padding(.horizontal, 16)
+        .opacity(appeared ? 1.0 : 0)
+    }
+
+    private func proFeatureCard(
+        titlePrefix: LocalizedStringKey,
+        titleAccent: LocalizedStringKey,
+        rows: [(icon: String, title: LocalizedStringKey, subtitle: LocalizedStringKey)]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 0) {
+                Text(titlePrefix)
+                    .font(themeStore.bold(20))
+                    .foregroundStyle(themeStore.mainText)
+                Text(" ")
+                Text(titleAccent)
+                    .font(themeStore.bold(20))
+                    .foregroundStyle(themeStore.mainAccentColor)
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 18)
+            .padding(.bottom, 8)
+
+            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                HStack(spacing: 14) {
+                    Image(systemName: row.icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(themeStore.mainText)
+                        .frame(width: 28, height: 28)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(row.title)
+                            .font(themeStore.medium(16))
+                            .foregroundStyle(themeStore.mainText)
+                        Text(row.subtitle)
+                            .font(themeStore.regular(13))
+                            .foregroundStyle(themeStore.secondaryText)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+
+                if index < rows.count - 1 {
+                    Rectangle()
+                        .fill(themeStore.dividerColor.opacity(0.4))
+                        .frame(height: 1)
+                        .padding(.leading, 60)
                 }
             }
+            .padding(.bottom, 8)
         }
-        .frame(maxWidth: .infinity)
-        .opacity(appeared ? 1.0 : 0)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+        )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
     }
 
     private var plansSection: some View {
@@ -275,7 +346,7 @@ struct PremiumView: View {
             HStack {
                 ZStack {
                     Circle()
-                        .stroke(selectedPlan == plan ? themeStore.accentBlue : Color(.separator), lineWidth: 2)
+                        .fill(selectedPlan == plan ? themeStore.accentBlue : Color(.separator).opacity(0.35))
                         .frame(width: 22, height: 22)
 
                     if selectedPlan == plan {
@@ -314,10 +385,10 @@ struct PremiumView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(selectedPlan == plan ? themeStore.accentBlue : Color.clear, lineWidth: 2)
+                    .fill(
+                        selectedPlan == plan
+                            ? themeStore.accentBlue.opacity(0.12)
+                            : Color(.secondarySystemBackground)
                     )
             )
         }
@@ -341,15 +412,8 @@ struct PremiumView: View {
                     Image(systemName: "gift")
                         .font(.system(size: 16, weight: .semibold))
                     Text("Start 7-Day Free Trial")
-                        .font(themeStore.bold(17))
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color.orange.gradient)
-                )
+                .duo3DStyle(Color.orange)
             }
             .buttonStyle(Duo3DButtonStyle())
             .accessibilityLabel(Text("Start 7-day free trial"))
@@ -368,22 +432,18 @@ struct PremiumView: View {
             Button {
                 Task { await handlePurchase() }
             } label: {
-                Group {
+                ZStack {
+                    Text("Subscribe")
+                        .foregroundStyle(.clear)
+
                     if storeKit.isLoading {
                         ProgressView()
                             .tint(.white)
                     } else {
                         Text("Subscribe")
-                            .font(themeStore.bold(17))
                     }
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(themeStore.accentBlue)
-                )
+                .duo3DStyle(themeStore.accentBlue, isDisabled: storeKit.isLoading)
             }
             .buttonStyle(Duo3DButtonStyle())
             .disabled(storeKit.isLoading)
@@ -405,24 +465,26 @@ struct PremiumView: View {
         VStack(spacing: 16) {
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(themeStore.accentBlue)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(themeStore.mainAccentColor)
+                        .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("PRO is active")
                             .font(themeStore.bold(17))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(themeStore.mainText)
                         Text("Unlimited access to all features")
                             .font(themeStore.regular(13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
-
 
                     Spacer()
                 }
 
-                Divider()
+                Rectangle()
+                    .fill(themeStore.dividerColor.opacity(0.4))
+                    .frame(height: 1)
 
                 VStack(spacing: 10) {
                     subscriptionDetailRow(label: "Plan", value: activePlanName)
@@ -432,10 +494,11 @@ struct PremiumView: View {
             }
             .padding(18)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.accentBlueSoft)
+                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .padding(.horizontal, 20)
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .padding(.horizontal, 16)
 
             Button {
                 openSubscriptionManagement()
@@ -446,20 +509,21 @@ struct PremiumView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 12, weight: .semibold))
                 }
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                        .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 )
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 20)
+            .buttonStyle(PressableButtonStyle(scale: 0.98))
+            .padding(.horizontal, 16)
 
             Text("Subscription renews automatically. You can cancel anytime in Settings → Apple ID → Subscriptions.")
                 .font(themeStore.regular(12))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .padding(.top, 4)

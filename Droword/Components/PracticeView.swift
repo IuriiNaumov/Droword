@@ -40,8 +40,8 @@ struct PracticeView: View {
     private var header: some View {
         HStack {
             Text("Practice")
-                .font(themeStore.bold(38))
-                .foregroundStyle(themeStore.mainText)
+                .zoomerTitle(38)
+                .environmentObject(themeStore)
 
             Spacer()
         }
@@ -51,61 +51,20 @@ struct PracticeView: View {
     }
 
     private var practiceEmptyState: some View {
-        PracticeEmptyContent(
+        let copy = DuoChaosCopy.practiceEmpty()
+        return PracticeEmptyContent(
+            illustration: AnyView(EmptyPracticeArt()),
             icon: "rectangle.stack.badge.plus",
-            title: "Not enough words yet",
-            subtitle: "Add at least 4 words with translations to start practicing.",
-            tip: "Tip: grab words from movies, chats, or walks — learning feels alive that way."
+            title: copy.title,
+            subtitle: copy.subtitle,
+            tip: copy.tip
         )
     }
-
-
 }
 
-
-
 #Preview {
-    let store = WordsStore()
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-        store.clear()
-        store.add(
-            StoredWord(
-                word: "No puedo creer lo que está pasando aquí",
-                type: "adjective",
-                translation: "Вкусный",
-                example: "Este plato es muy sabroso y delicioso.",
-                comment: "Моё любимое слово!",
-                tag: "Suggested",
-                fromLanguage: "es",
-                toLanguage: "ru"
-            )
-        )
-        store.add(
-            StoredWord(
-                word: "chido",
-                type: "adjective",
-                translation: "Круто",
-                example: "La fiesta estuvo chido y muy divertida.",
-                comment: nil,
-                tag: "Chat",
-                fromLanguage: "es",
-                toLanguage: "ru"
-            )
-        )
-        store.add(
-            StoredWord(
-                word: "食べ物",
-                type: "noun",
-                translation: "Еда",
-                example: "この食べ物はとてもおいしいです。",
-                comment: nil,
-                tag: "Travel",
-                fromLanguage: "ja",
-                toLanguage: "ru"
-            )
-        )
-    }
-    return PracticeView()
-        .environmentObject(store)
+    PracticeView()
+        .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
 }

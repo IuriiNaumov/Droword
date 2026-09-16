@@ -11,7 +11,7 @@ struct RadioButtonRow: View {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
-                        .stroke(themeStore.secondaryText.opacity(0.4), lineWidth: 1)
+                        .fill(themeStore.secondaryText.opacity(0.18))
                         .frame(width: 22, height: 22)
                     if isSelected {
                         Circle()

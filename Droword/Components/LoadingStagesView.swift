@@ -36,14 +36,12 @@ struct LoadingStagesView: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             guard isActive else { return }
-            Haptics.lightImpact()
             withAnimation(.easeInOut(duration: 0.35)) {
                 animating = false
             }
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 guard isActive else { return }
-                Haptics.lightImpact()
                 startBounce()
             }
         }

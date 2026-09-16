@@ -13,45 +13,34 @@ struct FeatureFlagsView: View {
                     .sheetTitle()
 
                 VStack(spacing: 0) {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(themeStore.iconGold.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "sparkles")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(themeStore.iconGold)
-                        }
+                    HStack(spacing: 14) {
+                        ProBadgeIcon(size: 28)
                         Text("PRO")
                             .font(themeStore.regular(16))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(themeStore.mainText)
                         Spacer()
                         Toggle("", isOn: $isPremium)
                             .labelsHidden()
-                            .tint(themeStore.accentGold)
+                            .tint(themeStore.mainAccentColor)
                             .onChange(of: isPremium) { _, newValue in
                                 debugOverride = newValue
                             }
                     }
                     .padding(.vertical, 14)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 18)
                     .background(themeStore.cardBg)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
 
                 VStack(spacing: 0) {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(themeStore.mainAccentColor.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "hand.wave.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(themeStore.mainAccentColor)
-                        }
+                    HStack(spacing: 14) {
+                        Image(systemName: "hand.wave")
+                            .font(.system(size: 18, weight: .regular))
+                            .foregroundStyle(themeStore.mainText)
+                            .frame(width: 28, height: 28)
                         Text("Onboarding")
                             .font(themeStore.regular(16))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(themeStore.mainText)
                         Spacer()
                         Toggle("", isOn: Binding(
                             get: { !hasCompletedOnboarding },
@@ -63,10 +52,10 @@ struct FeatureFlagsView: View {
                             .tint(themeStore.mainAccentColor)
                     }
                     .padding(.vertical, 14)
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 18)
                     .background(themeStore.cardBg)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
             }
             .padding(.bottom, 20)
             .padding(.horizontal, 20)

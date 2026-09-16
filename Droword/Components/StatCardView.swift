@@ -22,15 +22,15 @@ struct StatCardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                 .fill(themeStore.isGlass
                       ? Color.clear
                       : (themeStore.isMonochrome
                          ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
                          : themeStore.appBg))
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .cardDepth(cornerRadius: DesignRadius.card)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: value)
     }
 }

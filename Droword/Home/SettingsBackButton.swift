@@ -11,5 +11,6 @@ struct SettingsBackButton: View {
                 .foregroundStyle(themeStore.mainAccentColor)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Text("Back"))
     }
 }

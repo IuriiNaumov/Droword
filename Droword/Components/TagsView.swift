@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct TagsView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var themeStore: ThemeStore
     @Binding var selectedTag: String?
     @ObservedObject private var tagStore = TagStore.shared
@@ -45,14 +44,6 @@ struct TagsView: View {
                     let isSelected = selectedTag == tag.name
                     let baseColor = tag.color
                     let dimmed = isDeleteMode && !tag.isCustom
-                    let textColor: Color = {
-                        if themeStore.isMonochrome && isSelected {
-                            return .white
-                        }
-                        return colorScheme == .dark
-                            ? .white.opacity(isSelected ? 1.0 : 0.9)
-                            : darkerShade(of: baseColor, by: 0.45).opacity(isSelected ? 1.0 : 0.9)
-                    }()
 
                     Button {
                         if isDeleteMode {
@@ -61,13 +52,13 @@ struct TagsView: View {
                                     TagStore.shared.removeTag(named: tag.name)
                                     if selectedTag == tag.name { selectedTag = nil }
                                 }
-                                Haptics.selection()
+                                Haptics.warning()
                             }
                         } else {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
                                 selectedTag = selectedTag == tag.name ? nil : tag.name
                             }
-                            Haptics.selection()
+                            Haptics.tick()
                         }
                     } label: {
                         HStack(spacing: 6) {
@@ -80,35 +71,24 @@ struct TagsView: View {
 
                             Text(LocalizedStringKey(tag.name))
                                 .font(themeStore.medium(compact ? 13 : 15))
-                                .foregroundStyle(textColor)
+                                .foregroundStyle(tagTextColor(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed))
 
                             if isDeleteMode && !tag.isCustom {
                                 Image(systemName: "lock.fill")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(textColor.opacity(0.5))
+                                    .foregroundStyle(tagTextColor(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed).opacity(0.5))
                                     .transition(.scale.combined(with: .opacity))
                             }
                         }
                         .padding(.vertical, compact ? 8 : 10)
                         .padding(.horizontal, compact ? 24 : 28)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(
-                                    themeStore.isGlass
-                                        ? Color.clear
-                                        : (themeStore.isMonochrome && isSelected && !dimmed
-                                            ? themeStore.mainText.opacity(0.85)
-                                            : baseColor.opacity(dimmed ? 0.15 : (isSelected ? 0.95 : 0.32)))
-                                )
+                            Capsule(style: .continuous)
+                                .fill(tagFill(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed))
                         )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(isDeleteMode && tag.isCustom ? Color.accentRed.opacity(0.4) : Color.clear, lineWidth: 1.5)
-                        )
-                        .scaleEffect(isSelected && !isDeleteMode ? 1.06 : 1.0)
-                        .opacity(dimmed ? 0.5 : 1.0)
-                        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
+                        .scaleEffect(isSelected && !isDeleteMode ? 1.04 : 1.0)
+                        .opacity(dimmed ? 0.45 : 1.0)
+                        .animation(.spring(response: 0.35, dampingFraction: 0.78), value: isSelected)
                         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isDeleteMode)
                     }
                     .buttonStyle(.plain)
@@ -121,7 +101,7 @@ struct TagsView: View {
                             ForEach(DictionarySortOption.allCases, id: \.self) { option in
                                 Button {
                                     sortBinding.wrappedValue = option
-                                    Haptics.selection()
+                                    Haptics.tick()
                                 } label: {
                                     HStack {
                                         Text(option.displayName)
@@ -133,34 +113,40 @@ struct TagsView: View {
                             }
                         } label: {
                             Image(systemName: "arrow.up.arrow.down")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(themeStore.secondaryText)
-                                .frame(width: 32, height: 32)
-                                .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
+                                .frame(width: 34, height: 34)
+                                .background(Capsule().fill(themeStore.secondaryText.opacity(0.12)))
                         }
                         .opacity(isDeleteMode ? 0 : 1)
                         .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
                     }
 
                     if hasCustomTags {
-                        Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() } }) {
+                        Button(action: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() }
+                            Haptics.menuTap()
+                        }) {
                             Image(systemName: isDeleteMode ? "checkmark" : "pencil")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(isDeleteMode ? .white : themeStore.secondaryText)
-                                .frame(width: 32, height: 32)
+                                .frame(width: 34, height: 34)
                                 .background(
-                                    Circle().fill(isDeleteMode ? Color("AccentGreen") : themeStore.secondaryText.opacity(0.15))
+                                    Capsule().fill(isDeleteMode ? themeStore.mainAccentColor : themeStore.secondaryText.opacity(0.12))
                                 )
                         }
                         .buttonStyle(.plain)
                     }
 
-                    Button(action: { onAddTag?() }) {
+                    Button(action: {
+                        Haptics.menuTap()
+                        onAddTag?()
+                    }) {
                         Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(themeStore.secondaryText)
-                            .frame(width: 32, height: 32)
-                            .background(Circle().fill(themeStore.secondaryText.opacity(0.15)))
+                            .frame(width: 34, height: 34)
+                            .background(Capsule().fill(themeStore.secondaryText.opacity(0.12)))
                     }
                     .buttonStyle(.plain)
                     .opacity(isDeleteMode ? 0 : 1)
@@ -168,7 +154,7 @@ struct TagsView: View {
                 }
             }
             .padding(.horizontal, compact ? 10 : 0)
-            .padding(.vertical, compact ? 16 : 10)
+            .padding(.vertical, compact ? 14 : 8)
         }
         .onChange(of: tagStore.tags.count) { _, newCount in
             if newCount == 0 && isDeleteMode {
@@ -178,54 +164,26 @@ struct TagsView: View {
             }
         }
     }
-}
 
-private struct WiggleEffect: ViewModifier {
-    let isActive: Bool
-    @State private var angle: Double = 0
-    func body(content: Content) -> some View {
-        content
-            .rotationEffect(.degrees(isActive ? sin(angle) * 2.0 : 0))
-            .animation(.linear(duration: 0.12).repeatForever(autoreverses: true), value: isActive ? angle : 0)
-            .onAppear { if isActive { start() } }
-            .onChange(of: isActive) { _, newValue in
-                if newValue { start() }
-            }
-    }
-    private func start() {
-        angle = 0
-        withAnimation(.linear(duration: 0.12).repeatForever(autoreverses: true)) {
-            angle = .pi * 2
+    private func tagFill(isSelected: Bool, baseColor: Color, dimmed: Bool) -> Color {
+        if themeStore.isGlass { return Color.clear }
+        if dimmed { return baseColor.opacity(0.12) }
+        if isSelected {
+            return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
         }
+        return baseColor.opacity(0.2)
+    }
+
+    private func tagTextColor(isSelected: Bool, baseColor: Color, dimmed: Bool) -> Color {
+        if dimmed { return themeStore.secondaryText }
+        if isSelected { return .white }
+        if themeStore.isMonochrome { return themeStore.mainText }
+        return baseColor
     }
 }
 
 #Preview {
-    Group {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Light Mode")
-                .font(.custom("Poppins-Bold", size: 22))
-                .foregroundStyle(Color("MainBlack"))
-                .padding(.horizontal)
-
-            TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)
-            TagsView(selectedTag: .constant("Chat"), hasSuggestedWords: false)
-        }
-        .padding(.vertical, 30)
-        .background(Color.white)
-        .preferredColorScheme(.light)
-
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Dark Mode")
-                .font(.custom("Poppins-Bold", size: 22))
-                .foregroundStyle(.white)
-                .padding(.horizontal)
-
-            TagsView(selectedTag: .constant(nil), hasSuggestedWords: true)
-            TagsView(selectedTag: .constant("Street"), hasSuggestedWords: false)
-        }
-        .padding(.vertical, 30)
-        .background(Color.black)
-        .preferredColorScheme(.dark)
-    }
+    TagsView(selectedTag: .constant("Street"), hasSuggestedWords: true)
+        .environmentObject(ThemeStore())
+        .padding()
 }

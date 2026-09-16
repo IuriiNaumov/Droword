@@ -29,10 +29,10 @@ final class StudyTimeTracker: ObservableObject {
         sessionStart = Date()
 
         tickTimer?.invalidate()
-        tickTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+
+        tickTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.checkpointIfNeeded()
-                self?.recalculate()
             }
         }
     }
@@ -79,7 +79,6 @@ final class StudyTimeTracker: ObservableObject {
         }
         return String(localized: "\(max(minutes, 0))m", comment: "Study time format: minutes only")
     }
-
 
     func minutesPerDay(last days: Int) -> [(date: Date, minutes: Int)] {
         let cal = Calendar.current
@@ -129,7 +128,6 @@ final class StudyTimeTracker: ObservableObject {
         return totalSecs / max(1, days.count) / 60
     }
 
-    /// Saves accumulated time periodically so it's not lost on crash.
     private func checkpointIfNeeded() {
         guard let start = sessionStart else { return }
         let checkpointFrom = lastCheckpoint ?? start
@@ -137,6 +135,8 @@ final class StudyTimeTracker: ObservableObject {
         guard elapsed >= 60 else { return }
         saveSession(seconds: elapsed)
         lastCheckpoint = Date()
+
+        recalculate()
     }
 
     private func activeSeconds() -> Int {

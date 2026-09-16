@@ -33,7 +33,7 @@ struct OnboardingView: View {
         )
     ]}
 
-    private var totalPages: Int { pages.count + 3 }
+    private var totalPages: Int { pages.count + 4 }
 
     var body: some View {
         GeometryReader { geo in
@@ -66,8 +66,13 @@ struct OnboardingView: View {
                             .padding(.horizontal, 18)
                             .padding(.top, 24)
 
-                        OnboardingDetailsPage()
+                        OnboardingPreferencesPage()
                             .tag(pages.count + 2)
+                            .padding(.horizontal, 18)
+                            .padding(.top, 24)
+
+                        OnboardingDetailsPage()
+                            .tag(pages.count + 3)
                             .padding(.horizontal, 28)
                             .padding(.top, 24)
                     }
@@ -107,16 +112,10 @@ struct OnboardingView: View {
                                 }
                             }) {
                                 Image(systemName: "chevron.left")
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(themeStore.mainAccentColor)
-                                    .frame(height: 22)
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .background(
-                                        Capsule().fill(themeStore.cardBg.opacity(0.9))
-                                    )
                             }
-                            .buttonStyle(ScaledPressStyle())
+                            .buttonStyle(.plain)
                             .padding(.leading, 20)
                             .padding(.top, 12)
                         }
@@ -184,9 +183,9 @@ struct OnboardingView: View {
             let native = languageStore.nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
             let learning = languageStore.learningLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
             return !native.isEmpty && !learning.isEmpty && native != learning
-        case pages.count + 1:
+        case pages.count + 1, pages.count + 2:
             return true
-        case pages.count + 2:
+        case pages.count + 3:
             let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
             return !trimmedName.isEmpty && trimmedName.count <= 40
         default:
@@ -197,13 +196,16 @@ struct OnboardingView: View {
     private func next() {
         Haptics.selection()
         if page < totalPages - 1 {
+            if page == pages.count + 2 {
+                LearningProfileStore.shared.markConfigured()
+            }
             withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
                 page += 1
             }
         } else {
             let trimmedName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmedName.isEmpty && trimmedName.count <= 40 else {
-                Haptics.lightImpact(intensity: 0.5)
+                Haptics.tick()
                 return
             }
             finish()
@@ -211,7 +213,8 @@ struct OnboardingView: View {
     }
 
     private func finish() {
-        Haptics.lightImpact(intensity: 0.7)
+        LearningProfileStore.shared.markConfigured()
+        Haptics.success()
         withAnimation(.easeInOut(duration: 0.25)) {
             isCompleted = true
         }

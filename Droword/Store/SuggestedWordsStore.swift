@@ -32,16 +32,25 @@ final class SuggestedWordsStore: ObservableObject {
                 .filter { $0.fromLanguage == currentLanguage }
                 .sorted { $0.dateAdded > $1.dateAdded }
                 .prefix(50)
-            
+
             guard !relevantWords.isEmpty else { return }
-            
+
             let baseWords = relevantWords.map { $0.word }
             let allWords = words
                 .filter { $0.fromLanguage == currentLanguage }
                 .map { $0.word.lowercased() }
-            let result = try await fetchSuggestionsWithTopic(words: baseWords, exclude: allWords, languageStore: languageStore)
+            let result = try await fetchSuggestionsWithTopic(
+                words: baseWords,
+                exclude: allWords,
+                languageStore: languageStore,
+                preferredTopics: LearningProfileStore.shared.preferredTopicLabels,
+                learningGoal: LearningProfileStore.shared.goal.localizedTitle
+            )
             self.topic = result.topic
             self.suggestedWords = result.suggestions
+            if !result.suggestions.isEmpty {
+                Haptics.suggestionsArrived()
+            }
         } catch {
         }
     }

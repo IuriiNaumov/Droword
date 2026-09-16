@@ -25,25 +25,21 @@ struct DrowordWidgetEntryView: View {
     var entry: Provider.Entry
 
     var body: some View {
-        ZStack {
-            ContainerRelativeShape()
-                .fill(Color(red: 0.96, green: 0.95, blue: 0.93))
-
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.45, green: 0.72, blue: 0.96))
-                        .frame(width: 52, height: 52)
-
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundStyle(.white)
-                }
-
-                Text("Add Word")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.2, green: 0.2, blue: 0.2))
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.45, green: 0.72, blue: 0.96))
+                    .frame(width: 52, height: 52)
+                Image(systemName: "plus")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
             }
+            Text("Add a word")
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color(red: 0.2, green: 0.2, blue: 0.2))
+        }
+        .containerBackground(for: .widget) {
+            Color(red: 0.96, green: 0.95, blue: 0.93)
         }
     }
 }

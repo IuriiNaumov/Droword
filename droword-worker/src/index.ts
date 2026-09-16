@@ -1,20 +1,15 @@
+import { allowIP, bodyTooLarge, clipText, imageTooLarge, keysEqual, limits, takeList } from "./guard";
+
 export interface Env {
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY: string;
   APP_KEY: string;
 }
 
-// CORS headers for iOS app
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, X-App-Key",
-};
-
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders },
+    headers: { "Content-Type": "application/json" },
   });
 }
 
@@ -103,12 +98,17 @@ function levelGuideline(
 
 // ─── /translate ───
 async function handleTranslate(request: Request, env: Env): Promise<Response> {
-  const { word, learningLanguage, nativeLanguage, level } = await request.json<{
+  const raw = await request.json<{
     word: string;
     learningLanguage: string;
     nativeLanguage: string;
     level?: string;
   }>();
+
+  const word = clipText(raw.word, limits.word);
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const level = clipText(raw.level, 8) ?? "";
 
   if (!word || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: word, learningLanguage, nativeLanguage", 400);
@@ -176,8 +176,8 @@ Return ONLY valid JSON:
   });
 
   if (!anthropicResponse.ok) {
-    const text = await anthropicResponse.text();
-    return errorResponse(`Anthropic API error: ${text}`, anthropicResponse.status);
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
   }
 
   const claude = await anthropicResponse.json<{
@@ -186,7 +186,7 @@ Return ONLY valid JSON:
   }>();
 
   if (claude.error) {
-    return errorResponse(`Claude error: ${claude.error.message}`, 502);
+    return errorResponse("Upstream error", 502);
   }
 
   const text = claude.content?.find((c) => c.type === "text")?.text;
@@ -210,31 +210,49 @@ Return ONLY valid JSON:
 
 // ─── /suggest ───
 async function handleSuggest(request: Request, env: Env): Promise<Response> {
-  const { words, learningLanguage, nativeLanguage, level } = await request.json<{
+  const raw = await request.json<{
     words: string[];
     learningLanguage: string;
     nativeLanguage: string;
     level?: string;
+    preferredTopics?: string[];
+    learningGoal?: string;
   }>();
+
+  const words = takeList(raw.words);
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const level = clipText(raw.level, 8) ?? "";
+  const preferredTopics = takeList(raw.preferredTopics, 12, 48) ?? [];
+  const learningGoal = clipText(raw.learningGoal, 80);
 
   if (!words || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: words, learningLanguage, nativeLanguage", 400);
   }
 
-  const lvl = levelGuideline(learningLanguage, level || "");
+  const lvl = levelGuideline(learningLanguage, level);
   const wordsList = words.join(", ");
+  const topicsLine =
+    preferredTopics.length > 0
+      ? `Learner's preferred topics: ${preferredTopics.join(", ")}. Bias suggestions toward these when natural.`
+      : "";
+  const goalLine = learningGoal
+    ? `Learner's goal: ${learningGoal}. Prefer vocabulary useful for this goal.`
+    : "";
 
   const prompt = `You are a vocabulary assistant.
 
 Learning language: ${learningLanguage}
 Native language: ${nativeLanguage}
 Learner's level: ${lvl.label}
+${goalLine}
+${topicsLine}
 
 Current words:
 ${wordsList}
 
 TASK:
-1. Detect the main topic (one short phrase).
+1. Detect the main topic (one short phrase). Prefer aligning with preferred topics / goal when provided.
 2. Add exactly TWO new words in ${learningLanguage}:
    - related to the topic
    - not in the list
@@ -297,8 +315,8 @@ STRICT:
   });
 
   if (!anthropicResponse.ok) {
-    const text = await anthropicResponse.text();
-    return errorResponse(`Anthropic API error: ${text}`, anthropicResponse.status);
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
   }
 
   const claude = await anthropicResponse.json<{
@@ -307,7 +325,7 @@ STRICT:
   }>();
 
   if (claude.error) {
-    return errorResponse(`Claude error: ${claude.error.message}`, 502);
+    return errorResponse("Upstream error", 502);
   }
 
   const text = claude.content?.find((c) => c.type === "text")?.text;
@@ -330,40 +348,59 @@ STRICT:
 
 // ─── /story ───
 async function handleStory(request: Request, env: Env): Promise<Response> {
-  const { words, learningLanguage, nativeLanguage, level } = await request.json<{
+  const raw = await request.json<{
     words: string[];
     learningLanguage: string;
     nativeLanguage: string;
     level?: string;
+    goal?: string;
+    topics?: string[];
   }>();
 
-  if (!words || words.length === 0 || !learningLanguage || !nativeLanguage) {
+  const words = takeList(raw.words, 12);
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const level = clipText(raw.level, 8) ?? "";
+  const goal = clipText(raw.goal, 80);
+  const topics = takeList(raw.topics, 12, 48) ?? [];
+
+  if (!words || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: words, learningLanguage, nativeLanguage", 400);
   }
 
-  const lvl = levelGuideline(learningLanguage, level || "");
+  const lvl = levelGuideline(learningLanguage, level);
   const wordsList = words.join(", ");
+  const vibe = [goal, ...topics].filter(Boolean).join(", ");
 
-  const prompt = `You are a creative language tutor writing a mini reading exercise.
+  const prompt = `You are a short-story writer for language learners. Plot comes first. Vocabulary is optional seasoning.
 
 Learning language: ${learningLanguage}
 Native language: ${nativeLanguage}
-Learner's level: ${lvl.label}
+Level: ${lvl.label}. ${lvl.guideline}
+Scene flavor (use lightly): ${vibe || "everyday life"}
 
-Target words to weave in (use as many as fit naturally): ${wordsList}
+Candidate words (a MENU, not a checklist): ${wordsList}
 
-TASK:
-Write a SHORT, coherent, engaging story or everyday dialogue of 4–6 sentences in ${learningLanguage} that naturally uses the target words in context. It must read smoothly — comprehensible input, not a list of sentences.
+Write ONE tiny story with:
+- one person, one place, one desire
+- a beginning, a small problem, an ending
+- 5–8 sentences that cause the next sentence
+- a title that names the situation, not a vocab theme
 
-STRICT RULES:
-- title and story → ONLY ${learningLanguage}. The story MUST match the ${lvl.label} level. ${lvl.guideline}
-- Use the target words in their natural forms; you may inflect them.
-- translation → a faithful, natural ${nativeLanguage} translation of the whole story.
-- usedWords → the subset of the target words you actually used, exactly as given.
-- Keep it warm and interesting, not a dry grammar drill.
+WORD RULES:
+- Use at most 3 of the candidate words. 2 is better than 3. 0 is allowed if none fit.
+- A word may appear only if a native speaker would say it in this scene.
+- You may inflect words. Do not force a word into an awkward sentence.
+- Never write one sentence per word. Never list. Never "and then they used X".
+- If a word would make the story worse, drop it.
+- Never mark the candidate words. No quotation marks, no guillemets, no asterisks, no markdown, no italics, no bold. Write them as plain words in the sentence.
+
+LANGUAGE:
+- title and story → only ${learningLanguage}
+- translation → natural ${nativeLanguage} of the whole story
+- usedWords → only the candidate words you actually used, spelled as given
 
 Return ONLY valid JSON:
-
 {
   "title": "...",
   "story": "...",
@@ -387,8 +424,8 @@ Return ONLY valid JSON:
   });
 
   if (!anthropicResponse.ok) {
-    const text = await anthropicResponse.text();
-    return errorResponse(`Anthropic API error: ${text}`, anthropicResponse.status);
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
   }
 
   const claude = await anthropicResponse.json<{
@@ -397,7 +434,7 @@ Return ONLY valid JSON:
   }>();
 
   if (claude.error) {
-    return errorResponse(`Claude error: ${claude.error.message}`, 502);
+    return errorResponse("Upstream error", 502);
   }
 
   const text = claude.content?.find((c) => c.type === "text")?.text;
@@ -420,15 +457,20 @@ Return ONLY valid JSON:
 
 // ─── /extract-words ───
 async function handleExtractWords(request: Request, env: Env): Promise<Response> {
-  const { image, learningLanguage, nativeLanguage } = await request.json<{
+  const raw = await request.json<{
     image: string;
     learningLanguage: string;
     nativeLanguage: string;
   }>();
 
-  if (!image || !learningLanguage || !nativeLanguage) {
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const nativeLanguage = clipText(raw.nativeLanguage, 48);
+
+  if (imageTooLarge(raw.image) || !learningLanguage || !nativeLanguage) {
     return errorResponse("Missing required fields: image, learningLanguage, nativeLanguage", 400);
   }
+
+  const image = raw.image;
 
   const prompt = `You are a vocabulary extraction assistant for a language-learning app.
 
@@ -491,8 +533,8 @@ If you find no vocabulary, return { "words": [] }.`;
   });
 
   if (!anthropicResponse.ok) {
-    const text = await anthropicResponse.text();
-    return errorResponse(`Anthropic API error: ${text}`, anthropicResponse.status);
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
   }
 
   const claude = await anthropicResponse.json<{
@@ -501,7 +543,7 @@ If you find no vocabulary, return { "words": [] }.`;
   }>();
 
   if (claude.error) {
-    return errorResponse(`Claude error: ${claude.error.message}`, 502);
+    return errorResponse("Upstream error", 502);
   }
 
   const text = claude.content?.find((c) => c.type === "text")?.text;
@@ -522,24 +564,156 @@ If you find no vocabulary, return { "words": [] }.`;
   }
 }
 
+async function claudeJSON(
+  env: Env,
+  prompt: string,
+  maxTokens: number
+): Promise<Response> {
+  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5",
+      max_tokens: maxTokens,
+      system: "You always return strictly valid JSON without explanations.",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!anthropicResponse.ok) {
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
+  }
+
+  const claude = await anthropicResponse.json<{
+    content?: { type: string; text?: string }[];
+    error?: { message: string };
+  }>();
+
+  if (claude.error) {
+    return errorResponse("Upstream error", 502);
+  }
+
+  const text = claude.content?.find((c) => c.type === "text")?.text;
+  if (!text) {
+    return errorResponse("Empty response from Claude", 502);
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return errorResponse("Invalid JSON from Claude", 502);
+  }
+
+  try {
+    return jsonResponse(JSON.parse(jsonMatch[0]));
+  } catch {
+    return errorResponse("Failed to parse Claude response", 502);
+  }
+}
+
+// ─── /scene ───
+async function handleScene(request: Request, env: Env): Promise<Response> {
+  const raw = await request.json<{
+    word: string;
+    translation?: string;
+    learningLanguage: string;
+    nativeLanguage: string;
+    level?: string;
+    goal?: string;
+    messages?: { role: string; text: string }[];
+  }>();
+
+  const word = clipText(raw.word, limits.word);
+  const translation = clipText(raw.translation, limits.word);
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const level = clipText(raw.level, 8) ?? "";
+  const goal = clipText(raw.goal, 80);
+
+  if (!word || !learningLanguage || !nativeLanguage) {
+    return errorResponse("Missing required fields: word, learningLanguage, nativeLanguage", 400);
+  }
+
+  const history = (Array.isArray(raw.messages) ? raw.messages : [])
+    .slice(0, 8)
+    .filter((m) => m?.text && (m.role === "assistant" || m.role === "user"))
+    .map((m) => ({ role: m.role, text: m.text.trim().slice(0, 400) }));
+  const userTurns = history.filter((m) => m.role === "user").length;
+  const lvl = levelGuideline(learningLanguage, level);
+  const transcript = history
+    .map((m) => `${m.role === "user" ? "them" : "you"}: ${m.text}`)
+    .join("\n");
+
+  const prompt = `You are a friend helping them actually use one word. You are not a tutor and not a quiz app. You talk like a person on a sofa, not like an exercise.
+
+Target word (they must SAY this, in the learning language): "${word}"${translation ? ` — meaning in ${nativeLanguage}: "${translation}"` : ""}
+Learning language (their answers ONLY): ${learningLanguage}
+Native language (YOUR questions ONLY): ${nativeLanguage}
+Level: ${lvl.label}. ${lvl.guideline}
+Scene flavor: ${goal || "everyday life"}
+
+Transcript so far:
+${transcript || "(empty — you ask first)"}
+
+They have sent ${userTurns} of 3 replies.
+
+If ${userTurns} === 0: ask ONE short question in ${nativeLanguage} about a real moment where "${word}" is the natural thing to say. Invent a tiny scene (doorway, café, phone, street). Do NOT mention "${word}". Do NOT speak ${learningLanguage}. Do NOT say the translation either if you can avoid it — describe the situation instead.
+Vibe examples (write the actual question in ${nativeLanguage}):
+- greeting → what do you say when you want to say hi / you walk into a café
+- thanks → someone just held the door. what do you say?
+- food/drink → you're at the counter. how do you ask for it?
+- generic → what do you say when you mean [the idea], in a concrete moment
+
+If ${userTurns} is 1 or 2: stay in ${nativeLanguage}. React in a few warm words like a friend, then ask a slightly different everyday situation for the SAME word. If they did not use "${word}" (any inflection counts), make the scene more concrete — still ${nativeLanguage}, still not naming the word.
+
+If ${userTurns} >= 3: one last warm line in ${nativeLanguage} that ends it. Then stop.
+
+RULES:
+- reply → only ${nativeLanguage}. 1–2 short lines. Informal. No markdown. No quotation marks around the target word. No bullet lists.
+- hint → the natural ${learningLanguage} answer that uses "${word}". A word or a tiny phrase. Always give this on the opening turn. Give it again if they missed the word.
+- nudge → null
+- usedWord → true if their last message used the word or a clear inflection
+- done → true only when ${userTurns} >= 3
+
+Return ONLY valid JSON:
+{
+  "reply": "...",
+  "hint": "...",
+  "nudge": null,
+  "usedWord": false,
+  "done": false
+}`;
+
+  return claudeJSON(env, prompt, 400);
+}
+
 // ─── /tts ───
 async function handleTTS(request: Request, env: Env): Promise<Response> {
-  const { text, voice, format, language } = await request.json<{
+  const raw = await request.json<{
     text: string;
     voice?: string;
     format?: string;
     language?: string;
   }>();
 
+  const text = clipText(raw.text, limits.tts);
   if (!text) {
     return errorResponse("Missing required field: text", 400);
   }
 
+  const voice = clipText(raw.voice, 32) ?? "coral";
+  const format = clipText(raw.format, 8) ?? "mp3";
+  const language = clipText(raw.language, 48);
+
   const ttsBody: Record<string, unknown> = {
     model: "gpt-4o-mini-tts",
     input: text,
-    voice: voice || "coral",
-    format: format || "mp3",
+    voice: voice,
+    format: format,
   };
 
   // Steer pronunciation toward a native accent for the learning language.
@@ -559,16 +733,14 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
   });
 
   if (!openaiResponse.ok) {
-    const errorText = await openaiResponse.text();
-    return errorResponse(`OpenAI API error: ${errorText}`, openaiResponse.status);
+    await openaiResponse.text();
+    return errorResponse("Upstream error", 502);
   }
 
-  // Stream audio back to client
   return new Response(openaiResponse.body, {
     status: 200,
     headers: {
       "Content-Type": "audio/mpeg",
-      ...corsHeaders,
     },
   });
 }
@@ -576,22 +748,34 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
 // ─── Router ───
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers: corsHeaders });
+      return new Response(null, { status: 204 });
     }
 
     if (request.method !== "POST") {
       return errorResponse("Method not allowed", 405);
     }
 
-    // Validate app key
-    const appKey = request.headers.get("X-App-Key");
-    if (!env.APP_KEY || appKey !== env.APP_KEY) {
+    if (bodyTooLarge(request)) {
+      return errorResponse("Payload too large", 413);
+    }
+
+    const appKey = request.headers.get("X-App-Key") ?? "";
+    if (!env.APP_KEY || !keysEqual(appKey, env.APP_KEY)) {
       return errorResponse("Unauthorized", 401);
     }
 
     const url = new URL(request.url);
+    const allowed = await allowIP(request, url.pathname);
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": "60",
+        },
+      });
+    }
 
     try {
       switch (url.pathname) {
@@ -605,12 +789,13 @@ export default {
           return await handleExtractWords(request, env);
         case "/story":
           return await handleStory(request, env);
+        case "/scene":
+          return await handleScene(request, env);
         default:
           return errorResponse("Not found", 404);
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Internal error";
-      return errorResponse(message, 500);
+    } catch {
+      return errorResponse("Internal error", 500);
     }
   },
 };

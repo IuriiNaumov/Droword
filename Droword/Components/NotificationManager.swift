@@ -19,6 +19,9 @@ struct NotificationPreferences {
     let vocabEndMinute: Int
 
     let streakMilestonesEnabled: Bool
+    let eveningChatEnabled: Bool
+    let eveningChatHour: Int
+    let eveningChatMinute: Int
 
     static func fromDefaults() -> NotificationPreferences {
         let d = UserDefaults.standard
@@ -36,7 +39,10 @@ struct NotificationPreferences {
             vocabStartMinute: d.object(forKey: AppStorageKeys.notifVocabStartMinute) as? Int ?? 0,
             vocabEndHour: d.object(forKey: AppStorageKeys.notifVocabEndHour) as? Int ?? 18,
             vocabEndMinute: d.object(forKey: AppStorageKeys.notifVocabEndMinute) as? Int ?? 0,
-            streakMilestonesEnabled: d.bool(forKey: AppStorageKeys.notifStreakMilestones)
+            streakMilestonesEnabled: d.bool(forKey: AppStorageKeys.notifStreakMilestones),
+            eveningChatEnabled: d.object(forKey: AppStorageKeys.notifEveningChatEnabled) as? Bool ?? true,
+            eveningChatHour: d.object(forKey: AppStorageKeys.notifEveningChatHour) as? Int ?? 21,
+            eveningChatMinute: d.object(forKey: AppStorageKeys.notifEveningChatMinute) as? Int ?? 0
         )
     }
 }
@@ -57,35 +63,13 @@ private struct SeededRNG: RandomNumberGenerator {
     }
 }
 
-private let dailyReminderTitles = [
-    String(localized: "Time to learn!"),
-    String(localized: "Your daily word moment"),
-    String(localized: "Keep growing!"),
-    String(localized: "A word a day"),
-    String(localized: "Stay curious")
-]
-
-private let dailyReminderBodies = [
-    String(localized: "A few minutes now — your future self will thank you!"),
-    String(localized: "Small steps, big vocabulary. Let's go!"),
-    String(localized: "Your words are waiting. A quick session?"),
-    String(localized: "Consistency is key. Open up and review!"),
-    String(localized: "One small step today — closer to your goal.")
-]
-
-private let inactivityBodies = [
-    String(localized: "It's been a while — your words are waiting!"),
-    String(localized: "A quick review keeps words fresh. Come back?"),
-    String(localized: "Don't let your progress fade — even 2 minutes help."),
-    String(localized: "Your vocabulary misses you. Let's pick up where you left off!")
-]
-
 final class NotificationManager {
     static let shared = NotificationManager()
     private init() {}
 
     private enum IDs {
         static let dailyReminder = "notif.daily.reminder"
+        static let eveningChat = "notif.evening.chat"
         static let vocabPrefix = "notif.vocab."
         static let streakPrefix = "streak.milestone"
         static let dailyGoal = "daily.goal.done"
@@ -101,6 +85,17 @@ final class NotificationManager {
         }
     }
 
+    func runIfAuthorized(_ work: @escaping () -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async(execute: work)
+            default:
+                break
+            }
+        }
+    }
+
     func rescheduleAll(
         prefs: NotificationPreferences,
         allWords: [StoredWord],
@@ -111,6 +106,7 @@ final class NotificationManager {
         guard prefs.globalEnabled else { return }
 
         scheduleDailyReminder(prefs: prefs)
+        scheduleEveningChat(prefs: prefs, allWords: allWords)
         scheduleVocabNotifications(prefs: prefs, allWords: allWords)
         scheduleReviewDueNotifications(allWords: allWords)
 
@@ -122,11 +118,10 @@ final class NotificationManager {
     private func scheduleDailyReminder(prefs: NotificationPreferences) {
         guard prefs.dailyReminderEnabled else { return }
 
-        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
-
+        let copy = NotificationCopy.pickDaily()
         let content = UNMutableNotificationContent()
-        content.title = dailyReminderTitles[dayOfYear % dailyReminderTitles.count]
-        content.body = dailyReminderBodies[dayOfYear % dailyReminderBodies.count]
+        content.title = copy.title
+        content.body = copy.body
         content.sound = .default
 
         var components = DateComponents()
@@ -136,6 +131,35 @@ final class NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
         let request = UNNotificationRequest(identifier: IDs.dailyReminder, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+    }
+
+    private func scheduleEveningChat(prefs: NotificationPreferences, allWords: [StoredWord]) {
+        guard prefs.eveningChatEnabled else { return }
+        let candidates = allWords.filter { $0.translation?.isEmpty == false }
+        guard let word = pickWordsAvoidingRepetition(candidates: candidates, count: 1).first else { return }
+
+        let copy = NotificationCopy.pickEveningChat(
+            word: word.word,
+            translation: word.translation ?? ""
+        )
+        let content = UNMutableNotificationContent()
+        content.title = copy.title
+        content.body = copy.body
+        content.sound = .default
+        content.categoryIdentifier = "evening.chat"
+        content.userInfo = [
+            "type": "eveningChat",
+            "wordId": word.id.uuidString,
+            "word": word.word
+        ]
+
+        var components = DateComponents()
+        components.hour = prefs.eveningChatHour
+        components.minute = prefs.eveningChatMinute
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+        let request = UNNotificationRequest(identifier: IDs.eveningChat, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
+        saveRecentlyUsedWordIDs([word.id])
     }
 
     private func scheduleVocabNotifications(prefs: NotificationPreferences, allWords: [StoredWord]) {
@@ -206,23 +230,12 @@ final class NotificationManager {
     ) -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
         content.title = word.word
-
-        var bodyParts: [String] = []
-
-        if showTranscription, let transcription = word.transcription, !transcription.isEmpty {
-            bodyParts.append(transcription)
-        }
-
-        if showTranslation, let translation = word.translation, !translation.isEmpty {
-            bodyParts.append(translation)
-        }
-
-        if bodyParts.isEmpty {
-            content.body = String(localized: "Do you remember what this means?")
-        } else {
-            content.body = bodyParts.joined(separator: " — ")
-        }
-
+        content.body = NotificationCopy.vocabBody(
+            transcription: word.transcription,
+            translation: word.translation,
+            showTranscription: showTranscription,
+            showTranslation: showTranslation
+        )
         content.sound = .default
         return content
     }
@@ -316,23 +329,16 @@ final class NotificationManager {
         static let prefix = "notif.reviewdue."
     }
 
-    /// Schedules one notification per upcoming day on which introduced words
-    /// become due for review, fired at that day's earliest due time. This is the
-    /// core retention loop: users come back exactly when their memory needs it.
     private func scheduleReviewDueNotifications(allWords: [StoredWord]) {
         let cal = Calendar.current
         let now = Date()
 
-        // Only words already introduced and scheduled for a future review.
         let upcoming = allWords.compactMap { w -> Date? in
-            guard w.introduced, let due = w.dueDate, due > now else { return nil }
-            return due
+            guard WordDue.isUpcoming(introduced: w.introduced, dueDate: w.dueDate, now: now) else { return nil }
+            return w.dueDate
         }
         guard !upcoming.isEmpty else { return }
 
-        // Group future due dates by calendar day, keeping the earliest time and
-        // the count for each day. Cap at the next 7 days to respect the pending
-        // notification limit.
         var perDay: [Date: (earliest: Date, count: Int)] = [:]
         for due in upcoming {
             let day = cal.startOfDay(for: due)
@@ -350,12 +356,8 @@ final class NotificationManager {
             let fireDate = max(info.earliest, now.addingTimeInterval(60))
 
             let content = UNMutableNotificationContent()
-            content.title = String(localized: "Time to review 📚")
-            if info.count == 1 {
-                content.body = String(localized: "1 word is ready to review.")
-            } else {
-                content.body = String(localized: "\(info.count) words are ready to review.")
-            }
+            content.title = NotificationCopy.pickReviewTitle()
+            content.body = NotificationCopy.reviewBody(count: info.count)
             content.sound = .default
             content.badge = NSNumber(value: info.count)
 
@@ -383,9 +385,10 @@ final class NotificationManager {
                 ?? Date().addingTimeInterval(Double(d) * 86400)
             guard fire > Date() else { continue }
 
+            let copy = NotificationCopy.inactivity(atIndex: i)
             let content = UNMutableNotificationContent()
-            content.title = String(localized: "We miss you!")
-            content.body = inactivityBodies[i % inactivityBodies.count]
+            content.title = copy.title
+            content.body = copy.body
             content.sound = .default
 
             let trigger = UNTimeIntervalNotificationTrigger(
@@ -402,9 +405,10 @@ final class NotificationManager {
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifGlobalEnabled) else { return }
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifStreakMilestones) else { return }
 
+        let copy = NotificationCopy.streakMilestone(for: streak)
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "Streak milestone!")
-        content.body = String(localized: "You've been learning for \(streak) days in a row. Keep going!")
+        content.title = copy.title
+        content.body = copy.body
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
@@ -417,9 +421,10 @@ final class NotificationManager {
     func scheduleDailyGoalCompletion() {
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifGlobalEnabled) else { return }
 
+        let copy = NotificationCopy.pickGoal()
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "Daily goal reached!")
-        content.body = String(localized: "Awesome, you've hit your word goal for today.")
+        content.title = copy.title
+        content.body = copy.body
         content.sound = .default
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)

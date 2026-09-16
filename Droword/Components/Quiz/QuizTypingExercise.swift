@@ -25,21 +25,6 @@ struct QuizTypingExercise: View {
         isReversed ? item.word : item.translation
     }
 
-    private var fieldBackground: Color {
-        if !hasAnswered { return themeStore.cardBg }
-        if isAlmostCorrect { return themeStore.accentGold.opacity(0.08) }
-        if isCorrect { return themeStore.accentGreen.opacity(0.08) }
-        return themeStore.accentRed.opacity(0.08)
-    }
-
-    private var borderColor: Color {
-        if !hasAnswered {
-            return isInputFocused.wrappedValue ? themeStore.mainText : themeStore.dividerColor
-        }
-        if isAlmostCorrect { return themeStore.accentGold }
-        return isCorrect ? themeStore.accentGreen : themeStore.accentRed
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
@@ -64,28 +49,21 @@ struct QuizTypingExercise: View {
             .padding(.bottom, 32)
 
             VStack(spacing: 12) {
-                TextField("Your answer", text: $typingInput)
-                    .focused(isInputFocused)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(themeStore.regular(16))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 18)
-                    .background(fieldBackground)
-                    .foregroundStyle(themeStore.mainText)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(borderColor, lineWidth: hasAnswered ? 2.5 : 1.5)
-                    )
-                    .cornerRadius(14)
-                    .disabled(hasAnswered)
-                    .submitLabel(.done)
-                    .onSubmit {
+                FormTextField(
+                    title: String(localized: "Your answer"),
+                    text: $typingInput,
+                    status: fieldStatus,
+                    isDisabled: hasAnswered,
+                    autocapitalization: .never,
+                    disableAutocorrection: true,
+                    onSubmit: {
                         if !hasAnswered && !typingInput.trimmingCharacters(in: .whitespaces).isEmpty {
                             onSubmit()
                         }
-                    }
-                    .offset(x: shakeOffset)
+                    },
+                    externalFocus: isInputFocused
+                )
+                .offset(x: shakeOffset)
 
                 feedback
             }
@@ -93,6 +71,12 @@ struct QuizTypingExercise: View {
 
             Spacer()
         }
+    }
+
+    private var fieldStatus: FormTextFieldStatus {
+        guard hasAnswered else { return .normal }
+        if isAlmostCorrect { return .almost }
+        return isCorrect ? .correct : .wrong
     }
 
     private var feedback: some View {
@@ -108,7 +92,7 @@ struct QuizTypingExercise: View {
             if hasAnswered && isAlmostCorrect {
                 QuizFeedbackBadge(
                     icon: "checkmark.circle.fill",
-                    text: String(localized: "Almost!"),
+                    text: DuoChaosCopy.almost(),
                     color: themeStore.accentGold
                 )
             }
@@ -116,7 +100,7 @@ struct QuizTypingExercise: View {
             if hasAnswered && !isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
                     icon: "xmark.circle.fill",
-                    text: String(localized: "Correct: \(expected)"),
+                    text: DuoChaosCopy.wrongReveal(expected),
                     color: themeStore.accentRed
                 )
             }
@@ -124,7 +108,7 @@ struct QuizTypingExercise: View {
             if hasAnswered && isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
                     icon: "checkmark.circle.fill",
-                    text: String(localized: "Correct!"),
+                    text: DuoChaosCopy.correct(),
                     color: themeStore.accentGreen
                 )
             }

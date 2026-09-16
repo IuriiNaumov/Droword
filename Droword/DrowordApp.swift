@@ -1,5 +1,7 @@
 import SwiftUI
 import UserNotifications
+import UIKit
+import CoreText
 
 class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(
@@ -7,6 +9,13 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         return [.banner, .sound]
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        ChatSceneLaunch.consumeNotification(response.notification)
     }
 }
 
@@ -35,13 +44,40 @@ struct DrowordApp: App {
     init() {
         migrateNotificationSettings()
         configureNavigationBarTint()
-        warmUpKeyboard()
-        warmUpClaude()
         setupNotifications()
         checkTrialPeriod()
+        Self.registerBundledFonts()
         Task.detached(priority: .background) {
-            _ = UIFont(name: "Poppins-Bold", size: 14)
             _ = UIFont(name: "Poppins-Regular", size: 14)
+            _ = UIFont(name: "Poppins-Medium", size: 14)
+            _ = UIFont(name: "Poppins-SemiBold", size: 14)
+            _ = UIFont(name: "Poppins-Bold", size: 14)
+            _ = UIFont(name: "Poppins-Black", size: 14)
+        }
+    }
+
+    private static func registerBundledFonts() {
+        let files = [
+            "Poppins-Regular",
+            "Poppins-Medium",
+            "Poppins-SemiBold",
+            "Poppins-Bold",
+            "Poppins-Black"
+        ]
+        for name in files {
+            guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else {
+                #if DEBUG
+                print("⚠️ Missing font file in bundle: \(name).ttf")
+                #endif
+                continue
+            }
+            var error: Unmanaged<CFError>?
+            CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error)
+            #if DEBUG
+            if let error {
+                print("⚠️ Font register failed \(name): \(error.takeUnretainedValue())")
+            }
+            #endif
         }
     }
 
@@ -69,7 +105,7 @@ struct DrowordApp: App {
                         enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()
                         checkTrialPeriod()
-                        if !isPremium && themeStore.palette == .duolingo {
+                        if !isPremium && themeStore.palette != .colorful {
                             themeStore.set(.colorful)
                         }
                         studyTimeTracker.resumeSession()
@@ -77,6 +113,7 @@ struct DrowordApp: App {
                         let todayMins = studyTimeTracker.todaySeconds / 60
                         DailyChallengeManager.shared.updateStudyMinutes(todayMins)
                         studyTimeTracker.pauseSession()
+                        store.flushPendingSave()
                     @unknown default:
                         break
                     }
@@ -93,35 +130,11 @@ struct DrowordApp: App {
     private func setupNotifications() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
 
-        NotificationManager.shared.requestAuthorization { granted in
-            guard granted else { return }
-            let lastActiveDay = UserDefaults.standard.string(forKey: AppStorageKeys.lastActiveDay) ?? ""
-            if !lastActiveDay.isEmpty {
-                if let lastDate = DateFormatting.dayFormatter.date(from: lastActiveDay) {
-                    NotificationManager.shared.scheduleInactivityReminders(lastActive: lastDate)
-                }
+        let lastActiveDay = UserDefaults.standard.string(forKey: AppStorageKeys.lastActiveDay) ?? ""
+        NotificationManager.shared.runIfAuthorized {
+            if let lastDate = DateFormatting.dayFormatter.date(from: lastActiveDay) {
+                NotificationManager.shared.scheduleInactivityReminders(lastActive: lastDate)
             }
-        }
-    }
-
-    private func warmUpKeyboard() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let textField = UITextField()
-            UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first?.windows.first?.addSubview(textField)
-            textField.becomeFirstResponder()
-            textField.resignFirstResponder()
-            textField.removeFromSuperview()
-        }
-    }
-
-    private func warmUpClaude() {
-        let premium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
-        guard premium else { return }
-        let langStore = LanguageStore()
-        Task.detached(priority: .background) {
-            _ = try? await translateWithClaude(word: "hola", languageStore: langStore)
         }
     }
 
@@ -132,6 +145,12 @@ struct DrowordApp: App {
             tintColor = UIColor(red: 0.345, green: 0.8, blue: 0.008, alpha: 1)
         case "sunset":
             tintColor = UIColor(red: 0.91, green: 0.51, blue: 0.36, alpha: 1)
+        case "night":
+            tintColor = UIColor(red: 0.655, green: 0.545, blue: 0.98, alpha: 1)
+        case "ocean":
+            tintColor = UIColor(red: 0.18, green: 0.77, blue: 0.71, alpha: 1)
+        case "paper":
+            tintColor = UIColor(red: 0.77, green: 0.47, blue: 0.29, alpha: 1)
         case "glass":
             tintColor = UIColor.systemBlue
         default:
@@ -193,13 +212,11 @@ struct DrowordApp: App {
     private func checkTrialPeriod() {
         let df = DateFormatting.dayFormatter
 
-        // Restore trial date from Keychain if UserDefaults were cleared (reinstall)
         if !hasUsedTrial, let keychainDate = TrialKeychain.loadStartDate() {
             hasUsedTrial = true
             trialStartDate = keychainDate
         }
 
-        // Trial not started yet — don't auto-activate; user starts it from PremiumView
         guard hasUsedTrial, !trialStartDate.isEmpty,
               let start = df.date(from: trialStartDate) else { return }
 
@@ -215,7 +232,7 @@ struct DrowordApp: App {
                 isPremium = false
                 UserDefaults.standard.set(false, forKey: AppStorageKeys.seasonalEffectsEnabled)
                 if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),
-                   savedPalette == ThemeStore.Palette.duolingo.rawValue {
+                   savedPalette != ThemeStore.Palette.colorful.rawValue {
                     UserDefaults.standard.set(ThemeStore.Palette.colorful.rawValue, forKey: "appThemePalette")
                 }
             }
@@ -223,15 +240,34 @@ struct DrowordApp: App {
     }
 
     private func handleIncomingURL(_ url: URL) {
-        guard url.scheme == "droword", url.host == "add" else { return }
-
-        let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-            .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
-
+        guard url.scheme == "droword" else { return }
+        let host = url.host ?? ""
+        if host == "add" {
+            let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
+            NotificationCenter.default.post(
+                name: .sharedWordReceived,
+                object: nil,
+                userInfo: ["word": word]
+            )
+            return
+        }
+        if host == "chat" {
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+            let wordId = items?.first(where: { $0.name == "id" })?.value
+            let word = items?.first(where: { $0.name == "word" })?.value
+            ChatSceneLaunch.store(wordId: wordId, word: word)
+            NotificationCenter.default.post(
+                name: .openChatScene,
+                object: nil,
+                userInfo: ["wordId": wordId as Any, "word": word as Any]
+            )
+            return
+        }
         NotificationCenter.default.post(
-            name: .sharedWordReceived,
+            name: .openFromWidget,
             object: nil,
-            userInfo: ["word": word]
+            userInfo: ["host": host]
         )
     }
 }
@@ -240,4 +276,6 @@ extension Notification.Name {
     static let sharedWordReceived = Notification.Name("sharedWordReceived")
     static let copiedToClipboard = Notification.Name("copiedToClipboard")
     static let perfectQuizCompleted = Notification.Name("perfectQuizCompleted")
+    static let openFromWidget = Notification.Name("openFromWidget")
+    static let openChatScene = Notification.Name("openChatScene")
 }

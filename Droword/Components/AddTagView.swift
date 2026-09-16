@@ -1,5 +1,4 @@
 import SwiftUI
-import UserNotifications
 
 struct AddTagView: View {
     @EnvironmentObject private var themeStore: ThemeStore
@@ -8,7 +7,6 @@ struct AddTagView: View {
     @State private var colorHex: String = ""
 
     @State private var isSaving = false
-    @State private var didRequestNotifications = false
 
     var body: some View {
         NavigationStack {
@@ -43,7 +41,9 @@ struct AddTagView: View {
                         title: "e.g. #FFAA33",
                         text: $colorHex,
                         maxLength: 7,
-                        showCounter: false
+                        showCounter: false,
+                        autocapitalization: .never,
+                        disableAutocorrection: true
                     ).overlay(alignment: .trailing) {
                         Circle()
                             .fill(parsedColor ?? Color.gray)
@@ -51,8 +51,6 @@ struct AddTagView: View {
                             .padding(.trailing, 12)
                             .allowsHitTesting(false)
                     }
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
 
                     Text("Suggested")
                         .font(themeStore.regular(14))
@@ -68,11 +66,13 @@ struct AddTagView: View {
                                 Circle()
                                     .fill(item.color)
                                     .frame(width: 36, height: 36)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(colorHex == item.hex ? themeStore.mainText : Color.clear, lineWidth: 2)
-                                            .padding(-2)
-                                    )
+                                    .overlay {
+                                        if colorHex == item.hex {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 12, weight: .bold))
+                                                .foregroundStyle(.white)
+                                        }
+                                    }
                             }
                             .buttonStyle(.plain)
                         }
@@ -94,17 +94,8 @@ struct AddTagView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+                    CloseButton()
                 }
-            }
-        }
-        .task {
-            if !didRequestNotifications {
-                didRequestNotifications = true
-                NotificationManager.shared.requestAuthorization()
             }
         }
     }

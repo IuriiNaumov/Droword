@@ -21,8 +21,24 @@ struct NotificationSettingsView: View {
     @AppStorage(AppStorageKeys.notifVocabEndHour) private var vocabEndHour: Int = 18
     @AppStorage(AppStorageKeys.notifVocabEndMinute) private var vocabEndMinute: Int = 0
     @AppStorage(AppStorageKeys.notifStreakMilestones) private var streakMilestones: Bool = true
+    @AppStorage(AppStorageKeys.notifEveningChatEnabled) private var eveningChatEnabled: Bool = true
+    @AppStorage(AppStorageKeys.notifEveningChatHour) private var eveningChatHour: Int = 21
+    @AppStorage(AppStorageKeys.notifEveningChatMinute) private var eveningChatMinute: Int = 0
 
     @State private var rescheduleTask: Task<Void, Never>?
+
+    private var eveningChatDate: Binding<Date> {
+        Binding<Date>(
+            get: {
+                Calendar.current.date(from: DateComponents(hour: eveningChatHour, minute: eveningChatMinute)) ?? Date()
+            },
+            set: { newDate in
+                let comps = Calendar.current.dateComponents([.hour, .minute], from: newDate)
+                eveningChatHour = comps.hour ?? 21
+                eveningChatMinute = comps.minute ?? 0
+            }
+        )
+    }
 
     private var dailyReminderDate: Binding<Date> {
         Binding<Date>(
@@ -83,7 +99,7 @@ struct NotificationSettingsView: View {
                         isOn: $globalEnabled
                     )
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
 
                 if globalEnabled {
                     sectionHeader("Daily reminder")
@@ -107,8 +123,37 @@ struct NotificationSettingsView: View {
                             )
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
                     .animation(.easeInOut(duration: 0.25), value: dailyReminderEnabled)
+
+                    sectionHeader("Evening chat")
+
+                    VStack(spacing: 0) {
+                        toggleRow(
+                            icon: "moon.stars.fill",
+                            color: themeStore.accentPurple,
+                            title: "One word at night",
+                            isOn: $eveningChatEnabled
+                        )
+
+                        if eveningChatEnabled {
+                            Divider().padding(.leading, 68)
+
+                            timePickerRow(
+                                icon: "clock.fill",
+                                color: themeStore.iconBlue,
+                                title: "Chat time",
+                                date: eveningChatDate
+                            )
+                        }
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                    .animation(.easeInOut(duration: 0.25), value: eveningChatEnabled)
+
+                    Text("Tap it. Three lines with that word. Then stop.")
+                        .font(themeStore.regular(12))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .padding(.horizontal, 8)
 
                     sectionHeader("Vocabulary")
 
@@ -181,7 +226,7 @@ struct NotificationSettingsView: View {
                                     Text("End time must be after start time")
                                         .font(themeStore.regular(12))
                                 }
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(themeStore.mainAccentColor)
                                 .padding(.horizontal, 20)
                                 .padding(.top, 6)
                             }
@@ -195,7 +240,7 @@ struct NotificationSettingsView: View {
                             }
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
                     .animation(.easeInOut(duration: 0.25), value: vocabEnabled)
 
                     sectionHeader("Other")
@@ -208,7 +253,7 @@ struct NotificationSettingsView: View {
                             isOn: $streakMilestones
                         )
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
 
                     Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
                         .font(themeStore.regular(12))
@@ -242,10 +287,16 @@ struct NotificationSettingsView: View {
         .onChange(of: vocabEndHour) { _, _ in triggerReschedule() }
         .onChange(of: vocabEndMinute) { _, _ in triggerReschedule() }
         .onChange(of: streakMilestones) { _, _ in triggerReschedule() }
+        .onChange(of: eveningChatEnabled) { _, _ in triggerReschedule() }
+        .onChange(of: eveningChatHour) { _, _ in triggerReschedule() }
+        .onChange(of: eveningChatMinute) { _, _ in triggerReschedule() }
         .onChange(of: globalEnabled) { _, enabled in
             if enabled {
                 NotificationManager.shared.requestAuthorization { _ in }
             }
+        }
+        .onAppear {
+            NotificationManager.shared.requestAuthorization { _ in }
         }
     }
 
@@ -338,13 +389,8 @@ struct NotificationSettingsView: View {
         }
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(.ultraThinMaterial)
-
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(themeStore.secondaryText.opacity(0.1), lineWidth: 0.5)
         )
         .animation(.easeInOut(duration: 0.2), value: vocabShowTranscription)
         .animation(.easeInOut(duration: 0.2), value: vocabShowTranslation)
@@ -358,72 +404,60 @@ struct NotificationSettingsView: View {
         return UIImage(named: name)
     }
 
-    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-            }
+    private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
                 .tint(themeStore.mainAccentColor)
         }
         .padding(.vertical, 14)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 18)
         .background(themeStore.cardBg)
     }
 
-    private func timePickerRow(icon: String, color: Color, title: LocalizedStringKey, date: Binding<Date>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-            }
+    private func timePickerRow(icon: String, color: Color = .clear, title: LocalizedStringKey, date: Binding<Date>) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
             Spacer()
             DatePicker("", selection: date, displayedComponents: .hourAndMinute)
                 .labelsHidden()
                 .tint(themeStore.mainAccentColor)
         }
         .padding(.vertical, 8)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 18)
         .background(themeStore.cardBg)
     }
 
     private func frequencyRow(value: Binding<Int>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(themeStore.iconBlue.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: "number")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeStore.iconBlue)
-            }
+        HStack(spacing: 14) {
+            Image(systemName: "number")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
             Text("Per day")
                 .font(themeStore.regular(16))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
             Spacer()
             Stepper("\(value.wrappedValue)", value: value, in: 1...10)
                 .font(themeStore.medium(16))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
         }
         .padding(.vertical, 8)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 18)
         .background(themeStore.cardBg)
     }
 

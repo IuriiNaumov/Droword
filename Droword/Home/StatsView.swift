@@ -24,7 +24,10 @@ struct StatsView: View {
             HStack(spacing: 12) {
                 StatCardView(title: "Total", value: "\(store.totalWordsAdded)")
                 StatCardView(title: "Today", value: "\(cachedTodayCount)")
-                StatCardView(title: "Time", value: studyTimeTracker.todayFormatted)
+
+                TimelineView(.periodic(from: .now, by: 60)) { _ in
+                    StatCardView(title: "Time", value: studyTimeTracker.todayFormatted)
+                }
             }
         }
         .padding(16)

@@ -11,6 +11,7 @@ struct DictionarySettingsView: View {
     @State private var showImportPicker = false
     @State private var importedCount: Int?
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
+    @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallenges: Bool = true
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -22,10 +23,11 @@ struct DictionarySettingsView: View {
 
                 VStack(spacing: 0) {
                     toggleRow(icon: "rectangle.stack.fill", color: themeStore.accentBlue, title: "Show Word Packs", isOn: $showWordPacks)
+                    toggleRow(icon: "trophy", color: themeStore.accentGold, title: "Show Daily Challenges", isOn: $showDailyChallenges)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
 
-                Text("Word packs on the home screen.")
+                Text("Optional extras. Home stays quiet unless you turn these on.")
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
                     .padding(.horizontal, 4)
@@ -41,7 +43,7 @@ struct DictionarySettingsView: View {
                         showImportPicker = true
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
 
                 Text("Works with exports from Anki, Quizlet, and any CSV or TXT file. Minimum: a column named \"Word\". Translations will be added automatically if missing.")
                     .font(themeStore.regular(13))
@@ -54,7 +56,7 @@ struct DictionarySettingsView: View {
                         store.clear()
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
             }
             .padding(.bottom, 20)
             .padding(.horizontal, 20)
@@ -96,7 +98,7 @@ struct DictionarySettingsView: View {
             if let count = importedCount {
                 CustomAlertView(
                     icon: "checkmark.circle.fill",
-                    iconColor: themeStore.accentGreen,
+                    iconColor: themeStore.mainAccentColor,
                     title: "Import Complete",
                     message: "\(count) words imported successfully.",
                     primaryButton: .init(title: "OK", style: .primary) {
@@ -115,48 +117,40 @@ struct DictionarySettingsView: View {
             .foregroundStyle(.primary)
     }
 
-    private func settingsRow(icon: String, color: Color, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+    private func settingsRow(icon: String, color: Color = .clear, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button {
-            Haptics.selection()
+            Haptics.menuTap()
             action()
         } label: {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(color)
-                }
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(color == Color.accentRed ? Color.accentRed : themeStore.mainText)
+                    .frame(width: 28, height: 28)
 
                 Text(title)
                     .font(themeStore.regular(16))
-                    .foregroundStyle(color == Color.accentRed ? Color.accentRed : .primary)
+                    .foregroundStyle(color == Color.accentRed ? Color.accentRed : themeStore.mainText)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.6))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.45))
             }
             .padding(.vertical, 14)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 18)
             .background(themeStore.cardBg)
         }
         .buttonStyle(.plain)
     }
 
-    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-            }
+    private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
 
             Text(title)
                 .font(themeStore.regular(16))
@@ -169,7 +163,7 @@ struct DictionarySettingsView: View {
                 .tint(themeStore.mainAccentColor)
         }
         .padding(.vertical, 14)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 18)
         .background(themeStore.cardBg)
     }
 

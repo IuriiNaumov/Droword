@@ -73,7 +73,6 @@ struct OnboardingReplayView: View {
                 }
                 .iPadContentWidth(600)
 
-
             }
         }
         .onAppear { retriggerAnimation() }

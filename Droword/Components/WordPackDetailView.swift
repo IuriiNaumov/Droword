@@ -50,10 +50,9 @@ struct WordPackDetailView: View {
                             if addedCount > 0 {
                                 Text("\(addedCount) added")
                                     .font(themeStore.regular(13))
-                                    .foregroundStyle(themeStore.accentGreen)
+                                    .foregroundStyle(themeStore.accentBlue)
                             }
                         }
-
 
                         if visibleWords.count > 1 {
                             Button {
@@ -87,10 +86,7 @@ struct WordPackDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+                    CloseButton()
                 }
             }
         }
@@ -164,13 +160,11 @@ struct WordPackDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    // MARK: - Completion
-
     private var completionView: some View {
         VStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 40))
-                .foregroundStyle(themeStore.accentGreen)
+                .foregroundStyle(themeStore.accentBlue)
 
             Text("All done!")
                 .font(themeStore.bold(18))
@@ -200,8 +194,6 @@ struct WordPackDetailView: View {
         .padding(.vertical, 24)
     }
 
-    // MARK: - Actions
-
     private func addWord(_ word: StarterWord) {
         let newWord = StoredWord(
             word: word.word,
@@ -216,8 +208,7 @@ struct WordPackDetailView: View {
         store.add(newWord)
         addedWordIDs.insert(word.word)
         addedCount += 1
-        // Kick off enrichment right away so Claude fills in translation,
-        // examples and explanation without waiting for a relaunch.
+
         NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
         checkCompletion()
     }
@@ -235,7 +226,7 @@ struct WordPackDetailView: View {
                 alreadyInDictionary.insert(word.word)
             }
         }
-        // If all words already handled, auto-mark completed
+
         if visibleWords.isEmpty {
             markCompleted()
         }

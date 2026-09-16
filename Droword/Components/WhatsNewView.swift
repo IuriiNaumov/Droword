@@ -6,44 +6,37 @@ struct WhatsNewView: View {
 
     private var features: [WhatsNewFeature] {[
         WhatsNewFeature(
-            icon: "character.book.closed.fill",
-            color: themeStore.accentBlue,
+            icon: "character.book.closed",
             title: "Smart Dictionary",
             description: "AI-powered translations with examples, transcription and context."
         ),
         WhatsNewFeature(
-            icon: "brain.head.profile.fill",
-            color: themeStore.accentGreen,
+            icon: "brain.head.profile",
             title: "Spaced Repetition",
             description: "Review words at optimal intervals so they stick in long-term memory."
         ),
         WhatsNewFeature(
-            icon: "gamecontroller.fill",
-            color: themeStore.accentGold,
+            icon: "gamecontroller",
             title: "Mixed Quizzes",
             description: "Multiple choice, cloze, matching, typing and sentence building exercises."
         ),
         WhatsNewFeature(
-            icon: "waveform.circle.fill",
-            color: themeStore.iconPink,
+            icon: "waveform",
             title: "Voice & Pronunciation",
             description: "Listen to words with customizable voice and speech rate."
         ),
         WhatsNewFeature(
-            icon: "paintpalette.fill",
-            color: themeStore.iconPurple,
+            icon: "paintpalette",
             title: "Themes & Customization",
             description: "Choose from multiple themes, seasonal effects and appearance settings."
         ),
         WhatsNewFeature(
-            icon: "trophy.fill",
-            color: themeStore.iconGold,
+            icon: "trophy",
             title: "Achievements & Streaks",
             description: "Track your progress with badges, daily challenges and streak calendar."
         ),
         WhatsNewFeature(
-            icon: "rectangle.stack.fill",
-            color: themeStore.accentBlue,
+            icon: "rectangle.stack",
             title: "Word Packs",
             description: "Themed vocabulary sets — basics, food, travel and more."
         )
@@ -63,7 +56,7 @@ struct WhatsNewView: View {
                 }
                 .padding(.top, 24)
 
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     ForEach(features) { feature in
                         featureRow(feature)
                     }
@@ -84,15 +77,11 @@ struct WhatsNewView: View {
     }
 
     private func featureRow(_ feature: WhatsNewFeature) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(feature.color.opacity(0.15))
-                    .frame(width: 48, height: 48)
-                Image(systemName: feature.icon)
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(feature.color)
-            }
+        HStack(spacing: 14) {
+            Image(systemName: feature.icon)
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(feature.title)
@@ -108,11 +97,10 @@ struct WhatsNewView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
     }
 
     private var appVersion: String {
@@ -123,7 +111,6 @@ struct WhatsNewView: View {
 private struct WhatsNewFeature: Identifiable {
     let id = UUID()
     let icon: String
-    let color: Color
     let title: LocalizedStringKey
     let description: LocalizedStringKey
 }

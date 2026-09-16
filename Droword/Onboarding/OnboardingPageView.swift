@@ -26,7 +26,7 @@ struct OnboardingPageView: View {
     @State private var showSubtitle = false
 
     var body: some View {
-        VStack { 
+        VStack {
             Spacer(minLength: 0)
             VStack(spacing: 34) {
                 illustration
@@ -77,8 +77,7 @@ struct OnboardingPageView: View {
                 CustomizeIllustration(accent: model.accent, size: size, px: px, py: py)
             }
         }
-        .frame(width: size, height: size * 1.15)
-        .clipped()
+        .frame(width: size, height: size)
         .accessibilityHidden(true)
     }
 

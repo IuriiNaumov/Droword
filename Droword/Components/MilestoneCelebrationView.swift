@@ -138,8 +138,7 @@ struct MilestoneCelebrationView: View {
             .padding(.horizontal, 32)
         }
         .onAppear {
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
+            Haptics.celebration()
 
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                 emojiScale = 1.0

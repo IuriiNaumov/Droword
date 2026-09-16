@@ -5,7 +5,6 @@ import CryptoKit
 private final class TTSCache {
     static let shared = TTSCache()
 
-    /// Maximum cache size in bytes (50 MB)
     private let maxCacheSize: Int = 50 * 1024 * 1024
 
     private let cacheDir: URL = {
@@ -34,7 +33,6 @@ private final class TTSCache {
         trimIfNeeded()
     }
 
-    /// Removes oldest files when total cache exceeds the limit.
     private func trimIfNeeded() {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]) else { return }
@@ -52,7 +50,6 @@ private final class TTSCache {
 
         guard totalSize > maxCacheSize else { return }
 
-        // Sort oldest first
         entries.sort { $0.date < $1.date }
 
         for entry in entries {
@@ -113,7 +110,9 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     }
 
     func playAndWait(text: String, rate: Float? = nil) async throws {
+        try Task.checkCancellation()
         let data = try await fetchAudioData(for: text)
+        try Task.checkCancellation()
         try await playAudioSync(data: data, rate: rate)
     }
 
@@ -138,7 +137,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
             }
         }
     }
-    
+
     private func fetchAudioData(for text: String, voice: String) async throws -> Data {
         if let cached = TTSCache.shared.cachedData(for: text, voice: voice) {
             return cached
@@ -155,8 +154,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
             "voice": voice,
             "format": "mp3"
         ]
-        // Tell the backend which language this is so TTS uses a native accent
-        // (otherwise Japanese/etc. can be read with an English accent).
+
         if let language = UserDefaults.standard.string(forKey: "learningLanguage"), !language.isEmpty {
             body["language"] = language
         }
@@ -174,9 +172,6 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return try await fetchAudioData(for: text, voice: currentVoice)
     }
 
-    /// Configures and activates the shared audio session off the main thread.
-    /// `AVAudioSession.setActive(_:)` can block, so running it here (nonisolated,
-    /// on the concurrent executor) avoids the main-thread UI unresponsiveness warning.
     private nonisolated func activateSession(mixWithOthers: Bool) throws {
         let session = AVAudioSession.sharedInstance()
         let options: AVAudioSession.CategoryOptions = mixWithOthers ? [.mixWithOthers] : []
@@ -206,8 +201,7 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         player?.prepareToPlay()
         player?.enableRate = true
         player?.rate = rate ?? effectiveRate
-        
-        // Cancel any orphaned continuation from a previous rapid tap
+
         if let existing = playbackContinuation {
             playbackContinuation = nil
             existing.resume()

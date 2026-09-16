@@ -42,7 +42,7 @@ struct SeasonalEffectsSettingsView: View {
                         )
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: seasonalEffectsEnabled)
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -64,15 +64,15 @@ struct SeasonalEffectsSettingsView: View {
 
                 if seasonalEffectsEnabled {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                             .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                             .frame(height: 180)
                         SeasonalOverlayView(animated: seasonalAnimationEnabled)
                             .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
                             .allowsHitTesting(false)
                     }
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
                     .transition(.opacity)
                 }
             }
@@ -94,26 +94,22 @@ struct SeasonalEffectsSettingsView: View {
         }
     }
 
-    private func toggleRow(icon: String, color: Color, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-            }
+    private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
             Text(title)
                 .font(themeStore.regular(16))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
                 .tint(themeStore.mainAccentColor)
         }
         .padding(.vertical, 14)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 18)
         .background(themeStore.cardBg)
     }
 

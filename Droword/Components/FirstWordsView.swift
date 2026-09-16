@@ -129,7 +129,7 @@ struct FirstWordsView: View {
             } label: {
                 Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
                     .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
+                    .foregroundStyle(themeStore.accentBlue)
             }
             .buttonStyle(.plain)
         }

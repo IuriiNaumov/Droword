@@ -1,51 +1,43 @@
 import SwiftUI
+import UIKit
 
-/// Home entry point for reading mode.
 struct ReadingStoryCard: View {
     @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.colorScheme) private var colorScheme
     var onTap: () -> Void
 
     var body: some View {
         Button { onTap() } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(themeStore.iconCircleFill(colorScheme: colorScheme))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "book.pages.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(themeStore.accentPink)
-                }
+            HStack(spacing: 14) {
+                Image(systemName: "book.pages")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(themeStore.mainText)
+                    .frame(width: 28, height: 28)
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Reading")
                         .font(themeStore.bold(16))
                         .foregroundStyle(themeStore.mainText)
-                    Text("A quick story from your words")
+                    Text(DuoChaosCopy.readingSubtitle())
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeStore.accentPink)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(themeStore.secondaryText.opacity(0.45))
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-            .cardDepth(cornerRadius: 16)
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(Text("Reading practice"))
     }
 }
 
-/// Reading mode: generates a short story in the learning language from words the
-/// user is currently studying, with a tappable translation. Words in context
-/// stick far better than isolated flashcards (comprehensible input).
 struct StoryView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
@@ -60,29 +52,30 @@ struct StoryView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("Reading")
-                        .sheetTitle()
-
-                    if isLoading {
-                        loadingView
-                    } else if let story {
-                        storyContent(story)
-                    } else if let errorMessage {
-                        errorView(errorMessage)
+            Group {
+                if isLoading {
+                    loadingView
+                } else if let story {
+                    GeometryReader { geo in
+                        ScrollView(showsIndicators: false) {
+                            storyContent(story)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 24)
+                                .iPadContentWidth(600)
+                                .frame(maxWidth: .infinity, minHeight: geo.size.height)
+                        }
                     }
+                } else if let errorMessage {
+                    errorView(errorMessage)
+                        .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
-                .iPadContentWidth(600)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    SettingsBackButton()
-                        .environmentObject(themeStore)
+                    CloseButton()
                 }
             }
         }
@@ -91,24 +84,25 @@ struct StoryView: View {
         }
     }
 
-    // MARK: - Content
-
     private func storyContent(_ story: StoryResult) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(story.title)
+        VStack(alignment: .center, spacing: 16) {
+            Text(Self.plainText(story.title, words: story.usedWords))
                 .font(themeStore.bold(24))
                 .foregroundStyle(themeStore.mainText)
+                .multilineTextAlignment(.center)
 
-            Text(story.story)
+            Text(highlightedStory(story.story, words: story.usedWords))
                 .font(themeStore.regular(19))
                 .foregroundStyle(themeStore.mainText)
+                .multilineTextAlignment(.center)
                 .lineSpacing(6)
                 .fixedSize(horizontal: false, vertical: true)
 
             if showTranslation {
-                Text(story.translation)
+                Text(Self.plainText(story.translation, words: story.usedWords))
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
+                    .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 4)
@@ -129,19 +123,19 @@ struct StoryView: View {
             }
 
             if !story.usedWords.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Words in this story")
+                VStack(alignment: .center, spacing: 6) {
+                    Text("Slipped into the story")
                         .font(themeStore.medium(13))
                         .foregroundStyle(themeStore.secondaryText)
                     FlowLayout(spacing: 8) {
                         ForEach(story.usedWords, id: \.self) { w in
                             Text(w)
                                 .font(themeStore.medium(14))
-                                .foregroundStyle(themeStore.mainAccentColor)
+                                .foregroundStyle(Color("AccentGold"))
                                 .padding(.vertical, 6)
                                 .padding(.horizontal, 12)
                                 .background(
-                                    Capsule().fill(themeStore.mainAccentColor.opacity(0.12))
+                                    Capsule().fill(Color("AccentGold").opacity(0.14))
                                 )
                         }
                     }
@@ -162,13 +156,14 @@ struct StoryView: View {
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                         .fill(themeStore.mainAccentColor.opacity(0.12))
                 )
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.top, 8)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var loadingView: some View {
@@ -181,12 +176,12 @@ struct StoryView: View {
             )
             .frame(height: 34)
 
-            Text("Writing a story from your words…")
+            Text(DuoChaosCopy.storyWriting())
                 .font(themeStore.regular(15))
                 .foregroundStyle(themeStore.secondaryText)
+                .multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func errorView(_ message: String) -> some View {
@@ -201,29 +196,91 @@ struct StoryView: View {
             Button {
                 Task { await load() }
             } label: {
-                Text("Try again")
+                Text(DuoChaosCopy.storyTryAgain())
                     .duo3DStyle(themeStore.mainAccentColor)
             }
             .buttonStyle(Duo3DButtonStyle())
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Logic
+    private func highlightedStory(_ text: String, words: [String]) -> AttributedString {
+        let cleaned = Self.plainText(text, words: words)
+        var attributed = AttributedString(cleaned)
+        let gold = UIColor(Color("AccentGold"))
+        let highlightFont = UIFont(name: "Poppins-Bold", size: 19)
+            ?? .systemFont(ofSize: 19, weight: .bold)
+        let ns = cleaned as NSString
+        for word in words where word.count >= 2 {
+            var search = NSRange(location: 0, length: ns.length)
+            while true {
+                let found = ns.range(of: word, options: [.caseInsensitive, .diacriticInsensitive], range: search)
+                if found.location == NSNotFound { break }
+                if let stringRange = Range(found, in: cleaned),
+                   let attrRange = Range(stringRange, in: attributed) {
+                    attributed[attrRange].foregroundColor = gold
+                    attributed[attrRange].font = highlightFont
+                }
+                let next = found.location + max(found.length, 1)
+                if next >= ns.length { break }
+                search = NSRange(location: next, length: ns.length - next)
+            }
+        }
+        return attributed
+    }
 
-    /// Picks a handful of words to build the story from, preferring ones the user
-    /// is actively learning (introduced, translated), newest first.
-    private func pickWords() -> [String] {
-        let usable = store.words.filter { $0.translation?.isEmpty == false }
-        let learning = usable.filter { $0.introduced }
-        let pool = (learning.isEmpty ? usable : learning)
-            .sorted { $0.dateAdded > $1.dateAdded }
-        return Array(pool.prefix(8).map { $0.word }).shuffled()
+    private static func plainText(_ text: String, words: [String]) -> String {
+        var result = text
+        let wrappers: [(String, String)] = [
+            ("***", "***"),
+            ("**", "**"),
+            ("*", "*"),
+            ("__", "__"),
+            ("_", "_"),
+            ("\"", "\""),
+            ("«", "»"),
+            ("“", "”"),
+            ("‘", "’"),
+            ("'", "'"),
+            ("`", "`")
+        ]
+        for word in words where word.count >= 2 {
+            for (left, right) in wrappers {
+                result = result.replacingOccurrences(
+                    of: "\(left)\(word)\(right)",
+                    with: word,
+                    options: [.caseInsensitive, .diacriticInsensitive]
+                )
+            }
+        }
+        result = result.replacingOccurrences(of: #"\*\*\*(.+?)\*\*\*"#, with: "$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\*\*(.+?)\*\*"#, with: "$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\*(.+?)\*"#, with: "$1", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"(?<=\S)\*+"#, with: "", options: .regularExpression)
+        result = result.replacingOccurrences(of: #"\*+(?=\S)"#, with: "", options: .regularExpression)
+        for word in words where word.count >= 2 {
+            for mark in ["\"", "«", "»", "“", "”", "`"] {
+                result = result.replacingOccurrences(
+                    of: "\(mark)\(word)",
+                    with: word,
+                    options: [.caseInsensitive, .diacriticInsensitive]
+                )
+                result = result.replacingOccurrences(
+                    of: "\(word)\(mark)",
+                    with: word,
+                    options: [.caseInsensitive, .diacriticInsensitive]
+                )
+            }
+        }
+        return result
     }
 
     private func load() async {
-        let words = pickWords()
+        let words = StoryWordPicker.candidates(
+            from: store.words,
+            learningLanguage: languageStore.learningLanguage,
+            preferredTags: LearningProfileStore.shared.preferredTagNames
+        )
         guard words.count >= 3 else {
             errorMessage = String(localized: "Add a few more words first, then I can write you a story.")
             return
@@ -232,7 +289,13 @@ struct StoryView: View {
         showTranslation = false
         withAnimation { isLoading = true }
         do {
-            let result = try await generateStory(words: words, languageStore: languageStore)
+            let profile = LearningProfileStore.shared
+            let result = try await generateStory(
+                words: words,
+                languageStore: languageStore,
+                goal: profile.goal.localizedTitle,
+                topics: profile.topics.map(\.localizedTitle)
+            )
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                 story = result
                 isLoading = false

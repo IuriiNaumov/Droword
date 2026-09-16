@@ -1,11 +1,10 @@
 import Foundation
 import SwiftUI
+import Combine
 
 extension Notification.Name {
     static let wordsEnriched = Notification.Name("wordsEnriched")
-    /// Posted when a word needing enrichment is added while the app is running,
-    /// so pending words can be sent to Claude immediately instead of waiting for
-    /// the next launch or network reconnect.
+
     static let triggerEnrichment = Notification.Name("triggerEnrichment")
 }
 
@@ -37,20 +36,18 @@ final class WordEnrichmentService {
             Task { await enrichPendingWords() }
         }
 
-        observeTask = Task {
+        observeTask = Task { [weak self] in
+            guard let self else { return }
             var wasConnected = NetworkMonitor.shared.isConnected
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
+            for await connected in NetworkMonitor.shared.$isConnected.values {
                 guard !Task.isCancelled else { return }
-                let connected = NetworkMonitor.shared.isConnected
                 if connected && !wasConnected {
-                    await enrichPendingWords()
+                    await self.enrichPendingWords()
                 }
                 wasConnected = connected
             }
         }
 
-        // Enrich immediately when a pending word is added while the app is running.
         triggerTask = Task { [weak self] in
             for await _ in NotificationCenter.default.notifications(named: .triggerEnrichment) {
                 guard let self else { return }

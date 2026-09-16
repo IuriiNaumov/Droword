@@ -14,7 +14,7 @@ struct TagItem: Codable, Identifiable, Equatable {
 }
 
 final class TagStore: ObservableObject {
-    
+
     static let shared = TagStore()
     private init() { load() }
 
@@ -36,7 +36,7 @@ final class TagStore: ObservableObject {
     func removeTag(_ tag: TagItem) {
         tags.removeAll { $0.id == tag.id }
     }
-    
+
     func removeTag(named name: String) {
         let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedName.isEmpty else { return }

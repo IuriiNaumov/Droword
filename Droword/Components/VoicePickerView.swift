@@ -24,7 +24,7 @@ struct VoicePickerView: View {
                 HStack(spacing: 14) {
                     ZStack {
                         Circle()
-                            .stroke(themeStore.secondaryText.opacity(0.4), lineWidth: 1)
+                            .fill(themeStore.secondaryText.opacity(0.18))
                             .frame(width: 22, height: 22)
                         if option.key == selectedKey {
                             Circle()
@@ -59,10 +59,10 @@ struct VoicePickerView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                         .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
                 .contentShape(Rectangle())
                 .onTapGesture { select(option) }
             }
@@ -71,7 +71,7 @@ struct VoicePickerView: View {
 
     private func select(_ option: VoiceOption) {
         guard option.key != selectedKey else { return }
-        Haptics.selection()
+        Haptics.menuTap()
         withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) {
             selectedKey = option.key
         }

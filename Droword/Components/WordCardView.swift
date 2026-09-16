@@ -55,11 +55,12 @@ struct WordCardView: View {
         self.onReaction = onReaction
     }
 
-
-
     @State private var cardID = UUID()
     @State private var isExpanded = true
     @State private var isPlaying = false
+    @State private var isHoldingAudio = false
+    @State private var holdStartedAt: Date?
+    @State private var ignoreCardTapUntil: Date?
     @State private var showPremiumWall = false
     @State private var showAllExamples = false
     @State private var showReactionPicker = false
@@ -69,7 +70,6 @@ struct WordCardView: View {
     @State private var highlightedExtraExamples: [AttributedString] = []
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
-
 
     private var isSuggested: Bool { tag == "Suggested" }
 
@@ -95,10 +95,9 @@ struct WordCardView: View {
     var body: some View {
         cardContent
             .overlay {
-                // Dim the card behind the reaction picker to focus attention on
-                // the emoji, iMessage-style. Tapping the scrim dismisses it.
+
                 if showReactionPicker {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                         .fill(Color.black.opacity(colorScheme == .dark ? 0.4 : 0.14))
                         .transition(.opacity)
                         .onTapGesture {
@@ -111,7 +110,7 @@ struct WordCardView: View {
             .overlay(alignment: .topTrailing) {
                 if let reaction = reaction {
                     Button {
-                        Haptics.lightImpact(intensity: 0.4)
+                        Haptics.open()
                         if !showReactionPicker {
                             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
                         }
@@ -141,14 +140,14 @@ struct WordCardView: View {
                         reactions: pickerReactions,
                         current: reaction,
                         onSelect: { emoji in
-                            Haptics.lightImpact()
+                            Haptics.softTap()
                             withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
                                 onReaction?(reaction == emoji ? nil : emoji)
                                 showReactionPicker = false
                             }
                         },
                         onCustom: {
-                            Haptics.lightImpact()
+                            Haptics.softTap()
                             showEmojiKeyboard = true
                         }
                     )
@@ -157,7 +156,7 @@ struct WordCardView: View {
                     .zIndex(10)
                     .overlay {
                         EmojiKeyboardField(isPresented: $showEmojiKeyboard) { emoji in
-                            Haptics.lightImpact()
+                            Haptics.softTap()
                             withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
                                 onReaction?(emoji)
                                 showReactionPicker = false
@@ -216,14 +215,15 @@ struct WordCardView: View {
         .padding(.bottom, 0)
         .onTapGesture(count: 2) {
             guard onReaction != nil else { return }
-            Haptics.lightImpact(intensity: 0.4)
+            Haptics.open()
             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
             withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
                 showReactionPicker = true
             }
         }
         .onTapGesture {
-            // Any tap on a card dismisses an open reaction picker on other cards.
+            if let until = ignoreCardTapUntil, Date() < until { return }
+
             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
             if showReactionPicker {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
@@ -232,9 +232,9 @@ struct WordCardView: View {
                 return
             }
             if isExpanded {
-                Haptics.lightImpact(intensity: 0.4)
+                Haptics.cardCollapse()
             } else {
-                Haptics.lightImpact(intensity: 0.3)
+                Haptics.cardExpand()
             }
             withAnimation(.spring(response: 0.42, dampingFraction: 0.9)) {
                 isExpanded.toggle()
@@ -248,8 +248,7 @@ struct WordCardView: View {
             }
         }
         .onDisappear {
-            // Reset the picker when the card scrolls out of view or its tab
-            // is switched away, so it never lingers when the card returns.
+
             showReactionPicker = false
         }
         .onAppear {
@@ -286,13 +285,13 @@ struct WordCardView: View {
 
             if let tag = tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(themeStore.colorForTag(tag))
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 18)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(themeStore.colorForTag(tag), lineWidth: 1)
+                    .font(themeStore.bold(12))
+                    .foregroundStyle(themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2))
                     )
                     .padding(.bottom, 2)
             }
@@ -339,7 +338,7 @@ struct WordCardView: View {
                         }
 
                         Button {
-                            Haptics.lightImpact(intensity: 0.3)
+                            Haptics.softTap()
                             withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
                                 showAllExamples.toggle()
                             }
@@ -485,33 +484,56 @@ struct WordCardView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : backgroundColor)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
-        .shadow(color: themeStore.cardShadowColor, radius: themeStore.cardShadowRadius, x: 0, y: 3)
+        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
     }
 
     private var headerRow: some View {
         HStack(alignment: .top, spacing: 8) {
 
             Text(word)
-                .font(themeStore.bold(24))
+                .font(themeStore.medium(24))
+                .tracking(-0.2)
                 .foregroundStyle(primaryTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 
             Spacer()
 
-            Button(action: playAudio) {
-                SoundWavesView(isPlaying: isPlaying)
-                    .frame(width: 24, height: 24)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("Play pronunciation"))
-            .accessibilityHint(Text("Plays audio for \(word)"))
-            .padding(.top, 6)
-
+            SoundWavesView(isPlaying: isPlaying)
+                .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in
+                            guard !isHoldingAudio else { return }
+                            ignoreCardTapUntil = Date().addingTimeInterval(0.45)
+                            holdStartedAt = Date()
+                            isHoldingAudio = true
+                            TTSPlayer.beginHold(
+                                word: word,
+                                isPremium: isPremium,
+                                onNeedsPremium: { showPremiumWall = true },
+                                onPlayingChanged: { isPlaying = $0 }
+                            )
+                        }
+                        .onEnded { _ in
+                            ignoreCardTapUntil = Date().addingTimeInterval(0.45)
+                            guard isHoldingAudio else { return }
+                            let elapsed = Date().timeIntervalSince(holdStartedAt ?? Date())
+                            isHoldingAudio = false
+                            holdStartedAt = nil
+                            TTSPlayer.endHold(onPlayingChanged: { isPlaying = $0 })
+                            if elapsed < 0.22 {
+                                playAudio()
+                            }
+                        }
+                )
+                .accessibilityLabel(Text("Pronunciation"))
+                .accessibilityHint(Text("Tap to play, or hold to hear while pressed"))
+                .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
     }
@@ -527,7 +549,7 @@ struct WordCardView: View {
 
     private func shareWord() {
         guard let stored = storedWord else { return }
-        Haptics.lightImpact()
+        Haptics.softTap()
 
         guard let image = ShareWordCardView.renderImage(for: stored, themeStore: themeStore) else { return }
 
@@ -548,12 +570,12 @@ struct WordCardView: View {
 
     private func shareToStories() {
         guard let stored = storedWord else { return }
-        Haptics.lightImpact()
+        Haptics.softTap()
 
         if InstagramStoriesShare.isInstagramInstalled {
             InstagramStoriesShare.shareToInstagramStories(word: stored, themeStore: themeStore)
         } else {
-            // Fallback: share Stories-sized image via regular share sheet
+
             guard let image = InstagramStoriesShare.renderStoriesImage(for: stored, themeStore: themeStore) else { return }
 
             let text = "\(stored.word) — \(stored.translation ?? "")"
@@ -577,7 +599,6 @@ struct WordCardView: View {
     }
 }
 
-/// Button style that gives reactions a tactile "squish" on press, like iMessage.
 private struct ReactionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -586,8 +607,6 @@ private struct ReactionButtonStyle: ButtonStyle {
     }
 }
 
-/// iMessage-style reaction bar: the emoji cascade in one-by-one with a springy
-/// pop, and each responds to touch with a squish.
 private struct ReactionPickerBar: View {
     let reactions: [String]
     let current: String?
@@ -643,14 +662,11 @@ private struct ReactionPickerBar: View {
         .onAppear { appeared = true }
     }
 
-    /// Springy pop with a per-index delay so items enter left-to-right.
     private func cascade(_ index: Int) -> Animation {
         .spring(response: 0.34, dampingFraction: 0.6)
         .delay(Double(index) * 0.035)
     }
 }
-
-
 
 #Preview {
     VStack(spacing: 20) {

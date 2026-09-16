@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct QuizProgressHeader: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @ObservedObject var session: QuizSessionManager
@@ -19,14 +18,15 @@ struct QuizProgressHeader: View {
 
                 Spacer()
 
-                if session.currentStreak >= 2 {
+                if session.currentStreak >= 3 {
+                    QuizComboBadge(streak: session.currentStreak, scale: streakScale)
+                        .transition(.scale.combined(with: .opacity))
+                } else if session.currentStreak >= 2 {
                     HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(themeStore.accentRed)
+                        BurningFlameIcon(size: 14)
                         Text("\(session.currentStreak)")
                             .font(themeStore.bold(14))
-                            .foregroundStyle(themeStore.accentRed)
+                            .foregroundStyle(StreakFireStyle.red)
                     }
                     .scaleEffect(streakScale)
                     .transition(.scale.combined(with: .opacity))
@@ -40,7 +40,7 @@ struct QuizProgressHeader: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: session.currentStreak)
         .overlay(alignment: .topTrailing) {
             if let reward {
-                FloatingRewardLabel(text: reward.text, color: themeStore.accentGreen)
+                FloatingRewardLabel(text: reward.text, color: themeStore.accentBlue)
                     .id(reward.id)
                     .padding(.trailing, 28)
                     .allowsHitTesting(false)

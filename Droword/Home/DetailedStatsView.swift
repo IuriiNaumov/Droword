@@ -9,6 +9,8 @@ struct DetailedStatsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
+    var embedded: Bool = false
+
     @State private var dueToday: Int = 0
     @State private var masteryBreakdown: (new: Int, learning: Int, known: Int) = (0, 0, 0)
     @State private var totalLapses: Int = 0
@@ -28,33 +30,40 @@ struct DetailedStatsView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    Text("Stats")
-                        .sheetTitle()
-
-                    studyTimeSection
-                    masterySection
-                    reviewSection
-                    tagChartSection
-                    typeSection
-                    factsSection
+        if embedded {
+            statsStack
+                .onAppear { recalculate() }
+        } else {
+            NavigationStack {
+                ScrollView(showsIndicators: false) {
+                    statsStack
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 40)
+                        .iPadContentWidth()
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 40)
-                .iPadContentWidth()
-            }
-            .background(themeStore.appBg.ignoresSafeArea())
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
+                .background(themeStore.appBg.ignoresSafeArea())
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        CloseButton()
                     }
                 }
+                .onAppear { recalculate() }
             }
-            .onAppear { recalculate() }
+        }
+    }
+
+    private var statsStack: some View {
+        VStack(spacing: 20) {
+            if !embedded {
+                Text("Stats")
+                    .sheetTitle()
+            }
+            studyTimeSection
+            masterySection
+            reviewSection
+            tagChartSection
+            typeSection
+            factsSection
         }
     }
 
@@ -344,11 +353,11 @@ struct DetailedStatsView: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .cardDepth(cornerRadius: DesignRadius.card)
     }
 }
 

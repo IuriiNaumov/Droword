@@ -8,7 +8,22 @@ struct OnboardingLanguagePage: View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
+                VStack(spacing: 24) {
+                    LanguagePairHero(
+                        nativeName: languageStore.nativeLanguage,
+                        learningName: languageStore.learningLanguage,
+                        onSwap: {
+                            let native = languageStore.nativeLanguage
+                            let learning = languageStore.learningLanguage
+                            guard native != learning else { return }
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                languageStore.nativeLanguage = learning
+                                languageStore.learningLanguage = native
+                            }
+                        }
+                    )
+                    .padding(.top, 8)
+
                     LanguageCubePicker(
                         selectedLanguage: $languageStore.nativeLanguage,
                         title: "I speak",
@@ -30,7 +45,6 @@ struct OnboardingLanguagePage: View {
     }
 }
 
-/// Dedicated onboarding step for picking the proficiency level as a tile grid.
 struct OnboardingLevelPage: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
@@ -49,7 +63,7 @@ struct OnboardingLevelPage: View {
                             .foregroundStyle(themeStore.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 20)
 
                     LanguageLevelPicker(showTitle: false)
                 }
@@ -66,6 +80,7 @@ struct OnboardingLevelPage: View {
     store.learningLanguage = "Español"
     return OnboardingLanguagePage()
         .environmentObject(store)
+        .environmentObject(ThemeStore())
 }
 
 #Preview("Level") {
@@ -74,13 +89,4 @@ struct OnboardingLevelPage: View {
     return OnboardingLevelPage()
         .environmentObject(store)
         .environmentObject(ThemeStore())
-}
-
-#Preview("Dark") {
-    let store = LanguageStore()
-    store.nativeLanguage = "English"
-    store.learningLanguage = "Español"
-    return OnboardingLanguagePage()
-        .environmentObject(store)
-        .preferredColorScheme(.dark)
 }

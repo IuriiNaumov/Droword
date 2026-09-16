@@ -20,7 +20,6 @@ enum APIError: LocalizedError {
 enum APIClient {
     static let baseURL = "https://droword-api.droword.workers.dev"
 
-    /// App key decoded at runtime via XOR to avoid plain-text in the binary.
     static var appKey: String {
         let encoded: [UInt8] = [
             0xC3, 0xD5, 0xD0, 0xF8, 0xCB, 0xCE, 0xD1, 0xC2,
@@ -49,13 +48,18 @@ enum APIClient {
             throw URLError(.badServerResponse)
         }
         guard (200...299).contains(http.statusCode) else {
+            if http.statusCode == 429 {
+                throw APIError.serverError(
+                    statusCode: 429,
+                    message: String(localized: "Too many requests. Try again in a minute.")
+                )
+            }
             let message = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw APIError.serverError(statusCode: http.statusCode, message: message)
         }
         return data
     }
 
-    /// Performs the request with automatic timeout/connectivity error mapping.
     static func perform(_ request: URLRequest) async throws -> (Data, URLResponse) {
         do {
             return try await URLSession.shared.data(for: request)

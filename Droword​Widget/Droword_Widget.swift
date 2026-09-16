@@ -1,7 +1,6 @@
 import WidgetKit
 import SwiftUI
 
-
 private struct WidgetWord: Codable {
     let word: String
     let translation: String?
@@ -28,8 +27,9 @@ struct SimpleEntry: TimelineEntry {
     let currentStreak: Int
     let featuredWord: String?
     let featuredTranslation: String?
+    let lessonDone: Bool
+    let lessonScore: String?
 }
-
 
 struct Provider: TimelineProvider {
     private static let appGroupID = "group.com.droword.shared"
@@ -37,7 +37,8 @@ struct Provider: TimelineProvider {
 
     func placeholder(in context: Context) -> SimpleEntry {
         SimpleEntry(date: Date(), dueCount: 3, totalWords: 12, currentStreak: 5,
-                    featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
+                    featuredWord: "serendipity", featuredTranslation: "счастливая случайность",
+                    lessonDone: false, lessonScore: nil)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
@@ -53,7 +54,8 @@ struct Provider: TimelineProvider {
     private func buildEntry() -> SimpleEntry {
         guard let defaults = UserDefaults(suiteName: Self.appGroupID) else {
             return SimpleEntry(date: Date(), dueCount: 0, totalWords: 0, currentStreak: 0,
-                               featuredWord: nil, featuredTranslation: nil)
+                               featuredWord: nil, featuredTranslation: nil,
+                               lessonDone: false, lessonScore: nil)
         }
 
         let streak = defaults.integer(forKey: "currentStreak")
@@ -66,10 +68,23 @@ struct Provider: TimelineProvider {
         let dueCount = dueWords.count
         let picked = Self.pickWordOfTheDay(dueWords: dueWords, allWords: words)
 
+        let today = {
+            let df = DateFormatter()
+            df.calendar = Calendar(identifier: .gregorian)
+            df.dateFormat = "yyyy-MM-dd"
+            return df.string(from: Date())
+        }()
+        let lessonDone = (defaults.string(forKey: "widget.lessonDay") ?? "") == today
+        let lessonTotal = defaults.integer(forKey: "widget.lessonTotal")
+        let lessonCorrect = defaults.integer(forKey: "widget.lessonCorrect")
+        let lessonScore = lessonDone && lessonTotal > 0 ? "\(lessonCorrect)/\(lessonTotal)" : nil
+
         return SimpleEntry(date: Date(), dueCount: dueCount, totalWords: words.count,
                            currentStreak: streak,
                            featuredWord: picked?.word,
-                           featuredTranslation: picked?.translation)
+                           featuredTranslation: picked?.translation,
+                           lessonDone: lessonDone,
+                           lessonScore: lessonScore)
     }
 
     private static func readWords(defaults: UserDefaults) -> [WidgetWord] {
@@ -100,7 +115,6 @@ struct Provider: TimelineProvider {
         return nil
     }
 }
-
 
 private enum WidgetSeason {
     case winter, spring, summer, fall
@@ -215,6 +229,27 @@ private func seasonalDecoration(season: WidgetSeason, size: CGFloat) -> some Vie
     }
 }
 
+private func widgetGlyph(icon: String, color: Color) -> some View {
+    ZStack {
+        Circle()
+            .fill(color.opacity(0.2))
+            .frame(width: 48, height: 48)
+            .blur(radius: 4)
+        Circle()
+            .fill(
+                LinearGradient(
+                    colors: [color, color.opacity(0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(width: 40, height: 40)
+        Image(systemName: icon)
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+    }
+}
+
 struct DrowordWidgetEntryView: View {
     var entry: Provider.Entry
     private let season = WidgetSeason.current
@@ -253,126 +288,37 @@ struct DrowordWidgetEntryView: View {
             }
 
             VStack(spacing: 6) {
-                if entry.dueCount > 0 {
-                    ZStack {
-                        Circle()
-                            .fill(season.accentColor.opacity(0.2))
-                            .frame(width: 48, height: 48)
-                            .blur(radius: 4)
-
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [season.accentColor, season.accentColor.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 40, height: 40)
-                            .shadow(color: season.accentColor.opacity(0.4), radius: 6, y: 3)
-
-                        Text("\(entry.dueCount)")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-
-                    Text("\(entry.dueCount == 1 ? "word" : "words") to review")
+                if entry.totalWords == 0 {
+                    widgetGlyph(icon: "plus", color: season.accentColor)
+                    Text("Add a word")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color(.label), Color(.label).opacity(0.7)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-
-                    if let word = entry.featuredWord {
-                        VStack(spacing: 1) {
-                            Text(word)
-                                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Color(.label))
-                                .lineLimit(1)
-                            if let tr = entry.featuredTranslation {
-                                Text(tr)
-                                    .font(.system(size: 9, weight: .regular, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                } else if entry.totalWords > 0 {
-                    ZStack {
-                        Circle()
-                            .fill(Color.green.opacity(0.15))
-                            .frame(width: 48, height: 48)
-                            .blur(radius: 4)
-
-                        Circle()
-                            .fill(Color.green.opacity(0.8))
-                            .frame(width: 40, height: 40)
-
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-
-                    Text("All caught up!")
+                        .foregroundStyle(Color(.label))
+                } else if entry.lessonDone {
+                    widgetGlyph(icon: "checkmark", color: .green)
+                    Text("See you tomorrow")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
-
-                    if let word = entry.featuredWord {
-                        VStack(spacing: 1) {
-                            Text(word)
-                                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundStyle(Color(.label))
-                                .lineLimit(1)
-                            if let tr = entry.featuredTranslation {
-                                Text(tr)
-                                    .font(.system(size: 9, weight: .regular, design: .rounded))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
+                    if let score = entry.lessonScore {
+                        Text(score)
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
                     }
                 } else {
-                    ZStack {
-                        Circle()
-                            .fill(season.accentColor.opacity(0.2))
-                            .frame(width: 48, height: 48)
-                            .blur(radius: 4)
-
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [season.accentColor, season.accentColor.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 40, height: 40)
-                            .shadow(color: season.accentColor.opacity(0.4), radius: 6, y: 3)
-
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
-                    }
-
-                    Text("Add Word")
+                    widgetGlyph(icon: "bolt.fill", color: season.accentColor)
+                    Text("Today's lesson")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color(.label), Color(.label).opacity(0.7)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundStyle(Color(.label))
+                    if entry.dueCount > 0 {
+                        Text("\(entry.dueCount) due")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    } else if let word = entry.featuredWord {
+                        Text(word)
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color(.label))
+                            .lineLimit(1)
+                    }
                 }
-
-                Text("Droword")
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
-                    .foregroundStyle(.secondary.opacity(0.5))
             }
         }
     }
@@ -413,12 +359,21 @@ struct DrowordMediumWidgetView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    if entry.dueCount > 0 {
+                    if entry.lessonDone {
                         HStack(spacing: 4) {
-                            Circle()
-                                .fill(season.accentColor)
-                                .frame(width: 8, height: 8)
-                            Text("\(entry.dueCount) due")
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.green)
+                            Text(entry.lessonScore ?? "Done")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if entry.totalWords > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(season.accentColor)
+                            Text(entry.dueCount > 0 ? "\(entry.dueCount) due" : "Lesson")
                                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Color(.label))
                         }
@@ -428,15 +383,6 @@ struct DrowordMediumWidgetView: View {
                             Capsule()
                                 .fill(season.accentColor.opacity(0.15))
                         )
-                    } else if entry.totalWords > 0 {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.green)
-                            Text("All done")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                .foregroundStyle(.secondary)
-                        }
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -446,7 +392,7 @@ struct DrowordMediumWidgetView: View {
                     .frame(width: 1, height: 70)
 
                 VStack(spacing: 6) {
-                    Text("Word of the Day")
+                    Text(entry.lessonDone ? "Word of the day" : "Start the lesson")
                         .font(.system(size: 10, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
@@ -483,13 +429,12 @@ struct DrowordMediumWidgetView: View {
     }
 }
 
-
 struct DrowordCircularWidgetView: View {
     var body: some View {
         ZStack {
             AccessoryWidgetBackground()
-            Image(systemName: "plus")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
         }
     }
 }
@@ -503,23 +448,26 @@ struct DrowordRectangularWidgetView: View {
                 Circle()
                     .fill(.white.opacity(0.15))
                     .frame(width: 32, height: 32)
-                if entry.dueCount > 0 {
+                if entry.lessonDone {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                } else if entry.dueCount > 0 {
                     Text("\(entry.dueCount)")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                 } else {
-                    Image(systemName: entry.totalWords > 0 ? "checkmark" : "plus")
+                    Image(systemName: entry.totalWords > 0 ? "bolt.fill" : "plus")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
-                if entry.dueCount > 0 {
-                    Text("\(entry.dueCount) to review")
+                if entry.totalWords == 0 {
+                    Text("Add a word")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                } else if entry.totalWords > 0 {
-                    Text("All caught up!")
+                } else if entry.lessonDone {
+                    Text("See you tomorrow")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                 } else {
-                    Text("Add Word")
+                    Text("Today's lesson")
                         .font(.system(size: 14, weight: .bold, design: .rounded))
                 }
                 if entry.currentStreak > 0 {
@@ -569,10 +517,10 @@ struct Droword_Widget: Widget {
                         endPoint: .bottomTrailing
                     )
                 }
-                .widgetURL(URL(string: "droword://add"))
+                .widgetURL(URL(string: "droword://open"))
         }
         .configurationDisplayName("Droword")
-        .description("Track your streak, see words to review, and word of the day")
+        .description("Today's lesson, streak, and a word of the day")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
@@ -581,32 +529,39 @@ struct Droword_Widget: Widget {
     Droword_Widget()
 } timeline: {
     SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
-                featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
+                featuredWord: "serendipity", featuredTranslation: "счастливая случайность",
+                lessonDone: false, lessonScore: nil)
     SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
-                featuredWord: "ephemeral", featuredTranslation: "мимолётный")
+                featuredWord: "ephemeral", featuredTranslation: "мимолётный",
+                lessonDone: true, lessonScore: "7/8")
     SimpleEntry(date: .now, dueCount: 0, totalWords: 0, currentStreak: 0,
-                featuredWord: nil, featuredTranslation: nil)
+                featuredWord: nil, featuredTranslation: nil,
+                lessonDone: false, lessonScore: nil)
 }
 
 #Preview(as: .systemMedium) {
     Droword_Widget()
 } timeline: {
     SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
-                featuredWord: "serendipity", featuredTranslation: "счастливая случайность")
+                featuredWord: "serendipity", featuredTranslation: "счастливая случайность",
+                lessonDone: false, lessonScore: nil)
     SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
-                featuredWord: "ephemeral", featuredTranslation: "мимолётный")
+                featuredWord: "ephemeral", featuredTranslation: "мимолётный",
+                lessonDone: true, lessonScore: "7/8")
 }
 
 #Preview(as: .accessoryCircular) {
     Droword_Widget()
 } timeline: {
     SimpleEntry(date: .now, dueCount: 3, totalWords: 20, currentStreak: 5,
-                featuredWord: nil, featuredTranslation: nil)
+                featuredWord: nil, featuredTranslation: nil,
+                lessonDone: false, lessonScore: nil)
 }
 
 #Preview(as: .accessoryRectangular) {
     Droword_Widget()
 } timeline: {
     SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 7,
-                featuredWord: nil, featuredTranslation: nil)
+                featuredWord: nil, featuredTranslation: nil,
+                lessonDone: false, lessonScore: nil)
 }

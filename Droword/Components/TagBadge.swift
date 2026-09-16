@@ -3,17 +3,16 @@ import SwiftUI
 struct TagBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
     let text: String
+
     var body: some View {
         Text(text)
-            .font(themeStore.medium(14))
-            .foregroundStyle(themeStore.mainText)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
+            .font(themeStore.bold(12))
+            .foregroundStyle(themeStore.colorForTag(text))
+            .padding(.vertical, 5)
+            .padding(.horizontal, 12)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.isGlass ? Color.clear : Color.white.opacity(0.7))
+                Capsule(style: .continuous)
+                    .fill(themeStore.colorForTag(text).opacity(0.2))
             )
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
     }
 }

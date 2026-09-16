@@ -1,18 +1,10 @@
 import SwiftUI
 
-/// Единые метрики дизайна — общий источник истины для радиусов, отступов и глубины.
-/// Использование этих констант вместо «магических чисел» держит интерфейс консистентным
-/// и упрощает сквозные изменения стиля.
-
 enum DesignRadius {
-    /// Мелкие элементы: чипы, бейджи, поля ввода
-    static let small: CGFloat = 12
-    /// Карточки, кнопки, ячейки списков — базовый радиус
-    static let card: CGFloat = 16
-    /// Крупные контейнеры и контент листов
-    static let large: CGFloat = 20
-    /// Диалоги и алерты
-    static let dialog: CGFloat = 24
+    static let small: CGFloat = 14
+    static let card: CGFloat = 24
+    static let large: CGFloat = 28
+    static let dialog: CGFloat = 32
 }
 
 enum DesignSpacing {
@@ -24,10 +16,6 @@ enum DesignSpacing {
     static let section: CGFloat = 28
 }
 
-// MARK: - Tactile press feedback
-
-/// Лёгкий отклик на нажатие: кнопка чуть уменьшается и притухает.
-/// Придаёт «живость» плоским кнопкам без тяжёлого 3D-эффекта.
 struct PressableButtonStyle: ButtonStyle {
     var scale: CGFloat = 0.96
 
@@ -39,11 +27,6 @@ struct PressableButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Card depth
-
-/// Плоский стиль карточек: без рамок и теней. Оставлен как сквозной модификатор,
-/// чтобы места вызова `.cardDepth()` не требовалось убирать и при желании можно
-/// было вернуть глубину в одном месте.
 struct CardDepthModifier: ViewModifier {
     var cornerRadius: CGFloat = DesignRadius.card
 
@@ -52,18 +35,38 @@ struct CardDepthModifier: ViewModifier {
     }
 }
 
-extension View {
-    /// Добавляет карточке тонкую рамку и мягкую тень (тема-зависимо).
-    func cardDepth(cornerRadius: CGFloat = DesignRadius.card) -> some View {
-        modifier(CardDepthModifier(cornerRadius: cornerRadius))
+struct CleanCardModifier: ViewModifier {
+    let isGlass: Bool
+    let cardBg: Color
+    var cornerRadius: CGFloat = DesignRadius.large
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(isGlass ? Color.clear : cardBg)
+            )
+            .modifier(GlassCardModifier(isGlass: isGlass, cornerRadius: cornerRadius))
     }
 }
 
-// MARK: - Sheet modernization
-
 extension View {
-    /// Современное оформление модальных листов: индикатор перетаскивания и
-    /// скруглённые углы — как в системных листах iOS.
+    func cardDepth(cornerRadius: CGFloat = DesignRadius.card) -> some View {
+        modifier(CardDepthModifier(cornerRadius: cornerRadius))
+    }
+
+    func cleanCard(
+        isGlass: Bool,
+        cardBg: Color,
+        cornerRadius: CGFloat = DesignRadius.large
+    ) -> some View {
+        modifier(CleanCardModifier(isGlass: isGlass, cardBg: cardBg, cornerRadius: cornerRadius))
+    }
+
+    func cleanCard(themeStore: ThemeStore, cornerRadius: CGFloat = DesignRadius.large) -> some View {
+        cleanCard(isGlass: themeStore.isGlass, cardBg: themeStore.cardBg, cornerRadius: cornerRadius)
+    }
+
     func modernSheet() -> some View {
         self
             .presentationDragIndicator(.visible)

@@ -56,7 +56,9 @@ struct SuggestionsContainer: Codable {
 func fetchSuggestionsWithTopic(
     words: [String],
     exclude: [String],
-    languageStore: LanguageStore
+    languageStore: LanguageStore,
+    preferredTopics: [String] = [],
+    learningGoal: String? = nil
 ) async throws -> (topic: String?, suggestions: [SuggestedWord]) {
     var body: [String: Any] = [
         "words": words,
@@ -66,6 +68,12 @@ func fetchSuggestionsWithTopic(
     ]
     if !exclude.isEmpty {
         body["exclude"] = exclude
+    }
+    if !preferredTopics.isEmpty {
+        body["preferredTopics"] = preferredTopics
+    }
+    if let learningGoal, !learningGoal.isEmpty {
+        body["learningGoal"] = learningGoal
     }
 
     let request = try APIClient.makeRequest(endpoint: "suggest", body: body)

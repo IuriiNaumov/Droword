@@ -7,12 +7,12 @@ struct AvatarPickerView: View {
     @Environment(\.dismiss) private var dismiss
 
     let currentImage: UIImage?
-    let onComplete: (UIImage?) -> Void
+    let onPickedRaw: (UIImage) -> Void
+    let onRemoved: () -> Void
 
     @State private var showCamera = false
     @State private var showPhotosPicker = false
     @State private var selectedItem: PhotosPickerItem?
-    @State private var croppable: CroppableImage?
     @State private var pendingCameraImage: UIImage?
 
     var body: some View {
@@ -44,7 +44,7 @@ struct AvatarPickerView: View {
                             title: "Remove photo",
                             color: Color.accentRed
                         ) {
-                            onComplete(nil)
+                            onRemoved()
                             dismiss()
                         }
                     }
@@ -58,10 +58,7 @@ struct AvatarPickerView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+                    CloseButton()
                 }
             }
         }
@@ -72,17 +69,18 @@ struct AvatarPickerView: View {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
                     await MainActor.run {
-                        croppable = CroppableImage(image: uiImage)
+                        selectedItem = nil
+                        onPickedRaw(uiImage)
+                        dismiss()
                     }
                 }
             }
         }
         .fullScreenCover(isPresented: $showCamera, onDismiss: {
-            // Present the cropper only after the camera sheet has fully
-            // dismissed, to avoid presenting two covers at once.
             if let image = pendingCameraImage {
                 pendingCameraImage = nil
-                croppable = CroppableImage(image: image)
+                onPickedRaw(image)
+                dismiss()
             }
         }) {
             CameraView { image in
@@ -90,19 +88,6 @@ struct AvatarPickerView: View {
                 showCamera = false
             }
             .ignoresSafeArea()
-        }
-        .fullScreenCover(item: $croppable) { item in
-            ImageCropperView(
-                image: item.image,
-                onCrop: { cropped in
-                    onComplete(cropped)
-                    dismiss()
-                },
-                onCancel: {
-                    croppable = nil
-                }
-            )
-            .environmentObject(themeStore)
         }
     }
 
@@ -131,7 +116,7 @@ struct AvatarPickerView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                     .fill(themeStore.cardBg)
             )
         }
@@ -139,15 +124,11 @@ struct AvatarPickerView: View {
     }
 }
 
-/// Wrapper so a picked image can drive an `.fullScreenCover(item:)`.
 struct CroppableImage: Identifiable {
     let id = UUID()
     let image: UIImage
 }
 
-/// Instagram/Telegram-style crop step: pan and pinch-zoom the picked photo
-/// inside a circular window, then confirm to produce a square avatar image
-/// (the app already displays avatars clipped to a circle).
 struct ImageCropperView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -192,8 +173,6 @@ struct ImageCropperView: View {
         .background(Color.black.ignoresSafeArea())
     }
 
-    // MARK: - Image layer (shared by display and rendering for WYSIWYG)
-
     private func imageLayer(cropSize: CGFloat) -> some View {
         Image(uiImage: image)
             .resizable()
@@ -204,8 +183,6 @@ struct ImageCropperView: View {
             .frame(width: cropSize, height: cropSize)
             .clipped()
     }
-
-    // MARK: - Gestures
 
     private func dragGesture(cropSize: CGFloat) -> some Gesture {
         DragGesture()
@@ -232,8 +209,6 @@ struct ImageCropperView: View {
             }
     }
 
-    // MARK: - Clamping (keep the photo covering the crop window)
-
     private func baseFillSize(cropSize: CGFloat) -> CGSize {
         let aspect = image.size.width / max(image.size.height, 1)
         if aspect >= 1 {
@@ -253,8 +228,6 @@ struct ImageCropperView: View {
         )
     }
 
-    // MARK: - Rendering
-
     @MainActor
     private func renderCroppedImage(cropSize: CGFloat) -> UIImage? {
         let renderer = ImageRenderer(content: imageLayer(cropSize: cropSize))
@@ -263,12 +236,10 @@ struct ImageCropperView: View {
         return renderer.uiImage
     }
 
-    // MARK: - Controls
-
     private func controls(cropSize: CGFloat) -> some View {
         HStack {
             Button {
-                Haptics.lightImpact(intensity: 0.3)
+                Haptics.menuTap()
                 onCancel()
             } label: {
                 Text("Cancel")
@@ -279,7 +250,7 @@ struct ImageCropperView: View {
             Spacer()
 
             Button {
-                Haptics.lightImpact()
+                Haptics.menuTap()
                 if let cropped = renderCroppedImage(cropSize: cropSize) {
                     onCrop(cropped)
                 }
@@ -294,7 +265,6 @@ struct ImageCropperView: View {
     }
 }
 
-/// Dark surround with a transparent circular cutout and a thin ring.
 private struct CropMask: View {
     let cropSize: CGFloat
 
@@ -308,14 +278,14 @@ private struct CropMask: View {
                 .ignoresSafeArea()
 
             Circle()
-                .strokeBorder(Color.white.opacity(0.9), lineWidth: 2)
+                .fill(Color.white.opacity(0.08))
                 .frame(width: cropSize, height: cropSize)
         }
     }
 }
 
 private extension View {
-    /// Punches a hole in the view using the given mask shape.
+
     func reverseMask<Mask: View>(@ViewBuilder _ mask: () -> Mask) -> some View {
         self.mask {
             Rectangle()
@@ -327,5 +297,4 @@ private extension View {
         }
     }
 }
-
 

@@ -4,13 +4,13 @@ struct LanguageSelectionView: View {
     @EnvironmentObject var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var store: WordsStore
-    @Environment(\.dismiss) private var dismiss
 
-    @State private var pendingLearningLanguage: String?
-
-    private func flag(for name: String) -> String {
-        LanguageCatalog.availableLanguages.first { $0.name == name }?.flag ?? ""
+    private enum PendingChange: Equatable {
+        case learning(String)
+        case swap(native: String, learning: String)
     }
+
+    @State private var pending: PendingChange?
 
     private var learningBinding: Binding<String> {
         Binding(
@@ -20,44 +20,41 @@ struct LanguageSelectionView: View {
                 if store.words.isEmpty {
                     languageStore.learningLanguage = newValue
                 } else {
-                    pendingLearningLanguage = newValue
+                    pending = .learning(newValue)
                 }
             }
         )
     }
 
+    private var pendingAlertTitle: String {
+        switch pending {
+        case .learning(let name):
+            return String(localized: "Switch to \(name)?")
+        case .swap(_, let learning):
+            return String(localized: "Switch to \(learning)?")
+        case .none:
+            return ""
+        }
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 30) {
-
+            VStack(spacing: 28) {
                 Text("Language Preferences")
                     .sheetTitle()
 
-                VStack(spacing: 10) {
-                    HStack(spacing: 10) {
-                        Text(flag(for: languageStore.nativeLanguage))
-                            .font(.system(size: 28))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(themeStore.accentBlue)
-                        Text(flag(for: languageStore.learningLanguage))
-                            .font(.system(size: 28))
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
+                LanguagePairHero(
+                    nativeName: languageStore.nativeLanguage,
+                    learningName: languageStore.learningLanguage,
+                    onSwap: swapLanguages
+                )
 
-                    Text(LanguageLevels.localizedLabel(forCode: languageStore.learningLevel))
-                        .font(themeStore.bold(13))
-                        .foregroundStyle(themeStore.mainAccentColor)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 14)
-                        .background(Capsule().fill(themeStore.mainAccentColor.opacity(0.15)))
-                }
+                Text(LanguageLevels.localizedLabel(forCode: languageStore.learningLevel))
+                    .font(themeStore.bold(13))
+                    .foregroundStyle(themeStore.mainAccentColor)
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 14)
+                    .background(Capsule().fill(themeStore.mainAccentColor.opacity(0.15)))
 
                 LanguageCubePicker(
                     selectedLanguage: $languageStore.nativeLanguage,
@@ -86,48 +83,63 @@ struct LanguageSelectionView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
         .overlay {
-            if let pending = pendingLearningLanguage {
+            if pending != nil {
                 CustomAlertView(
                     icon: "exclamationmark.triangle.fill",
                     iconColor: themeStore.accentGold,
-                    title: "Switch to \(pending)?",
+                    title: LocalizedStringKey(pendingAlertTitle),
                     message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
                     primaryButton: .init(title: "Switch", style: .primary) {
-                        languageStore.learningLanguage = pending
-                        pendingLearningLanguage = nil
+                        applyPending()
                     },
                     secondaryButton: .init(title: "Cancel", style: .cancel) {
-                        pendingLearningLanguage = nil
+                        pending = nil
                     }
                 )
                 .transition(.opacity)
                 .zIndex(999)
             }
         }
-        .animation(.easeOut(duration: 0.2), value: pendingLearningLanguage)
+        .animation(.easeOut(duration: 0.2), value: pending)
+    }
+
+    private func swapLanguages() {
+        let newNative = languageStore.learningLanguage
+        let newLearning = languageStore.nativeLanguage
+        guard newNative != newLearning else { return }
+
+        if store.words.isEmpty {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                languageStore.nativeLanguage = newNative
+                languageStore.learningLanguage = newLearning
+            }
+        } else {
+            pending = .swap(native: newNative, learning: newLearning)
+        }
+    }
+
+    private func applyPending() {
+        switch pending {
+        case .learning(let name):
+            languageStore.learningLanguage = name
+        case .swap(let native, let learning):
+            languageStore.nativeLanguage = native
+            languageStore.learningLanguage = learning
+        case .none:
+            break
+        }
+        pending = nil
     }
 }
 
 #Preview {
     LanguageSelectionView()
-        .environmentObject(mockLanguageStore())
-}
-
-#Preview("Light") {
-    LanguageSelectionView()
-        .environmentObject(mockLanguageStore())
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark") {
-    LanguageSelectionView()
-        .environmentObject(mockLanguageStore())
-        .preferredColorScheme(.dark)
-}
-
-private func mockLanguageStore() -> LanguageStore {
-    let store = LanguageStore()
-    store.nativeLanguage = "Русский"
-    store.learningLanguage = "日本語"
-    return store
+        .environmentObject({
+            let store = LanguageStore()
+            store.nativeLanguage = "Русский"
+            store.learningLanguage = "日本語"
+            return store
+        }())
+        .environmentObject(ThemeStore())
+        .environmentObject(WordsStore())
 }

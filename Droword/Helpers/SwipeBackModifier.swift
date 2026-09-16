@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Re-enables the interactive pop gesture (swipe from left edge)
-/// when the default back button is hidden via `.navigationBarBackButtonHidden(true)`.
 struct SwipeBackModifier: ViewModifier {
     func body(content: Content) -> some View {
         content

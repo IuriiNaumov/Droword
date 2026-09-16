@@ -19,6 +19,7 @@ struct ScanWordsView: View {
     @State private var showPhotosPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var addedCount = 0
+    @State private var showPremiumWall = false
 
     private var visibleWords: [ExtractedWord] {
         extractedWords.filter { !addedWordIDs.contains($0.id) && !skippedWordIDs.contains($0.id) }
@@ -47,10 +48,14 @@ struct ScanWordsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    SettingsBackButton()
-                        .environmentObject(themeStore)
+                    CloseButton()
                 }
             }
+        }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraView { image in
@@ -75,14 +80,12 @@ struct ScanWordsView: View {
         }
     }
 
-    // MARK: - Photo Selection
-
     private var photoSelectionSection: some View {
         VStack(spacing: 20) {
             VStack(spacing: 8) {
                 Image(systemName: "doc.text.viewfinder")
                     .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(themeStore.mainAccentColor)
+                    .foregroundStyle(themeStore.accentBlue)
 
                 Text("Take a photo of a word list, textbook page, or handout")
                     .font(themeStore.regular(15))
@@ -92,9 +95,15 @@ struct ScanWordsView: View {
             }
             .padding(.vertical, 32)
 
+            Text("The photo is sent to our servers to read the words. We don't keep it after the scan.")
+                .font(themeStore.regular(13))
+                .foregroundStyle(themeStore.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+
             Button {
                 Haptics.lightImpact()
-                showCamera = true
+                startScan(camera: true)
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "camera.fill")
@@ -106,18 +115,18 @@ struct ScanWordsView: View {
 
             Button {
                 Haptics.lightImpact()
-                showPhotosPicker = true
+                startScan(camera: false)
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "photo.on.rectangle")
                     Text("Choose from library")
                 }
                 .font(themeStore.bold(17))
-                .foregroundStyle(themeStore.mainAccentColor)
+                .foregroundStyle(themeStore.accentBlue)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                         .fill(themeStore.mainAccentColor.opacity(0.12))
                 )
             }
@@ -133,8 +142,6 @@ struct ScanWordsView: View {
         }
     }
 
-    // MARK: - Extracting
-
     private var extractingSection: some View {
         VStack(spacing: 20) {
             if let image = selectedImage {
@@ -142,7 +149,7 @@ struct ScanWordsView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
             }
 
             VStack(spacing: 16) {
@@ -161,8 +168,6 @@ struct ScanWordsView: View {
             .padding(.vertical, 20)
         }
     }
-
-    // MARK: - Results
 
     private var resultsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -211,7 +216,7 @@ struct ScanWordsView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 40))
-                        .foregroundStyle(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.accentBlue)
 
                     Text("All done!")
                         .font(themeStore.bold(18))
@@ -235,7 +240,6 @@ struct ScanWordsView: View {
                 .padding(.vertical, 24)
             }
 
-            // "Scan another" button when results are shown
             Button {
                 Haptics.lightImpact()
                 resetState()
@@ -245,11 +249,11 @@ struct ScanWordsView: View {
                     Text("Scan another photo")
                 }
                 .font(themeStore.bold(17))
-                .foregroundStyle(themeStore.mainAccentColor)
+                .foregroundStyle(themeStore.accentBlue)
                 .padding(.vertical, 16)
                 .frame(maxWidth: .infinity)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                         .fill(themeStore.mainAccentColor.opacity(0.12))
                 )
             }
@@ -260,7 +264,7 @@ struct ScanWordsView: View {
     private func extractedWordCard(_ word: ExtractedWord) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(word.word)
-                .font(themeStore.bold(22))
+                .font(themeStore.medium(22))
                 .foregroundStyle(themeStore.mainText)
 
             Text(word.translation)
@@ -317,7 +321,17 @@ struct ScanWordsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    // MARK: - Actions
+    private func startScan(camera: Bool) {
+        guard isPremium || DailyLimitsManager.canScanPhoto else {
+            showPremiumWall = true
+            return
+        }
+        if camera {
+            showCamera = true
+        } else {
+            showPhotosPicker = true
+        }
+    }
 
     private func extractWords() async {
         guard !isExtracting, let image = selectedImage else { return }
@@ -325,8 +339,8 @@ struct ScanWordsView: View {
 
         let canUse = isPremium || DailyLimitsManager.canScanPhoto
         guard canUse else {
-            errorMessage = String(localized: "Daily scan limit reached. Upgrade to Pro for unlimited scans.")
             selectedImage = nil
+            showPremiumWall = true
             return
         }
 

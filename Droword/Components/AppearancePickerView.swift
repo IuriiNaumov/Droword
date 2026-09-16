@@ -5,52 +5,53 @@ struct AppearancePickerView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.appAppearance) private var storedAppearance: String = AppAppearance.system.rawValue
 
+    var isSheet: Bool = false
+
     private var selected: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Text("Appearance")
-                    .sheetTitle()
+        VStack(spacing: 24) {
+            Text("Appearance")
+                .sheetTitle()
 
-                HStack(alignment: .top, spacing: 12) {
-                    ForEach(AppAppearance.allCases, id: \.self) { option in
-                        appearanceCard(option: option, isSelected: selected == option) {
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(AppAppearance.allCases) { option in
+                    appearanceCard(option: option, isSelected: selected == option) {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                             storedAppearance = option.rawValue
-                            Haptics.selection()
                         }
+                        Haptics.menuTap()
                     }
                 }
-                .padding(.horizontal, 20)
-
-                Spacer()
             }
-            .padding(.bottom, 20)
-            .background(themeStore.appBg.ignoresSafeArea())
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+            .padding(.horizontal, 20)
+
+            Spacer()
+        }
+        .padding(.bottom, 20)
+        .background(themeStore.appBg.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if isSheet {
+                    CloseButton()
+                } else {
+                    SettingsBackButton()
                 }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
     }
 
     private func appearanceCard(option: AppAppearance, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 10) {
-                previewBlock(for: option, isSelected: isSelected)
+                previewBlock(for: option)
                     .aspectRatio(200.0 / 340.0, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(isSelected ? themeStore.mainAccentColor : themeStore.dividerColor.opacity(0.6), lineWidth: isSelected ? 2 : 1)
-                    )
+                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
 
                 Text(option.title)
                     .font(themeStore.medium(14))
@@ -58,7 +59,7 @@ struct AppearancePickerView: View {
 
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? themeStore.mainAccentColor : themeStore.secondaryText.opacity(0.3), lineWidth: 1.5)
+                        .fill(themeStore.secondaryText.opacity(0.18))
                         .frame(width: 24, height: 24)
 
                     if isSelected {
@@ -75,11 +76,11 @@ struct AppearancePickerView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
     }
 
     @ViewBuilder
-    private func previewBlock(for option: AppAppearance, isSelected: Bool) -> some View {
+    private func previewBlock(for option: AppAppearance) -> some View {
         switch option {
         case .light:
             singlePreview(isDark: false)

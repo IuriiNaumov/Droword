@@ -2,6 +2,8 @@ import SwiftUI
 
 struct DailyChallengeDetailView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var store: WordsStore
+    @EnvironmentObject private var languageStore: LanguageStore
     @ObservedObject var manager: DailyChallengeManager
     @Environment(\.dismiss) private var dismiss
 
@@ -14,6 +16,7 @@ struct DailyChallengeDetailView: View {
 
                     summaryHeader
                     challengesList
+                    HomeVisibilityHint(message: "You can hide Daily Challenges from Home whenever you want.")
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 40)
@@ -22,10 +25,7 @@ struct DailyChallengeDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+                    CloseButton()
                 }
             }
         }
@@ -35,11 +35,11 @@ struct DailyChallengeDetailView: View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .stroke(themeStore.accentGreen.opacity(0.15), lineWidth: 8)
+                    .stroke(themeStore.accentBlue.opacity(0.15), lineWidth: 8)
                     .frame(width: 100, height: 100)
                 Circle()
                     .trim(from: 0, to: overallProgress)
-                    .stroke(themeStore.accentGreen, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .stroke(themeStore.accentBlue, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .frame(width: 100, height: 100)
                     .rotationEffect(.degrees(-90))
                     .animation(.spring(response: 0.6, dampingFraction: 0.8), value: overallProgress)
@@ -57,7 +57,7 @@ struct DailyChallengeDetailView: View {
             if manager.allCompleted {
                 Text("All challenges completed!")
                     .font(themeStore.bold(18))
-                    .foregroundStyle(themeStore.accentGreen)
+                    .foregroundStyle(themeStore.accentBlue)
             }
 
             Text("Total completed: \(manager.totalCompleted)")
@@ -67,10 +67,10 @@ struct DailyChallengeDetailView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 20))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
         .cardDepth(cornerRadius: 20)
     }
 
@@ -89,21 +89,10 @@ struct DailyChallengeDetailView: View {
 
     private func challengeCard(_ challenge: DailyChallenge) -> some View {
         HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(challenge.isCompleted ? themeStore.accentGreen.opacity(0.15) : themeStore.secondaryText.opacity(0.08))
-                    .frame(width: 48, height: 48)
-
-                if challenge.isCompleted {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(themeStore.accentGreen)
-                } else {
-                    Image(systemName: challenge.type.icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(themeStore.mainText.opacity(0.7))
-                }
-            }
+            Image(systemName: challenge.isCompleted ? "checkmark" : challenge.type.icon)
+                .font(.system(size: 20, weight: challenge.isCompleted ? .bold : .regular))
+                .foregroundStyle(challenge.isCompleted ? themeStore.accentBlue : themeStore.mainText)
+                .frame(width: 28, height: 28)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
@@ -125,7 +114,7 @@ struct DailyChallengeDetailView: View {
                             .fill(themeStore.secondaryText.opacity(0.1))
                             .frame(height: 6)
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(challenge.isCompleted ? themeStore.accentGreen : themeStore.accentBlue)
+                            .fill(themeStore.accentBlue.opacity(challenge.isCompleted ? 1 : 0.55))
                             .frame(width: geo.size.width * challenge.progress, height: 6)
                             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: challenge.progress)
                     }
@@ -139,9 +128,9 @@ struct DailyChallengeDetailView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
     }
 }

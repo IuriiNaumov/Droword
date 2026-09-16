@@ -8,14 +8,14 @@ struct StarterWord {
 }
 
 struct StarterWordBank {
-    /// Returns 3 beginner words for the given language pair, or nil if the pair is unsupported.
+
     static func words(learning: String, native: String) -> [StarterWord]? {
         let key = "\(learning)→\(native)"
         return bank[key]
     }
 
     private static let bank: [String: [StarterWord]] = [
-        // English learning pairs
+
         "English→Русский": [
             StarterWord(word: "Hello", translation: "Привет", type: "interjection", transcription: "həˈloʊ"),
             StarterWord(word: "Thank you", translation: "Спасибо", type: "phrase", transcription: "θæŋk juː"),
@@ -72,7 +72,6 @@ struct StarterWordBank {
             StarterWord(word: "Friend", translation: "दोस्त", type: "noun", transcription: "frɛnd"),
         ],
 
-        // Español learning pairs
         "Español→Русский": [
             StarterWord(word: "Hola", translation: "Привет", type: "interjection", transcription: "ˈola"),
             StarterWord(word: "Gracias", translation: "Спасибо", type: "noun", transcription: "ˈɡɾasjas"),
@@ -84,7 +83,6 @@ struct StarterWordBank {
             StarterWord(word: "Amigo", translation: "Friend", type: "noun", transcription: "aˈmiɣo"),
         ],
 
-        // Русский learning pairs
         "Русский→English": [
             StarterWord(word: "Привет", translation: "Hello", type: "interjection", transcription: "prʲɪˈvʲet"),
             StarterWord(word: "Спасибо", translation: "Thank you", type: "noun", transcription: "spɐˈsʲibə"),
@@ -96,7 +94,6 @@ struct StarterWordBank {
             StarterWord(word: "Друг", translation: "Amigo", type: "noun", transcription: "druɡ"),
         ],
 
-        // Français learning pairs
         "Français→Русский": [
             StarterWord(word: "Bonjour", translation: "Привет", type: "interjection", transcription: "bɔ̃ʒuʁ"),
             StarterWord(word: "Merci", translation: "Спасибо", type: "interjection", transcription: "mɛʁsi"),
@@ -108,7 +105,6 @@ struct StarterWordBank {
             StarterWord(word: "Ami", translation: "Friend", type: "noun", transcription: "ami"),
         ],
 
-        // Deutsch learning pairs
         "Deutsch→Русский": [
             StarterWord(word: "Hallo", translation: "Привет", type: "interjection", transcription: "ˈhalo"),
             StarterWord(word: "Danke", translation: "Спасибо", type: "interjection", transcription: "ˈdaŋkə"),
@@ -120,7 +116,6 @@ struct StarterWordBank {
             StarterWord(word: "Freund", translation: "Friend", type: "noun", transcription: "fʁɔʏnt"),
         ],
 
-        // Italiano learning pairs
         "Italiano→Русский": [
             StarterWord(word: "Ciao", translation: "Привет", type: "interjection", transcription: "tʃao"),
             StarterWord(word: "Grazie", translation: "Спасибо", type: "interjection", transcription: "ˈɡrattsje"),
@@ -132,7 +127,6 @@ struct StarterWordBank {
             StarterWord(word: "Amico", translation: "Friend", type: "noun", transcription: "aˈmiko"),
         ],
 
-        // Português learning pairs
         "Português→Русский": [
             StarterWord(word: "Olá", translation: "Привет", type: "interjection", transcription: "oˈla"),
             StarterWord(word: "Obrigado", translation: "Спасибо", type: "interjection", transcription: "obɾiˈɡadu"),
@@ -144,21 +138,18 @@ struct StarterWordBank {
             StarterWord(word: "Amigo", translation: "Friend", type: "noun", transcription: "ɐˈmiɡu"),
         ],
 
-        // 中文 learning pairs
         "中文→English": [
             StarterWord(word: "你好", translation: "Hello", type: "interjection", transcription: "nǐ hǎo"),
             StarterWord(word: "谢谢", translation: "Thank you", type: "interjection", transcription: "xiè xiè"),
             StarterWord(word: "朋友", translation: "Friend", type: "noun", transcription: "péng yǒu"),
         ],
 
-        // 日本語 learning pairs
         "日本語→English": [
             StarterWord(word: "こんにちは", translation: "Hello", type: "interjection", transcription: "konnichiwa"),
             StarterWord(word: "ありがとう", translation: "Thank you", type: "interjection", transcription: "arigatō"),
             StarterWord(word: "友達", translation: "Friend", type: "noun", transcription: "tomodachi"),
         ],
 
-        // 한국어 learning pairs
         "한국어→English": [
             StarterWord(word: "안녕하세요", translation: "Hello", type: "interjection", transcription: "annyeonghaseyo"),
             StarterWord(word: "감사합니다", translation: "Thank you", type: "interjection", transcription: "gamsahamnida"),

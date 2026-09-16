@@ -4,13 +4,13 @@ struct OnboardingDetailsPage: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     @AppStorage(AppStorageKeys.userName) private var userName: String = ""
-    
+
     @State private var tempName: String = ""
-    
+
     private var isNameValid: Bool {
         !tempName.isEmpty && tempName.count <= 40
     }
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer(minLength: 20)
@@ -27,21 +27,14 @@ struct OnboardingDetailsPage: View {
                     }
                     .padding(.horizontal, 4)
 
-                    TextField("Enter your name", text: $tempName)
-                        .font(themeStore.regular(16))
-                        .textContentType(.name)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.words)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(themeStore.cardBg)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(tempName.count > 40 ? Color.accentRed : themeStore.dividerColor, lineWidth: 2)
-                        )
+                    FormTextField(
+                        title: String(localized: "Enter your name"),
+                        text: $tempName,
+                        maxLength: 40,
+                        status: tempName.count > 40 ? .wrong : .normal,
+                        autocapitalization: .words,
+                        disableAutocorrection: true
+                    )
                 }
 
             }

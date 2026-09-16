@@ -2,10 +2,11 @@ import SwiftUI
 
 struct PracticeEmptyContent: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    var illustration: AnyView? = nil
     let icon: String
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-    let tip: LocalizedStringKey
+    let title: String
+    let subtitle: String
+    let tip: String
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0
@@ -13,34 +14,46 @@ struct PracticeEmptyContent: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: icon)
-                .font(.system(size: 44))
-                .foregroundStyle(themeStore.secondaryText.opacity(0.35))
-                .scaleEffect(iconScale)
+            Group {
+                if let illustration {
+                    illustration
+                } else {
+                    HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+                }
+            }
+            .frame(width: 176, height: 176)
+            .scaleEffect(iconScale)
 
             Text(title)
-                .font(themeStore.medium(18))
-                .foregroundStyle(.secondary)
+                .font(themeStore.display(22))
+                .foregroundStyle(themeStore.mainText)
+                .tracking(-0.4)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
-                .font(themeStore.regular(14))
-                .foregroundStyle(.secondary.opacity(0.8))
+                .font(themeStore.regular(15))
+                .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .opacity(subtitleOpacity)
 
             Text(tip)
-                .font(themeStore.regular(13))
-                .foregroundStyle(.secondary.opacity(0.7))
+                .font(themeStore.bold(13))
+                .foregroundStyle(themeStore.mainAccentColor)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(themeStore.mainAccentColor.opacity(0.12))
+                )
                 .opacity(subtitleOpacity)
+                .padding(.horizontal, 28)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
                 iconScale = 1.0
             }
             withAnimation(.easeOut(duration: 0.35).delay(0.1)) {

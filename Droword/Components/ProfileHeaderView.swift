@@ -7,7 +7,6 @@ struct ProfileHeaderView: View {
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
     @State private var showStats = false
-    @State private var streakPulse: CGFloat = 1.0
     private let cuteTags: [String] = [
         "keep it up",
         "proud of you",
@@ -61,12 +60,12 @@ struct ProfileHeaderView: View {
                                 .clipShape(Circle())
                         } else {
                             Circle()
-                                .fill(themeStore.accentBlue.opacity(0.25))
+                                .fill(themeStore.secondaryText.opacity(0.15))
                                 .frame(width: 58, height: 58)
                                 .overlay(
                                     Image(systemName: "person.fill")
-                                        .font(.system(size: 26, weight: .semibold))
-                                        .foregroundStyle(themeStore.mainText)
+                                        .font(.system(size: 26, weight: .medium))
+                                        .foregroundStyle(themeStore.mainText.opacity(0.7))
                                 )
                         }
                     }
@@ -79,19 +78,12 @@ struct ProfileHeaderView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .center, spacing: 8) {
                         Text(displayName)
-                            .font(themeStore.bold(18))
+                            .font(themeStore.display(20))
                             .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
 
                         if isPremium {
-                            Text("PRO")
-                                .font(themeStore.bold(10))
-                                .foregroundStyle(colorScheme == .dark ? .white : themeStore.accentBlue)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(colorScheme == .dark ? themeStore.accentBlue : themeStore.accentBlueSoft)
-                                )
+                            ProPillBadge()
                         }
                     }
 
@@ -103,37 +95,12 @@ struct ProfileHeaderView: View {
 
                 Spacer()
 
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(themeStore.accentRed)
-                    Text("\(currentStreak)")
-                        .font(themeStore.bold(17))
-                        .foregroundStyle(themeStore.mainText)
-                        .contentTransition(.numericText())
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(
-                    Capsule()
-                        .fill(themeStore.accentRed.opacity(0.12))
-                )
-                .scaleEffect(streakPulse)
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
-                .onChange(of: currentStreak) { oldValue, newValue in
-                    guard newValue > oldValue else { return }
-                    Haptics.lightImpact()
-                    streakPulse = 1.35
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.45)) {
-                        streakPulse = 1.0
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(Text("Streak: \(currentStreak) days"))
+                StreakFireBadge(count: currentStreak)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
             }
 
         }
-        .padding(.horizontal, 36)
+        .padding(.horizontal, 20)
         .padding(.top, 40)
         .onAppear {
             let today = DateFormatting.todayString
@@ -142,7 +109,7 @@ struct ProfileHeaderView: View {
             let isPremiumUser = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
             if isPremiumUser {
                 let result = WordsStore.computeCurrentStreakWithFreeze(from: store.words)
-                currentStreak = max(result.streak, 1)
+                currentStreak = result.streak
                 if let freezeDay = result.freezeDate {
                     let freezeStr = DateFormatting.dayFormatter.string(from: freezeDay)
                     let lastFreezeStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
@@ -151,8 +118,7 @@ struct ProfileHeaderView: View {
                     }
                 }
             } else {
-                let computed = WordsStore.computeCurrentStreak(from: store.words)
-                currentStreak = max(computed, 1)
+                currentStreak = WordsStore.computeCurrentStreak(from: store.words)
             }
 
             if lastActiveDay != today {

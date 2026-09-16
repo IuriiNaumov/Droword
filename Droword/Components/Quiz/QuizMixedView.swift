@@ -10,6 +10,9 @@ struct QuizMixedView: View {
     var sessionSize: Int = 10
     var filterTag: String? = nil
     var direction: QuizDirection = .mixed
+    var persistSession: Bool = true
+    var presetWords: [StoredWord] = []
+    var recordsLesson: Bool = false
 
     @State private var hasAnswered = false
     @State private var isCorrect = false
@@ -25,23 +28,19 @@ struct QuizMixedView: View {
 
     @State private var clozeRevealed = false
 
-    @State private var speakingAccuracy: Double? = nil
-
     @State private var shakeOffset: CGFloat = 0
 
     @State private var hintShown = false
     @State private var hintText: String = ""
 
-    @State private var matchingPairs: [(word: String, translation: String)] = []
-    @State private var matchedPairs: Set<String> = []
-    @State private var selectedMatchWord: String? = nil
-    @State private var selectedMatchTranslation: String? = nil
-    @State private var matchingWrongPair: (String, String)? = nil
-    @State private var shuffledTranslations: [String] = []
+    @State private var matchingPairs: [QuizSessionManager.MatchingPair] = []
+    @State private var matchedPairIDs: Set<UUID> = []
+    @State private var selectedMatchWordID: UUID? = nil
+    @State private var selectedMatchTranslationID: UUID? = nil
+    @State private var matchingWrongIDs: (UUID, UUID)? = nil
+    @State private var shuffledTranslationIDs: [UUID] = []
     @State private var matchingWrongAttempts: Int = 0
     private let matchingMaxAttempts: Int = 3
-
-
 
     @State private var streakScale: CGFloat = 1.0
     @State private var streakMilestone: Int? = nil
@@ -51,6 +50,8 @@ struct QuizMixedView: View {
 
     @State private var reward: (id: Int, text: String)? = nil
     @State private var rewardCounter = 0
+    @State private var completionMoments: [StudyMoment] = []
+    @State private var chatSceneTarget: ChatSceneTarget?
 
     var body: some View {
         ZStack {
@@ -66,7 +67,10 @@ struct QuizMixedView: View {
                             return (word: item.word, translation: item.translation)
                         }
                         return nil
-                    }
+                    },
+                    moments: completionMoments,
+                    isLesson: recordsLesson,
+                    onScene: recordsLesson ? { openLessonScene() } : nil
                 ) {
                     startSession()
                 }
@@ -96,7 +100,7 @@ struct QuizMixedView: View {
                                     selectOption(option, item: item)
                                 }
                             )
-                        case .typing:
+                        case .typing, .speaking:
                             QuizTypingExercise(
                                 item: item,
                                 hasAnswered: hasAnswered,
@@ -132,17 +136,16 @@ struct QuizMixedView: View {
                                 wrongAttempts: matchingWrongAttempts,
                                 maxAttempts: matchingMaxAttempts,
                                 matchingPairs: $matchingPairs,
-                                matchedPairs: $matchedPairs,
-                                selectedMatchWord: $selectedMatchWord,
-                                selectedMatchTranslation: $selectedMatchTranslation,
-                                matchingWrongPair: $matchingWrongPair,
-                                shuffledTranslations: $shuffledTranslations,
+                                matchedPairIDs: $matchedPairIDs,
+                                selectedMatchWordID: $selectedMatchWordID,
+                                selectedMatchTranslationID: $selectedMatchTranslationID,
+                                matchingWrongIDs: $matchingWrongIDs,
+                                shuffledTranslationIDs: $shuffledTranslationIDs,
                                 onAllMatched: {
                                     hasAnswered = true
                                     isCorrect = true
                                     session.recordAnswer(correct: true)
-                                    animateStreakPulse()
-                                    showReward("+1")
+                                    celebrateCorrectAnswer()
                                     QuizSessionManager.applyScheduling(
                                         for: item.id,
                                         correct: true,
@@ -153,10 +156,9 @@ struct QuizMixedView: View {
                                 onWrongMatch: {
                                     matchingWrongAttempts += 1
                                     if matchingWrongAttempts >= matchingMaxAttempts {
-                                        // Reveal all correct pairs
+
                                         for pair in matchingPairs {
-                                            matchedPairs.insert(pair.word)
-                                            matchedPairs.insert(pair.translation)
+                                            matchedPairIDs.insert(pair.id)
                                         }
                                         hasAnswered = true
                                         isCorrect = false
@@ -185,17 +187,6 @@ struct QuizMixedView: View {
                                     selectOption(option, item: item)
                                 }
                             )
-                        case .speaking:
-                            QuizSpeakingExercise(
-                                item: item,
-                                hasAnswered: hasAnswered,
-                                isCorrect: isCorrect,
-                                accuracy: speakingAccuracy,
-                                shakeOffset: shakeOffset,
-                                localeIdentifier: SpeechRecognizer.localeIdentifier(for: languageStore.learningLanguage),
-                                onResult: { text in checkSpeakingAnswer(text, item: item) },
-                                onSkip: { skipSpeaking(item: item) }
-                            )
                         }
                     }
                     .id(session.currentIndex)
@@ -221,12 +212,24 @@ struct QuizMixedView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.currentIndex)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
         .onAppear {
-            hasEnoughWords = store.words.filter({ $0.translation != nil && !$0.translation!.isEmpty }).count >= 4
+            let usable = presetWords.isEmpty
+                ? store.words.filter({ $0.translation != nil && !$0.translation!.isEmpty }).count
+                : presetWords.count
+            hasEnoughWords = usable >= 4
             restoreOrStartSession()
+        }
+        .fullScreenCover(item: $chatSceneTarget) { target in
+            ChatSceneView(target: target)
+                .environmentObject(store)
+                .environmentObject(languageStore)
+                .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
         }
         .onChange(of: session.isComplete) { _, isComplete in
             if isComplete {
-                session.clearSavedSession()
+                if persistSession {
+                    session.clearSavedSession()
+                }
                 badgeStore.recordQuizCompletion()
                 DailyChallengeManager.shared.recordQuizCompleted(
                     score: session.correctCount,
@@ -242,7 +245,9 @@ struct QuizMixedView: View {
             let usable = store.words.filter { $0.translation != nil && !$0.translation!.isEmpty }.count
             hasEnoughWords = usable >= 4
             if usable < 4 {
-                session.clearSavedSession()
+                if persistSession {
+                    session.clearSavedSession()
+                }
                 session.queue = []
                 session.currentIndex = 0
                 session.isComplete = false
@@ -278,29 +283,23 @@ struct QuizMixedView: View {
             }
         }
     }
-    
+
     private func bottomButton(exerciseType: QuizSessionManager.ExerciseType) -> some View {
         Group {
             if exerciseType == .matching && !hasAnswered {
                 EmptyView()
-            } else if (exerciseType == .typing || exerciseType == .cloze) && !hasAnswered {
+            } else if (exerciseType == .typing || exerciseType == .speaking || exerciseType == .cloze) && !hasAnswered {
                 VStack(spacing: 10) {
                     Button {
                         checkTypingAnswer()
                     } label: {
                         Text("Check")
-                            .font(themeStore.bold(16))
-                            .foregroundStyle(.white)
-                            .padding(.vertical, 16)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(typingInput.trimmingCharacters(in: .whitespaces).isEmpty
-                                        ? themeStore.secondaryText.opacity(0.3)
-                                        : themeStore.mainAccentColor)
+                            .duo3DStyle(
+                                themeStore.mainAccentColor,
+                                isDisabled: typingInput.trimmingCharacters(in: .whitespaces).isEmpty
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(Duo3DButtonStyle())
                     .disabled(typingInput.trimmingCharacters(in: .whitespaces).isEmpty)
 
                     Button {
@@ -314,22 +313,25 @@ struct QuizMixedView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
+            } else if exerciseType == .listening && !hasAnswered {
+                Button {
+                    skipListeningAsCorrect()
+                } label: {
+                    Text("Can't listen")
+                        .font(themeStore.medium(14))
+                        .foregroundStyle(themeStore.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .padding(.bottom, 24)
             } else if hasAnswered {
                 Button {
                     Haptics.lightImpact()
                     goToNext()
                 } label: {
                     Text("Continue")
-                        .font(themeStore.bold(16))
-                        .foregroundStyle(.white)
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.mainAccentColor)
-                        )
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
@@ -337,9 +339,6 @@ struct QuizMixedView: View {
         }
     }
 
-    /// Shown after a wrong answer: the correct word–translation, an example in
-    /// context, and any short explanation the word carries. Turns a mistake into
-    /// a teaching moment (Duolingo-style feedback).
     private func answerExplanationPanel(item: QuizSessionManager.QuizItem) -> some View {
         let stored = store.words.first(where: { $0.id == item.id })
         let example = (stored?.example ?? item.example) ?? ""
@@ -416,8 +415,8 @@ struct QuizMixedView: View {
     }
 
     private func restoreOrStartSession() {
-        if session.restoreSession() {
-            // Remove quiz items whose words were deleted from the store
+        if persistSession, session.restoreSession() {
+
             let existingIDs = Set(store.words.map(\.id))
             let staleIDs = session.queue.filter { !existingIDs.contains($0.id) }.map(\.id)
 
@@ -448,15 +447,33 @@ struct QuizMixedView: View {
     }
 
     private func startSession() {
-        session.clearSavedSession()
-        session.maxSessionSize = sessionSize
-        session.prepareMixedSession(from: store.words, filterTag: filterTag)
+        if persistSession {
+            session.clearSavedSession()
+        }
+        session.maxSessionSize = presetWords.isEmpty ? sessionSize : presetWords.count
+        if !presetWords.isEmpty {
+            session.prepareLessonSession(
+                from: presetWords,
+                learningStyle: LearningProfileStore.shared.style
+            )
+        } else {
+            session.prepareMixedSession(
+                from: store.words,
+                filterTag: filterTag,
+                learningStyle: LearningProfileStore.shared.style,
+                preferredTopics: LearningProfileStore.shared.preferredTagNames
+            )
+        }
         prepareCurrentQuestion()
     }
 
     private func prepareCurrentQuestion() {
         guard let item = session.currentItem,
-              let exerciseType = session.currentExerciseType else { return }
+              var exerciseType = session.currentExerciseType else { return }
+        if exerciseType == .speaking {
+            exerciseType = .typing
+            session.exerciseTypes[item.id] = .typing
+        }
         prepareStateForItem(item, exerciseType: exerciseType)
     }
 
@@ -471,7 +488,6 @@ struct QuizMixedView: View {
         shakeOffset = 0
         hintShown = false
         hintText = ""
-        speakingAccuracy = nil
 
         switch exerciseType {
         case .multipleChoice:
@@ -482,7 +498,7 @@ struct QuizMixedView: View {
             }
             let distractors = session.distractors(for: item, from: store.words, reversed: mcReversed)
             let answer = mcReversed ? item.word : item.translation
-            // Filter out any distractors that accidentally match the answer
+
             var all = distractors.filter { $0.lowercased() != answer.lowercased() } + [answer]
             all.shuffle()
             options = all
@@ -499,18 +515,18 @@ struct QuizMixedView: View {
 
         case .matching:
             matchingPairs = session.matchingPairs(for: item)
-            matchedPairs = []
+            matchedPairIDs = []
             matchingWrongAttempts = 0
-            selectedMatchWord = nil
-            selectedMatchTranslation = nil
-            matchingWrongPair = nil
-            shuffledTranslations = matchingPairs.map(\.translation).shuffled()
+            selectedMatchWordID = nil
+            selectedMatchTranslationID = nil
+            matchingWrongIDs = nil
+            shuffledTranslationIDs = matchingPairs.map(\.id).shuffled()
 
         case .sentenceBuilding:
             break
 
         case .listening:
-            // Audio prompt; correct answer is the word itself, options are words.
+
             mcReversed = true
             let distractors = session.distractors(for: item, from: store.words, reversed: true)
             var all = distractors.filter { $0.lowercased() != item.word.lowercased() } + [item.word]
@@ -518,73 +534,39 @@ struct QuizMixedView: View {
             options = all
 
         case .speaking:
-            break
+            switch direction {
+            case .normal: typingReversed = false
+            case .reversed: typingReversed = true
+            case .mixed: typingReversed = session.directionMap[item.id] ?? Bool.random()
+            }
         }
     }
 
-    private func checkSpeakingAnswer(_ recognized: String, item: QuizSessionManager.QuizItem) {
-        guard !hasAnswered else { return }
-        let said = recognized.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        let target = item.word.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        let dist = levenshteinDistance(said, target)
-        let maxLen = max(target.count, said.count, 1)
-        let similarity = 1.0 - Double(dist) / Double(maxLen)
-        let exactish = said == target || (target.count >= 3 && said.contains(target))
-        let accuracy = exactish ? 1.0 : max(0.0, similarity)
-        // Grade pronunciation on a spectrum instead of pass/fail:
-        //   ≥0.8 great · 0.55–0.8 close (still passes, but slower interval) · <0.55 miss.
-        let passed = exactish || accuracy >= 0.55
-        let almost = passed && !exactish && accuracy < 0.8
-
-        hasAnswered = true
-        isCorrect = passed
-        isAlmostCorrect = almost
-        speakingAccuracy = accuracy
-        if passed {
-            Haptics.success()
-            animateStreakPulse()
-            showReward("+1")
-        } else {
-            Haptics.error()
-            triggerShake()
+    private func openLessonScene() {
+        let items = session.queue.map { item in
+            (
+                id: item.id,
+                word: item.word,
+                translation: item.translation,
+                correct: session.answerResults[item.id] ?? false
+            )
         }
-        session.recordAnswer(correct: passed)
-        QuizSessionManager.applyScheduling(
-            for: item.id,
-            correct: passed,
-            isAlmostCorrect: almost,
-            store: store,
-            languageStore: languageStore
-        )
-    }
-
-    private func skipSpeaking(item: QuizSessionManager.QuizItem) {
-        guard !hasAnswered else { return }
-        Haptics.error()
-        hasAnswered = true
-        isCorrect = false
-        triggerShake()
-        session.recordAnswer(correct: false)
-        QuizSessionManager.applyScheduling(
-            for: item.id,
-            correct: false,
-            store: store,
-            languageStore: languageStore
-        )
+        chatSceneTarget = ChatScenePicker.fromLesson(items: items, words: store.words)
+            ?? ChatScenePicker.fallback(words: store.words, learningLanguage: languageStore.learningLanguage)
     }
 
     private func goToNext() {
-        // Pre-compute the next question's state BEFORE animating the transition.
-        // This avoids the flicker where the new view renders with stale values
-        // (e.g. showing translation instead of word) for a split second.
+
         let nextIndex = session.currentIndex + 1
         if nextIndex < session.queue.count {
             let nextItem = session.queue[nextIndex]
-            if let nextType = session.exerciseTypes[nextItem.id] {
+            if var nextType = session.exerciseTypes[nextItem.id] {
+                if nextType == .speaking {
+                    nextType = .typing
+                    session.exerciseTypes[nextItem.id] = .typing
+                }
                 prepareStateForItem(nextItem, exerciseType: nextType)
-                // Auto-play only when the user actively advances into a
-                // listening question — not on tab entry or session restore,
-                // where re-appearing views would otherwise replay the audio.
+
                 if nextType == .listening {
                     Task { await AudioManager.shared.play(word: nextItem.word) }
                 }
@@ -594,7 +576,46 @@ struct QuizMixedView: View {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             session.advance()
         }
-        session.saveSession()
+        if persistSession {
+            session.saveSession()
+        }
+        if session.isComplete {
+            let results = session.queue.map { item in
+                (
+                    id: item.id,
+                    word: item.word,
+                    translation: item.translation,
+                    correct: session.answerResults[item.id] ?? false
+                )
+            }
+            completionMoments = StudyActivityStore.shared.captureSession(results: results, seedingFrom: store.words)
+            if recordsLesson {
+                let missed = results.filter { !$0.correct }
+                StudyActivityStore.shared.rememberLessonMisses(missed.map(\.id))
+                StudyActivityStore.shared.markLessonComplete(
+                    correct: session.correctCount,
+                    total: session.originalTotal,
+                    missedWords: missed.map(\.word),
+                    seedingFrom: store.words
+                )
+            }
+            store.syncStreakToAppGroup()
+        }
+    }
+
+    private func skipListeningAsCorrect() {
+        guard !hasAnswered, let item = session.currentItem else { return }
+        selectedOption = item.word
+        hasAnswered = true
+        isCorrect = true
+        session.recordAnswer(correct: true)
+        celebrateCorrectAnswer()
+        QuizSessionManager.applyScheduling(
+            for: item.id,
+            correct: true,
+            store: store,
+            languageStore: languageStore
+        )
     }
 
     private func selectOption(_ option: String, item: QuizSessionManager.QuizItem) {
@@ -605,16 +626,14 @@ struct QuizMixedView: View {
         let correctAnswer = mcReversed ? item.word : item.translation
         isCorrect = option.lowercased() == correctAnswer.lowercased()
 
+        session.recordAnswer(correct: isCorrect)
         if isCorrect {
-            Haptics.success()
-            animateStreakPulse()
-            showReward("+1")
+            celebrateCorrectAnswer()
         } else {
             Haptics.error()
             triggerShake()
         }
 
-        session.recordAnswer(correct: isCorrect)
         QuizSessionManager.applyScheduling(
             for: item.id,
             correct: isCorrect,
@@ -622,7 +641,6 @@ struct QuizMixedView: View {
             languageStore: languageStore
         )
     }
-
 
     private func checkTypingAnswer() {
         guard let item = session.currentItem,
@@ -636,13 +654,12 @@ struct QuizMixedView: View {
             let base = item.word.trimmingCharacters(in: .whitespacesAndNewlines)
             if let match = ClozeMatcher.find(word: item.word, in: item.example ?? ""),
                match.form.lowercased() != base.lowercased() {
-                // Accept both the exact form shown in the sentence (e.g. a plural)
-                // and the dictionary form the user might type instead.
+
                 rawAnswer = "\(match.form),\(base)"
             } else {
                 rawAnswer = base
             }
-        case .typing:
+        case .typing, .speaking:
             let expected = typingReversed ? item.word : item.translation
             rawAnswer = expected.trimmingCharacters(in: .whitespacesAndNewlines)
         default:
@@ -682,9 +699,6 @@ struct QuizMixedView: View {
             hasAnswered = true
             isCorrect = true
             isAlmostCorrect = almostCorrect
-            Haptics.success()
-            animateStreakPulse()
-            showReward("+1")
 
             if exerciseType == .cloze {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -693,6 +707,7 @@ struct QuizMixedView: View {
             }
 
             session.recordAnswer(correct: true)
+            celebrateCorrectAnswer()
             QuizSessionManager.applyScheduling(
                 for: item.id,
                 correct: true,
@@ -759,17 +774,27 @@ struct QuizMixedView: View {
         }
     }
 
+    private func celebrateCorrectAnswer() {
+        SoundFX.play(.ding)
+        Haptics.success()
+        showReward("+1")
+        animateStreakPulse()
+    }
+
     private func animateStreakPulse() {
-        guard session.currentStreak >= 2 else { return }
+        let streak = session.currentStreak
+        guard streak >= 2 else { return }
         streakScale = 1.4
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
             streakScale = 1.0
         }
 
-        let streak = session.currentStreak
         if streak == 3 || streak == 5 || streak == 7 || streak == 10 || (streak > 10 && streak % 5 == 0) {
-            Haptics.success()
+            SoundFX.play(.combo)
+            Haptics.combo(streak: streak)
             showStreakMilestone(streak)
+        } else if streak >= 3 {
+            Haptics.tick()
         }
     }
 

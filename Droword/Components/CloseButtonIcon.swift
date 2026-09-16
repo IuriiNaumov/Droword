@@ -10,3 +10,22 @@ struct CloseButtonIcon: View {
             .accessibilityLabel(Text("Close"))
     }
 }
+
+struct CloseButton: View {
+    @Environment(\.dismiss) private var dismiss
+    var action: (() -> Void)? = nil
+
+    var body: some View {
+        Button {
+            if let action {
+                action()
+            } else {
+                dismiss()
+            }
+        } label: {
+            CloseButtonIcon()
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Close"))
+    }
+}

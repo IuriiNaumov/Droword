@@ -107,7 +107,7 @@ struct TermsOfUseView: View {
         .enableSwipeBack()
     }
 
-    private func section(title: String, body: String) -> some View {
+    private func section(title: LocalizedStringKey, body: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(themeStore.bold(18))
@@ -119,6 +119,6 @@ struct TermsOfUseView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(themeStore.cardBg))
+        .background(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous).fill(themeStore.cardBg))
     }
 }

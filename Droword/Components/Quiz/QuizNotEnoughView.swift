@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Состояние квиза, когда слов недостаточно для начала практики.
 struct QuizNotEnoughView: View {
     var body: some View {
         VStack(spacing: 18) {

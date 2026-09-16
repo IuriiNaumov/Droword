@@ -7,6 +7,7 @@ struct DictionaryView: View {
     @State private var selectedTag: String? = nil
     @State private var searchText = ""
     @State private var debouncedSearch = ""
+    @FocusState private var isSearchFocused: Bool
     @State private var searchDebounceTask: Task<Void, Never>?
     @State private var sortOption: DictionarySortOption = .newestFirst
 
@@ -20,6 +21,9 @@ struct DictionaryView: View {
     @State private var selectedWordIDs: Set<UUID> = []
     @State private var showBulkDeleteConfirmation = false
     @State private var cardAppeared: Set<UUID> = []
+    @State private var refreshPhrase: String = ""
+    @State private var showRefreshPhrase = false
+    @State private var refreshBounce = false
     @AppStorage(AppStorageKeys.hasSeenReactionHint) private var hasSeenReactionHint: Bool = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
@@ -31,302 +35,305 @@ struct DictionaryView: View {
             : [GridItem(.flexible())]
     }
 
-    private var headerView: some View {
+    var body: some View {
+        dictionaryContent
+            .overlay(alignment: .top) { refreshPhraseBanner }
+            .overlay(alignment: .bottom) { bulkDeleteBar }
+            .overlay { bulkDeleteAlert }
+            .background(themeStore.appBg)
+            .sheet(isPresented: $showAddTag) {
+                AddTagView()
+                    .presentationDetents([.fraction(0.65)])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(DesignRadius.dialog)
+            }
+            .onAppear {
+                recalculateFiltered()
+                animateCardsIn()
+            }
+            .onChange(of: selectedTag) {
+                isSearchFocused = false
+                recalculateFiltered()
+                animateCardsIn()
+            }
+            .onChange(of: store.revision) { recalculateFiltered() }
+            .onChange(of: searchText) { debounceSearch() }
+            .onChange(of: debouncedSearch) { recalculateFiltered(); animateCardsIn() }
+            .onChange(of: sortOption) { recalculateFiltered(); animateCardsIn() }
+    }
+
+    @ViewBuilder
+    private var dictionaryContent: some View {
+        if store.words.isEmpty {
+            emptyDictionary
+        } else {
+            populatedDictionary
+        }
+    }
+
+    private var emptyDictionary: some View {
+        VStack(spacing: 0) {
+            dictionaryHeader(showsSelect: false)
+                .padding(.bottom, 8)
+
+            EmptyListView(
+                illustration: AnyView(CryingEmptyIllustration()),
+                title: DuoChaosCopy.dictionaryGarden().title,
+                subtitle: DuoChaosCopy.dictionaryGarden().subtitle
+            )
+        }
+        .iPadContentWidth(1000)
+    }
+
+    private var populatedDictionary: some View {
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    dictionaryHeader(showsSelect: true)
+                        .id("dictionaryTop")
+                    DictionarySearchBar(
+                        searchText: $searchText,
+                        isFocused: $isSearchFocused,
+                        enabled: true
+                    )
+                    tagsRow
+                    wordGrid
+                }
+                .iPadContentWidth(1000)
+            }
+            .onChange(of: selectedTag) {
+                proxy.scrollTo("dictionaryTop", anchor: .top)
+            }
+            .refreshable { await runDictionaryRefresh() }
+            .scrollDismissesKeyboard(.immediately)
+        }
+    }
+
+    private func dictionaryHeader(showsSelect: Bool) -> some View {
         HStack {
             Text("Dictionary")
-                .font(themeStore.bold(38))
-                .foregroundStyle(themeStore.mainText)
+                .zoomerTitle(38)
+                .environmentObject(themeStore)
+                .scaleEffect(refreshBounce ? 1.04 : 1)
+                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: refreshBounce)
             Spacer()
-            Button {
-                Haptics.selection()
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                    isSelectMode.toggle()
-                    if !isSelectMode { selectedWordIDs.removeAll() }
-                }
-            } label: {
-                Text(isSelectMode ? "Done" : "Select")
-                    .font(themeStore.medium(15))
-                    .foregroundStyle(store.words.isEmpty ? themeStore.secondaryText : (isSelectMode ? .white : themeStore.mainText))
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(isSelectMode ? themeStore.mainAccentColor : (themeStore.isGlass ? Color.clear : themeStore.cardBg))
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelectMode, cornerRadius: 12))
+            if showsSelect {
+                selectModeButton
             }
-            .buttonStyle(.plain)
-            .disabled(store.words.isEmpty)
-            .opacity(store.words.isEmpty ? 0.5 : 1)
-            .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
         }
         .padding(.top, 8)
         .padding(.horizontal, horizontalPadding)
     }
 
-    var body: some View {
-        Group {
-            if store.words.isEmpty {
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        headerView
+    private var selectModeButton: some View {
+        let disabled = store.words.isEmpty
+        let label = isSelectMode ? String(localized: "Done") : String(localized: "Select")
+        let fill: Color = {
+            if isSelectMode { return themeStore.mainAccentColor }
+            return themeStore.isGlass ? Color.clear : themeStore.cardBg
+        }()
+        let textColor: Color = {
+            if disabled { return themeStore.secondaryText }
+            return isSelectMode ? .white : themeStore.mainText
+        }()
 
-                        HStack(spacing: 10) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(themeStore.secondaryText)
-                            TextField("Search words, translations, examples...", text: $searchText)
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(themeStore.mainText)
-                                .disableAutocorrection(true)
-                                .disabled(true)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                        )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-                        .padding(.horizontal, horizontalPadding)
-
-                        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
-                            .padding(.horizontal, horizontalPadding)
-
-                        EmptyListView(
-                            icon: "book.closed",
-                            title: "Your word garden is waiting",
-                            subtitle: "Add a couple of words and I'll keep them safe here. Little by little — you'll see your vocabulary grow every day."
-                        )
-                    }
-                    .iPadContentWidth(1000)
-                }
-            } else {
-                ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        headerView
-                            .id("dictionaryTop")
-
-                        HStack(spacing: 10) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(themeStore.secondaryText)
-                            TextField("Search words, translations, examples...", text: $searchText)
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(themeStore.mainText)
-                                .disableAutocorrection(true)
-                            if !searchText.isEmpty {
-                                Button(action: { Haptics.lightImpact(intensity: 0.4); searchText = "" }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(themeStore.secondaryText)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel(Text("Clear search"))
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                        )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-                        .padding(.horizontal, horizontalPadding)
-
-                        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
-                            .padding(.horizontal, horizontalPadding)
-
-                        LazyVGrid(columns: gridColumns, spacing: 12) {
-                            if filteredWords.isEmpty {
-                                if let tag = selectedTag, !tag.isEmpty {
-                                    EmptyListView(
-                                        icon: "tag",
-                                        title: "No words in «\(tag)»",
-                                        subtitle: "Add words with this tag and they'll appear here."
-                                    )
-                                    .frame(minHeight: 300)
-                                } else if !searchText.isEmpty {
-                                    EmptyListView(
-                                        icon: "magnifyingglass",
-                                        title: "No words found",
-                                        subtitle: "Try a different search or remove the filter."
-                                    )
-                                    .frame(minHeight: 300)
-                                }
-                            } else {
-                                if isSelectMode {
-                                    Button {
-                                        Haptics.selection()
-                                        if selectedWordIDs.count == filteredWords.count {
-                                            selectedWordIDs.removeAll()
-                                        } else {
-                                            selectedWordIDs = Set(filteredWords.map(\.id))
-                                        }
-                                    } label: {
-                                        HStack(spacing: 10) {
-                                            Image(systemName: selectedWordIDs.count == filteredWords.count ? "checkmark.circle.fill" : "circle")
-                                                .font(.system(size: 22))
-                                                .foregroundStyle(selectedWordIDs.count == filteredWords.count ? themeStore.mainAccentColor : themeStore.secondaryText)
-                                            Text("Select all (\(filteredWords.count))")
-                                                .font(themeStore.medium(15))
-                                                .foregroundStyle(themeStore.mainText)
-                                            Spacer()
-                                        }
-                                        .padding(.vertical, 8)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-
-                                ForEach(Array(filteredWords.enumerated()), id: \.element.id) { index, word in
-                                    HStack(spacing: 12) {
-                                        if isSelectMode {
-                                            Button {
-                                                Haptics.lightImpact(intensity: 0.3)
-                                                if selectedWordIDs.contains(word.id) {
-                                                    selectedWordIDs.remove(word.id)
-                                                } else {
-                                                    selectedWordIDs.insert(word.id)
-                                                }
-                                            } label: {
-                                                Image(systemName: selectedWordIDs.contains(word.id) ? "checkmark.circle.fill" : "circle")
-                                                    .font(.system(size: 22))
-                                                    .foregroundStyle(selectedWordIDs.contains(word.id) ? themeStore.mainAccentColor : themeStore.secondaryText)
-                                            }
-                                            .buttonStyle(.plain)
-                                            .transition(.move(edge: .leading).combined(with: .opacity))
-                                        }
-
-                                        WordCardView(
-                                            word: word.word,
-                                            translation: word.translation,
-                                            type: word.type,
-                                            example: word.example,
-                                            transcription: word.transcription,
-                                            comment: word.comment,
-                                            explanation: word.explanation,
-                                            breakdown: word.breakdown,
-                                            tag: word.tag,
-                                            examples: word.examples,
-                                            collocations: word.collocations,
-                                            synonyms: word.synonyms,
-                                            antonyms: word.antonyms,
-                                            mnemonic: word.mnemonic,
-                                            reaction: word.reaction,
-                                            storedWord: word
-                                        ) {
-                                            store.remove(word)
-                                        } onReaction: { emoji in
-                                            store.setReaction(for: word.id, reaction: emoji)
-                                            if !hasSeenReactionHint {
-                                                withAnimation { hasSeenReactionHint = true }
-                                            }
-                                        }
-                                    }
-                                    .opacity(cardAppeared.contains(word.id) ? 1 : 0)
-                                    .offset(y: cardAppeared.contains(word.id) ? 0 : 20)
-                                    .onAppear {
-                                        let delay = Double(min(index, 15)) * 0.04
-                                        _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
-                                            cardAppeared.insert(word.id)
-                                        }
-                                    }
-
-                                    if index == 0 && !hasSeenReactionHint {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "hand.tap")
-                                                .font(.system(size: 13))
-                                            Text("Double tap the card to add a reaction")
-                                                .font(themeStore.regular(13))
-                                        }
-                                        .foregroundStyle(themeStore.secondaryText)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.top, -4)
-                                        .transition(.opacity)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.bottom, 40)
-                        .animation(.spring(), value: store.words.count)
-                        .id(themeStore.palette)
-                    }
-                    .iPadContentWidth(1000)
-                }
-                .onChange(of: selectedTag) {
-                    proxy.scrollTo("dictionaryTop", anchor: .top)
-                }
-                } // ScrollViewReader
+        return Button {
+            Haptics.buttonPress()
+            isSearchFocused = false
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                isSelectMode.toggle()
+                if !isSelectMode { selectedWordIDs.removeAll() }
             }
-        }
-        .overlay(alignment: .bottom) {
-            if isSelectMode && !selectedWordIDs.isEmpty {
-                Button {
-                    Haptics.warning()
-                    showBulkDeleteConfirmation = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "trash.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Delete \(selectedWordIDs.count) words")
-                            .font(themeStore.bold(16))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.accentRed)
-                    )
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.bottom, 8)
-                }
-                .buttonStyle(.plain)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-        .overlay {
-            if showBulkDeleteConfirmation {
-                CustomAlertView(
-                    icon: "trash.fill",
-                    iconColor: themeStore.accentRed,
-                    title: "Delete \(selectedWordIDs.count) words?",
-                    message: "This action cannot be undone.",
-                    primaryButton: .init(title: "Delete", style: .destructive) {
-                        store.removeMultiple(ids: selectedWordIDs)
-                        selectedWordIDs.removeAll()
-                        isSelectMode = false
-                        showBulkDeleteConfirmation = false
-                    },
-                    secondaryButton: .init(title: "Cancel", style: .cancel) {
-                        showBulkDeleteConfirmation = false
-                    }
+        } label: {
+            Text(label)
+                .font(themeStore.bold(15))
+                .foregroundStyle(textColor)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                        .fill(fill)
                 )
-                .transition(.opacity)
-                .zIndex(999)
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelectMode, cornerRadius: DesignRadius.large))
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(disabled ? 0.5 : 1)
+        .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
+    }
+
+    private var tagsRow: some View {
+        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
+            .padding(.horizontal, horizontalPadding)
+    }
+
+    private var wordGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 12) {
+            if filteredWords.isEmpty {
+                dictionaryEmptyFilter
+            } else {
+                if isSelectMode {
+                    selectAllRow
+                }
+                ForEach(Array(filteredWords.enumerated()), id: \.element.id) { index, word in
+                    DictionaryWordRow(
+                        word: word,
+                        index: index,
+                        isSelectMode: isSelectMode,
+                        isSelected: selectedWordIDs.contains(word.id),
+                        hasAppeared: cardAppeared.contains(word.id),
+                        showReactionHint: index == 0 && !hasSeenReactionHint,
+                        onToggleSelect: { toggleSelection(word.id) },
+                        onDelete: { store.remove(word) },
+                        onReaction: { emoji in
+                            store.setReaction(for: word.id, reaction: emoji)
+                            if !hasSeenReactionHint {
+                                withAnimation { hasSeenReactionHint = true }
+                            }
+                        },
+                        onAppearCard: { appearCard(word.id, index: index) }
+                    )
+                }
             }
         }
-        .background(themeStore.appBg)
-        .sheet(isPresented: $showAddTag) {
-            AddTagView()
-                .presentationDetents([.fraction(0.65)])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(DesignRadius.dialog)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.bottom, 40)
+        .animation(.spring(), value: store.words.count)
+        .id(themeStore.palette)
+    }
+
+    @ViewBuilder
+    private var dictionaryEmptyFilter: some View {
+        if let tag = selectedTag, !tag.isEmpty {
+            EmptyListView(
+                icon: "tag",
+                title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
+            )
+            .frame(minHeight: 300)
+        } else if !searchText.isEmpty {
+            EmptyListView(
+                icon: "magnifyingglass",
+                title: DuoChaosCopy.dictionaryEmpty(tag: nil).title,
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: nil).subtitle
+            )
+            .frame(minHeight: 300)
         }
-        .onAppear {
-            recalculateFiltered()
-        }
-        .onChange(of: selectedTag) { recalculateFiltered(); animateCardsIn() }
-        .onChange(of: store.revision) { recalculateFiltered() }
-        .onChange(of: searchText) {
-            searchDebounceTask?.cancel()
-            searchDebounceTask = Task {
-                try? await Task.sleep(nanoseconds: 200_000_000)
-                guard !Task.isCancelled else { return }
-                debouncedSearch = searchText
+    }
+
+    private var selectAllRow: some View {
+        let allSelected = selectedWordIDs.count == filteredWords.count
+        let icon = allSelected ? "checkmark.circle.fill" : "circle"
+        let iconColor = allSelected ? themeStore.mainAccentColor : themeStore.secondaryText
+        let title = String(localized: "Select all (\(filteredWords.count))")
+
+        return Button {
+            Haptics.tick()
+            if allSelected {
+                selectedWordIDs.removeAll()
+            } else {
+                selectedWordIDs = Set(filteredWords.map(\.id))
             }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 22))
+                    .foregroundStyle(iconColor)
+                Text(title)
+                    .font(themeStore.medium(15))
+                    .foregroundStyle(themeStore.mainText)
+                Spacer()
+            }
+            .padding(.vertical, 8)
         }
-        .onChange(of: debouncedSearch) { recalculateFiltered(); animateCardsIn() }
-        .onChange(of: sortOption) { recalculateFiltered(); animateCardsIn() }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var refreshPhraseBanner: some View {
+        if showRefreshPhrase {
+            Text(refreshPhrase)
+                .font(themeStore.bold(14))
+                .foregroundStyle(themeStore.mainText)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(themeStore.cardBg)
+                )
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private var bulkDeleteBar: some View {
+        if isSelectMode && !selectedWordIDs.isEmpty {
+            Button {
+                Haptics.error()
+                showBulkDeleteConfirmation = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "trash.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("Delete \(selectedWordIDs.count) words")
+                }
+                .duo3DStyle(Color.accentRed)
+            }
+            .buttonStyle(Duo3DButtonStyle())
+            .padding(.horizontal, horizontalPadding)
+            .padding(.bottom, 8)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    @ViewBuilder
+    private var bulkDeleteAlert: some View {
+        if showBulkDeleteConfirmation {
+            CustomAlertView(
+                icon: "trash.fill",
+                iconColor: themeStore.accentRed,
+                title: "Delete \(selectedWordIDs.count) words?",
+                message: "This action cannot be undone.",
+                primaryButton: .init(title: "Delete", style: .destructive) {
+                    store.removeMultiple(ids: selectedWordIDs)
+                    selectedWordIDs.removeAll()
+                    isSelectMode = false
+                    showBulkDeleteConfirmation = false
+                },
+                secondaryButton: .init(title: "Cancel", style: .cancel) {
+                    showBulkDeleteConfirmation = false
+                }
+            )
+            .transition(.opacity)
+            .zIndex(999)
+        }
+    }
+
+    private func toggleSelection(_ id: UUID) {
+        Haptics.tick()
+        if selectedWordIDs.contains(id) {
+            selectedWordIDs.remove(id)
+        } else {
+            selectedWordIDs.insert(id)
+        }
+    }
+
+    private func appearCard(_ id: UUID, index: Int) {
+        let delay = Double(min(index, 15)) * 0.04
+        _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
+            cardAppeared.insert(id)
+        }
+    }
+
+    private func debounceSearch() {
+        searchDebounceTask?.cancel()
+        searchDebounceTask = Task {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            guard !Task.isCancelled else { return }
+            debouncedSearch = searchText
+        }
     }
 
     private func recalculateFiltered() {
@@ -370,8 +377,6 @@ struct DictionaryView: View {
         case .masteryLow:
             result.sort { $0.repetitions < $1.repetitions }
         case .hardest:
-            // Hardest first: the lower the ease factor, the more the word has
-            // been struggled with. Break ties by more lapses.
             result.sort {
                 if $0.easeFactor != $1.easeFactor { return $0.easeFactor < $1.easeFactor }
                 return $0.lapses > $1.lapses
@@ -390,11 +395,143 @@ struct DictionaryView: View {
     private func animateCardsIn() {
         cardAppeared.removeAll()
         for (i, word) in cachedFiltered.enumerated() {
-            let delay = Double(min(i, 15)) * 0.04
-            _ = withAnimation(.spring(response: 0.4, dampingFraction: 0.8).delay(delay)) {
-                cardAppeared.insert(word.id)
+            appearCard(word.id, index: i)
+        }
+    }
+
+    @MainActor
+    private func runDictionaryRefresh() async {
+        refreshPhrase = DuoChaosCopy.dictionaryRefresh()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+            showRefreshPhrase = true
+            refreshBounce = true
+        }
+        Haptics.tick()
+        SoundFX.play(.pop)
+        store.reloadFromDisk(force: true)
+        try? await Task.sleep(for: .milliseconds(700))
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            refreshBounce = false
+            showRefreshPhrase = false
+        }
+    }
+}
+
+private struct DictionarySearchBar: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+    @Binding var searchText: String
+    var isFocused: FocusState<Bool>.Binding
+    var enabled: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(themeStore.secondaryText)
+
+            TextField("Search words, translations, examples...", text: $searchText)
+                .font(themeStore.regular(16))
+                .foregroundStyle(themeStore.mainText)
+                .tint(themeStore.mainAccentColor)
+                .disableAutocorrection(true)
+                .textInputAutocapitalization(.never)
+                .focused(isFocused)
+                .submitLabel(.done)
+                .disabled(!enabled)
+                .onSubmit { isFocused.wrappedValue = false }
+
+            if isFocused.wrappedValue || !searchText.isEmpty {
+                Button {
+                    Haptics.softTap()
+                    if searchText.isEmpty {
+                        isFocused.wrappedValue = false
+                    } else {
+                        searchText = ""
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(themeStore.secondaryText)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(searchText.isEmpty ? "Dismiss search" : "Clear search"))
             }
         }
+        .animation(.easeInOut(duration: 0.15), value: isFocused.wrappedValue)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 19)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                .fill(themeStore.dividerColor.opacity(0.55))
+        )
+        .padding(.horizontal, 20)
+    }
+}
+
+private struct DictionaryWordRow: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+
+    let word: StoredWord
+    let index: Int
+    let isSelectMode: Bool
+    let isSelected: Bool
+    let hasAppeared: Bool
+    let showReactionHint: Bool
+    let onToggleSelect: () -> Void
+    let onDelete: () -> Void
+    let onReaction: (String?) -> Void
+    let onAppearCard: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                if isSelectMode {
+                    Button(action: onToggleSelect) {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 22))
+                            .foregroundStyle(isSelected ? themeStore.mainAccentColor : themeStore.secondaryText)
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                }
+
+                WordCardView(
+                    word: word.word,
+                    translation: word.translation,
+                    type: word.type,
+                    example: word.example,
+                    transcription: word.transcription,
+                    comment: word.comment,
+                    explanation: word.explanation,
+                    breakdown: word.breakdown,
+                    tag: word.tag,
+                    examples: word.examples,
+                    collocations: word.collocations,
+                    synonyms: word.synonyms,
+                    antonyms: word.antonyms,
+                    mnemonic: word.mnemonic,
+                    reaction: word.reaction,
+                    storedWord: word,
+                    onDelete: onDelete,
+                    onReaction: onReaction
+                )
+            }
+
+            if showReactionHint {
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.tap")
+                        .font(.system(size: 13))
+                    Text("Double tap the card to add a reaction")
+                        .font(themeStore.regular(13))
+                }
+                .foregroundStyle(themeStore.secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.top, -4)
+                .transition(.opacity)
+            }
+        }
+        .opacity(hasAppeared ? 1 : 0)
+        .offset(y: hasAppeared ? 0 : 20)
+        .id(word.id)
+        .onAppear(perform: onAppearCard)
     }
 }
 

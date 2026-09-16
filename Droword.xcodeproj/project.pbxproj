@@ -420,6 +420,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Droword​Widget/DrowordWidget.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 587TJ8A7UX;
@@ -452,6 +453,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Droword​Widget/DrowordWidget.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 587TJ8A7UX;
@@ -627,9 +629,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Droword;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Droword uses the camera to take a profile photo and scan words from photos.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Droword uses the microphone so you can practice pronouncing words out loud.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Droword accesses your photo library to set a profile photo and scan words from images.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Droword uses speech recognition to check how you pronounce the words you're learning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -674,9 +674,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Droword;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Droword uses the camera to take a profile photo and scan words from photos.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Droword uses the microphone so you can practice pronouncing words out loud.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Droword accesses your photo library to set a profile photo and scan words from images.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Droword uses speech recognition to check how you pronounce the words you're learning.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -28,9 +28,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var antonyms: [String] = []
     var mnemonic: String? = nil
     var reaction: String? = nil
-    /// Whether the user has gone through the "learn / introduce" step for this
-    /// word. New words wait in the Learn section until introduced, and only then
-    /// enter spaced-repetition review.
+
     var introduced: Bool = false
 
     init(
@@ -118,9 +116,7 @@ struct StoredWord: Identifiable, Codable, Equatable {
         }
         collocations = try container.decodeIfPresent([String].self, forKey: .collocations) ?? []
         reaction = try container.decodeIfPresent(String.self, forKey: .reaction)
-        // Migration: words that already have review progress are treated as
-        // already introduced, so existing users don't get flooded with
-        // "new words to learn".
+
         introduced = try container.decodeIfPresent(Bool.self, forKey: .introduced) ?? (repetitions > 0 || intervalDays > 0)
     }
 }
@@ -148,8 +144,12 @@ final class WordsStore: ObservableObject {
     private let totalKey = "WordsStore.totalWordsAdded"
     private static let migrationKey = "WordsStore.migratedToAppGroup"
     private static let fileMigrationKey = "WordsStore.migratedToFile"
+    private static let autoIntroduceKey = "WordsStore.autoIntroducedPending"
     private var hasLoaded = false
     private var saveTask: Task<Void, Never>?
+    private var savesSinceBackup = 0
+    private var lastWidgetReloadAt: Date = .distantPast
+    private var lastLoadedFileModification: Date?
 
     private var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? UserDefaults.standard
@@ -164,10 +164,12 @@ final class WordsStore: ObservableObject {
     init() {
         migrateIfNeeded()
         load()
+        autoIntroducePendingWordsIfNeeded()
     }
 
     func add(_ word: StoredWord) {
         var w = word
+        w.introduced = true
         if w.dueDate == nil {
             w.dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
         }
@@ -211,77 +213,170 @@ final class WordsStore: ObservableObject {
         }
     }
 
+    private func autoIntroducePendingWordsIfNeeded() {
+        let shared = sharedDefaults
+        guard !shared.bool(forKey: Self.autoIntroduceKey) else { return }
+        shared.set(true, forKey: Self.autoIntroduceKey)
+
+        var copy = words
+        var changed = false
+        for i in copy.indices where !copy[i].introduced {
+            copy[i].introduced = true
+            changed = true
+        }
+        if changed {
+            words = copy
+        }
+    }
+
     private func load() {
-        // Try primary file
+
         if let data = try? Data(contentsOf: Self.wordsFileURL) {
             do {
                 words = try JSONDecoder().decode([StoredWord].self, from: data)
                 totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+                lastLoadedFileModification = Self.fileModificationDate()
                 hasLoaded = true
                 return
             } catch {
                 #if DEBUG
                 print("⚠️ WordsStore: Failed to decode words.json: \(error)")
                 #endif
-                // Try backup before falling through
+
                 let backupURL = Self.wordsFileURL.deletingLastPathComponent().appendingPathComponent("words_backup.json")
                 if let backupData = try? Data(contentsOf: backupURL),
                    let decoded = try? JSONDecoder().decode([StoredWord].self, from: backupData) {
                     words = decoded
                     totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+                    lastLoadedFileModification = Self.fileModificationDate()
                     hasLoaded = true
                     return
                 }
             }
         }
 
-        // Fallback to UserDefaults (legacy migration path)
         if let data = sharedDefaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) {
             words = decoded
         }
 
         totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
+        lastLoadedFileModification = Self.fileModificationDate()
         hasLoaded = true
     }
 
-    func reloadFromDisk() {
+    private static func fileModificationDate() -> Date? {
+        let attrs = try? FileManager.default.attributesOfItem(atPath: wordsFileURL.path)
+        return attrs?[.modificationDate] as? Date
+    }
+
+    func reloadFromDisk(force: Bool = false) {
+
+        if !force,
+           let mod = Self.fileModificationDate(),
+           let last = lastLoadedFileModification,
+           mod <= last {
+            return
+        }
         guard let data = try? Data(contentsOf: Self.wordsFileURL),
-              let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) else { return }
+              let decoded = try? JSONDecoder().decode([StoredWord].self, from: data) else {
+            if force { revision += 1 }
+            return
+        }
         if decoded != words {
             hasLoaded = false
             words = decoded
             totalWordsAdded = sharedDefaults.integer(forKey: totalKey)
             hasLoaded = true
+        } else if force {
+            revision += 1
         }
+        lastLoadedFileModification = Self.fileModificationDate()
+    }
+
+    func flushPendingSave() {
+        saveTask?.cancel()
+        saveTask = nil
+        persistNow(forceBackup: true, forceWidgetReload: true)
     }
 
     private func scheduleSave() {
         saveTask?.cancel()
         saveTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
             guard !Task.isCancelled, let self else { return }
-            let copy = self.words
-            let total = self.totalWordsAdded
-            let totalKey = self.totalKey
-            let defaults = self.sharedDefaults
-            let fileURL = Self.wordsFileURL
-            Task.detached(priority: .utility) {
-                if let data = try? JSONEncoder().encode(copy) {
-                    try? data.write(to: fileURL, options: .atomic)
-                    // Keep a rolling backup
+            self.persistNow(forceBackup: false, forceWidgetReload: false)
+        }
+    }
+
+    private func persistNow(forceBackup: Bool, forceWidgetReload: Bool) {
+        let copy = words
+        let total = totalWordsAdded
+        let totalKey = self.totalKey
+        let defaults = sharedDefaults
+        let fileURL = Self.wordsFileURL
+        savesSinceBackup += 1
+        let writeBackup = forceBackup || savesSinceBackup >= 10
+        if writeBackup { savesSinceBackup = 0 }
+
+        let shouldReloadWidget: Bool
+        if forceWidgetReload {
+            shouldReloadWidget = true
+            lastWidgetReloadAt = Date()
+        } else if Date().timeIntervalSince(lastWidgetReloadAt) >= 30 {
+            shouldReloadWidget = true
+            lastWidgetReloadAt = Date()
+        } else {
+            shouldReloadWidget = false
+        }
+
+        let streak = Self.computeCurrentStreak(from: copy)
+        let widgetPayload = Self.makeWidgetSnapshot(from: copy)
+        let streakKey = AppStorageKeys.currentStreak
+
+        Task.detached(priority: .utility) {
+            if let data = try? JSONEncoder().encode(copy) {
+                try? data.write(to: fileURL, options: .atomic)
+                if writeBackup {
                     let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("words_backup.json")
                     try? data.write(to: backupURL, options: .atomic)
                 }
-                await MainActor.run {
-                    defaults.set(total, forKey: totalKey)
-                }
+            }
+
+            if let snapshotData = try? JSONEncoder().encode(widgetPayload) {
+                defaults.set(snapshotData, forKey: "WordsStore.words")
+            }
+            defaults.set(total, forKey: totalKey)
+            defaults.set(streak, forKey: streakKey)
+            await MainActor.run {
+                UserDefaults.standard.set(streak, forKey: streakKey)
+                StudyActivityStore.shared.writeToAppGroup()
+            }
+            if shouldReloadWidget {
                 WidgetCenter.shared.reloadAllTimelines()
             }
-            self.syncStreakToAppGroup()
         }
     }
-    
+
+    private struct WidgetSnapshotWord: Codable {
+        let word: String
+        let translation: String?
+        let dueDate: Date?
+        let dateAdded: Date
+    }
+
+    private static func makeWidgetSnapshot(from words: [StoredWord]) -> [WidgetSnapshotWord] {
+
+        words.map {
+            WidgetSnapshotWord(
+                word: $0.word,
+                translation: $0.translation,
+                dueDate: $0.dueDate,
+                dateAdded: $0.dateAdded
+            )
+        }
+    }
+
     func setReaction(for id: UUID, reaction: String?) {
         guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
         var w = words[idx]
@@ -311,60 +406,22 @@ final class WordsStore: ObservableObject {
         words[idx] = w
     }
 
-
-    static func computeCurrentStreak(from words: [StoredWord]) -> Int {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let dates = Set(words.map { cal.startOfDay(for: $0.dateAdded) })
-
-        var streak = 0
-        var day = today
-        while dates.contains(day) {
-            streak += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
-            day = prev
-        }
-        return streak
+    static func activityDays(from words: [StoredWord]) -> Set<Date> {
+        StudyActivityStore.shared.ensureMigrated(from: words)
+        return StudyActivityStore.shared.activityDates()
     }
 
-    /// Computes streak allowing one gap day per 7-day window (premium freeze).
-    /// Returns the streak count and the date that was frozen (if any).
-    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, freezeDate: Date?) {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let dates = Set(words.map { cal.startOfDay(for: $0.dateAdded) })
+    static func computeCurrentStreak(from words: [StoredWord]) -> Int {
+        DayStreak.current(activityDays: activityDays(from: words))
+    }
 
-        var streak = 0
-        var day = today
-        var freezeDate: Date? = nil
+    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, freezeDate: Date?) {
         let lastFreezeDateStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
         let lastFreezeDay = DateFormatting.dayFormatter.date(from: lastFreezeDateStr)
-
-        while true {
-            if dates.contains(day) {
-                streak += 1
-            } else if freezeDate == nil {
-                // Allow freeze if 7+ days since last freeze (or never frozen)
-                let canFreeze: Bool
-                if let lastFreeze = lastFreezeDay {
-                    let daysSinceFreeze = cal.dateComponents([.day], from: lastFreeze, to: day).day ?? 0
-                    canFreeze = abs(daysSinceFreeze) >= 7
-                } else {
-                    canFreeze = true
-                }
-                if canFreeze && day != today {
-                    freezeDate = day
-                    streak += 1
-                } else {
-                    break
-                }
-            } else {
-                break
-            }
-            guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
-            day = prev
-        }
-        return (streak, freezeDate)
+        return DayStreak.currentWithFreeze(
+            activityDays: activityDays(from: words),
+            lastFreezeDay: lastFreezeDay
+        )
     }
 
     func syncStreakToAppGroup() {
@@ -373,24 +430,25 @@ final class WordsStore: ObservableObject {
         UserDefaults.standard.set(streak, forKey: AppStorageKeys.currentStreak)
     }
 
-    /// Words the user has added but not yet gone through the "learn" step for,
-    /// oldest first (FIFO), and only those that already have a translation ready.
     var newWords: [StoredWord] {
         words
             .filter { !$0.introduced && ($0.translation?.isEmpty == false) }
             .sorted { $0.dateAdded < $1.dateAdded }
     }
 
-    /// Marks words as introduced and makes them due for their first recall now,
-    /// so they enter the review flow immediately after being learned.
     func markIntroduced(ids: [UUID]) {
+        guard !ids.isEmpty else { return }
         let now = Date()
+        var copy = words
+        var changed = false
         for id in ids {
-            guard let idx = words.firstIndex(where: { $0.id == id }) else { continue }
-            var w = words[idx]
-            w.introduced = true
-            w.dueDate = now
-            words[idx] = w
+            guard let idx = copy.firstIndex(where: { $0.id == id }) else { continue }
+            copy[idx].introduced = true
+            copy[idx].dueDate = now
+            changed = true
+        }
+        if changed {
+            words = copy
         }
     }
 

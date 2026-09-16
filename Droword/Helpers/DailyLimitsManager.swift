@@ -5,17 +5,14 @@ struct DailyLimitsManager {
         let firstUseDateStr = UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? ""
         guard !firstUseDateStr.isEmpty,
               let firstUse = DateFormatting.dayFormatter.date(from: firstUseDateStr) else {
-            return 7
+            return TranslationLimits.maxFreeTranslations(firstUse: nil)
         }
-        let daysSinceInstall = Calendar.current.dateComponents([.day], from: firstUse, to: Date()).day ?? 0
-        return daysSinceInstall <= 7 ? 7 : 3
+        return TranslationLimits.maxFreeTranslations(firstUse: firstUse)
     }
     static let maxFreeTTS = 10
     static let maxFreeSuggestionFetches = 2
     static let maxFreePhotoScans = 1
-    /// A pedagogical cap (not a paywall): learning too many brand-new words in a
-    /// single day floods future review sessions. Popular SRS apps default to a
-    /// similar daily intake. Applies to everyone.
+
     static let maxNewWordsPerDay = 12
 
     private static let dateKey = "dailyLimits.date"

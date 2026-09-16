@@ -1,11 +1,9 @@
 import SwiftUI
 
-// MARK: - Models
-
 struct WordPack: Identifiable {
     let id: String
     let icon: String
-    let colorKey: String // ThemeStore property name
+    let colorKey: String
     let titleKey: LocalizedStringKey
     let descriptionKey: LocalizedStringKey
     let wordCount: Int = 20
@@ -23,20 +21,18 @@ struct WordPackTracker {
     }
 }
 
-// MARK: - Pack Catalog
-
 struct WordPacksData {
 
     static let allPacks: [WordPack] = [
-        WordPack(id: "basics", icon: "star.fill", colorKey: "accentGold",
+        WordPack(id: "basics", icon: "star", colorKey: "accentGold",
                  titleKey: "Basics", descriptionKey: "Essential everyday words"),
         WordPack(id: "food", icon: "fork.knife", colorKey: "accentGreen",
                  titleKey: "Food & Drinks", descriptionKey: "What to eat and drink"),
         WordPack(id: "travel", icon: "airplane", colorKey: "accentBlue",
                  titleKey: "Travel", descriptionKey: "Getting around and exploring"),
-        WordPack(id: "shopping", icon: "bag.fill", colorKey: "mainAccentColor",
+        WordPack(id: "shopping", icon: "bag", colorKey: "mainAccentColor",
                  titleKey: "Shopping", descriptionKey: "Buying and paying"),
-        WordPack(id: "daily_life", icon: "house.fill", colorKey: "accentRed",
+        WordPack(id: "daily_life", icon: "house", colorKey: "accentRed",
                  titleKey: "Daily Life", descriptionKey: "Home and routine"),
     ]
 
@@ -62,8 +58,6 @@ struct WordPacksData {
         default: return themeStore.mainAccentColor
         }
     }
-
-    // MARK: - Basics Pack
 
     private static let basicsBank: [String: [StarterWord]] = [
         "English→Русский": [
@@ -596,8 +590,6 @@ struct WordPacksData {
         ],
     ]
 
-    // MARK: - Food & Drinks Pack
-
     private static let foodBank: [String: [StarterWord]] = [
         "English→Русский": [
             StarterWord(word: "Bread", translation: "Хлеб", type: "noun", transcription: "brɛd"),
@@ -1128,8 +1120,6 @@ struct WordPacksData {
             StarterWord(word: "पीना", translation: "Пить", type: "глагол", transcription: "piːnaː"),
         ],
     ]
-
-    // MARK: - Travel Pack
 
     private static let travelBank: [String: [StarterWord]] = [
         "English→Русский": [
@@ -1662,8 +1652,6 @@ struct WordPacksData {
         ],
     ]
 
-    // MARK: - Shopping Pack
-
     private static let shoppingBank: [String: [StarterWord]] = [
         "English→Русский": [
             StarterWord(word: "Money", translation: "Деньги", type: "noun", transcription: "ˈmʌni"),
@@ -2172,8 +2160,6 @@ struct WordPacksData {
             StarterWord(word: "बेचना", translation: "Продавать", type: "глагол", transcription: "betɕnaː"),
         ],
     ]
-
-    // MARK: - Daily Life Pack
 
     private static let dailyLifeBank: [String: [StarterWord]] = [
         "English→Русский": [

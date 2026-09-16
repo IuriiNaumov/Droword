@@ -15,63 +15,63 @@ struct ShareWordCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let tag = word.tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
-                    .font(.custom("Poppins-Medium", size: 13))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(Self.tagColor(for: tag))
                     .padding(.vertical, 4)
                     .padding(.horizontal, 18)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Self.tagColor(for: tag), lineWidth: 1)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Self.tagColor(for: tag).opacity(0.18))
                     )
                     .padding(.bottom, 2)
             }
 
             Text(word.word)
-                .font(.custom("Poppins-Bold", size: 24))
+                .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundStyle(primaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let transcription = word.transcription, !transcription.isEmpty {
                 Text("[\(transcription)]")
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(secondaryText)
             }
 
             if !word.type.isEmpty {
                 Text(word.type.capitalized)
-                    .font(.custom("Poppins-Regular", size: 14))
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundStyle(secondaryText)
                     .padding(.bottom, 2)
             }
 
             if let translation = word.translation, !translation.isEmpty {
                 Text(translation)
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(primaryText)
             }
 
             if let example = word.example, !example.isEmpty {
                 Text(highlightedExample(example: example, target: word.word))
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(primaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let explanation = word.explanation, !explanation.isEmpty {
                 Text(explanation)
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(primaryText)
             }
 
             if let breakdown = word.breakdown, !breakdown.isEmpty {
                 Text(breakdown)
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(primaryText)
             }
 
             if let comment = word.comment, !comment.isEmpty {
                 Text(comment)
-                    .font(.custom("Poppins-Regular", size: 16))
+                    .font(.system(size: 16, weight: .regular, design: .rounded))
                     .foregroundStyle(Color.mainGrey)
                     .padding(.top, 4)
             }
@@ -79,7 +79,7 @@ struct ShareWordCardView: View {
             HStack {
                 Spacer()
                 Text("Droword")
-                    .font(.custom("Poppins-Bold", size: 13))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundStyle(subtleText)
             }
             .padding(.top, 8)
@@ -87,11 +87,7 @@ struct ShareWordCardView: View {
         .padding(20)
         .frame(width: cardWidth, alignment: .leading)
         .background(backgroundColor)
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(.separator).opacity(0.2), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
     }
 
     private func highlightedExample(example: String, target: String) -> AttributedString {
@@ -118,7 +114,7 @@ struct ShareWordCardView: View {
            let attrEnd = AttributedString.Index(range.upperBound, within: attr) {
             let highlightRange = attrStart..<attrEnd
             attr[highlightRange].foregroundColor = isSuggested ? .accentColor : .orange
-            attr[highlightRange].font = .custom("Poppins-Bold", size: 16)
+            attr[highlightRange].font = .system(size: 16, weight: .bold, design: .rounded)
         }
         return attr
     }

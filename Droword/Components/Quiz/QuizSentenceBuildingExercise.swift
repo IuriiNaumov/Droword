@@ -41,9 +41,9 @@ struct QuizSentenceBuildingExercise: View {
     }
 
     private var builtArea: some View {
-        let borderColor: Color = {
-            if !hasAnswered { return themeStore.dividerColor }
-            return isCorrect ? themeStore.accentGreen : themeStore.accentRed
+        let areaFill: Color = {
+            if !hasAnswered { return themeStore.isGlass ? Color.clear : themeStore.cardBg }
+            return isCorrect ? themeStore.accentGreen.opacity(0.12) : themeStore.accentRed.opacity(0.12)
         }()
 
         return VStack(spacing: 8) {
@@ -82,18 +82,14 @@ struct QuizSentenceBuildingExercise: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+                    .fill(areaFill)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(themeStore.isGlass && !hasAnswered ? Color.clear : borderColor, lineWidth: hasAnswered ? 2 : 1)
-            )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !hasAnswered, cornerRadius: 14))
 
             if hasAnswered && !isCorrect {
                 QuizFeedbackBadge(
                     icon: "xmark.circle.fill",
-                    text: correctSentenceWords.joined(separator: " "),
+                    text: DuoChaosCopy.wrongReveal(correctSentenceWords.joined(separator: " ")),
                     color: themeStore.accentRed
                 )
             }
@@ -101,7 +97,7 @@ struct QuizSentenceBuildingExercise: View {
             if hasAnswered && isCorrect {
                 QuizFeedbackBadge(
                     icon: "checkmark.circle.fill",
-                    text: String(localized: "Correct!"),
+                    text: DuoChaosCopy.correct(),
                     color: themeStore.accentGreen
                 )
             }
@@ -128,10 +124,6 @@ struct QuizSentenceBuildingExercise: View {
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(themeStore.isGlass ? Color.clear : themeStore.dividerColor, lineWidth: 1)
                         )
                         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 10))
                 }

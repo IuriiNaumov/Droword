@@ -18,16 +18,15 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.trialStartDate) private var trialStartDate: String = ""
     @State private var avatarImage: UIImage?
     @State private var showAvatarPicker = false
+    @State private var pendingCropImage: UIImage?
+    @State private var croppable: CroppableImage?
     @State private var showPersonalDetailsSheet = false
-    
-    @State private var showFontSizeSheet = false
     @State private var path = NavigationPath()
     @State private var showOnboarding = false
     #if DEBUG
     @State private var devTapCount = 0
     @State private var showFeatureFlags = false
     #endif
-
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
@@ -57,8 +56,7 @@ struct SettingsView: View {
                                     .scaledToFill()
                                     .frame(width: 92, height: 92)
                                     .clipShape(Circle())
-                                    .overlay(Circle().stroke(themeStore.mainText.opacity(0.1), lineWidth: 1))
-                                    
+
                             } else {
                                 Circle()
                                     .fill(themeStore.secondaryText.opacity(0.15))
@@ -68,12 +66,11 @@ struct SettingsView: View {
                                             .font(.system(size: 40, weight: .medium))
                                             .foregroundStyle(themeStore.mainText.opacity(0.7))
                                     )
-                                    
+
                             }
 
-
                         }
-                        .onTapGesture { Haptics.lightImpact(); showAvatarPicker = true }
+                        .onTapGesture { Haptics.menuTap(); showAvatarPicker = true }
                         .accessibilityLabel(Text("Profile photo"))
                         .accessibilityHint(Text("Tap to change your photo"))
 
@@ -85,7 +82,7 @@ struct SettingsView: View {
                             #if DEBUG
                             .onTapGesture(count: 5) {
                                 showFeatureFlags.toggle()
-                                Haptics.lightImpact()
+                                Haptics.menuTap()
                             }
                             #endif
 
@@ -100,31 +97,36 @@ struct SettingsView: View {
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
-                            SettingItem(icon: "person.circle", color: themeStore.iconGreen, title: "Personal details"),
+                            SettingItem(icon: "person", title: "Personal details"),
+                            SettingItem(icon: "sparkles", title: "Learning vibe", destination: .learningPreferences),
                         ]) { item in
-                            if item.title == "Personal details" { showPersonalDetailsSheet = true }
+                            if let destination = item.destination {
+                                path.append(destination)
+                            } else if item.icon == "person" {
+                                showPersonalDetailsSheet = true
+                            }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "textformat.size.larger", color: themeStore.accentGold, title: "Font Size", value: themeStore.fontScaleLabel),
-                            SettingItem(icon: "textformat.size", color: themeStore.iconGreen, title: "Language Pair", value: languageStore.learningLanguage),
-                            SettingItem(icon: "paintbrush.fill", color: themeStore.iconPurple, title: "App customization", showProBadge: !isPremium),
-                            SettingItem(icon: "bell.badge.fill", color: themeStore.iconPink, title: "Notifications"),
-                            SettingItem(icon: "mic.fill", color: themeStore.iconBlue, title: "Voice & Speech"),
-                            SettingItem(icon: "trophy.fill", color: themeStore.iconGold, title: "Achievements")
+                            SettingItem(icon: "textformat.size", title: "Language Pair", value: languageStore.learningLanguage),
+                            SettingItem(icon: "paintbrush", title: "App customization", showProBadge: !isPremium),
+                            SettingItem(icon: "bell", title: "Notifications"),
+                            SettingItem(icon: "mic", title: "Voice & Speech"),
+                            SettingItem(icon: "hand.tap", title: "Haptics"),
+                            SettingItem(icon: "trophy", title: "Achievements")
                         ]) { item in
                             if item.title == "Language Pair" { path.append(SettingsDestination.language) }
                             if item.title == "App customization" { path.append(SettingsDestination.appCustomization) }
-                            if item.title == "Font Size" { showFontSizeSheet = true }
                             if item.title == "Notifications" { path.append(SettingsDestination.notifications) }
                             if item.title == "Voice & Speech" { path.append(SettingsDestination.voiceAndSpeech) }
+                            if item.title == "Haptics" { path.append(SettingsDestination.haptics) }
                             if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
                         }
 
                         #if DEBUG
                         if showFeatureFlags {
                             groupedSettingsSection([
-                                SettingItem(icon: "flag.checkered", color: themeStore.mainText, title: "Feature Flags", value: nil)
+                                SettingItem(icon: "flag", title: "Feature Flags", value: nil)
                             ]) { item in
                                 path.append(SettingsDestination.featureFlags)
                             }
@@ -132,29 +134,32 @@ struct SettingsView: View {
                         #endif
 
                         groupedSettingsSection([
-                            SettingItem(icon: "globe", color: themeStore.accentBlue, title: "App Language")
+                            SettingItem(icon: "globe", title: "App Language")
                         ]) { _ in
                             openAppLanguageSettings()
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "book.closed.fill", color: themeStore.iconBlue, title: "Dictionary")
+                            SettingItem(icon: "book.closed", title: "Dictionary")
                         ]) { _ in
                             path.append(SettingsDestination.dictionary)
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "play.circle.fill", color: themeStore.accentBlue, title: "App Tour"),
-                            SettingItem(icon: "sparkles.rectangle.stack.fill", color: themeStore.accentGold, title: "What's New")
+                            SettingItem(icon: "play.circle", title: "App Tour"),
+                            SettingItem(icon: "sparkles", title: "What's New")
                         ]) { item in
                             if item.title == "App Tour" { showOnboarding = true }
                             if item.title == "What's New" { path.append(SettingsDestination.whatsNew) }
                         }
 
                         groupedSettingsSection([
-                            SettingItem(icon: "hand.raised.fill", color: themeStore.isMonochrome ? themeStore.monoDark : Color.gray, title: "Privacy Policy")
-                        ]) { _ in
-                            path.append(SettingsDestination.privacyPolicy)
+                            SettingItem(icon: "hand.raised", title: "Privacy Policy", destination: .privacyPolicy),
+                            SettingItem(icon: "doc.text", title: "Terms of Use", destination: .termsOfUse)
+                        ]) { item in
+                            if let destination = item.destination {
+                                path.append(destination)
+                            }
                         }
                     }
 
@@ -166,11 +171,7 @@ struct SettingsView: View {
             .background(themeStore.appBg.ignoresSafeArea())
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
-                    .accessibilityLabel(Text("Close settings"))
+                    CloseButton()
                 }
             }
             .navigationBarBackButtonHidden(true)
@@ -179,8 +180,12 @@ struct SettingsView: View {
                 case .language:
                     LanguageSelectionView()
                         .environmentObject(languageStore)
+                case .learningPreferences:
+                    LearningPreferencesView()
                 case .voiceAndSpeech:
                     VoiceAndSpeechSettingsView()
+                case .haptics:
+                    HapticSettingsView()
                 case .notifications:
                     NotificationSettingsView()
                         .environmentObject(store)
@@ -192,10 +197,18 @@ struct SettingsView: View {
                     FeatureFlagsView()
                 case .privacyPolicy:
                     PrivacyPolicyView()
+                case .termsOfUse:
+                    TermsOfUseView()
                 case .achievements:
                     AchievementsView()
                 case .theme:
                     ThemePickerView()
+                case .appIcon:
+                    AppIconPickerView()
+                case .fontSize:
+                    FontSizePickerView()
+                case .appearance:
+                    AppearancePickerView()
                 case .seasonalEffects:
                     SeasonalEffectsSettingsView()
                 case .appCustomization:
@@ -210,20 +223,42 @@ struct SettingsView: View {
             }
         }
         .tint(themeStore.mainAccentColor)
-        .sheet(isPresented: $showAvatarPicker) {
-            AvatarPickerView(currentImage: avatarImage) { newImage in
-                if let newImage {
-                    avatarImage = newImage
-                    saveAvatarToDisk(newImage)
-                } else {
+        .sheet(isPresented: $showAvatarPicker, onDismiss: {
+            guard let image = pendingCropImage else { return }
+            pendingCropImage = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                croppable = CroppableImage(image: image)
+            }
+        }) {
+            AvatarPickerView(
+                currentImage: avatarImage,
+                onPickedRaw: { image in
+                    pendingCropImage = image
+                },
+                onRemoved: {
                     avatarImage = nil
                     deleteAvatarFromDisk()
                 }
-            }
+            )
+            .environmentObject(themeStore)
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(DesignRadius.dialog)
             .preferredColorScheme(appearance.colorScheme)
+        }
+        .fullScreenCover(item: $croppable) { item in
+            ImageCropperView(
+                image: item.image,
+                onCrop: { cropped in
+                    avatarImage = cropped
+                    saveAvatarToDisk(cropped)
+                    croppable = nil
+                },
+                onCancel: {
+                    croppable = nil
+                }
+            )
+            .environmentObject(themeStore)
         }
         .sheet(isPresented: $showPersonalDetailsSheet) {
             PersonalDetailsView()
@@ -233,15 +268,7 @@ struct SettingsView: View {
                 .presentationCornerRadius(DesignRadius.dialog)
                 .preferredColorScheme(appearance.colorScheme)
         }
-        .sheet(isPresented: $showFontSizeSheet) {
-            FontSizePickerView()
-                .environmentObject(themeStore)
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(DesignRadius.dialog)
-                .preferredColorScheme(appearance.colorScheme)
-        }
-        
+
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingReplayView()
                 .environmentObject(themeStore)
@@ -253,7 +280,6 @@ struct SettingsView: View {
 
     private var premiumBanner: some View {
         Button {
-            Haptics.selection()
             path.append(SettingsDestination.premium)
         } label: {
             HStack(spacing: 14) {
@@ -297,10 +323,10 @@ struct SettingsView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.accentBlueSoft)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
         }
         .buttonStyle(Duo3DButtonStyle())
     }
@@ -310,33 +336,25 @@ struct SettingsView: View {
         onTap: ((SettingItem) -> Void)? = nil
     ) -> some View {
         VStack(spacing: 0) {
-            ForEach(items) { item in
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 Button {
-                    Haptics.selection()
+                    Haptics.menuTap()
                     onTap?(item)
                 } label: {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(item.color.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: item.icon)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(item.color)
-                        }
+                    HStack(spacing: 14) {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 18, weight: .regular))
+                            .foregroundStyle(themeStore.mainText)
+                            .frame(width: 28, height: 28, alignment: .center)
 
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(item.title)
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(.primary)
+                                .font(themeStore.regular(17))
+                                .foregroundStyle(themeStore.mainText)
 
                             if item.showProBadge {
-                                Text("PRO")
-                                    .font(themeStore.bold(9))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(themeStore.accentBlue))
+                                ProPillBadge()
+                                    .environmentObject(themeStore)
                             }
                         }
 
@@ -344,25 +362,35 @@ struct SettingsView: View {
 
                         if let value = item.value {
                             Text(value)
-                                .font(themeStore.regular(14))
+                                .font(themeStore.regular(15))
                                 .foregroundStyle(themeStore.secondaryText)
                         }
 
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(themeStore.accentBlue)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(themeStore.secondaryText.opacity(0.45))
                     }
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 20)
-                    .background(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 18)
+                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PressableButtonStyle(scale: 0.99))
+
+                if index < items.count - 1 {
+                    Rectangle()
+                        .fill(themeStore.dividerColor.opacity(0.4))
+                        .frame(height: 1)
+                        .padding(.leading, 60)
+                }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
-        .padding(.horizontal, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 28))
+        .padding(.horizontal, 16)
     }
 
     private func openAppLanguageSettings() {

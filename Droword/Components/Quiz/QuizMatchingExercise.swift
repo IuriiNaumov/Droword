@@ -9,19 +9,23 @@ struct QuizMatchingExercise: View {
     let wrongAttempts: Int
     let maxAttempts: Int
 
-    @Binding var matchingPairs: [(word: String, translation: String)]
-    @Binding var matchedPairs: Set<String>
-    @Binding var selectedMatchWord: String?
-    @Binding var selectedMatchTranslation: String?
-    @Binding var matchingWrongPair: (String, String)?
-    @Binding var shuffledTranslations: [String]
+    @Binding var matchingPairs: [QuizSessionManager.MatchingPair]
+    @Binding var matchedPairIDs: Set<UUID>
+    @Binding var selectedMatchWordID: UUID?
+    @Binding var selectedMatchTranslationID: UUID?
+    @Binding var matchingWrongIDs: (UUID, UUID)?
+    @Binding var shuffledTranslationIDs: [UUID]
 
     var onAllMatched: () -> Void
     var onWrongMatch: () -> Void
 
-    var body: some View {
-        let words = matchingPairs.map(\.word)
+    private var translationPairs: [QuizSessionManager.MatchingPair] {
+        shuffledTranslationIDs.compactMap { id in
+            matchingPairs.first(where: { $0.id == id })
+        }
+    }
 
+    var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
@@ -44,14 +48,14 @@ struct QuizMatchingExercise: View {
 
             HStack(spacing: 12) {
                 VStack(spacing: 10) {
-                    ForEach(words, id: \.self) { word in
-                        matchingWordCell(text: word, isWord: true)
+                    ForEach(matchingPairs) { pair in
+                        matchingCell(pair: pair, isWord: true)
                     }
                 }
 
                 VStack(spacing: 10) {
-                    ForEach(shuffledTranslations, id: \.self) { translation in
-                        matchingWordCell(text: translation, isWord: false)
+                    ForEach(translationPairs) { pair in
+                        matchingCell(pair: pair, isWord: false)
                     }
                 }
             }
@@ -61,7 +65,7 @@ struct QuizMatchingExercise: View {
                 if isCorrect {
                     QuizFeedbackBadge(
                         icon: "checkmark.circle.fill",
-                        text: String(localized: "Correct!"),
+                        text: DuoChaosCopy.correct(),
                         color: themeStore.accentGreen
                     )
                     .padding(.top, 16)
@@ -79,10 +83,12 @@ struct QuizMatchingExercise: View {
         }
     }
 
-    private func matchingWordCell(text: String, isWord: Bool) -> some View {
-        let isMatched = matchedPairs.contains(text)
-        let isSelected = (isWord && selectedMatchWord == text) || (!isWord && selectedMatchTranslation == text)
-        let isWrong = matchingWrongPair?.0 == text || matchingWrongPair?.1 == text
+    private func matchingCell(pair: QuizSessionManager.MatchingPair, isWord: Bool) -> some View {
+        let isMatched = matchedPairIDs.contains(pair.id)
+        let isSelected = (isWord && selectedMatchWordID == pair.id)
+            || (!isWord && selectedMatchTranslationID == pair.id)
+        let isWrong = matchingWrongIDs?.0 == pair.id || matchingWrongIDs?.1 == pair.id
+        let text = isWord ? pair.word : pair.translation
 
         var bgColor: Color {
             if isMatched { return themeStore.accentGreen.opacity(0.2) }
@@ -91,15 +97,8 @@ struct QuizMatchingExercise: View {
             return themeStore.cardBg
         }
 
-        var borderColor: Color {
-            if isMatched { return themeStore.accentGreen }
-            if isWrong { return themeStore.accentRed }
-            if isSelected { return themeStore.mainAccentColor }
-            return themeStore.dividerColor
-        }
-
         return Button {
-            handleTap(text: text, isWord: isWord)
+            handleTap(pairID: pair.id, isWord: isWord)
         } label: {
             Text(text)
                 .font(themeStore.medium(14))
@@ -114,10 +113,6 @@ struct QuizMatchingExercise: View {
                         .fill(themeStore.isGlass && !isMatched && !isWrong && !isSelected ? Color.clear : bgColor)
                 )
                 .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isMatched && !isWrong && !isSelected, cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(borderColor, lineWidth: isSelected ? 2 : 1)
-                )
         }
         .buttonStyle(.plain)
         .disabled(isMatched)
@@ -126,57 +121,54 @@ struct QuizMatchingExercise: View {
         .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 
-    private func handleTap(text: String, isWord: Bool) {
+    private func handleTap(pairID: UUID, isWord: Bool) {
         guard !hasAnswered else { return }
 
         if isWord {
-            if selectedMatchWord == text {
-                selectedMatchWord = nil
+            if selectedMatchWordID == pairID {
+                selectedMatchWordID = nil
                 Haptics.selection()
-            } else if let translation = selectedMatchTranslation {
-                checkPair(word: text, translation: translation)
+            } else if let translationID = selectedMatchTranslationID {
+                checkPair(wordID: pairID, translationID: translationID)
             } else {
-                selectedMatchWord = text
+                selectedMatchWordID = pairID
                 Haptics.selection()
             }
         } else {
-            if selectedMatchTranslation == text {
-                selectedMatchTranslation = nil
+            if selectedMatchTranslationID == pairID {
+                selectedMatchTranslationID = nil
                 Haptics.selection()
-            } else if let word = selectedMatchWord {
-                checkPair(word: word, translation: text)
+            } else if let wordID = selectedMatchWordID {
+                checkPair(wordID: wordID, translationID: pairID)
             } else {
-                selectedMatchTranslation = text
+                selectedMatchTranslationID = pairID
                 Haptics.selection()
             }
         }
     }
 
-    private func checkPair(word: String, translation: String) {
-        let isCorrectPair = matchingPairs.contains { $0.word == word && $0.translation == translation }
-
-        if isCorrectPair {
+    private func checkPair(wordID: UUID, translationID: UUID) {
+        if wordID == translationID {
             Haptics.success()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                matchedPairs.insert(word)
-                matchedPairs.insert(translation)
-                selectedMatchWord = nil
-                selectedMatchTranslation = nil
+                matchedPairIDs.insert(wordID)
+                selectedMatchWordID = nil
+                selectedMatchTranslationID = nil
             }
 
-            if matchedPairs.count == matchingPairs.count * 2 {
+            if matchedPairIDs.count == matchingPairs.count {
                 onAllMatched()
             }
         } else {
             Haptics.error()
             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                matchingWrongPair = (word, translation)
+                matchingWrongIDs = (wordID, translationID)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                withAnimation { matchingWrongPair = nil }
+                withAnimation { matchingWrongIDs = nil }
             }
-            selectedMatchWord = nil
-            selectedMatchTranslation = nil
+            selectedMatchWordID = nil
+            selectedMatchTranslationID = nil
             onWrongMatch()
         }
     }

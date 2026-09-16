@@ -46,10 +46,10 @@ struct BannerToastView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                         .fill(themeStore.isGlass ? Color.clear : themeStore.toastBg)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
                 .padding(.top, 20)
                 .transition(
                     .move(edge: .top)
@@ -77,7 +77,7 @@ struct BannerToastView: View {
 
         VStack(spacing: 30) {
             Text("Light Mode")
-                .font(.custom("Poppins-Bold", size: 22))
+                .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(Color.mainBlack)
                 .padding(.top, 40)
 
@@ -98,7 +98,7 @@ struct BannerToastView: View {
 
         VStack(spacing: 30) {
             Text("Dark Mode")
-                .font(.custom("Poppins-Bold", size: 22))
+                .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .padding(.top, 40)
 

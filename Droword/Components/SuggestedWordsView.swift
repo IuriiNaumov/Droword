@@ -30,7 +30,7 @@ struct SuggestedWordsView: View {
                         ForEach(suggested.suggestedWords) { word in
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(word.word.capitalized)
-                                    .font(themeStore.bold(24))
+                                    .font(themeStore.medium(24))
                                     .foregroundStyle(themeStore.mainText)
 
                                 Text(word.translation)
@@ -61,7 +61,7 @@ struct SuggestedWordsView: View {
                                         .padding(.horizontal, 12)
                                         .background(accent)
                                         .clipShape(Capsule())
-                                        
+
                                     }
 
                                     Spacer()
@@ -108,7 +108,7 @@ struct SuggestedWordsView: View {
             var attributed = AttributedString(example)
             if let range = attributed.range(of: word.word, options: .caseInsensitive) {
                 attributed[range].foregroundColor = UIColor(themeStore.accentGold)
-                attributed[range].font = UIFont(name: themeStore.fontBold, size: 16) ?? .boldSystemFont(ofSize: 16)
+                attributed[range].font = themeStore.uiFont(size: 16, weight: .bold)
             }
             cache[word.id.uuidString] = attributed
         }

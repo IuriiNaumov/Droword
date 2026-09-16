@@ -47,7 +47,6 @@ struct AddWordView: View {
         "Link it to something you know"
     ]
 
-
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
@@ -67,11 +66,11 @@ struct AddWordView: View {
                     }
 
                     Button {
-                        Haptics.lightImpact()
+                        Haptics.addWordTap()
                         Task { await addWord() }
                     } label: {
                         ZStack {
-                            // Hidden text to keep consistent button size
+
                             Text("Add")
                                 .font(themeStore.bold(17))
                                 .foregroundStyle(.clear)
@@ -101,15 +100,10 @@ struct AddWordView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
-                    .accessibilityLabel(Text("Close"))
+                    CloseButton()
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Haptics.lightImpact()
                         showScanWords = true
                     } label: {
                         Image(systemName: "doc.text.viewfinder")
@@ -193,6 +187,16 @@ struct AddWordView: View {
 
             if !didAppear { didAppear = true }
         }
+        .onChange(of: isAdding) { _, adding in
+            if adding {
+                Haptics.startHeartbeat()
+            } else {
+                Haptics.stopHeartbeat()
+            }
+        }
+        .onDisappear {
+            Haptics.stopHeartbeat()
+        }
     }
 
     private var wordSection: some View {
@@ -223,12 +227,8 @@ struct AddWordView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                     .fill(themeStore.dividerColor.opacity(0.55))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(focusedField == .word ? themeStore.mainAccentColor : Color.clear, lineWidth: 2)
             )
         }
     }
@@ -265,7 +265,7 @@ struct AddWordView: View {
             .focused($focusedField, equals: .comment)
         }
     }
-    
+
     private func addWord() async {
         guard !isAdding else { return }
         let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -363,12 +363,10 @@ struct AddWordView: View {
         }
     }
 
-
 }
 
 #Preview {
     AddWordView(store: WordsStore())
         .environmentObject(LanguageStore())
 }
-
 

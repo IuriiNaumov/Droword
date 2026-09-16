@@ -34,7 +34,7 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         title: "4. Photos and Camera Access",
-                        body: "If you choose to set a profile image, the image is stored locally on your device. The App does not upload, store, or process images on external servers."
+                        body: "If you set a profile image, it stays on your device. If you scan a page of words, that photo is sent to our API so we can read the vocabulary. We do not keep the image after the scan."
                     )
 
                     policySection(
@@ -94,7 +94,7 @@ struct PrivacyPolicyView: View {
         .enableSwipeBack()
     }
 
-    private func policySection(title: String, body: String) -> some View {
+    private func policySection(title: LocalizedStringKey, body: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(themeStore.bold(18))
@@ -106,6 +106,6 @@ struct PrivacyPolicyView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(themeStore.cardBg))
+        .background(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous).fill(themeStore.cardBg))
     }
 }

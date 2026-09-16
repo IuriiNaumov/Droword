@@ -1,89 +1,141 @@
 import SwiftUI
 
-struct WordPacksSectionView: View {
+struct WordPacksButton: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var languageStore: LanguageStore
+
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+
+    let availableCount: Int
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "rectangle.stack")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 8) {
+                    Text("Word Packs")
+                        .font(themeStore.bold(16))
+                        .foregroundStyle(themeStore.mainText)
+
+                    if !isPremium {
+                        ProPillBadge()
+                    }
+                }
+
+                Text(availableCount == 1
+                     ? String(localized: "1 pack ready")
+                     : String(localized: "\(availableCount) packs ready"))
+                    .font(themeStore.regular(13))
+                    .foregroundStyle(themeStore.secondaryText)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(themeStore.accentBlue)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+        )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+    }
+}
+
+struct WordPacksDetailView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var store: WordsStore
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-    @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
     @AppStorage(AppStorageKeys.hasSeenWordPacksHint) private var hasSeenHint: Bool = false
 
     @State private var selectedPack: WordPack?
     @State private var showPremiumWall = false
 
-    @Environment(\.colorScheme) private var colorScheme
+    private var learning: String { languageStore.learningLanguage }
+    private var native: String { languageStore.nativeLanguage }
 
-    var body: some View {
-        let packs = WordPacksData.allPacks
-        let learning = languageStore.learningLanguage
-        let native = languageStore.nativeLanguage
-
-        // Filter out packs with no data AND completed packs
-        let availablePacks = packs.filter {
+    private var availablePacks: [WordPack] {
+        WordPacksData.allPacks.filter {
             WordPacksData.words(packID: $0.id, learning: learning, native: native) != nil
             && !WordPackTracker.isCompleted(packID: $0.id, learning: learning, native: native)
         }
+    }
 
-        if !availablePacks.isEmpty && showWordPacks {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header
-                HStack(spacing: 8) {
+    private var completedPacks: [WordPack] {
+        WordPacksData.allPacks.filter {
+            WordPacksData.words(packID: $0.id, learning: learning, native: native) != nil
+            && WordPackTracker.isCompleted(packID: $0.id, learning: learning, native: native)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
                     Text("Word Packs")
-                        .font(themeStore.bold(24))
-                        .foregroundStyle(themeStore.mainText)
+                        .sheetTitle()
 
-                    if !isPremium {
-                        Text("PRO")
-                            .font(themeStore.bold(9))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(themeStore.accentBlue))
-                    }
-
-                    Spacer()
-                }
-
-                // Mini pack cards — scrollable row
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(availablePacks) { pack in
-                            miniPackCard(pack, learning: learning, native: native)
-                                .onTapGesture {
-                                    Haptics.lightImpact()
-                                    if isPremium {
-                                        selectedPack = pack
-                                    } else {
-                                        showPremiumWall = true
-                                    }
+                    if !hasSeenHint {
+                        Text("Pick a pack, add the words, then practice.")
+                            .font(themeStore.regular(14))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .onAppear {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                                    withAnimation { hasSeenHint = true }
                                 }
-                        }
+                            }
                     }
-                }
 
-                // One-time hint
-                if !hasSeenHint {
-                    Text("You can hide this section in Dictionary settings.")
-                        .font(themeStore.regular(13))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    hasSeenHint = true
+                    if availablePacks.isEmpty && completedPacks.isEmpty {
+                        EmptyListView(
+                            icon: "rectangle.stack",
+                            title: String(localized: "No packs yet"),
+                            subtitle: String(localized: "Packs for this language pair will show up here.")
+                        )
+                        .frame(minHeight: 220)
+                    } else {
+                        if !availablePacks.isEmpty {
+                            sectionHeader(String(localized: "Ready to learn"))
+                            VStack(spacing: 12) {
+                                ForEach(availablePacks) { pack in
+                                    packRow(pack, completed: false)
                                 }
                             }
                         }
+
+                        if !completedPacks.isEmpty {
+                            sectionHeader(String(localized: "Completed"))
+                            VStack(spacing: 12) {
+                                ForEach(completedPacks) { pack in
+                                    packRow(pack, completed: true)
+                                }
+                            }
+                        }
+                    }
+
+                    HomeVisibilityHint(message: "You can hide Word Packs from Home whenever you want.")
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
+            }
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    CloseButton()
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-            )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 24))
-            .cardDepth(cornerRadius: 24)
-            .padding(.horizontal, 20)
             .fullScreenCover(item: $selectedPack) { pack in
                 WordPackDetailView(pack: pack)
                     .environmentObject(themeStore)
@@ -98,42 +150,71 @@ struct WordPacksSectionView: View {
         }
     }
 
-    // MARK: - Mini Pack Card (StatCardView style)
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(themeStore.bold(14))
+            .foregroundStyle(themeStore.secondaryText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 4)
+    }
 
-    private func miniPackCard(_ pack: WordPack, learning: String, native: String) -> some View {
-        let color = WordPacksData.packColor(for: pack, themeStore: themeStore)
+    private func packRow(_ pack: WordPack, completed: Bool) -> some View {
+        Button {
+            Haptics.menuTap()
+            if completed { return }
+            if isPremium {
+                selectedPack = pack
+            } else {
+                showPremiumWall = true
+            }
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: completed ? "checkmark" : pack.icon)
+                    .font(.system(size: 20, weight: completed ? .bold : .regular))
+                    .foregroundStyle(completed ? themeStore.accentBlue : themeStore.mainText)
+                    .frame(width: 28, height: 28)
 
-        return VStack(spacing: 6) {
-            Image(systemName: pack.icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(color)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(pack.titleKey)
+                        .font(themeStore.medium(16))
+                        .foregroundStyle(completed ? themeStore.secondaryText : themeStore.mainText)
 
-            Text(pack.titleKey)
-                .font(themeStore.medium(13))
-                .foregroundStyle(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
-                .lineLimit(1)
-                .truncationMode(.tail)
+                    Text(pack.descriptionKey)
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .lineLimit(2)
+
+                    Text(String(localized: "\(pack.wordCount) words"))
+                        .font(themeStore.regular(12))
+                        .foregroundStyle(themeStore.secondaryText.opacity(0.7))
+                }
+
+                Spacer()
+
+                if !completed {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(themeStore.secondaryText.opacity(0.45))
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+            )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+            .opacity(completed ? 0.75 : 1)
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 16)
-        .frame(minWidth: 96, maxWidth: 150)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(themeStore.isGlass
-                      ? Color.clear
-                      : (themeStore.isMonochrome
-                         ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-                         : themeStore.appBg))
-        )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
+        .buttonStyle(.plain)
+        .disabled(completed)
     }
 }
 
-#Preview {
-    WordPacksSectionView()
-        .environmentObject(ThemeStore())
-        .environmentObject(LanguageStore())
-        .environmentObject(WordsStore())
-        .padding()
+enum WordPacksHome {
+    static func availableCount(learning: String, native: String) -> Int {
+        WordPacksData.allPacks.filter {
+            WordPacksData.words(packID: $0.id, learning: learning, native: native) != nil
+            && !WordPackTracker.isCompleted(packID: $0.id, learning: learning, native: native)
+        }.count
+    }
 }

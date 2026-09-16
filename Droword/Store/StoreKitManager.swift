@@ -96,9 +96,7 @@ final class StoreKitManager: ObservableObject {
         if hasPurchase {
             UserDefaults.standard.set(true, forKey: AppStorageKeys.isPremium)
         } else {
-            // No verified entitlement — premium is valid only during an active 7-day trial.
-            // This makes `isPremium` strictly derived from (verified purchase) || (active trial),
-            // so any stray/leftover `true` (tampering, migrations, bugs) self-heals here.
+
             var trialActive = false
             let hasUsedTrial = UserDefaults.standard.bool(forKey: AppStorageKeys.hasUsedTrial)
             let trialStart = UserDefaults.standard.string(forKey: AppStorageKeys.trialStartDate) ?? ""

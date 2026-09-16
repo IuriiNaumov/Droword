@@ -7,235 +7,206 @@ struct ThemePickerView: View {
     @State private var showPremiumWall = false
     @Environment(\.dismiss) private var dismiss
 
+    var initialPalette: ThemeStore.Palette? = nil
+    var isSheet: Bool = false
+
     var body: some View {
         VStack(spacing: 0) {
-            Text("Background")
-                .sheetTitle()
+            header
 
-            // Carousel
             TabView(selection: $selectedPalette) {
                 ForEach(availablePalettes) { palette in
-                    themePreviewPage(palette: palette)
+                    previewStage(palette: palette)
                         .tag(palette)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: selectedPalette)
+            .frame(maxHeight: .infinity)
 
-            // Bottom: theme name + button
-            VStack(spacing: 12) {
-                let pc = ThemeStore.previewColors(for: selectedPalette)
-
-                VStack(spacing: 4) {
-                    Text(selectedPalette.title)
-                        .font(themeStore.bold(20))
-                        .foregroundStyle(themeStore.mainText)
-
-                    Text(selectedPalette.subtitle)
-                        .font(themeStore.regular(14))
-                        .foregroundStyle(themeStore.secondaryText)
-                }
-
-                Button {
-                    guard isPremium else {
-                        showPremiumWall = true
-                        return
-                    }
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                        themeStore.set(selectedPalette)
-                    }
-                    Haptics.selection()
-                    dismiss()
-                } label: {
-                    HStack(spacing: 8) {
-                        if themeStore.palette == selectedPalette {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .bold))
-                            Text("Current theme")
-                        } else if !isPremium {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 13, weight: .bold))
-                            Text("PRO")
-                        } else {
-                            Text("Set theme")
-                        }
-                    }
-                    .duo3DStyle(themeStore.palette == selectedPalette
-                                ? themeStore.secondaryText.opacity(0.4)
-                                : pc.mainAccentColor,
-                                isDisabled: themeStore.palette == selectedPalette)
-                }
-                .buttonStyle(Duo3DButtonStyle(isDuolingo: themeStore.isDuolingo))
-                .disabled(themeStore.palette == selectedPalette)
+            setButton
                 .padding(.horizontal, 20)
-            }
-            .padding(.bottom, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 28)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                SettingsBackButton()
-            }
-        }
-        .navigationBarBackButtonHidden(true)
-        .enableSwipeBack()
-        .tint(themeStore.accentPurple)
         .onAppear {
-            selectedPalette = themeStore.palette
-            UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(themeStore.accentPurple)
-            UIPageControl.appearance().pageIndicatorTintColor = UIColor(themeStore.accentPurple.opacity(0.25))
+            selectedPalette = initialPalette ?? themeStore.palette
+            let accent = UIColor(themeStore.mainAccentColor)
+            UIPageControl.appearance().currentPageIndicatorTintColor = accent
+            UIPageControl.appearance().pageIndicatorTintColor = accent.withAlphaComponent(0.25)
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
                 .tint(themeStore.mainAccentColor)
         }
+        .toolbar {
+            if !isSheet {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    SettingsBackButton()
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(!isSheet)
+        .enableSwipeBack()
     }
 
-    // MARK: - Theme Preview Page
+    private var header: some View {
+        ZStack {
+            Text("Choose background")
+                .font(themeStore.bold(18))
+                .foregroundStyle(themeStore.mainText)
 
-    private func themePreviewPage(palette: ThemeStore.Palette) -> some View {
+            HStack {
+                if isSheet {
+                    CloseButton()
+                }
+                Spacer()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, isSheet ? 16 : 8)
+        .padding(.bottom, 8)
+    }
+
+    private func previewStage(palette: ThemeStore.Palette) -> some View {
         let c = ThemeStore.previewColors(for: palette)
 
         return VStack(spacing: 0) {
-            // Phone frame
-            VStack(spacing: 12) {
-                // Profile area
-                HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
                     Circle()
-                        .fill(c.mainAccentColor.opacity(0.2))
-                        .frame(width: 36, height: 36)
+                        .fill(c.mainAccentColor.opacity(0.22))
+                        .frame(width: 44, height: 44)
                         .overlay(
                             Image(systemName: "person.fill")
-                                .font(.system(size: 16))
+                                .font(.system(size: 18, weight: .medium))
                                 .foregroundStyle(c.mainAccentColor)
                         )
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        RoundedRectangle(cornerRadius: 3, style: .continuous)
-                            .fill(c.mainText.opacity(0.7))
-                            .frame(width: 80, height: 10)
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(c.secondaryText.opacity(0.4))
-                            .frame(width: 50, height: 7)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Capsule().fill(c.mainText.opacity(0.35)).frame(width: 96, height: 8)
+                        Capsule().fill(c.secondaryText.opacity(0.3)).frame(width: 64, height: 6)
                     }
+                    Spacer(minLength: 0)
+                }
 
+                HStack(spacing: 10) {
+                    glassMiniCard(c)
+                    glassMiniCard(c)
+                }
+
+                HStack {
+                    Capsule().fill(c.mainText.opacity(0.2)).frame(width: 72, height: 8)
                     Spacer()
+                    Capsule()
+                        .fill(c.cardBg.opacity(0.95))
+                        .frame(width: 52, height: 30)
+                        .overlay(alignment: .trailing) {
+                            Circle()
+                                .fill(c.mainAccentColor)
+                                .padding(3)
+                        }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(glassPlate(c))
 
-                // Stats row
-                HStack(spacing: 8) {
-                    miniStatCard("42", title: "Total", c: c)
-                    miniStatCard("3", title: "Today", c: c)
-                    miniStatCard("15m", title: "Time", c: c)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 4)
+                wordPreviewCard(c)
+                wordPreviewCard(c, muted: true)
 
-                // Word card
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Travel")
-                        .font(c.medium(11))
-                        .foregroundStyle(c.accentBlue)
-                        .padding(.vertical, 3)
-                        .padding(.horizontal, 10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                .stroke(c.accentBlue, lineWidth: 1)
-                        )
-
-                    Text("Serendipity")
-                        .font(c.bold(18))
-                        .foregroundStyle(c.mainText)
-
-                    Text("/ˌsɛr.ənˈdɪp.ɪ.ti/")
-                        .font(c.regular(11))
-                        .foregroundStyle(c.mainText.opacity(0.7))
-
-                    Text("Noun")
-                        .font(c.regular(11))
-                        .foregroundStyle(c.mainText.opacity(0.7))
-
-                    Divider()
-                        .background(c.secondaryText.opacity(0.2))
-
-                    Text("Счастливая случайность")
-                        .font(c.regular(12))
-                        .foregroundStyle(c.mainText)
-
-                    Text("Finding that book was pure serendipity.")
-                        .font(c.regular(12))
-                        .foregroundStyle(c.mainText)
-                        .italic()
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(c.isGlass ? c.appBg.opacity(0.5) : c.cardBg)
-                )
-                .padding(.horizontal, 16)
-
-                // Second card placeholder
-                VStack(alignment: .leading, spacing: 6) {
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(c.mainText.opacity(0.15))
-                        .frame(width: 60, height: 8)
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(c.mainText.opacity(0.5))
-                        .frame(width: 120, height: 12)
-                    RoundedRectangle(cornerRadius: 3, style: .continuous)
-                        .fill(c.mainText.opacity(0.12))
-                        .frame(width: 90, height: 8)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(c.isGlass ? c.appBg.opacity(0.5) : c.cardBg)
-                )
-                .padding(.horizontal, 16)
-
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
+            .padding(18)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
+                RoundedRectangle(cornerRadius: 36, style: .continuous)
                     .fill(c.appBg)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .stroke(c.secondaryText.opacity(0.15), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-            .padding(.horizontal, 32)
-            .padding(.vertical, 8)
+            .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
+            .padding(.horizontal, 28)
+            .padding(.vertical, 12)
         }
     }
 
-    // MARK: - Mini Stat Card
+    private func glassMiniCard(_ c: ThemeStore.PreviewColors) -> some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(c.cardBg.opacity(c.isGlass ? 0.35 : 0.72))
+            .frame(height: 64)
+            .overlay(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Capsule().fill(c.mainText.opacity(0.28)).frame(width: 40, height: 6)
+                    Capsule().fill(c.secondaryText.opacity(0.25)).frame(width: 56, height: 5)
+                }
+                .padding(.leading, 14)
+            }
+    }
 
-    private func miniStatCard(_ value: String, title: String, c: ThemeStore.PreviewColors) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
+    private func glassPlate(_ c: ThemeStore.PreviewColors) -> some View {
+        RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            .fill(c.cardBg.opacity(c.isGlass ? 0.3 : 0.55))
+    }
+
+    private func wordPreviewCard(_ c: ThemeStore.PreviewColors, muted: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Capsule()
+                .fill(c.mainAccentColor.opacity(muted ? 0.25 : 0.45))
+                .frame(width: muted ? 48 : 56, height: 7)
+            Text(muted ? "Ephemeral" : "Serendipity")
                 .font(c.bold(16))
-                .foregroundStyle(c.mainText)
-            Text(title)
-                .font(c.medium(10))
+                .foregroundStyle(c.mainText.opacity(muted ? 0.55 : 1))
+            Text(muted ? "…" : "Счастливая случайность")
+                .font(c.regular(12))
                 .foregroundStyle(c.secondaryText)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(c.isGlass ? c.appBg.opacity(0.5) : c.cardBg)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(c.cardBg.opacity(muted ? 0.85 : 1))
         )
     }
 
-    // MARK: - Helpers
+    private var setButton: some View {
+        let isCurrent = themeStore.palette == selectedPalette
+        let c = ThemeStore.previewColors(for: selectedPalette)
+
+        return Button {
+            Haptics.menuTap()
+            guard isPremium else {
+                showPremiumWall = true
+                return
+            }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                themeStore.set(selectedPalette)
+            }
+            dismiss()
+        } label: {
+            Group {
+                if isCurrent {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 15, weight: .bold))
+                        Text("Current background")
+                    }
+                } else if !isPremium {
+                    HStack(spacing: 8) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Set background")
+                    }
+                } else {
+                    Text("Set background")
+                }
+            }
+            .duo3DStyle(
+                isCurrent ? themeStore.secondaryText.opacity(0.55) : c.mainAccentColor,
+                isDisabled: isCurrent
+            )
+        }
+        .buttonStyle(Duo3DButtonStyle())
+        .disabled(isCurrent)
+    }
 
     private var availablePalettes: [ThemeStore.Palette] {
         ThemeStore.Palette.allCases.filter { palette in
@@ -249,8 +220,6 @@ struct ThemePickerView: View {
 }
 
 #Preview {
-    NavigationStack {
-        ThemePickerView()
-            .environmentObject(ThemeStore())
-    }
+    ThemePickerView(isSheet: true)
+        .environmentObject(ThemeStore())
 }

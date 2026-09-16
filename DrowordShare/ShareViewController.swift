@@ -44,12 +44,10 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // Save to shared container so the app can pick it up on next launch
         if let defaults = UserDefaults(suiteName: "group.com.droword.shared") {
             defaults.set(word, forKey: "pendingSharedWord")
         }
 
-        // Open the containing app via responder chain (standard Share Extension pattern)
         var responder: UIResponder? = self as UIResponder
         while let current = responder {
             let openURL = NSSelectorFromString("openURL:")

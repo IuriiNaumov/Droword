@@ -52,8 +52,30 @@ struct QuizMultipleChoiceExercise: View {
             .padding(.horizontal, 24)
             .offset(x: hasAnswered && !isCorrect ? shakeOffset : 0)
 
+            if hasAnswered {
+                Group {
+                    if isCorrect {
+                        QuizFeedbackBadge(
+                            icon: "checkmark.circle.fill",
+                            text: DuoChaosCopy.correct(),
+                            color: themeStore.accentGreen
+                        )
+                    } else {
+                        QuizFeedbackBadge(
+                            icon: "xmark.circle.fill",
+                            text: DuoChaosCopy.wrongReveal(correctAnswer),
+                            color: themeStore.accentRed
+                        )
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+                .transition(.opacity.combined(with: .scale))
+            }
+
             Spacer()
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: hasAnswered)
     }
 
     private func optionButton(option: String) -> some View {
@@ -87,7 +109,7 @@ struct QuizMultipleChoiceExercise: View {
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(themeStore.mainText)
+                        .foregroundStyle(themeStore.accentGreen)
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
@@ -99,14 +121,13 @@ struct QuizMultipleChoiceExercise: View {
             .padding(.vertical, 16)
             .padding(.horizontal, 20)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                     .fill(bgColor)
             )
         }
         .buttonStyle(.plain)
         .disabled(hasAnswered)
         .opacity(isIrrelevant ? 0.4 : 1.0)
-        .scaleEffect(hasAnswered && isThisCorrect ? 1.05 : 1.0)
         .animation(.spring(response: 0.35, dampingFraction: 0.5), value: hasAnswered)
         .accessibilityLabel(Text(option))
         .accessibilityAddTraits(hasAnswered && isThisCorrect ? .isSelected : [])

@@ -4,9 +4,10 @@ struct EmptyListView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var icon: String = "text.badge.plus"
-    var title: LocalizedStringKey = "Your word garden is waiting"
-    var subtitle: LocalizedStringKey = "Add a couple of words — and we'll begin the journey."
-    var tip: LocalizedStringKey? = nil
+    var illustration: AnyView? = nil
+    var title: String = String(localized: "Your word garden is waiting")
+    var subtitle: String = String(localized: "Add a couple of words — and we'll begin the journey.")
+    var tip: String? = nil
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0
@@ -14,42 +15,54 @@ struct EmptyListView: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: icon)
-                .font(.system(size: 44))
-                .foregroundStyle(themeStore.secondaryText.opacity(0.35))
-                .scaleEffect(iconScale)
+            Group {
+                if let illustration {
+                    illustration
+                } else {
+                    HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+                }
+            }
+            .frame(width: 176, height: 176)
+            .scaleEffect(iconScale)
 
             Text(title)
-                .font(themeStore.medium(18))
-                .foregroundStyle(.secondary)
+                .font(themeStore.display(20))
+                .foregroundStyle(themeStore.mainText)
+                .tracking(-0.4)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
                 .font(themeStore.regular(14))
-                .foregroundStyle(.secondary.opacity(0.8))
+                .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .opacity(subtitleOpacity)
 
             if let tip {
                 Text(tip)
-                    .font(themeStore.regular(13))
-                    .foregroundStyle(.secondary.opacity(0.7))
+                    .font(themeStore.bold(13))
+                    .foregroundStyle(themeStore.mainAccentColor)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(themeStore.mainAccentColor.opacity(0.12))
+                    )
+                    .padding(.horizontal, 28)
                     .opacity(subtitleOpacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
                 iconScale = 1.0
             }
-            withAnimation(.easeOut(duration: 0.4).delay(0.15)) {
+            withAnimation(.easeOut(duration: 0.35).delay(0.1)) {
                 titleOpacity = 1.0
             }
-            withAnimation(.easeOut(duration: 0.4).delay(0.3)) {
+            withAnimation(.easeOut(duration: 0.35).delay(0.2)) {
                 subtitleOpacity = 1.0
             }
         }
@@ -57,11 +70,11 @@ struct EmptyListView: View {
 }
 
 #Preview {
-    EmptyListView()
-        .preferredColorScheme(.light)
-}
-
-#Preview("Dark Mode") {
-    EmptyListView()
-        .preferredColorScheme(.dark)
+    EmptyListView(
+        illustration: AnyView(EmptyDictionaryArt()),
+        title: "No words yet",
+        subtitle: "It's so empty we're crying."
+    )
+    .environmentObject(ThemeStore())
+    .preferredColorScheme(.light)
 }

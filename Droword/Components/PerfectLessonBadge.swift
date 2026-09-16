@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Бейдж «Идеально!» для 100%-урока — пружинный пульсирующий значок с медалью.
 struct PerfectLessonBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @State private var scale: CGFloat = 0.3
@@ -19,11 +18,7 @@ struct PerfectLessonBadge: View {
         .padding(.horizontal, 18)
         .background(
             Capsule()
-                .fill(themeStore.accentGold.opacity(0.18))
-                .overlay(
-                    Capsule()
-                        .stroke(themeStore.accentGold.opacity(glow), lineWidth: 1.5)
-                )
+                .fill(themeStore.accentGold.opacity(0.18 + glow * 0.1))
         )
         .scaleEffect(scale)
         .onAppear {

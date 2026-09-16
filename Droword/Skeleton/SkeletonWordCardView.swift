@@ -20,17 +20,17 @@ struct SkeletonWordCardView: View {
                     .frame(width: 24, height: 24)
                     .shimmering()
             }
-            
+
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(Color.gray.opacity(0.22))
                 .frame(width: 70, height: 18)
                 .shimmering()
-            
+
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(Color.gray.opacity(0.2))
                 .frame(width: 120, height: 20)
                 .shimmering()
-            
+
             VStack(alignment: .leading, spacing: 6) {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .fill(Color.gray.opacity(0.18))
@@ -41,13 +41,13 @@ struct SkeletonWordCardView: View {
                     .frame(width: 135, height: 18)
                     .shimmering()
             }
-            
+
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(Color.gray.opacity(0.16))
                 .frame(width: 110, height: 14)
                 .padding(.top, 2)
                 .shimmering()
-            
+
             HStack {
                 Spacer()
                 RoundedRectangle(cornerRadius: 6)

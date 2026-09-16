@@ -25,7 +25,7 @@ private struct ShimmerModifier: ViewModifier {
                             startPoint: UnitPoint(x: 0, y: 0),
                             endPoint: UnitPoint(x: 1, y: 0)
                         )
-                        
+
                         Rectangle()
                             .fill(gradient)
                             .rotationEffect(.degrees(20))

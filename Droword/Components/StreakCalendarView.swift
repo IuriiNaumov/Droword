@@ -26,11 +26,11 @@ private struct MonthData {
     let perfectWeeks: Set<Int>
 }
 
-
 struct StreakCalendarView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
+    @ObservedObject private var activity = StudyActivityStore.shared
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
 
     private let daysInWeek = 7
@@ -47,9 +47,8 @@ struct StreakCalendarView: View {
 
     private static let weekdaySymbols: [String] = {
         let symbols = Calendar.current.shortStandaloneWeekdaySymbols
-        return Array(symbols[1...]) + [symbols[0]]  // Mon–Sun order
+        return Array(symbols[1...]) + [symbols[0]]
     }()
-
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -70,6 +69,13 @@ struct StreakCalendarView: View {
             rebuildMonthCalendar()
             rebuildStats()
         }
+        .onChange(of: activity.dayKeys) {
+            rebuildEarliestDate()
+            rebuildMilestones()
+            rebuildCurrentStreakDates()
+            rebuildMonthCalendar()
+            rebuildStats()
+        }
         .onChange(of: store.words.count) {
             rebuildEarliestDate()
             rebuildMilestones()
@@ -82,10 +88,9 @@ struct StreakCalendarView: View {
         }
     }
 
-
     private var statsRow: some View {
         HStack(spacing: 0) {
-            statBubble(value: "\(cachedStats.currentStreak)", label: "Streak")
+            statBubble(value: "\(cachedStats.currentStreak)", label: "Streak", fire: true)
             statBubble(value: "\(cachedStats.longestStreak)", label: "Best streak")
             statBubble(value: "\(cachedStats.totalActiveDays)", label: "Active days")
             if let best = cachedStats.bestDay {
@@ -94,11 +99,20 @@ struct StreakCalendarView: View {
         }
     }
 
-    private func statBubble(value: String, label: LocalizedStringKey) -> some View {
+    private func statBubble(value: String, label: LocalizedStringKey, fire: Bool = false) -> some View {
         VStack(spacing: 2) {
-            Text(value)
-                .font(themeStore.bold(18))
-                .foregroundStyle(themeStore.mainText)
+            if fire {
+                HStack(spacing: 4) {
+                    BurningFlameIcon(size: 14)
+                    Text(value)
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(StreakFireStyle.red)
+                }
+            } else {
+                Text(value)
+                    .font(themeStore.bold(18))
+                    .foregroundStyle(themeStore.mainText)
+            }
             Text(label)
                 .font(themeStore.regular(11))
                 .foregroundStyle(themeStore.secondaryText)
@@ -128,8 +142,8 @@ struct StreakCalendarView: View {
                 }
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(canGoBack ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(canGoBack ? themeStore.mainAccentColor : themeStore.mainAccentColor.opacity(0.25))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -152,8 +166,8 @@ struct StreakCalendarView: View {
                 }
             } label: {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(canGoForward ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(canGoForward ? themeStore.mainAccentColor : themeStore.mainAccentColor.opacity(0.25))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -224,19 +238,7 @@ struct StreakCalendarView: View {
             ZStack {
                 Circle()
                     .fill(monthCellColor(for: day))
-                    .frame(width: 34, height: 34)
-
-                if day.isToday {
-                    Circle()
-                        .stroke(themeStore.mainText, lineWidth: 2)
-                        .frame(width: 34, height: 34)
-                }
-
-                if isSelected {
-                    Circle()
-                        .stroke(themeStore.mainText, lineWidth: 2)
-                        .frame(width: 38, height: 38)
-                }
+                    .frame(width: isSelected ? 38 : 34, height: isSelected ? 38 : 34)
 
                 Text("\(dayNum)")
                     .font(themeStore.medium(13))
@@ -276,9 +278,11 @@ struct StreakCalendarView: View {
         if day.isFuture { return Color.clear }
         if day.count == 0 { return themeStore.secondaryText.opacity(0.08) }
         let intensity = min(1.0, Double(day.count) / Double(max(cachedMaxCount, 3)))
+        if currentStreakDates.contains(day.date) {
+            return StreakFireStyle.red.opacity(0.35 + intensity * 0.55)
+        }
         return themeStore.accentGreen.opacity(0.3 + intensity * 0.7)
     }
-
 
     private static let monthTitleFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -313,11 +317,20 @@ struct StreakCalendarView: View {
             }
 
             HStack(spacing: 12) {
-                if day.count > 0 {
+                if !day.words.isEmpty {
                     Label {
                         Text("\(day.count) words")
                     } icon: {
                         Image(systemName: "text.book.closed")
+                    }
+                    .font(themeStore.regular(13))
+                    .foregroundStyle(themeStore.mainText)
+                }
+                if StudyActivityStore.shared.studied(on: day.date) {
+                    Label {
+                        Text("Studied")
+                    } icon: {
+                        Image(systemName: "bolt.fill")
                     }
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.mainText)
@@ -331,13 +344,12 @@ struct StreakCalendarView: View {
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.mainText)
                 }
-                if day.count == 0 && day.studyMinutes == 0 {
+                if day.words.isEmpty && day.studyMinutes == 0 && !StudyActivityStore.shared.studied(on: day.date) {
                     Text("No activity")
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
                 }
             }
-
 
         }
         .padding(12)
@@ -349,7 +361,10 @@ struct StreakCalendarView: View {
     }
 
     private func rebuildEarliestDate() {
-        cachedEarliestDate = store.words.lazy.map(\.dateAdded).min()
+        StudyActivityStore.shared.ensureMigrated(from: store.words)
+        let wordMin = store.words.lazy.map(\.dateAdded).min()
+        let studyMin = StudyActivityStore.shared.activityDates().min()
+        cachedEarliestDate = [wordMin, studyMin].compactMap { $0 }.min()
     }
 
     private func rebuildMonthCalendar() {
@@ -379,7 +394,8 @@ struct StreakCalendarView: View {
             let wordsForDay = grouped[startOfDate] ?? []
             let wordNames = Array(wordsForDay.prefix(5).map { $0.word })
             let isFuture = startOfDate > today
-            let count = wordsForDay.count
+            let studied = StudyActivityStore.shared.studied(on: startOfDate)
+            let count = max(wordsForDay.count, studied ? 1 : 0)
             if count > maxCount { maxCount = count }
 
             allDays.append(DayActivity(
@@ -429,6 +445,7 @@ struct StreakCalendarView: View {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
         let grouped = Dictionary(grouping: store.words) { cal.startOfDay(for: $0.dateAdded) }
+        let studyDates = WordsStore.activityDays(from: store.words)
 
         var stats = CalendarStats()
 
@@ -440,22 +457,15 @@ struct StreakCalendarView: View {
         }
 
         let rangeGrouped = grouped.filter { $0.key >= rangeStart && $0.key <= today }
-        let activeDates = Set(rangeGrouped.keys.filter { (rangeGrouped[$0]?.count ?? 0) > 0 })
+        let activeDates = Set(rangeGrouped.keys.filter { (rangeGrouped[$0]?.count ?? 0) > 0 }).union(
+            studyDates.filter { $0 >= rangeStart && $0 <= today }
+        )
         stats.totalActiveDays = activeDates.count
 
         if isPremium {
-            let result = WordsStore.computeCurrentStreakWithFreeze(from: store.words)
-            stats.currentStreak = result.streak
+            stats.currentStreak = WordsStore.computeCurrentStreakWithFreeze(from: store.words).streak
         } else {
-            let allActiveDates = Set(grouped.keys.filter { (grouped[$0]?.count ?? 0) > 0 })
-            var day = today
-            var streak = 0
-            while allActiveDates.contains(day) {
-                streak += 1
-                guard let prev = cal.date(byAdding: .day, value: -1, to: day) else { break }
-                day = prev
-            }
-            stats.currentStreak = streak
+            stats.currentStreak = WordsStore.computeCurrentStreak(from: store.words)
         }
 
         let sortedDates = activeDates.sorted()
@@ -482,7 +492,7 @@ struct StreakCalendarView: View {
 
     private func rebuildMilestones() {
         let cal = Calendar.current
-        let allDates = Set(store.words.map { cal.startOfDay(for: $0.dateAdded) }).sorted()
+        let allDates = WordsStore.activityDays(from: store.words).sorted()
         let thresholds: Set<Int> = [7, 30, 100, 365]
         var milestones: Set<Date> = []
 
@@ -506,7 +516,7 @@ struct StreakCalendarView: View {
     private func rebuildCurrentStreakDates() {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
-        let allDates = Set(store.words.map { cal.startOfDay(for: $0.dateAdded) })
+        let allDates = WordsStore.activityDays(from: store.words)
         var dates: Set<Date> = []
         var day = today
         var usedFreeze = false
@@ -515,7 +525,7 @@ struct StreakCalendarView: View {
             if allDates.contains(day) {
                 dates.insert(day)
             } else if isPremium && !usedFreeze && day != today {
-                // Allow one freeze gap in the visual streak
+
                 dates.insert(day)
                 usedFreeze = true
             } else {

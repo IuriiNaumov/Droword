@@ -1,27 +1,21 @@
 import SwiftUI
 
-/// Карточка «Next Review» на главном: когда повторять нечего, показывает время до
-/// следующего повторения и мотивирующую подсказку. Закрывается крестиком.
 struct HomeNextReviewCard: View {
     @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.colorScheme) private var colorScheme
 
     let count: Int
     let date: Date
     var onDismiss: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(themeStore.iconCircleFill(colorScheme: colorScheme))
-                    .frame(width: 44, height: 44)
-                Image(systemName: "timer")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(themeStore.accentBlue)
-            }
+        HStack(spacing: 14) {
+            Image(systemName: "timer")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
+
             VStack(alignment: .leading, spacing: 4) {
-                Text("Next Review")
+                Text(DuoChaosCopy.nextReviewTitle())
                     .font(themeStore.bold(16))
                     .foregroundStyle(themeStore.mainText)
                 Text("\(count) words to review in \(timeUntil(date))")
@@ -30,7 +24,7 @@ struct HomeNextReviewCard: View {
                 if let hint = longIntervalHint(for: date) {
                     Text(hint)
                         .font(themeStore.regular(12))
-                        .foregroundStyle(themeStore.accentGold)
+                        .foregroundStyle(themeStore.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -40,19 +34,16 @@ struct HomeNextReviewCard: View {
                     onDismiss()
                 }
             } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeStore.accentBlue)
+                CloseButtonIcon()
             }
             .buttonStyle(.plain)
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 16))
-        .cardDepth(cornerRadius: 16)
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
         .padding(.horizontal, 20)
     }
 

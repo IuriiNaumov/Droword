@@ -30,6 +30,7 @@ Worker будет доступен на `http://localhost:8787`.
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-proj-...
+APP_KEY=...
 ```
 
 ## Деплой
@@ -45,6 +46,7 @@ npx wrangler login
 ```bash
 npx wrangler secret put ANTHROPIC_API_KEY
 npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put APP_KEY
 ```
 
 ### 3. Задеплой
@@ -54,6 +56,18 @@ npm run deploy
 ```
 
 Worker будет доступен на `https://droword-api.<твой-аккаунт>.workers.dev`.
+
+## Защита
+
+Ключ в приложении не секрет: его достают из IPA. На воркере это компенсируется лимитами, а не «прятанием» ключа.
+
+- `X-App-Key` обязателен. Без него — 401.
+- CORS закрыт: браузерный `fetch` с сайта не пройдёт. Нативное iOS-приложение CORS не использует.
+- Тело больше ~1.8 MB — 413. TTS/слова/списки обрезаются.
+- Лимиты по IP (минута / день): translate 40/250, suggest 12/40, tts 12/80, extract-words 6/20, story 8/30, scene 20/80. Счётчик — Cache API, небольшой овершут возможен.
+- Ошибки Anthropic/OpenAI наружу не светятся.
+
+Лимиты free/PRO по-прежнему живут в приложении. Обогнать paywall прямым вызовом API всё ещё можно, но жечь Claude пачкой запросов — уже нет.
 
 ## Формат запросов
 

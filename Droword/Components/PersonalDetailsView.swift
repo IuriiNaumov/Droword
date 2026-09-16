@@ -37,11 +37,10 @@ struct PersonalDetailsView: View {
                     FormTextField(
                         title: "Your name",
                         text: $tempName,
-                        focusedColor: themeStore.secondaryText,
-                        maxLength: 40
+                        maxLength: 40,
+                        autocapitalization: .words,
+                        disableAutocorrection: true
                     )
-                    .textInputAutocapitalization(.words)
-                    .autocorrectionDisabled()
                 }
 
                 Button(action: {
@@ -68,10 +67,7 @@ struct PersonalDetailsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { dismiss() } label: {
-                        CloseButtonIcon()
-                            .environmentObject(themeStore)
-                    }
+                    CloseButton()
                 }
             }
             .overlay {
