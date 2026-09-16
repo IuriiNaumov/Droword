@@ -126,7 +126,7 @@ struct AddWordView: View {
             if showOfflineAlert {
                 CustomAlertView(
                     icon: "wifi.slash",
-                    iconColor: themeStore.accentRed,
+                    iconColor: themeStore.accentGold,
                     title: "No internet connection",
                     message: "The word will be saved and enriched with translation and examples once you're back online.",
                     primaryButton: .init(title: "Add anyway", style: .primary) {

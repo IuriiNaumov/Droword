@@ -122,16 +122,9 @@ struct AppIconPickerView: View {
             .padding(.bottom, 24)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .top) {
             if let toast {
-                Text(toast)
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(themeStore.mainText)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(themeStore.toastBg))
-                    .padding(.bottom, 90)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                BannerToastView(type: .success, message: toast, duration: 2.2)
             }
         }
         .toolbar {

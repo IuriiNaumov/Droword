@@ -60,16 +60,9 @@ struct AppCustomizationView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
-        .overlay(alignment: .bottom) {
+        .overlay(alignment: .top) {
             if let iconToast {
-                Text(iconToast)
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(themeStore.mainText)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(themeStore.cardBg))
-                    .padding(.bottom, 28)
-                    .transition(.opacity)
+                BannerToastView(type: .success, message: iconToast, duration: 2.2)
             }
         }
         .sheet(isPresented: $showAppearanceSheet) {

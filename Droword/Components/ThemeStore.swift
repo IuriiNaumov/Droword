@@ -316,7 +316,7 @@ final class ThemeStore: ObservableObject {
         }
     }
 
-    var toastText: Color { accentBlue }
+    var toastText: Color { accentGreen }
 
     var monoDark: Color {
         if isSunset { return Color(hex: "#E8825C") }

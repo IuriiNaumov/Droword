@@ -7,17 +7,10 @@ struct QuizStreakMilestoneBanner: View {
     @State private var appeared = false
 
     var body: some View {
-        HStack(spacing: 8) {
-            BurningFlameIcon(size: 16, monochrome: true)
-            Text(DuoChaosCopy.streak(streak))
-                .font(themeStore.bold(14))
-                .foregroundStyle(.white)
-        }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 16)
-        .background(
-            Capsule(style: .continuous)
-                .fill(StreakFireStyle.red)
+        AppToastChrome(
+            icon: "flame.fill",
+            text: DuoChaosCopy.streak(streak),
+            tint: themeStore.accentGreen
         )
         .scaleEffect(appeared ? 1 : 0.94)
         .opacity(appeared ? 1 : 0)

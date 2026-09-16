@@ -252,18 +252,12 @@ struct DictionaryView: View {
     @ViewBuilder
     private var refreshPhraseBanner: some View {
         if showRefreshPhrase {
-            Text(refreshPhrase)
-                .font(themeStore.bold(14))
-                .foregroundStyle(themeStore.mainText)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(themeStore.cardBg)
-                )
-                .padding(.top, 8)
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .allowsHitTesting(false)
+            AppToastChrome(
+                icon: "sparkles",
+                text: refreshPhrase,
+                tint: themeStore.accentGreen
+            )
+            .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
 

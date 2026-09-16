@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Quiz combo chip: x3 / x5 / ON FIRE — solid red, no gradient.
+/// Quiz combo chip: x3 / x5 / ON FIRE — green so it reads as a win, not an error.
 struct QuizComboBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -17,12 +17,16 @@ struct QuizComboBadge: View {
     var body: some View {
         HStack(spacing: 5) {
             if showFlame {
-                BurningFlameIcon(size: streak >= 7 ? 15 : 13, monochrome: streak >= 7)
+                BurningFlameIcon(
+                    size: streak >= 7 ? 15 : 13,
+                    monochrome: streak >= 7,
+                    color: themeStore.accentGreen
+                )
             }
             Text(label)
                 .font(themeStore.bold(streak >= 7 ? 13 : 14))
                 .tracking(streak >= 7 ? 0.6 : 0)
-                .foregroundStyle(streak >= 7 ? Color.white : StreakFireStyle.red)
+                .foregroundStyle(streak >= 7 ? Color.white : themeStore.accentGreen)
                 .contentTransition(.numericText())
         }
         .padding(.horizontal, streak >= 7 ? 12 : 10)
@@ -30,10 +34,10 @@ struct QuizComboBadge: View {
         .background {
             if streak >= 7 {
                 Capsule(style: .continuous)
-                    .fill(StreakFireStyle.red)
+                    .fill(themeStore.accentGreen)
             } else {
                 Capsule(style: .continuous)
-                    .fill(StreakFireStyle.red.opacity(0.14))
+                    .fill(themeStore.accentGreen.opacity(0.16))
             }
         }
         .scaleEffect(scale)

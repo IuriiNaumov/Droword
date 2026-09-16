@@ -10,7 +10,7 @@ struct LanguagePreferencesView: View {
     @State private var toastID = UUID()
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 28) {
                     Text("Language Preferences")
@@ -54,6 +54,15 @@ struct LanguagePreferencesView: View {
                 .padding(.bottom, 50)
             }
             .background(themeStore.appBg.ignoresSafeArea())
+
+            if showToast {
+                BannerToastView(
+                    type: toastType,
+                    message: toastMessage,
+                    duration: 2.0
+                )
+                .id(toastID)
+            }
         }
     }
 
@@ -61,15 +70,12 @@ struct LanguagePreferencesView: View {
         let native = languageStore.nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
         let learning = languageStore.learningLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if native.isEmpty || learning.isEmpty {
-            toastType = .success
-            toastMessage = "Language has been updated"
-        } else if native == learning {
+        if native == learning && !native.isEmpty {
             toastType = .error
-            toastMessage = "Oops! Something went wrong."
+            toastMessage = String(localized: "Oops! Something went wrong.")
         } else {
             toastType = .success
-            toastMessage = "Language has been updated"
+            toastMessage = String(localized: "Language has been updated")
         }
 
         toastID = UUID()

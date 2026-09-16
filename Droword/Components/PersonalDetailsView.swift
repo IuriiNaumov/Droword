@@ -70,7 +70,7 @@ struct PersonalDetailsView: View {
                     CloseButton()
                 }
             }
-            .overlay {
+            .overlay(alignment: .top) {
                 if showToast {
                     BannerToastView(type: .success, message: String(localized: "Saved"), duration: 1.5)
                 }

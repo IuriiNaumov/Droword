@@ -100,7 +100,7 @@ struct CustomAlertView: View {
     private func buttonBgColor(_ style: AlertButton.Style) -> Color {
         switch style {
         case .primary:
-            return themeStore.accentBlue
+            return themeStore.mainAccentColor
         case .destructive:
             return themeStore.accentRed
         case .cancel:
