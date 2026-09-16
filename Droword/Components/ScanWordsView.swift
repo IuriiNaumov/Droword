@@ -388,12 +388,26 @@ struct ScanWordsView: View {
         store.add(newWord)
         addedWordIDs.insert(word.id)
         addedCount += 1
+        NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
     }
 
     private func addAllWords() {
         for word in visibleWords {
-            addWord(word)
+            let newWord = StoredWord(
+                word: word.word,
+                type: word.type ?? "",
+                translation: word.translation,
+                example: nil,
+                transcription: word.transcription,
+                fromLanguage: languageStore.learningLanguage,
+                toLanguage: languageStore.nativeLanguage,
+                needsEnrichment: true
+            )
+            store.add(newWord)
+            addedWordIDs.insert(word.id)
+            addedCount += 1
         }
+        NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
     }
 
     private func resetState() {

@@ -287,6 +287,9 @@ struct DictionarySettingsView: View {
         }
 
         importedCount = count
+        if count > 0 {
+            NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
+        }
     }
 
     private func parseCSVRows(_ text: String) -> [[String]] {
