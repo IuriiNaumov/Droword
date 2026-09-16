@@ -8,6 +8,7 @@ enum SoundFX {
         case ding
         case whoosh
         case combo
+        case sparkle
     }
 
     private static var player: AVAudioPlayer?
@@ -28,7 +29,14 @@ enum SoundFX {
 
             let data = try wavData(for: kind)
             let p = try AVAudioPlayer(data: data)
-            p.volume = kind == .whoosh ? 0.45 : 0.55
+            p.volume = {
+                switch kind {
+                case .whoosh: return 0.45
+                case .sparkle: return 0.48
+                case .ding: return 0.5
+                default: return 0.55
+                }
+            }()
             p.prepareToPlay()
             player = p
             p.play()
@@ -67,6 +75,9 @@ enum SoundFX {
                 release: 0.12,
                 chirp: true
             )
+        case .sparkle:
+            // Soft chime + tiny high ticks — join moment on splash.
+            data = try synthesizeSparkle(duration: 0.58)
         }
         cache[kind] = data
         return data
@@ -121,6 +132,56 @@ enum SoundFX {
             let env = sin(.pi * progress) * (0.55 + 0.45 * (1 - progress))
             let sample = (state * 0.55 + tone) * env * 0.4
             samples[i] = Int16(max(-1.0, min(1.0, sample)) * Double(Int16.max))
+        }
+
+        return try pcm16WAV(samples: samples, sampleRate: Int(sampleRate))
+    }
+
+    /// Soft fairy-tale chime — gentle arpeggio with a long shimmer tail.
+    private static func synthesizeSparkle(duration: Double) throws -> Data {
+        let sampleRate = 22050.0
+        let count = Int(duration * sampleRate)
+        var samples = [Int16](repeating: 0, count: count)
+
+        // Soft major-ish bells, staggered like a tiny music-box phrase.
+        // C6, E6, G6, C7 — warm, not sharp.
+        let notes: [(start: Double, freq: Double, amp: Double, len: Double)] = [
+            (0.00, 1046.5, 0.85, 0.42),
+            (0.07, 1318.5, 0.72, 0.40),
+            (0.14, 1568.0, 0.62, 0.38),
+            (0.22, 2093.0, 0.48, 0.36),
+            (0.30, 2637.0, 0.22, 0.28)
+        ]
+
+        for i in 0..<count {
+            let t = Double(i) / sampleRate
+            var sample = 0.0
+
+            for note in notes {
+                let local = t - note.start
+                guard local >= 0, local < note.len else { continue }
+
+                // Soft attack, long exponential decay — “fairy dust”
+                let attack = 0.012
+                let attackEnv = local < attack ? (local / attack) : 1.0
+                let decay = exp(-local * 4.2)
+                let env = attackEnv * decay
+
+                // Fundamental + soft overtone (bell-ish, not harsh)
+                let fund = sin(2 * .pi * note.freq * local)
+                let over = sin(2 * .pi * note.freq * 2.01 * local) * 0.18
+                let air = sin(2 * .pi * note.freq * 3.02 * local) * 0.06
+                sample += (fund + over + air) * note.amp * env
+            }
+
+            // Very quiet high shimmer veil
+            if t > 0.05, t < 0.55 {
+                let veil = sin(2 * .pi * 3200 * t) * 0.04 * exp(-(t - 0.05) * 5.5)
+                sample += veil
+            }
+
+            let clipped = max(-1.0, min(1.0, sample * 0.38))
+            samples[i] = Int16(clipped * Double(Int16.max))
         }
 
         return try pcm16WAV(samples: samples, sampleRate: Int(sampleRate))

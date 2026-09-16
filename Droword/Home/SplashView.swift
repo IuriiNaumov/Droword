@@ -7,17 +7,13 @@ struct SplashView: View {
 
     var onFinished: () -> Void
 
-    /// 1 = letters sit as droword, 0 = dro / ord are spread away from w.
+    /// 0 = open (dro / ord away), 1 = locked as droword.
     @State private var join: CGFloat = 1
     @State private var wOn = false
     @State private var sidesOn = false
-    @State private var wPulse: CGFloat = 1
-    @State private var wAppear: CGFloat = 0.4
-    @State private var settled = false
-    @State private var squeeze = false
-    @State private var fly = false
+    @State private var exit: CGFloat = 0
 
-    private let travel: CGFloat = 78
+    private let travel: CGFloat = 72
 
     private var splashBg: Color {
         colorScheme == .dark ? .black : .white
@@ -34,116 +30,76 @@ struct SplashView: View {
             splashBg.ignoresSafeArea()
 
             wordmark
-                .scaleEffect(wordScale)
-                .opacity(fly ? 0 : 1)
+                .opacity(1 - exit)
+                .scaleEffect(1 - exit * 0.04)
         }
-        .opacity(fly ? 0 : 1)
         .allowsHitTesting(false)
         .task { await play() }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Droword"))
     }
 
-    private var wordScale: CGFloat {
-        if fly { return 1.55 }
-        if squeeze { return 0.9 }
-        if settled { return 1.03 }
-        return 1
-    }
-
     private var wordmark: some View {
         HStack(spacing: -1.6) {
-            splashLetter("d", x: -split, on: sidesOn)
-            splashLetter("r", x: -split, on: sidesOn)
-            splashLetter("o", x: -split, on: sidesOn)
+            sideLetter("d", x: -split)
+            sideLetter("r", x: -split)
+            sideLetter("o", x: -split)
 
             Text("w")
                 .opacity(wOn ? 1 : 0)
-                .scaleEffect(wAppear * wPulse)
+                .scaleEffect(wOn ? 1 : 0.88)
                 .zIndex(1)
 
-            splashLetter("o", x: split, on: sidesOn)
-            splashLetter("r", x: split, on: sidesOn)
-            splashLetter("d", x: split, on: sidesOn)
+            sideLetter("o", x: split)
+            sideLetter("r", x: split)
+            sideLetter("d", x: split)
         }
         .font(themeStore.display(48))
         .foregroundStyle(splashText)
     }
 
-    private func splashLetter(_ text: String, x: CGFloat, on: Bool) -> some View {
+    private func sideLetter(_ text: String, x: CGFloat) -> some View {
         Text(text)
             .offset(x: x)
-            .opacity(on ? 1 : 0)
-            .scaleEffect(on ? 1 : 0.55)
+            .opacity(sidesOn ? 1 : 0)
     }
 
     @MainActor
     private func play() async {
         if reduceMotion {
             wOn = true
-            wAppear = 1
             sidesOn = true
             join = 1
-            settled = true
-            Haptics.softTap()
-            try? await Task.sleep(for: .milliseconds(520))
+            try? await Task.sleep(for: .milliseconds(480))
             await finish()
             return
         }
 
-        withAnimation(.spring(response: 0.46, dampingFraction: 0.68)) {
+        withAnimation(.easeOut(duration: 0.35)) {
             wOn = true
-            wAppear = 1
         }
-        Haptics.softTap()
-        try? await Task.sleep(for: .milliseconds(380))
+        try? await Task.sleep(for: .milliseconds(280))
 
-        Haptics.splash()
-        withAnimation(.spring(response: 0.58, dampingFraction: 0.78)) {
+        withAnimation(.easeOut(duration: 0.45)) {
             sidesOn = true
             join = 0
         }
+        try? await Task.sleep(for: .milliseconds(520))
 
-        try? await Task.sleep(for: .milliseconds(720))
-
-        withAnimation(.spring(response: 0.62, dampingFraction: 0.76)) {
+        withAnimation(.spring(duration: 0.55, bounce: 0.12)) {
             join = 1
         }
+        try? await Task.sleep(for: .milliseconds(700))
 
-        try? await Task.sleep(for: .milliseconds(480))
-        Haptics.success()
-        withAnimation(.spring(response: 0.34, dampingFraction: 0.55)) {
-            wPulse = 1.16
-            settled = true
-        }
-        withAnimation(.spring(response: 0.42, dampingFraction: 0.72).delay(0.08)) {
-            wPulse = 1
-        }
-
-        try? await Task.sleep(for: .milliseconds(900))
         await finish()
     }
 
     @MainActor
     private func finish() async {
-        Haptics.splashExit()
-        if reduceMotion {
-            withAnimation(.easeInOut(duration: 0.32)) {
-                fly = true
-            }
-            try? await Task.sleep(for: .milliseconds(340))
-            onFinished()
-            return
+        withAnimation(.easeIn(duration: 0.28)) {
+            exit = 1
         }
-
-        withAnimation(.easeIn(duration: 0.12)) {
-            squeeze = true
-        }
-        try? await Task.sleep(for: .milliseconds(110))
-        withAnimation(.easeIn(duration: 0.46)) {
-            fly = true
-        }
-        try? await Task.sleep(for: .milliseconds(470))
+        try? await Task.sleep(for: .milliseconds(300))
         onFinished()
     }
 }
