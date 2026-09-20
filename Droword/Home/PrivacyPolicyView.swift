@@ -77,7 +77,7 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         title: "12. Contact",
-                        body: "If you have any questions about this Privacy Policy, please contact us via the App Store support link."
+                        body: "Questions about this Privacy Policy: hello@droword.app"
                     )
                 }
                 .padding(.horizontal)
@@ -108,4 +108,11 @@ struct PrivacyPolicyView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous).fill(themeStore.cardBg))
     }
+}
+
+#Preview {
+    NavigationStack {
+        PrivacyPolicyView()
+    }
+    .environmentObject(ThemeStore())
 }

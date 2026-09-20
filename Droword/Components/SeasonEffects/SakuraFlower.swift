@@ -19,3 +19,8 @@ struct SakuraFlower: View {
         .frame(width: size, height: size)
     }
 }
+
+#Preview {
+    SakuraFlower(size: 40)
+        .padding()
+}

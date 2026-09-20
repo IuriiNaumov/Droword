@@ -86,7 +86,7 @@ struct AppCustomizationView: View {
         }
     }
 
-    // MARK: - Background (Plata)
+
 
     private var backgroundCard: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -221,7 +221,7 @@ struct AppCustomizationView: View {
         }
     }
 
-    // MARK: - App icon (Plata)
+
 
     private var appIconCard: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -305,7 +305,7 @@ struct AppCustomizationView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Mode (Plata)
+
 
     private var modeCard: some View {
         Button {

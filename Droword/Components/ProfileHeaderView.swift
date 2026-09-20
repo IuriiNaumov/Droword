@@ -83,7 +83,7 @@ struct ProfileHeaderView: View {
                             .tracking(-0.4)
 
                         if isPremium {
-                            ProPillBadge()
+                            GlassProStar(size: 22)
                         }
                     }
 

@@ -40,3 +40,12 @@ struct RadioButtonRow: View {
         .buttonStyle(.plain)
     }
 }
+
+#Preview {
+    VStack {
+        RadioButtonRow(title: "Option A", isSelected: true, action: {})
+        RadioButtonRow(title: "Option B", isSelected: false, action: {})
+    }
+    .padding()
+    .environmentObject(ThemeStore())
+}

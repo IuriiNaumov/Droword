@@ -83,3 +83,12 @@ extension View {
         modifier(ZoomerTitleModifier(size: size))
     }
 }
+
+#Preview {
+    VStack(spacing: 16) {
+        ZoomerSticker(text: "new")
+        ZoomerCountBadge(value: 3)
+    }
+    .padding()
+    .environmentObject(ThemeStore())
+}

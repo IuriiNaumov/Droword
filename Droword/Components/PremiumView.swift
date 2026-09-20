@@ -57,11 +57,14 @@ struct PremiumView: View {
 
     private static let featureRows: [FeatureRow] = [
         FeatureRow(id: 0, title: "AI translations", free: "\(DailyLimitsManager.maxFreeTranslations) / day", pro: "Unlimited"),
-        FeatureRow(id: 1, title: "Voice pronunciation", free: "10 / day", pro: "Unlimited"),
-        FeatureRow(id: 2, title: "Word suggestions", free: "4 / day", pro: "Unlimited"),
-        FeatureRow(id: 3, title: "Themes", free: "Default only", pro: "All themes"),
-        FeatureRow(id: 4, title: "Seasonal effects", free: "—", pro: "All effects"),
-        FeatureRow(id: 5, title: "Streak freeze", free: "—", pro: "1 / week"),
+        FeatureRow(id: 1, title: "Voice pronunciation", free: "\(DailyLimitsManager.maxFreeTTS) / day", pro: "Unlimited"),
+        FeatureRow(id: 2, title: "Word suggestions", free: "\(DailyLimitsManager.maxFreeSuggestionFetches) / day", pro: "Unlimited"),
+        FeatureRow(id: 3, title: "Stories", free: "\(DailyLimitsManager.maxFreeStories) / day", pro: "Unlimited"),
+        FeatureRow(id: 4, title: "Chat scenes", free: "\(DailyLimitsManager.maxFreeScenes) / day", pro: "Unlimited"),
+        FeatureRow(id: 5, title: "Photo scans", free: "\(DailyLimitsManager.maxFreePhotoScans) / day", pro: "Unlimited"),
+        FeatureRow(id: 6, title: "Themes", free: "Default only", pro: "All themes"),
+        FeatureRow(id: 7, title: "Seasonal effects", free: "—", pro: "All effects"),
+        FeatureRow(id: 8, title: "Streak freeze", free: "—", pro: "1 / week"),
     ]
 
     var body: some View {
@@ -97,17 +100,17 @@ struct PremiumView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 headerSection
-                    .padding(.top, 24)
+                    .padding(.top, 28)
 
                 if isPremium {
                     proActiveFeatures
-                        .padding(.top, 28)
+                        .padding(.top, 32)
 
                     activeSection
-                        .padding(.top, 28)
+                        .padding(.top, 32)
                 } else {
                     comparisonSection
-                        .padding(.top, 28)
+                        .padding(.top, 32)
 
                     if !hasUsedTrial {
                         startTrialButton
@@ -117,7 +120,7 @@ struct PremiumView: View {
                             VStack { Divider() }
                             Text("or subscribe")
                                 .font(themeStore.regular(13))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(themeStore.secondaryText)
                             VStack { Divider() }
                         }
                         .padding(.horizontal, 20)
@@ -135,7 +138,7 @@ struct PremiumView: View {
                     } label: {
                         Text("Restore purchases")
                             .font(themeStore.regular(13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeStore.secondaryText)
                     }
                     .disabled(storeKit.isLoading)
                     .padding(.top, 12)
@@ -152,9 +155,9 @@ struct PremiumView: View {
     }
 
     private var headerSection: some View {
-        VStack(spacing: 16) {
-            SparkleCluster(size: 132)
-                .scaleEffect(appeared ? 1.0 : 0.6)
+        VStack(spacing: 18) {
+            GlassProStar(size: 128, animated: true)
+                .scaleEffect(appeared ? 1.0 : 0.82)
                 .opacity(appeared ? 1.0 : 0)
 
             if isPremium {
@@ -173,13 +176,15 @@ struct PremiumView: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
             } else {
-                Text("Droword PRO")
+                Text("Learn without limits")
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
+                    .multilineTextAlignment(.center)
 
-                Text("Unlock unlimited AI features")
+                Text("Unlimited AI translations, voice, stories, and more")
                     .font(themeStore.regular(15))
                     .foregroundStyle(themeStore.secondaryText)
+                    .multilineTextAlignment(.center)
             }
         }
         .frame(maxWidth: .infinity)
@@ -214,7 +219,7 @@ struct PremiumView: View {
 
                         Text(row.free)
                             .font(themeStore.regular(13))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(themeStore.secondaryText)
                             .frame(width: 80)
 
                         Text(row.pro)
@@ -360,7 +365,7 @@ struct PremiumView: View {
                     HStack(spacing: 8) {
                         Text(title)
                             .font(themeStore.medium(16))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(themeStore.mainText)
 
                         if let badge {
                             Text(badge)
@@ -373,22 +378,22 @@ struct PremiumView: View {
                     }
                     Text(detail)
                         .font(themeStore.regular(13))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(themeStore.secondaryText)
                 }
 
                 Spacer()
 
                 Text(price)
                     .font(themeStore.bold(18))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(themeStore.mainText)
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous)
                     .fill(
                         selectedPlan == plan
                             ? themeStore.accentBlue.opacity(0.12)
-                            : Color(.secondarySystemBackground)
+                            : themeStore.cardBg.opacity(0.85)
                     )
             )
         }
@@ -413,7 +418,7 @@ struct PremiumView: View {
                         .font(.system(size: 16, weight: .semibold))
                     Text("Start 7-Day Free Trial")
                 }
-                .duo3DStyle(Color.orange)
+                .duo3DStyle(themeStore.accentGold)
             }
             .buttonStyle(Duo3DButtonStyle())
             .accessibilityLabel(Text("Start 7-day free trial"))
@@ -620,4 +625,11 @@ struct PremiumView: View {
             UIApplication.shared.open(url)
         }
     }
+}
+
+#Preview {
+    NavigationStack {
+        PremiumView()
+    }
+    .environmentObject(ThemeStore())
 }

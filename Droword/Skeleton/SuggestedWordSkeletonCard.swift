@@ -54,7 +54,7 @@ struct SuggestedWordSkeletonCard: View {
                 )
         )
         .onAppear {
-            withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
                 shimmerPhase = 2.0
             }
         }
@@ -84,6 +84,12 @@ extension View {
                     .mask(self)
             }
         )
-        .animation(.linear(duration: 1.4).repeatForever(autoreverses: false), value: phase)
+        .animation(.linear(duration: 1.1).repeatForever(autoreverses: false), value: phase)
     }
+}
+
+#Preview {
+    SuggestedWordSkeletonCard()
+        .padding()
+        .environmentObject(ThemeStore())
 }

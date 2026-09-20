@@ -72,6 +72,7 @@ struct QuizCompletionView: View {
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(300))
                 if percentage == 100 {
+                    SoundFX.play(.sparkle)
                     Haptics.celebration()
                 } else if percentage >= 70 {
                     Haptics.celebration()
@@ -269,4 +270,9 @@ struct QuizCompletionView: View {
         }
         .frame(minWidth: 70)
     }
+}
+
+#Preview {
+    QuizCompletionView(correct: 8, total: 10, onRestart: {})
+        .environmentObject(ThemeStore())
 }

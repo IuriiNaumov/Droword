@@ -190,6 +190,26 @@ final class WordsStore: ObservableObject {
         words.removeAll()
     }
 
+    func update(_ word: StoredWord) {
+        guard let index = words.firstIndex(where: { $0.id == word.id }) else { return }
+        words[index] = word
+    }
+
+    func clearTag(_ name: String) {
+        let normalized = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return }
+        var copy = words
+        var changed = false
+        for i in copy.indices {
+            if let tag = copy[i].tag,
+               tag.caseInsensitiveCompare(normalized) == .orderedSame {
+                copy[i].tag = nil
+                changed = true
+            }
+        }
+        if changed { words = copy }
+    }
+
     private func migrateIfNeeded() {
         let shared = sharedDefaults
 

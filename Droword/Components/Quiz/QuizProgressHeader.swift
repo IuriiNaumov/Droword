@@ -78,3 +78,14 @@ struct QuizProgressHeader: View {
         return themeStore.dividerColor.opacity(0.4)
     }
 }
+
+#Preview {
+    QuizProgressHeader(
+        session: QuizSessionManager(),
+        streakScale: 1,
+        hasAnswered: false,
+        isCorrect: false,
+        reward: nil
+    )
+    .environmentObject(ThemeStore())
+}

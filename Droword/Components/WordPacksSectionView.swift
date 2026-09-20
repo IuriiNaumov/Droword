@@ -59,7 +59,6 @@ struct WordPacksDetailView: View {
     @AppStorage(AppStorageKeys.hasSeenWordPacksHint) private var hasSeenHint: Bool = false
 
     @State private var selectedPack: WordPack?
-    @State private var showPremiumWall = false
 
     private var learning: String { languageStore.learningLanguage }
     private var native: String { languageStore.nativeLanguage }
@@ -142,11 +141,6 @@ struct WordPacksDetailView: View {
                     .environmentObject(languageStore)
                     .environmentObject(store)
             }
-            .fullScreenCover(isPresented: $showPremiumWall) {
-                PremiumView(asWall: true)
-                    .environmentObject(themeStore)
-                    .tint(themeStore.mainAccentColor)
-            }
         }
     }
 
@@ -162,11 +156,7 @@ struct WordPacksDetailView: View {
         Button {
             Haptics.menuTap()
             if completed { return }
-            if isPremium {
-                selectedPack = pack
-            } else {
-                showPremiumWall = true
-            }
+            selectedPack = pack
         } label: {
             HStack(spacing: 14) {
                 Image(systemName: completed ? "checkmark" : pack.icon)
@@ -217,4 +207,20 @@ enum WordPacksHome {
             && !WordPackTracker.isCompleted(packID: $0.id, learning: learning, native: native)
         }.count
     }
+}
+
+#Preview("Button") {
+    WordPacksButton(availableCount: 3)
+        .padding()
+        .environmentObject(ThemeStore())
+        .environmentObject(LanguageStore())
+}
+
+#Preview("Detail") {
+    NavigationStack {
+        WordPacksDetailView()
+    }
+    .environmentObject(ThemeStore())
+    .environmentObject(LanguageStore())
+    .environmentObject(WordsStore())
 }

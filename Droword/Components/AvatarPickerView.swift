@@ -298,3 +298,11 @@ private extension View {
     }
 }
 
+#Preview {
+    AvatarPickerView(
+        currentImage: nil,
+        onPickedRaw: { _ in },
+        onRemoved: {}
+    )
+    .environmentObject(ThemeStore())
+}

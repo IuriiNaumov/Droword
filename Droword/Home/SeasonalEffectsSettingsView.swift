@@ -127,3 +127,10 @@ struct SeasonalEffectsSettingsView: View {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        SeasonalEffectsSettingsView()
+    }
+    .environmentObject(ThemeStore())
+}

@@ -20,9 +20,18 @@ struct ScanWordsView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var addedCount = 0
     @State private var showPremiumWall = false
+    @State private var alreadyInDictionary: Set<String> = []
+
+    private var existingWordKeys: Set<String> {
+        Set(store.words.map { $0.word.lowercased() })
+    }
 
     private var visibleWords: [ExtractedWord] {
-        extractedWords.filter { !addedWordIDs.contains($0.id) && !skippedWordIDs.contains($0.id) }
+        extractedWords.filter {
+            !addedWordIDs.contains($0.id)
+                && !skippedWordIDs.contains($0.id)
+                && !alreadyInDictionary.contains($0.word.lowercased())
+        }
     }
 
     var body: some View {
@@ -354,6 +363,11 @@ struct ScanWordsView: View {
             }
 
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                alreadyInDictionary = Set(
+                    words
+                        .map { $0.word.lowercased() }
+                        .filter { existingWordKeys.contains($0) }
+                )
                 extractedWords = words
                 isExtracting = false
             }
@@ -361,6 +375,8 @@ struct ScanWordsView: View {
             if words.isEmpty {
                 errorMessage = String(localized: "No words found in the image. Try a clearer photo.")
                 resetState()
+            } else if visibleWords.isEmpty {
+                errorMessage = String(localized: "All of these words are already in your dictionary.")
             }
         } catch {
             #if DEBUG
@@ -375,6 +391,11 @@ struct ScanWordsView: View {
     }
 
     private func addWord(_ word: ExtractedWord) {
+        let key = word.word.lowercased()
+        guard !existingWordKeys.contains(key) else {
+            alreadyInDictionary.insert(key)
+            return
+        }
         let newWord = StoredWord(
             word: word.word,
             type: word.type ?? "",
@@ -393,21 +414,8 @@ struct ScanWordsView: View {
 
     private func addAllWords() {
         for word in visibleWords {
-            let newWord = StoredWord(
-                word: word.word,
-                type: word.type ?? "",
-                translation: word.translation,
-                example: nil,
-                transcription: word.transcription,
-                fromLanguage: languageStore.learningLanguage,
-                toLanguage: languageStore.nativeLanguage,
-                needsEnrichment: true
-            )
-            store.add(newWord)
-            addedWordIDs.insert(word.id)
-            addedCount += 1
+            addWord(word)
         }
-        NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
     }
 
     private func resetState() {
@@ -415,6 +423,7 @@ struct ScanWordsView: View {
         extractedWords = []
         addedWordIDs = []
         skippedWordIDs = []
+        alreadyInDictionary = []
         isExtracting = false
         errorMessage = nil
         selectedPhotoItem = nil

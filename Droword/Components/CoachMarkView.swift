@@ -111,3 +111,14 @@ struct CoachMarkView: View {
         }
     }
 }
+
+#Preview {
+    CoachMarkView(
+        steps: [
+            CoachMarkStep(title: "Add words", message: "Tap + to add a word.", icon: "plus.circle.fill"),
+            CoachMarkStep(title: "Practice", message: "Review on a schedule.", icon: "bolt.fill")
+        ],
+        onComplete: {}
+    )
+    .environmentObject(ThemeStore())
+}

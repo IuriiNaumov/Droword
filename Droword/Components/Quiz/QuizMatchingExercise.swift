@@ -175,3 +175,51 @@ struct QuizMatchingExercise: View {
         }
     }
 }
+
+private struct QuizMatchingExercisePreview: View {
+    @State private var matchingPairs = [
+        QuizSessionManager.MatchingPair(word: "hola", translation: "hello"),
+        QuizSessionManager.MatchingPair(word: "adiós", translation: "bye")
+    ]
+    @State private var matchedPairIDs: Set<UUID> = []
+    @State private var selectedMatchWordID: UUID?
+    @State private var selectedMatchTranslationID: UUID?
+    @State private var matchingWrongIDs: (UUID, UUID)?
+    @State private var shuffledTranslationIDs: [UUID] = []
+
+    var body: some View {
+        QuizMatchingExercise(
+            item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+            hasAnswered: false,
+            isCorrect: false,
+            wrongAttempts: 0,
+            maxAttempts: 3,
+            matchingPairs: $matchingPairs,
+            matchedPairIDs: $matchedPairIDs,
+            selectedMatchWordID: $selectedMatchWordID,
+            selectedMatchTranslationID: $selectedMatchTranslationID,
+            matchingWrongIDs: $matchingWrongIDs,
+            shuffledTranslationIDs: $shuffledTranslationIDs,
+            onAllMatched: {},
+            onWrongMatch: {}
+        )
+        .padding()
+        .environmentObject(ThemeStore())
+        .onAppear {
+            if shuffledTranslationIDs.isEmpty {
+                shuffledTranslationIDs = matchingPairs.map(\.id)
+            }
+        }
+    }
+}
+
+#Preview {
+    QuizMatchingExercisePreview()
+}

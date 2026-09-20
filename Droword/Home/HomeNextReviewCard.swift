@@ -93,3 +93,9 @@ struct HomeNextReviewCard: View {
         return hints[index]
     }
 }
+
+#Preview {
+    HomeNextReviewCard(count: 5, date: Date().addingTimeInterval(86400), onDismiss: {})
+        .padding()
+        .environmentObject(ThemeStore())
+}

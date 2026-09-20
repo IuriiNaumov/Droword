@@ -17,6 +17,7 @@ struct ReviewSectionView: View {
     @AppStorage(AppStorageKeys.hasSeenReviewPaywall) private var hasSeenReviewPaywall: Bool = false
     @State private var showPaywallFromReview: Bool = false
     @State private var nextReviewText: LocalizedStringKey? = nil
+    @ObservedObject private var network = NetworkMonitor.shared
 
     private var totalDue: Int { learningQueue.count }
     private var remaining: Int { max(0, learningQueue.count - currentIndex) }
@@ -93,7 +94,14 @@ struct ReviewSectionView: View {
                 .tint(primaryText)
         }
         .buttonStyle(.plain)
+        .opacity(network.isConnected ? 1 : 0.35)
+        .disabled(!network.isConnected)
         .accessibilityLabel(Text("Play pronunciation"))
+        .accessibilityHint(
+            Text(network.isConnected
+                 ? "Plays the word out loud"
+                 : "Needs an internet connection")
+        )
     }
 
     private var reviewCard: some View {
@@ -606,6 +614,7 @@ struct ReviewSectionView: View {
     }
 
     private func playAudio() {
+        guard network.isConnected else { return }
         TTSPlayer.play(
             word: card.word,
             isPremium: isPremium,
@@ -642,3 +651,9 @@ struct ReviewSectionView: View {
     }
 }
 
+#Preview {
+    ReviewSectionView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
+}

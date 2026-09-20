@@ -78,3 +78,8 @@ struct LeafView: View {
         .frame(width: size, height: size)
     }
 }
+
+#Preview {
+    LeafView(size: 40)
+        .padding()
+}

@@ -194,3 +194,12 @@ enum AppIconChanger {
         return alternate[name] != nil
     }
 }
+
+#Preview {
+    HStack(spacing: 16) {
+        AppIconArtwork(style: .classic, size: 72)
+        AppIconArtwork(style: .sun, size: 72)
+        AppIconArtwork(style: .night, size: 72)
+    }
+    .padding()
+}

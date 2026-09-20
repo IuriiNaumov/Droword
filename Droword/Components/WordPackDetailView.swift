@@ -8,10 +8,14 @@ struct WordPackDetailView: View {
 
     let pack: WordPack
 
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    private let freePreviewLimit = 5
+
     @State private var addedWordIDs: Set<String> = []
     @State private var skippedWordIDs: Set<String> = []
     @State private var alreadyInDictionary: Set<String> = []
     @State private var addedCount = 0
+    @State private var showPremiumWall = false
 
     private var allWords: [StarterWord] {
         WordPacksData.words(
@@ -26,6 +30,10 @@ struct WordPackDetailView: View {
             let id = word.word
             return !addedWordIDs.contains(id) && !skippedWordIDs.contains(id) && !alreadyInDictionary.contains(id)
         }
+    }
+
+    private var canAddMoreFree: Bool {
+        isPremium || addedCount < freePreviewLimit
     }
 
     private var color: Color {
@@ -54,6 +62,12 @@ struct WordPackDetailView: View {
                             }
                         }
 
+                        if !isPremium {
+                            Text("Free preview: add up to \(freePreviewLimit) words")
+                                .font(themeStore.regular(13))
+                                .foregroundStyle(themeStore.secondaryText)
+                        }
+
                         if visibleWords.count > 1 {
                             Button {
                                 Haptics.lightImpact()
@@ -61,7 +75,7 @@ struct WordPackDetailView: View {
                             } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus.circle.fill")
-                                    Text("Add all")
+                                    Text(isPremium ? "Add all" : "Add preview")
                                 }
                                 .duo3DStyle(color)
                             }
@@ -93,6 +107,11 @@ struct WordPackDetailView: View {
         .onAppear {
             detectAlreadyAdded()
         }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
+        }
     }
 
     private func wordCard(_ word: StarterWord) -> some View {
@@ -117,13 +136,17 @@ struct WordPackDetailView: View {
 
             HStack {
                 Button {
-                    withAnimation(.spring()) {
-                        addWord(word)
+                    if canAddMoreFree {
+                        withAnimation(.spring()) {
+                            addWord(word)
+                        }
+                    } else {
+                        showPremiumWall = true
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Add")
+                        Image(systemName: canAddMoreFree ? "plus.circle.fill" : "lock.fill")
+                        Text(canAddMoreFree ? "Add" : "PRO")
                     }
                     .font(themeStore.medium(13))
                     .foregroundStyle(.white)
@@ -195,6 +218,10 @@ struct WordPackDetailView: View {
     }
 
     private func addWord(_ word: StarterWord) {
+        guard canAddMoreFree else {
+            showPremiumWall = true
+            return
+        }
         let newWord = StoredWord(
             word: word.word,
             type: word.type,
@@ -215,6 +242,10 @@ struct WordPackDetailView: View {
 
     private func addAllWords() {
         for word in visibleWords {
+            guard canAddMoreFree else {
+                showPremiumWall = true
+                break
+            }
             addWord(word)
         }
     }

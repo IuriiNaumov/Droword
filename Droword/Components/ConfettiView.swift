@@ -104,3 +104,11 @@ private struct ConfettiParticle {
     let color: Color
     let opacity: Double
 }
+
+#Preview {
+    ZStack {
+        Color.black.opacity(0.05).ignoresSafeArea()
+        ConfettiView()
+    }
+    .environmentObject(ThemeStore())
+}

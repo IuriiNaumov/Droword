@@ -286,7 +286,6 @@ public enum Haptics {
         }
     }
 
-    /// Letter ticks + bloom — synced to the kinetic wordmark.
     public static func splash() {
         if supportsCoreHaptics {
             play([
@@ -318,7 +317,6 @@ public enum Haptics {
         }
     }
 
-    /// Squeeze then fly-through when the splash leaves.
     public static func splashExit() {
         if supportsCoreHaptics {
             play([
@@ -389,7 +387,6 @@ public enum Haptics {
         combo(streak: 7)
     }
 
-    /// Long blooming rumble when a suggestion pack lands on Home.
     public static func suggestionsArrived() {
         suggestionTask?.cancel()
         guard HapticFeel.current != .off else { return }

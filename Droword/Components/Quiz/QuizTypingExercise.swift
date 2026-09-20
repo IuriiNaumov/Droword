@@ -115,3 +115,36 @@ struct QuizTypingExercise: View {
         }
     }
 }
+
+private struct QuizTypingExercisePreview: View {
+    @State private var typingInput = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        QuizTypingExercise(
+            item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+            hasAnswered: false,
+            isCorrect: false,
+            isAlmostCorrect: false,
+            isReversed: false,
+            shakeOffset: 0,
+            hintShown: false,
+            hintText: "",
+            typingInput: $typingInput,
+            isInputFocused: $focused,
+            onSubmit: {}
+        )
+        .environmentObject(ThemeStore())
+    }
+}
+
+#Preview {
+    QuizTypingExercisePreview()
+}

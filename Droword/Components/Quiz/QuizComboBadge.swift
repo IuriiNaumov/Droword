@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Quiz combo chip: x3 / x5 / ON FIRE — streak red, same as Home.
 struct QuizComboBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -42,4 +41,10 @@ struct QuizComboBadge: View {
         .scaleEffect(scale)
         .accessibilityLabel(Text("Combo \(streak)"))
     }
+}
+
+#Preview {
+    QuizComboBadge(streak: 5)
+        .padding()
+        .environmentObject(ThemeStore())
 }

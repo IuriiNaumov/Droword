@@ -24,3 +24,8 @@ struct QuizFeedbackBadge: View {
             }
     }
 }
+
+#Preview {
+    QuizFeedbackBadge(icon: "checkmark.circle.fill", text: "Nice!", color: .green)
+        .padding()
+}

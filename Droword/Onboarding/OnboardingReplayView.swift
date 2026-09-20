@@ -20,12 +20,6 @@ struct OnboardingReplayView: View {
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
             accent: themeStore.accentGreen
-        ),
-        .init(
-            title: "Make it yours",
-            subtitle: "Choose languages, voices and themes. Make it yours!",
-            illustrationStyle: .customize,
-            accent: themeStore.accentGold
         )
     ]}
 
@@ -100,6 +94,7 @@ struct OnboardingReplayView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(.white)
+                        .frame(width: 24, height: 24)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(themeStore.mainAccentColor))
                 }
@@ -112,6 +107,7 @@ struct OnboardingReplayView: View {
                     Image(systemName: "checkmark")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(.white)
+                        .frame(width: 24, height: 24)
                         .frame(width: 56, height: 56)
                         .background(Circle().fill(themeStore.mainAccentColor))
                 }
@@ -136,4 +132,9 @@ private struct ReplayScaledPressStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.9), value: configuration.isPressed)
     }
+}
+
+#Preview {
+    OnboardingReplayView()
+        .environmentObject(ThemeStore())
 }

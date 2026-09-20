@@ -8,6 +8,7 @@ extension Notification.Name {
 
 struct WordCardView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var store: WordsStore
     @Environment(\.colorScheme) private var colorScheme
 
     let word: String
@@ -70,6 +71,8 @@ struct WordCardView: View {
     @State private var highlightedExtraExamples: [AttributedString] = []
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
+    @State private var showEditWord = false
+    @ObservedObject private var network = NetworkMonitor.shared
 
     private var isSuggested: Bool { tag == "Suggested" }
 
@@ -140,8 +143,12 @@ struct WordCardView: View {
                         reactions: pickerReactions,
                         current: reaction,
                         onSelect: { emoji in
-                            Haptics.softTap()
-                            withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
+                            if reaction == emoji {
+                                Haptics.softTap()
+                            } else {
+                                Haptics.success()
+                            }
+                            withAnimation(DesignMotion.card) {
                                 onReaction?(reaction == emoji ? nil : emoji)
                                 showReactionPicker = false
                             }
@@ -170,6 +177,20 @@ struct WordCardView: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text("\(word), \(translation ?? "")"))
             .contextMenu {
+                if storedWord != nil {
+                    Button {
+                        showEditWord = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button {
+                        shareWord()
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                }
+
                 Button {
                     UIPasteboard.general.string = word
                     NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
@@ -236,7 +257,7 @@ struct WordCardView: View {
             } else {
                 Haptics.cardExpand()
             }
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.9)) {
+            withAnimation(DesignMotion.card) {
                 isExpanded.toggle()
             }
         }
@@ -277,6 +298,16 @@ struct WordCardView: View {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
                 .tint(themeStore.mainAccentColor)
+        }
+        .sheet(isPresented: $showEditWord) {
+            if let storedWord {
+                EditWordView(word: storedWord)
+                    .environmentObject(themeStore)
+                    .environmentObject(store)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+                    .modernSheet()
+            }
         }
     }
 
@@ -505,9 +536,12 @@ struct WordCardView: View {
             SoundWavesView(isPlaying: isPlaying)
                 .frame(width: 40, height: 40)
                 .contentShape(Rectangle())
+                .opacity(network.isConnected ? 1 : 0.35)
+                .allowsHitTesting(network.isConnected)
                 .highPriorityGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { _ in
+                            guard network.isConnected else { return }
                             guard !isHoldingAudio else { return }
                             ignoreCardTapUntil = Date().addingTimeInterval(0.45)
                             holdStartedAt = Date()
@@ -532,13 +566,18 @@ struct WordCardView: View {
                         }
                 )
                 .accessibilityLabel(Text("Pronunciation"))
-                .accessibilityHint(Text("Tap to play, or hold to hear while pressed"))
+                .accessibilityHint(
+                    Text(network.isConnected
+                         ? "Tap to play, or hold to hear while pressed"
+                         : "Needs an internet connection")
+                )
                 .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
     }
 
     private func playAudio() {
+        guard network.isConnected else { return }
         TTSPlayer.play(
             word: word,
             isPremium: isPremium,

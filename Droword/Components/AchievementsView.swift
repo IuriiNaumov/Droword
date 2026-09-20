@@ -71,3 +71,9 @@ struct AchievementsView: View {
     }
 }
 
+#Preview {
+    AchievementsView()
+        .environmentObject(ThemeStore())
+        .environmentObject(WordsStore())
+        .environmentObject(BadgeStore())
+}

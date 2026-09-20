@@ -37,3 +37,13 @@ struct HomeVisibilityHint: View {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        HomeVisibilityHint(message: "Word packs are hidden. Turn them on in settings.")
+            .padding()
+    }
+    .environmentObject(ThemeStore())
+    .environmentObject(WordsStore())
+    .environmentObject(LanguageStore())
+}

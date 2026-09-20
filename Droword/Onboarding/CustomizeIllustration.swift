@@ -27,3 +27,7 @@ struct CustomizeIllustration: View {
         .allowsHitTesting(false)
     }
 }
+
+#Preview {
+    CustomizeIllustration(accent: .orange, size: 220, px: 0, py: 0)
+}

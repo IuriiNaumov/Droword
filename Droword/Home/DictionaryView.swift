@@ -76,60 +76,56 @@ struct DictionaryView: View {
             dictionaryHeader(showsSelect: false)
                 .padding(.bottom, 8)
 
-            EmptyListView(
-                illustration: AnyView(CryingEmptyIllustration()),
-                title: DuoChaosCopy.dictionaryGarden().title,
-                subtitle: DuoChaosCopy.dictionaryGarden().subtitle
-            )
+            ZStack(alignment: .bottom) {
+                EmptyListView(
+                    illustration: AnyView(CryingEmptyIllustration()),
+                    title: DuoChaosCopy.dictionaryGarden().title,
+                    subtitle: DuoChaosCopy.dictionaryGarden().subtitle
+                )
+
+                Button {
+                    NotificationCenter.default.post(name: .openAddWord, object: nil)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                        Text("Add a word")
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+                .padding(.horizontal, 40)
+                .padding(.bottom, 32)
+            }
         }
         .iPadContentWidth(1000)
     }
 
     private var populatedDictionary: some View {
-        ScrollViewReader { proxy in
-            Group {
-                if showsDictionaryFilterEmpty {
-                    VStack(spacing: 16) {
-                        dictionaryHeader(showsSelect: true)
-                            .id("dictionaryTop")
-                        DictionarySearchBar(
-                            searchText: $searchText,
-                            isFocused: $isSearchFocused,
-                            enabled: true
-                        )
-                        tagsRow
-                        Spacer(minLength: 0)
-                    }
-                    .iPadContentWidth(1000)
+        VStack(spacing: 16) {
+            dictionaryHeader(showsSelect: true)
+
+            DictionarySearchBar(
+                searchText: $searchText,
+                isFocused: $isSearchFocused,
+                enabled: true
+            )
+
+            tagsRow
+
+            if showsDictionaryFilterEmpty {
+                dictionaryEmptyFilter
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .overlay {
-                        dictionaryEmptyFilter
-                            .iPadContentWidth(1000)
-                            .allowsHitTesting(false)
-                    }
-                } else {
-                    ScrollView(showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: 16) {
-                            dictionaryHeader(showsSelect: true)
-                                .id("dictionaryTop")
-                            DictionarySearchBar(
-                                searchText: $searchText,
-                                isFocused: $isSearchFocused,
-                                enabled: true
-                            )
-                            tagsRow
-                            wordGrid
-                        }
+                    .iPadContentWidth(1000)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    wordGrid
                         .iPadContentWidth(1000)
-                    }
-                    .refreshable { await runDictionaryRefresh() }
-                    .scrollDismissesKeyboard(.immediately)
                 }
-            }
-            .onChange(of: selectedTag) {
-                proxy.scrollTo("dictionaryTop", anchor: .top)
+                .refreshable { await runDictionaryRefresh() }
+                .scrollDismissesKeyboard(.immediately)
             }
         }
+        .iPadContentWidth(1000)
     }
 
     private func dictionaryHeader(showsSelect: Bool) -> some View {
@@ -186,7 +182,12 @@ struct DictionaryView: View {
     }
 
     private var tagsRow: some View {
-        TagsView(selectedTag: $selectedTag, onAddTag: { showAddTag = true }, sortOption: $sortOption)
+        TagsView(
+            selectedTag: $selectedTag,
+            hasSuggestedWords: store.words.contains { $0.tag == "Suggested" },
+            onAddTag: { showAddTag = true },
+            sortOption: $sortOption
+        )
             .padding(.horizontal, horizontalPadding)
     }
 

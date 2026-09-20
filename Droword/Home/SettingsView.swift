@@ -47,7 +47,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 28) {
+                VStack(spacing: DesignSpacing.section + 4) {
                     VStack(spacing: 12) {
                         ZStack {
                             if let avatarImage {
@@ -297,7 +297,7 @@ struct SettingsView: View {
                             .foregroundStyle(themeStore.mainText)
                         Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
                             .font(themeStore.regular(12))
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(themeStore.accentGold)
                     } else {
                         Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
                             .font(themeStore.bold(16))

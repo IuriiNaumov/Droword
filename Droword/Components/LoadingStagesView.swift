@@ -47,3 +47,9 @@ struct LoadingStagesView: View {
         }
     }
 }
+
+#Preview {
+    LoadingStagesView(color: .blue)
+        .padding()
+        .background(Color.gray.opacity(0.2))
+}

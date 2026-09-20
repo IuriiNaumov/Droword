@@ -102,3 +102,21 @@ struct DailyLessonCard: View {
         .accessibilityLabel(Text("\(plan.title). \(plan.subtitle)"))
     }
 }
+
+#Preview {
+    DailyLessonCard(plan: DailyLessonPlan(
+        title: "Today's lesson",
+        subtitle: "A short set for today",
+        words: [],
+        minutes: 4,
+        styleLabel: "Mixed",
+        topicLabels: ["Travel"],
+        canStart: true,
+        isDone: false,
+        correct: 0,
+        total: 0,
+        tomorrowWords: []
+    ), onStart: {})
+        .padding()
+        .environmentObject(ThemeStore())
+}

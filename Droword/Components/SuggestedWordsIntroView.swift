@@ -4,7 +4,7 @@ struct SuggestedWordsIntroView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     let onDismiss: () -> Void
 
-    @State private var emojiScale: CGFloat = 0.3
+    @State private var iconScale: CGFloat = 0.3
     @State private var textOpacity: Double = 0
     @State private var bulletOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
@@ -18,9 +18,8 @@ struct SuggestedWordsIntroView: View {
                 .onTapGesture { onDismiss() }
 
             VStack(spacing: 20) {
-                Text("💡")
-                    .font(.system(size: 64))
-                    .scaleEffect(emojiScale)
+                ModalIconView(kind: .idea, color: themeStore.accentGold, size: 104)
+                    .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text("Suggested Words")
@@ -64,7 +63,7 @@ struct SuggestedWordsIntroView: View {
             }
             .padding(28)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.dialog, style: .continuous)
                     .fill(themeStore.appBg)
             )
             .padding(.horizontal, 32)
@@ -73,7 +72,7 @@ struct SuggestedWordsIntroView: View {
             Haptics.mediumImpact()
 
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                emojiScale = 1.0
+                iconScale = 1.0
             }
             withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
                 textOpacity = 1.0
@@ -102,7 +101,7 @@ struct SuggestedWordsIntroView: View {
     }
 }
 
-#Preview {
+#Preview("Suggested words intro") {
     SuggestedWordsIntroView(onDismiss: {})
         .environmentObject(ThemeStore())
 }

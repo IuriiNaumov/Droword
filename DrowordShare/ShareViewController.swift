@@ -6,10 +6,10 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
-        extractSharedText()
+        extractSharedContent()
     }
 
-    private func extractSharedText() {
+    private func extractSharedContent() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             done()
             return
@@ -19,21 +19,73 @@ class ShareViewController: UIViewController {
             guard let attachments = item.attachments else { continue }
             for provider in attachments {
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                    provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] data, _ in
-                        DispatchQueue.main.async {
-                            if let text = data as? String {
-                                self?.openApp(with: text.trimmingCharacters(in: .whitespacesAndNewlines))
-                            } else {
-                                self?.done()
-                            }
-                        }
-                    }
+                    loadText(from: provider, type: UTType.plainText.identifier)
+                    return
+                }
+                if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) {
+                    loadText(from: provider, type: UTType.text.identifier)
+                    return
+                }
+                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+                    loadURL(from: provider)
                     return
                 }
             }
         }
 
         done()
+    }
+
+    private func loadText(from provider: NSItemProvider, type: String) {
+        provider.loadItem(forTypeIdentifier: type, options: nil) { [weak self] data, _ in
+            DispatchQueue.main.async {
+                let text: String?
+                if let string = data as? String {
+                    text = string
+                } else if let data = data as? Data {
+                    text = String(data: data, encoding: .utf8)
+                } else {
+                    text = nil
+                }
+
+                if let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty {
+                    self?.openApp(with: Self.firstUsableToken(from: trimmed))
+                } else {
+                    self?.done()
+                }
+            }
+        }
+    }
+
+    private func loadURL(from provider: NSItemProvider) {
+        provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] data, _ in
+            DispatchQueue.main.async {
+                let url = (data as? URL) ?? (data as? NSURL) as URL?
+                if let host = url?.host, !host.isEmpty {
+                    self?.openApp(with: host)
+                } else if let absolute = url?.absoluteString, !absolute.isEmpty {
+                    self?.openApp(with: absolute)
+                } else {
+                    self?.done()
+                }
+            }
+        }
+    }
+
+    private static func firstUsableToken(from text: String) -> String {
+        let firstLine = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty } ?? text
+
+        if firstLine.count <= 80 {
+            return firstLine
+        }
+
+        let token = firstLine
+            .components(separatedBy: .whitespacesAndNewlines)
+            .first { !$0.isEmpty } ?? String(firstLine.prefix(80))
+        return token
     }
 
     private func openApp(with word: String) {

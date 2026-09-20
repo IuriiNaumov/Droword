@@ -10,8 +10,8 @@ struct DictionarySettingsView: View {
     @State private var csvFileURL: URL?
     @State private var showImportPicker = false
     @State private var importedCount: Int?
-    @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
-    @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallenges: Bool = true
+    @State private var importError: String?
+    @State private var showClearConfirm = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -21,13 +21,9 @@ struct DictionarySettingsView: View {
 
                 sectionHeader("Home Screen")
 
-                VStack(spacing: 0) {
-                    toggleRow(icon: "rectangle.stack.fill", color: themeStore.accentBlue, title: "Show Word Packs", isOn: $showWordPacks)
-                    toggleRow(icon: "trophy", color: themeStore.accentGold, title: "Show Daily Challenges", isOn: $showDailyChallenges)
-                }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                HomeExtrasToggleList()
 
-                Text("Optional extras. Home stays quiet unless you turn these on.")
+                Text("Hide extras you don’t want on Home. Dictionary and lessons stay.")
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
                     .padding(.horizontal, 4)
@@ -53,7 +49,8 @@ struct DictionarySettingsView: View {
 
                 VStack(spacing: 0) {
                     settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear \(store.words.count) words") {
-                        store.clear()
+                        guard !store.words.isEmpty else { return }
+                        showClearConfirm = true
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
@@ -90,19 +87,59 @@ struct DictionarySettingsView: View {
             allowedContentTypes: [.commaSeparatedText, .plainText],
             allowsMultipleSelection: false
         ) { result in
-            if case .success(let urls) = result, let url = urls.first {
-                importCSV(from: url)
+            switch result {
+            case .success(let urls):
+                if let url = urls.first {
+                    importCSV(from: url)
+                } else {
+                    importError = String(localized: "No file selected.")
+                }
+            case .failure:
+                importError = String(localized: "Couldn't open that file.")
             }
         }
         .overlay {
-            if let count = importedCount {
+            if showClearConfirm {
+                CustomAlertView(
+                    icon: "trash.fill",
+                    iconColor: Color.accentRed,
+                    title: "Clear dictionary?",
+                    message: "This deletes all \(store.words.count) words. This can't be undone.",
+                    primaryButton: .init(title: "Clear all", style: .destructive) {
+                        store.clear()
+                        showClearConfirm = false
+                        Haptics.warning()
+                    },
+                    secondaryButton: .init(title: "Cancel", style: .cancel) {
+                        showClearConfirm = false
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(999)
+            } else if let count = importedCount {
                 CustomAlertView(
                     icon: "checkmark.circle.fill",
                     iconColor: themeStore.mainAccentColor,
                     title: "Import Complete",
-                    message: "\(count) words imported successfully.",
+                    message: LocalizedStringKey(
+                        count == 0
+                            ? String(localized: "No new words to import.")
+                            : String(localized: "\(count) words imported successfully.")
+                    ),
                     primaryButton: .init(title: "OK", style: .primary) {
                         importedCount = nil
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(999)
+            } else if let importError {
+                CustomAlertView(
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: themeStore.accentGold,
+                    title: "Import failed",
+                    message: LocalizedStringKey(importError),
+                    primaryButton: .init(title: "OK", style: .primary) {
+                        self.importError = nil
                     }
                 )
                 .transition(.opacity)
@@ -145,38 +182,12 @@ struct DictionarySettingsView: View {
         .buttonStyle(.plain)
     }
 
-    private func toggleRow(icon: String, color: Color = .clear, title: LocalizedStringKey, isOn: Binding<Bool>) -> some View {
-        Button {
-            isOn.wrappedValue.toggle()
-            Haptics.menuTap()
-        } label: {
-            HStack(spacing: 14) {
-                MenuSymbol(systemName: icon)
-
-                Text(title)
-                    .font(themeStore.regular(16))
-                    .foregroundStyle(themeStore.mainText)
-
-                Spacer()
-
-                Toggle("", isOn: isOn)
-                    .labelsHidden()
-                    .tint(themeStore.mainAccentColor)
-                    .allowsHitTesting(false)
-            }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 18)
-            .background(themeStore.cardBg)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
     private func exportCSV() {
         let df = DateFormatting.dayFormatter
 
-        var csv = "Word,Translation,Type,Tag,Comment,Example,Explanation,Breakdown,Transcription,From Language,To Language,Date Added\n"
+        var csv = "Word,Translation,Type,Tag,Comment,Example,Explanation,Breakdown,Transcription,From Language,To Language,Date Added,Ease Factor,Interval Days,Repetitions,Lapses,Due Date,Introduced\n"
         for w in store.words {
+            let due = w.dueDate.map { df.string(from: $0) } ?? ""
             let fields: [String] = [
                 csvEscape(w.word),
                 csvEscape(w.translation ?? ""),
@@ -189,7 +200,13 @@ struct DictionarySettingsView: View {
                 csvEscape(w.transcription ?? ""),
                 csvEscape(w.fromLanguage),
                 csvEscape(w.toLanguage),
-                df.string(from: w.dateAdded)
+                df.string(from: w.dateAdded),
+                csvEscape(String(w.easeFactor)),
+                csvEscape(String(w.intervalDays)),
+                csvEscape(String(w.repetitions)),
+                csvEscape(String(w.lapses)),
+                csvEscape(due),
+                csvEscape(w.introduced ? "true" : "false")
             ]
             csv += fields.joined(separator: ",") + "\n"
         }
@@ -215,18 +232,36 @@ struct DictionarySettingsView: View {
     }
 
     private func importCSV(from url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return }
+        guard url.startAccessingSecurityScopedResource() else {
+            importError = String(localized: "Couldn't access that file.")
+            return
+        }
         defer { url.stopAccessingSecurityScopedResource() }
 
-        guard let content = try? String(contentsOf: url, encoding: .utf8) else { return }
+        let content: String
+        if let utf8 = try? String(contentsOf: url, encoding: .utf8) {
+            content = utf8
+        } else if let latin1 = try? String(contentsOf: url, encoding: .isoLatin1) {
+            content = latin1
+        } else {
+            importError = String(localized: "Couldn't read the file. Use UTF-8 CSV or TXT.")
+            return
+        }
 
         let rows = parseCSVRows(content)
-        guard rows.count > 1 else { return }
+        guard rows.count > 1 else {
+            importError = String(localized: "File is empty or has no data rows.")
+            return
+        }
 
         let header = rows[0].map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
 
         let colWord = header.firstIndex(of: "word")
+            ?? header.firstIndex(of: "front")
+            ?? header.firstIndex(of: "term")
         let colTranslation = header.firstIndex(of: "translation")
+            ?? header.firstIndex(of: "back")
+            ?? header.firstIndex(of: "definition")
         let colType = header.firstIndex(of: "type")
         let colTag = header.firstIndex(of: "tag")
         let colComment = header.firstIndex(of: "comment")
@@ -237,8 +272,17 @@ struct DictionarySettingsView: View {
         let colFromLang = header.firstIndex(of: "from language")
         let colToLang = header.firstIndex(of: "to language")
         let colDate = header.firstIndex(of: "date added")
+        let colEase = header.firstIndex(of: "ease factor")
+        let colInterval = header.firstIndex(of: "interval days")
+        let colReps = header.firstIndex(of: "repetitions")
+        let colLapses = header.firstIndex(of: "lapses")
+        let colDue = header.firstIndex(of: "due date")
+        let colIntroduced = header.firstIndex(of: "introduced")
 
-        guard let colWord else { return }
+        guard let colWord else {
+            importError = String(localized: "Need a column named \"Word\" (or Front / Term).")
+            return
+        }
 
         let df = DateFormatting.dayFormatter
 
@@ -266,6 +310,14 @@ struct DictionarySettingsView: View {
 
             let importedTranslation = field(at: colTranslation, in: row)
             let importedExample = field(at: colExample, in: row)
+            let ease = Double(field(at: colEase, in: row) ?? "") ?? 2.5
+            let interval = Int(field(at: colInterval, in: row) ?? "") ?? 0
+            let reps = Int(field(at: colReps, in: row) ?? "") ?? 0
+            let lapses = Int(field(at: colLapses, in: row) ?? "") ?? 0
+            let dueDate = field(at: colDue, in: row).flatMap { df.date(from: $0) }
+            let introducedFlag = (field(at: colIntroduced, in: row)?.lowercased() == "true")
+                || reps > 0 || interval > 0 || dueDate != nil
+
             let newWord = StoredWord(
                 word: wordText,
                 type: field(at: colType, in: row) ?? "word",
@@ -279,8 +331,14 @@ struct DictionarySettingsView: View {
                 dateAdded: date,
                 fromLanguage: field(at: colFromLang, in: row) ?? languageStore.nativeLanguage,
                 toLanguage: field(at: colToLang, in: row) ?? languageStore.learningLanguage,
+                easeFactor: ease,
+                intervalDays: interval,
+                repetitions: reps,
+                lapses: lapses,
+                dueDate: dueDate,
                 needsEnrichment: importedTranslation == nil,
-                examples: importedExample != nil ? [importedExample!] : []
+                examples: importedExample != nil ? [importedExample!] : [],
+                introduced: introducedFlag
             )
             store.add(newWord)
             count += 1
@@ -355,4 +413,13 @@ struct DictionarySettingsView: View {
 
         return rows
     }
+}
+
+#Preview {
+    NavigationStack {
+        DictionarySettingsView()
+    }
+    .environmentObject(WordsStore())
+    .environmentObject(LanguageStore())
+    .environmentObject(ThemeStore())
 }

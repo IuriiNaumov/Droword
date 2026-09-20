@@ -12,14 +12,31 @@ struct SuggestedWordsView: View {
     @State private var cachedExamples: [String: AttributedString] = [:]
 
     var body: some View {
-        if suggested.isLoading || !suggested.suggestedWords.isEmpty {
+        if suggested.isLoading || !suggested.suggestedWords.isEmpty || suggested.lastError != nil {
             VStack(alignment: .leading, spacing: 16) {
-                if suggested.topic != nil {
-                    Text("Suggestions")
-                        .font(themeStore.bold(24))
-                        .foregroundStyle(themeStore.mainText)
+                Text("Suggestions")
+                    .font(themeStore.display(24))
+                    .foregroundStyle(themeStore.mainText)
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+
+                if let topic = suggested.topic, !topic.isEmpty {
+                    Text(topic)
+                        .font(themeStore.regular(14))
+                        .foregroundStyle(themeStore.secondaryText)
                         .padding(.leading, 16)
-                        .padding(.top, 8)
+                        .padding(.top, -8)
+                }
+
+                if let lastError = suggested.lastError {
+                    StatusBannerView(
+                        icon: "exclamationmark.triangle.fill",
+                        iconColor: themeStore.accentRed,
+                        title: "Couldn't load suggestions",
+                        subtitle: LocalizedStringKey(lastError),
+                        useCard: true
+                    )
+                    .padding(.horizontal, 16)
                 }
 
                 if suggested.isLoading {
@@ -46,6 +63,7 @@ struct SuggestedWordsView: View {
 
                                 HStack {
                                     Button {
+                                        Haptics.softTap()
                                         withAnimation(.spring()) {
                                             suggested.accept(word, store: store, languageStore: languageStore)
                                             badgeStore.recordSuggestedWordAccepted()
@@ -57,12 +75,11 @@ struct SuggestedWordsView: View {
                                         }
                                         .font(themeStore.medium(13))
                                         .foregroundStyle(.white)
-                                        .padding(.vertical, 6)
-                                        .padding(.horizontal, 12)
-                                        .background(accent)
-                                        .clipShape(Capsule())
-
+                                        .padding(.vertical, 7)
+                                        .padding(.horizontal, 14)
+                                        .background(Capsule().fill(accent))
                                     }
+                                    .buttonStyle(PressableButtonStyle())
 
                                     Spacer()
 
@@ -78,16 +95,17 @@ struct SuggestedWordsView: View {
                                         .font(themeStore.regular(13))
                                         .foregroundStyle(accent)
                                     }
+                                    .buttonStyle(PressableButtonStyle())
                                 }
                                 .padding(.top, 10)
                             }
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(
-                                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
                                     .fill(accent.opacity(0.15))
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
                             .transition(.scale.combined(with: .opacity))
                         }
                     }

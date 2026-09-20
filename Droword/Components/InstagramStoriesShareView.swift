@@ -251,3 +251,32 @@ enum InstagramStoriesShare {
         }
     }
 }
+
+#Preview("Word") {
+    InstagramStoriesTemplateView(
+        word: StoredWord(
+        word: "hola",
+        type: "interjection",
+        translation: "hello",
+        example: "¡Hola! ¿Cómo estás?",
+        fromLanguage: "Español",
+        toLanguage: "English"
+    ),
+        themeStore: ThemeStore()
+    )
+}
+
+#Preview("Streak") {
+    ShareStreakTemplateView(
+        streak: 12,
+        word: StoredWord(
+        word: "hola",
+        type: "interjection",
+        translation: "hello",
+        example: "¡Hola! ¿Cómo estás?",
+        fromLanguage: "Español",
+        toLanguage: "English"
+    ),
+        themeStore: ThemeStore()
+    )
+}

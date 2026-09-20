@@ -245,7 +245,7 @@ final class ThemeStore: ObservableObject {
                 appBg: Color(light: "#F2F2F7", dark: "#000000"),
                 cardBg: Color(light: "#F2F2F7", dark: "#1C1C1E"),
                 mainText: Color(light: "#000000", dark: "#FFFFFF"),
-                secondaryText: Color(light: "#8E8E93", dark: "#8E8E93"),
+                secondaryText: Color(light: "#6C6C70", dark: "#AEAEB2"),
                 dividerColor: Color(light: "#C6C6C8", dark: "#38383A"),
                 tabTint: Color(light: "#007AFF", dark: "#0A84FF"),
                 buttonShadow: Color(hex: "#005EC4"),
@@ -458,4 +458,3 @@ struct GlassCardModifier: ViewModifier {
         }
     }
 }
-

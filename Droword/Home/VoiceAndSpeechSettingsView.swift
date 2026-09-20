@@ -61,3 +61,10 @@ struct VoiceAndSpeechSettingsView: View {
         .enableSwipeBack()
     }
 }
+
+#Preview {
+    NavigationStack {
+        VoiceAndSpeechSettingsView()
+    }
+    .environmentObject(ThemeStore())
+}

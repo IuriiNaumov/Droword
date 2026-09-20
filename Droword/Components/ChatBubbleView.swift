@@ -64,3 +64,20 @@ struct ChatBubbleView: View {
         }
     }
 }
+
+#Preview {
+    VStack(spacing: 12) {
+        ChatBubbleView(
+            message: SceneChatMessage(role: .assistant, text: "Hey! Try using hola."),
+            showHint: true,
+            onHint: { _ in }
+        )
+        ChatBubbleView(
+            message: SceneChatMessage(role: .user, text: "Hola!"),
+            showHint: false,
+            onHint: { _ in }
+        )
+    }
+    .padding()
+    .environmentObject(ThemeStore())
+}

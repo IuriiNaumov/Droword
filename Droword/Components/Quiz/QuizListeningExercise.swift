@@ -2,6 +2,7 @@ import SwiftUI
 
 struct QuizListeningExercise: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @ObservedObject private var network = NetworkMonitor.shared
 
     let item: QuizSessionManager.QuizItem
     let hasAnswered: Bool
@@ -30,9 +31,16 @@ struct QuizListeningExercise: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle())
+                .opacity(network.isConnected ? 1 : 0.35)
+                .disabled(!network.isConnected || isPlaying)
                 .accessibilityLabel(Text("Play the word"))
+                .accessibilityHint(
+                    Text(network.isConnected
+                         ? "Plays the word out loud"
+                         : "Needs an internet connection")
+                )
 
-                Text("Tap to hear it again")
+                Text(network.isConnected ? "Tap to hear it again" : "Needs an internet connection")
                     .font(themeStore.regular(14))
                     .foregroundStyle(themeStore.secondaryText.opacity(0.7))
             }
@@ -73,7 +81,7 @@ struct QuizListeningExercise: View {
     }
 
     private func play() {
-        guard !isPlaying else { return }
+        guard network.isConnected, !isPlaying else { return }
         isPlaying = true
         Task {
             try? await AudioManager.shared.playAndWait(text: item.word)
@@ -127,4 +135,25 @@ struct QuizListeningExercise: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.5), value: hasAnswered)
         .accessibilityLabel(Text(option))
     }
+}
+
+#Preview {
+    QuizListeningExercise(
+        item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+        hasAnswered: false,
+        isCorrect: false,
+        options: ["hello", "bye", "please", "thanks"],
+        selectedOption: nil,
+        shakeOffset: 0,
+        onSelect: { _ in }
+    )
+    .padding()
+    .environmentObject(ThemeStore())
 }

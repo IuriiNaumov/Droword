@@ -19,3 +19,8 @@ struct SunView: View {
         .frame(width: size, height: size)
     }
 }
+
+#Preview {
+    SunView(size: 40)
+        .padding()
+}

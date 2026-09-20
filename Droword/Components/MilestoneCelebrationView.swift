@@ -4,12 +4,14 @@ enum MilestoneType: Identifiable, Equatable {
     case wordCount(Int)
     case streak(Int)
     case dailyGoal
+    case badge(id: String, emoji: String, title: String, message: String)
 
     var id: String {
         switch self {
         case .wordCount(let n): return "words.\(n)"
         case .streak(let n): return "streak.\(n)"
         case .dailyGoal: return "dailyGoal"
+        case .badge(let id, _, _, _): return "badge.\(id)"
         }
     }
 
@@ -31,6 +33,7 @@ enum MilestoneType: Identifiable, Equatable {
             default: return "🌟"
             }
         case .dailyGoal: return "🎯"
+        case .badge(_, let emoji, _, _): return emoji
         }
     }
 
@@ -39,10 +42,17 @@ enum MilestoneType: Identifiable, Equatable {
         case .wordCount(let n): return String(localized: "\(n) words!")
         case .streak(let n): return String(localized: "\(n)-day streak!")
         case .dailyGoal: return String(localized: "Daily goal!")
+        case .badge(_, _, let title, _): return title
         }
     }
 
     func message(wordsCount: Int, daysSinceStart: Int) -> String {
+        switch self {
+        case .badge(_, _, _, let message):
+            return message
+        default:
+            break
+        }
         let wordsPerWeek = daysSinceStart > 0 ? max(1, wordsCount * 7 / daysSinceStart) : wordsCount
         switch self {
         case .wordCount(let n):
@@ -77,6 +87,8 @@ enum MilestoneType: Identifiable, Equatable {
             }
         case .dailyGoal:
             return String(localized: "You've hit your target for today. Total: \(wordsCount) words.")
+        case .badge:
+            return ""
         }
     }
 }
@@ -88,7 +100,7 @@ struct MilestoneCelebrationView: View {
     var daysSinceStart: Int = 0
     let onDismiss: () -> Void
 
-    @State private var emojiScale: CGFloat = 0.3
+    @State private var iconScale: CGFloat = 0.3
     @State private var textOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
 
@@ -104,7 +116,7 @@ struct MilestoneCelebrationView: View {
             VStack(spacing: 24) {
                 Text(milestone.emoji)
                     .font(.system(size: 72))
-                    .scaleEffect(emojiScale)
+                    .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text(milestone.title)
@@ -132,16 +144,17 @@ struct MilestoneCelebrationView: View {
             }
             .padding(32)
             .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignRadius.dialog, style: .continuous)
                     .fill(themeStore.appBg)
             )
             .padding(.horizontal, 32)
         }
         .onAppear {
             Haptics.celebration()
+            SoundFX.play(.sparkle)
 
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                emojiScale = 1.0
+                iconScale = 1.0
             }
             withAnimation(.easeOut(duration: 0.4).delay(0.3)) {
                 textOpacity = 1.0
@@ -151,4 +164,47 @@ struct MilestoneCelebrationView: View {
             }
         }
     }
+}
+
+#Preview("Words 10") {
+    MilestoneCelebrationView(milestone: .wordCount(10), wordsCount: 10, daysSinceStart: 3, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Words 50") {
+    MilestoneCelebrationView(milestone: .wordCount(50), wordsCount: 50, daysSinceStart: 20, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Words 100") {
+    MilestoneCelebrationView(milestone: .wordCount(100), wordsCount: 100, daysSinceStart: 40, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Streak 7") {
+    MilestoneCelebrationView(milestone: .streak(7), wordsCount: 30, daysSinceStart: 10, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Streak 30") {
+    MilestoneCelebrationView(milestone: .streak(30), wordsCount: 80, daysSinceStart: 35, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Daily goal") {
+    MilestoneCelebrationView(milestone: .dailyGoal, wordsCount: 22, daysSinceStart: 12, onDismiss: {})
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Badge unlock") {
+    MilestoneCelebrationView(
+        milestone: .badge(
+            id: "quiz.10",
+            emoji: "📝",
+            title: String(localized: "Badge unlocked!"),
+            message: "Quiz Rookie — Complete 10 quizzes"
+        ),
+        onDismiss: {}
+    )
+    .environmentObject(ThemeStore())
 }

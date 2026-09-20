@@ -10,8 +10,10 @@ struct DailyLimitsManager {
         return TranslationLimits.maxFreeTranslations(firstUse: firstUse)
     }
     static let maxFreeTTS = 10
-    static let maxFreeSuggestionFetches = 2
+    static let maxFreeSuggestionFetches = 4
     static let maxFreePhotoScans = 1
+    static let maxFreeStories = 2
+    static let maxFreeScenes = 3
 
     static let maxNewWordsPerDay = 12
 
@@ -20,6 +22,8 @@ struct DailyLimitsManager {
     private static let ttsKey = "dailyLimits.tts"
     private static let goldenKey = "dailyLimits.goldenFetches"
     private static let photoScansKey = "dailyLimits.photoScans"
+    private static let storiesKey = "dailyLimits.stories"
+    private static let scenesKey = "dailyLimits.scenes"
     private static let newWordsKey = "dailyLimits.newWords"
 
     private static func resetIfNeeded() {
@@ -31,6 +35,8 @@ struct DailyLimitsManager {
             UserDefaults.standard.set(0, forKey: ttsKey)
             UserDefaults.standard.set(0, forKey: goldenKey)
             UserDefaults.standard.set(0, forKey: photoScansKey)
+            UserDefaults.standard.set(0, forKey: storiesKey)
+            UserDefaults.standard.set(0, forKey: scenesKey)
             UserDefaults.standard.set(0, forKey: newWordsKey)
         }
     }
@@ -117,5 +123,43 @@ struct DailyLimitsManager {
         resetIfNeeded()
         let current = UserDefaults.standard.integer(forKey: photoScansKey)
         UserDefaults.standard.set(current + 1, forKey: photoScansKey)
+    }
+
+    static var storiesUsedToday: Int {
+        resetIfNeeded()
+        return UserDefaults.standard.integer(forKey: storiesKey)
+    }
+
+    static var canGenerateStory: Bool {
+        storiesUsedToday < maxFreeStories
+    }
+
+    static var storiesRemaining: Int {
+        max(0, maxFreeStories - storiesUsedToday)
+    }
+
+    static func recordStory() {
+        resetIfNeeded()
+        let current = UserDefaults.standard.integer(forKey: storiesKey)
+        UserDefaults.standard.set(current + 1, forKey: storiesKey)
+    }
+
+    static var scenesUsedToday: Int {
+        resetIfNeeded()
+        return UserDefaults.standard.integer(forKey: scenesKey)
+    }
+
+    static var canStartScene: Bool {
+        scenesUsedToday < maxFreeScenes
+    }
+
+    static var scenesRemaining: Int {
+        max(0, maxFreeScenes - scenesUsedToday)
+    }
+
+    static func recordScene() {
+        resetIfNeeded()
+        let current = UserDefaults.standard.integer(forKey: scenesKey)
+        UserDefaults.standard.set(current + 1, forKey: scenesKey)
     }
 }

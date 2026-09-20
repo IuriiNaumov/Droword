@@ -7,6 +7,8 @@ struct PracticeEmptyContent: View {
     let title: String
     let subtitle: String
     let tip: String
+    var ctaTitle: LocalizedStringKey? = nil
+    var onCTA: (() -> Void)? = nil
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0
@@ -50,6 +52,22 @@ struct PracticeEmptyContent: View {
                 )
                 .opacity(subtitleOpacity)
                 .padding(.horizontal, 28)
+
+            if let ctaTitle, let onCTA {
+                Button {
+                    Haptics.softTap()
+                    onCTA()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                        Text(ctaTitle)
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+                .padding(.horizontal, 40)
+                .opacity(subtitleOpacity)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -64,4 +82,14 @@ struct PracticeEmptyContent: View {
             }
         }
     }
+}
+
+#Preview {
+    PracticeEmptyContent(
+        icon: "bolt.fill",
+        title: "Nothing due",
+        subtitle: "Add a few words and come back.",
+        tip: "Four words unlock practice"
+    )
+    .environmentObject(ThemeStore())
 }

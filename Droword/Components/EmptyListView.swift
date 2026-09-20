@@ -30,14 +30,14 @@ struct EmptyListView: View {
             }
 
             Text(title)
-                .font(themeStore.display(20))
+                .font(themeStore.display(22))
                 .foregroundStyle(themeStore.mainText)
                 .tracking(-0.4)
                 .multilineTextAlignment(.center)
                 .opacity(titleOpacity)
 
             Text(subtitle)
-                .font(themeStore.regular(14))
+                .font(themeStore.regular(15))
                 .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -49,7 +49,7 @@ struct EmptyListView: View {
                     .foregroundStyle(themeStore.mainAccentColor)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                     .background(
                         Capsule(style: .continuous)
                             .fill(themeStore.mainAccentColor.opacity(0.12))

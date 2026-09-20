@@ -167,3 +167,10 @@ extension ThemeStore {
         }
     }
 }
+
+#Preview {
+    NavigationStack {
+        FontSizePickerView()
+    }
+    .environmentObject(ThemeStore())
+}

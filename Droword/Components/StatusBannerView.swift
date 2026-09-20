@@ -7,8 +7,14 @@ struct StatusBannerView: View {
     var iconColor: Color? = nil
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
+    var useCard: Bool = false
 
     var body: some View {
+        content
+            .modifier(OptionalCardChrome(enabled: useCard, themeStore: themeStore))
+    }
+
+    private var content: some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 20, weight: .regular))
@@ -24,7 +30,41 @@ struct StatusBannerView: View {
                     .foregroundStyle(themeStore.secondaryText)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
+}
+
+private struct OptionalCardChrome: ViewModifier {
+    let enabled: Bool
+    let themeStore: ThemeStore
+
+    func body(content: Content) -> some View {
+        if enabled {
+            content
+                .padding(16)
+                .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
+        } else {
+            content
+        }
+    }
+}
+
+#Preview {
+    VStack(spacing: 16) {
+        StatusBannerView(
+            icon: "wifi.slash",
+            iconColor: .orange,
+            title: "You're offline",
+            subtitle: "AI features need a connection.",
+            useCard: true
+        )
+        StatusBannerView(
+            icon: "clock",
+            title: "Daily limit reached",
+            subtitle: "Come back tomorrow."
+        )
+    }
+    .padding()
+    .environmentObject(ThemeStore())
 }

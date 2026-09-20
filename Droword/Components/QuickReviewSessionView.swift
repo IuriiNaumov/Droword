@@ -21,6 +21,7 @@ struct QuickReviewSessionView: View {
     @State private var sessionResults: [(id: UUID, word: String, translation: String, correct: Bool)] = []
     @State private var doneMoments: [StudyMoment] = []
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @ObservedObject private var network = NetworkMonitor.shared
 
     private let maxCards = 12
 
@@ -296,9 +297,12 @@ struct QuickReviewSessionView: View {
         SoundWavesView(isPlaying: isPlaying)
             .frame(width: 40, height: 40)
             .contentShape(Rectangle())
+            .opacity(network.isConnected ? 1 : 0.35)
+            .allowsHitTesting(network.isConnected)
             .highPriorityGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
+                        guard network.isConnected else { return }
                         guard !isHoldingAudio else { return }
                         holdStartedAt = Date()
                         isHoldingAudio = true
@@ -321,6 +325,11 @@ struct QuickReviewSessionView: View {
                     }
             )
             .accessibilityLabel(Text("Pronunciation"))
+            .accessibilityHint(
+                Text(network.isConnected
+                     ? "Tap to play, or hold to hear while pressed"
+                     : "Needs an internet connection")
+            )
             .padding(.top, 2)
     }
 
@@ -484,6 +493,7 @@ struct QuickReviewSessionView: View {
     }
 
     private func playAudio(for word: StoredWord) {
+        guard network.isConnected else { return }
         TTSPlayer.play(
             word: word.word,
             isPremium: isPremium,
@@ -491,4 +501,11 @@ struct QuickReviewSessionView: View {
             onPlayingChanged: { isPlaying = $0 }
         )
     }
+}
+
+#Preview {
+    QuickReviewSessionView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
 }

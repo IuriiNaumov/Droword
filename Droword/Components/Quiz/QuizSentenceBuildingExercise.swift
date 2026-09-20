@@ -175,3 +175,33 @@ struct FlowLayout: Layout {
         }
     }
 }
+
+private struct QuizSentenceBuildingExercisePreview: View {
+    @State private var sentenceWords = ["Hola", "amigo"]
+    @State private var selectedSentenceWords: [String] = []
+
+    var body: some View {
+        QuizSentenceBuildingExercise(
+            item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+            hasAnswered: false,
+            isCorrect: false,
+            shakeOffset: 0,
+            sentenceWords: $sentenceWords,
+            selectedSentenceWords: $selectedSentenceWords,
+            correctSentenceWords: ["Hola", "amigo"]
+        )
+        .padding()
+        .environmentObject(ThemeStore())
+    }
+}
+
+#Preview {
+    QuizSentenceBuildingExercisePreview()
+}

@@ -1,4 +1,4 @@
-/** Request guards: size, rate, key compare. Native iOS ignores CORS; browsers should not call this API. */
+
 
 const MAX_BODY_BYTES = 1_800_000;
 const MAX_WORD = 200;
@@ -31,7 +31,6 @@ export function clipText(value: unknown, max: number): string | null {
   return trimmed;
 }
 
-/** Truncates oversized lists so a fat vocab dump cannot inflate the Claude prompt. */
 export function takeList(value: unknown, maxItems = MAX_LIST, maxItem = MAX_WORD): string[] | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   const out: string[] = [];
@@ -88,7 +87,6 @@ async function bump(cache: Cache, key: string, max: number, ttl: number): Promis
   return true;
 }
 
-/** Per-IP minute + day caps. Best-effort (edge cache); bursts can slightly overshoot. */
 export async function allowIP(request: Request, path: string): Promise<boolean> {
   const ip = encodeURIComponent(clientIP(request));
   const window = PATH_LIMITS[path] ?? { max: 30, seconds: 60 };
@@ -99,11 +97,11 @@ export async function allowIP(request: Request, path: string): Promise<boolean> 
 
   const minuteOk = await bump(
     cache,
-    `https://droword.rate/m/${path}/${ip}/${minute}`,
+    `https:
     window.max,
     window.seconds
   );
   if (!minuteOk) return false;
 
-  return bump(cache, `https://droword.rate/d/${path}/${ip}/${day}`, dayMax, 86_400);
+  return bump(cache, `https:
 }

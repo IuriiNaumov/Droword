@@ -64,3 +64,8 @@ struct SkeletonWordCardView: View {
         .redacted(reason: .placeholder)
     }
 }
+
+#Preview {
+    SkeletonWordCardView()
+        .padding()
+}

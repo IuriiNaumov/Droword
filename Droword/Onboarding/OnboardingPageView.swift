@@ -102,3 +102,18 @@ struct OnboardingPageView: View {
         }
     }
 }
+
+#Preview {
+    OnboardingPageView(
+        model: OnboardingPageModel(
+            title: "Build your dictionary",
+            subtitle: "Save words with examples and tags.",
+            illustrationStyle: .dictionary,
+            accent: .blue
+        ),
+        animateStage: true,
+        dragOffset: .zero,
+        containerSize: CGSize(width: 390, height: 844)
+    )
+    .environmentObject(ThemeStore())
+}

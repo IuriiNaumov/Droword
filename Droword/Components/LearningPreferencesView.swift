@@ -209,23 +209,47 @@ struct OnboardingPreferencesPage: View {
     @ObservedObject private var profile = LearningProfileStore.shared
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Make it yours")
-                    .zoomerTitle(32)
-                    .environmentObject(themeStore)
+        ZStack {
+            themeStore.appBg.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Make it yours")
+                            .font(themeStore.bold(28))
+                            .foregroundStyle(themeStore.mainText)
+                        Text("Goal, topics, style — so practice feels like you.")
+                            .font(themeStore.regular(15))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 20)
 
-                Text("Goal, topics, style — so practice feels like you.")
-                    .font(themeStore.regular(15))
-                    .foregroundStyle(themeStore.secondaryText)
-
-                LearningPreferencesForm(profile: profile, compact: true)
-                    .padding(.top, 8)
+                    LearningPreferencesForm(profile: profile, compact: true)
+                }
+                .padding(.top, 54)
+                .padding(.bottom, 12)
             }
-            .padding(.bottom, 12)
         }
         .onDisappear {
             profile.markConfigured()
         }
     }
+}
+
+#Preview("Form") {
+    LearningPreferencesForm(profile: LearningProfileStore.shared)
+        .padding()
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Settings") {
+    NavigationStack {
+        LearningPreferencesView()
+    }
+    .environmentObject(ThemeStore())
+}
+
+#Preview("Onboarding") {
+    OnboardingPreferencesPage()
+        .environmentObject(ThemeStore())
 }

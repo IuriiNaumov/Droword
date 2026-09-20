@@ -48,7 +48,7 @@ enum SceneOfflineCopy {
         }
     }
 
-    // MARK: - RU
+
 
     private static func ru(_ m: String, _ k: SceneKind) -> (open: [String], follow: [String], nudge: [String], close: [String]) {
         let close = ["ок, на сегодня хватит.", "ладно, поймал. на сегодня всё.", "супер. завтра продолжим."]
@@ -147,7 +147,7 @@ enum SceneOfflineCopy {
         }
     }
 
-    // MARK: - ES
+
 
     private static func es(_ m: String, _ k: SceneKind) -> (open: [String], follow: [String], nudge: [String], close: [String]) {
         let close = ["vale, por hoy ya.", "ok, lo pillaste. hasta mañana.", "bien. lo dejamos aquí."]
@@ -204,7 +204,7 @@ enum SceneOfflineCopy {
         }
     }
 
-    // MARK: - FR
+
 
     private static func fr(_ m: String, _ k: SceneKind) -> (open: [String], follow: [String], nudge: [String], close: [String]) {
         let close = ["ok, on s'arrête là.", "nickel. à demain.", "ça suffit pour aujourd'hui."]
@@ -261,7 +261,7 @@ enum SceneOfflineCopy {
         }
     }
 
-    // MARK: - DE
+
 
     private static func de(_ m: String, _ k: SceneKind) -> (open: [String], follow: [String], nudge: [String], close: [String]) {
         let close = ["ok, reicht für heute.", "sitzt. bis morgen.", "gut. für heute Schluss."]
@@ -318,7 +318,7 @@ enum SceneOfflineCopy {
         }
     }
 
-    // MARK: - IT / PT / KO / JA / ZH / EN
+
 
     private static func it(_ m: String, _ k: SceneKind) -> (open: [String], follow: [String], nudge: [String], close: [String]) {
         let close = ["ok, per oggi basta.", "ci sei. a domani.", "bene. chiudiamo qui."]

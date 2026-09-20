@@ -16,6 +16,13 @@ enum DesignSpacing {
     static let section: CGFloat = 28
 }
 
+enum DesignMotion {
+    static let toast = Animation.spring(response: 0.35, dampingFraction: 0.82)
+    static let sheet = Animation.spring(response: 0.38, dampingFraction: 0.86)
+    static let card = Animation.spring(response: 0.38, dampingFraction: 0.88)
+    static let press = Animation.spring(response: 0.3, dampingFraction: 0.7)
+}
+
 struct PressableButtonStyle: ButtonStyle {
     var scale: CGFloat = 0.96
 
@@ -23,7 +30,7 @@ struct PressableButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? scale : 1.0)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .animation(DesignMotion.press, value: configuration.isPressed)
     }
 }
 

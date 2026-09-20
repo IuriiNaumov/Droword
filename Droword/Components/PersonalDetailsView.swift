@@ -85,4 +85,3 @@ struct PersonalDetailsView: View {
 #Preview {
     PersonalDetailsView()
 }
-

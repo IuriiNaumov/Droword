@@ -25,9 +25,15 @@ struct PerfectLessonBadge: View {
             withAnimation(.spring(response: 0.45, dampingFraction: 0.5)) {
                 scale = 1.0
             }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 0.9).repeatCount(3, autoreverses: true)) {
                 glow = 1.0
             }
         }
     }
+}
+
+#Preview {
+    PerfectLessonBadge()
+        .padding()
+        .environmentObject(ThemeStore())
 }

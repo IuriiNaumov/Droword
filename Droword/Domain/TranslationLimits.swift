@@ -3,7 +3,7 @@ import Foundation
 enum TranslationLimits {
 
     static func maxFreeTranslations(daysSinceInstall: Int) -> Int {
-        daysSinceInstall <= 7 ? 7 : 3
+        daysSinceInstall <= 7 ? 10 : 5
     }
 
     static func maxFreeTranslations(firstUse: Date?, now: Date = Date(), calendar: Calendar = .current) -> Int {

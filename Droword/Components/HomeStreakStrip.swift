@@ -60,3 +60,10 @@ struct HomeStreakStrip: View {
         return formatter.string(from: date)
     }
 }
+
+#Preview {
+    HomeStreakStrip(onOpenCalendar: {})
+        .padding()
+        .environmentObject(WordsStore())
+        .environmentObject(ThemeStore())
+}

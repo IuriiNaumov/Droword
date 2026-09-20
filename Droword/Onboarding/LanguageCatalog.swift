@@ -16,4 +16,3 @@ struct LanguageCatalog {
         LanguageOption(name: "हिन्दी", flag: "🇮🇳", color: Color("AccentBlue"))
     ]
 }
-

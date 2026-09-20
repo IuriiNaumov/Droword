@@ -134,3 +134,10 @@ struct DailyChallengeDetailView: View {
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
     }
 }
+
+#Preview {
+    DailyChallengeDetailView(manager: DailyChallengeManager.shared)
+        .environmentObject(ThemeStore())
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+}

@@ -23,8 +23,8 @@ struct ReadingStoryCard: View {
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.45))
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(themeStore.accentBlue)
             }
             .padding(16)
             .background(
@@ -49,6 +49,7 @@ struct StoryView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showTranslation = false
+    @State private var showPremiumWall = false
 
     var body: some View {
         NavigationStack {
@@ -81,6 +82,10 @@ struct StoryView: View {
         }
         .task {
             if story == nil { await load() }
+        }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
         }
     }
 
@@ -285,6 +290,13 @@ struct StoryView: View {
             errorMessage = String(localized: "Add a few more words first, then I can write you a story.")
             return
         }
+        guard isPremium || DailyLimitsManager.canGenerateStory else {
+            showPremiumWall = true
+            if story == nil {
+                errorMessage = String(localized: "You've used today's free stories. Upgrade to PRO for unlimited.")
+            }
+            return
+        }
         errorMessage = nil
         showTranslation = false
         withAnimation { isLoading = true }
@@ -296,13 +308,35 @@ struct StoryView: View {
                 goal: profile.goal.localizedTitle,
                 topics: profile.topics.map(\.localizedTitle)
             )
+            if !isPremium {
+                DailyLimitsManager.recordStory()
+            }
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
                 story = result
                 isLoading = false
             }
         } catch {
             withAnimation { isLoading = false }
-            errorMessage = String(localized: "Couldn't create a story right now. Please try again.")
+            let isOffline = !NetworkMonitor.shared.isConnected
+                || (error as? APIError).map { if case .noConnection = $0 { return true }; return false } ?? false
+            if isOffline {
+                errorMessage = String(localized: "You're offline. Connect to generate a story.")
+            } else {
+                errorMessage = String(localized: "Couldn't create a story right now. Please try again.")
+            }
         }
     }
+}
+
+#Preview("Card") {
+    ReadingStoryCard(onTap: {})
+        .padding()
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Story") {
+    StoryView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
 }

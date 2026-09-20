@@ -141,3 +141,10 @@ struct FirstWordsView: View {
         )
     }
 }
+
+#Preview {
+    FirstWordsView(onDismiss: {})
+        .environmentObject(ThemeStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(WordsStore())
+}

@@ -1,7 +1,6 @@
 import AVFoundation
 import Foundation
 
-/// Tiny synthesized UI sounds (not TTS). Respects the silent switch via `.ambient`.
 enum SoundFX {
     enum Kind {
         case pop
@@ -76,7 +75,6 @@ enum SoundFX {
                 chirp: true
             )
         case .sparkle:
-            // Soft chime + tiny high ticks — join moment on splash.
             data = try synthesizeSparkle(duration: 0.58)
         }
         cache[kind] = data
@@ -126,7 +124,6 @@ enum SoundFX {
         for i in 0..<count {
             let t = Double(i) / sampleRate
             let progress = t / duration
-            // Soft noise burst that slides down in amplitude = “whoosh”
             state = state * 0.96 + Double.random(in: -1...1) * 0.35
             let tone = sin(2 * .pi * (420 - 220 * progress) * t) * 0.25
             let env = sin(.pi * progress) * (0.55 + 0.45 * (1 - progress))
@@ -137,14 +134,11 @@ enum SoundFX {
         return try pcm16WAV(samples: samples, sampleRate: Int(sampleRate))
     }
 
-    /// Soft fairy-tale chime — gentle arpeggio with a long shimmer tail.
     private static func synthesizeSparkle(duration: Double) throws -> Data {
         let sampleRate = 22050.0
         let count = Int(duration * sampleRate)
         var samples = [Int16](repeating: 0, count: count)
 
-        // Soft major-ish bells, staggered like a tiny music-box phrase.
-        // C6, E6, G6, C7 — warm, not sharp.
         let notes: [(start: Double, freq: Double, amp: Double, len: Double)] = [
             (0.00, 1046.5, 0.85, 0.42),
             (0.07, 1318.5, 0.72, 0.40),
@@ -161,20 +155,17 @@ enum SoundFX {
                 let local = t - note.start
                 guard local >= 0, local < note.len else { continue }
 
-                // Soft attack, long exponential decay — “fairy dust”
                 let attack = 0.012
                 let attackEnv = local < attack ? (local / attack) : 1.0
                 let decay = exp(-local * 4.2)
                 let env = attackEnv * decay
 
-                // Fundamental + soft overtone (bell-ish, not harsh)
                 let fund = sin(2 * .pi * note.freq * local)
                 let over = sin(2 * .pi * note.freq * 2.01 * local) * 0.18
                 let air = sin(2 * .pi * note.freq * 3.02 * local) * 0.06
                 sample += (fund + over + air) * note.amp * env
             }
 
-            // Very quiet high shimmer veil
             if t > 0.05, t < 0.55 {
                 let veil = sin(2 * .pi * 3200 * t) * 0.04 * exp(-(t - 0.05) * 5.5)
                 sample += veil
@@ -209,8 +200,8 @@ enum SoundFX {
         appendASCII("WAVE")
         appendASCII("fmt ")
         appendUInt32(16)
-        appendUInt16(1) // PCM
-        appendUInt16(1) // mono
+        appendUInt16(1)
+        appendUInt16(1)
         appendUInt32(UInt32(sampleRate))
         appendUInt32(UInt32(sampleRate * 2))
         appendUInt16(2)

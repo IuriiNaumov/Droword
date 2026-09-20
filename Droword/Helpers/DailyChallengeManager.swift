@@ -65,12 +65,15 @@ final class DailyChallengeManager: ObservableObject {
     private let storageKey = "DailyChallengeManager.challenges"
     private let lastDateKey = "DailyChallengeManager.lastDate"
     private let totalCompletedKey = "DailyChallengeManager.totalCompleted"
+    private let dismissedDateKey = "DailyChallengeManager.dismissedDate"
 
     @Published private(set) var totalCompleted: Int = 0
+    @Published private(set) var isDismissedForToday: Bool = false
 
     private init() {
         totalCompleted = UserDefaults.standard.integer(forKey: totalCompletedKey)
         loadOrGenerate()
+        syncDismissedState()
     }
 
     var todayString: String {
@@ -83,6 +86,20 @@ final class DailyChallengeManager: ObservableObject {
 
     var completedCount: Int {
         challenges.filter { $0.isCompleted }.count
+    }
+
+    var showsOnHome: Bool {
+        !isDismissedForToday
+    }
+
+    func dismissCompletedForToday() {
+        guard allCompleted else { return }
+        UserDefaults.standard.set(todayString, forKey: dismissedDateKey)
+        isDismissedForToday = true
+    }
+
+    private func syncDismissedState() {
+        isDismissedForToday = UserDefaults.standard.string(forKey: dismissedDateKey) == todayString
     }
 
     func recordWordsAdded(count: Int) {
@@ -139,6 +156,7 @@ final class DailyChallengeManager: ObservableObject {
             UserDefaults.standard.set(today, forKey: lastDateKey)
             save()
         }
+        syncDismissedState()
     }
 
     func refreshIfNeeded() {
@@ -149,6 +167,7 @@ final class DailyChallengeManager: ObservableObject {
             UserDefaults.standard.set(today, forKey: lastDateKey)
             save()
         }
+        syncDismissedState()
     }
 
     private func save() {

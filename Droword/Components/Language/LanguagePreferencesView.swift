@@ -82,3 +82,11 @@ struct LanguagePreferencesView: View {
         showToast = true
     }
 }
+
+#Preview {
+    NavigationStack {
+        LanguagePreferencesView()
+    }
+    .environmentObject(LanguageStore())
+    .environmentObject(ThemeStore())
+}

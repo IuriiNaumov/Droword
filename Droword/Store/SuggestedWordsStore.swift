@@ -11,6 +11,7 @@ final class SuggestedWordsStore: ObservableObject {
         didSet { saveToDisk() }
     }
     @Published var isLoading = false
+    @Published var lastError: String? = nil
 
     private static let fileURL: URL = {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -23,7 +24,13 @@ final class SuggestedWordsStore: ObservableObject {
 
     func fetchSuggestions(basedOn words: [StoredWord], languageStore: LanguageStore) async {
         guard !words.isEmpty else { return }
+        guard NetworkMonitor.shared.isConnected else {
+            isLoading = false
+            lastError = nil
+            return
+        }
         isLoading = true
+        lastError = nil
         defer { isLoading = false }
 
         do {
@@ -51,7 +58,14 @@ final class SuggestedWordsStore: ObservableObject {
             if !result.suggestions.isEmpty {
                 Haptics.suggestionsArrived()
             }
+        } catch let error as APIError {
+            lastError = error.errorDescription
         } catch {
+            if !NetworkMonitor.shared.isConnected {
+                lastError = String(localized: "No internet connection")
+            } else {
+                lastError = String(localized: "Couldn't load suggestions. Try again later.")
+            }
         }
     }
 

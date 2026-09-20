@@ -8,6 +8,8 @@ struct ChatSceneView: View {
     @ObservedObject private var learningProfile = LearningProfileStore.shared
     @StateObject private var model: ChatSceneViewModel
     @FocusState private var inputFocused: Bool
+    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+    @State private var showPremiumWall = false
 
     init(target: ChatSceneTarget) {
         _model = StateObject(wrappedValue: ChatSceneViewModel(target: target))
@@ -21,6 +23,18 @@ struct ChatSceneView: View {
                     translation: model.target.translation,
                     userTurns: model.userTurns
                 )
+                if model.isOfflinePractice {
+                    StatusBannerView(
+                        icon: "wifi.slash",
+                        iconColor: themeStore.accentGold,
+                        title: "You're offline",
+                        subtitle: "Chat scenes need a connection. Come back online to practice.",
+                        useCard: true
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                }
                 messagesList
                 if let errorMessage = model.errorMessage {
                     Text(errorMessage)
@@ -56,9 +70,21 @@ struct ChatSceneView: View {
         .task {
             await model.loadOpening(
                 languageStore: languageStore,
-                goal: learningProfile.goal.localizedTitle
+                goal: learningProfile.goal.localizedTitle,
+                isPremium: isPremium
             )
-            inputFocused = true
+            if model.needsPremium {
+                showPremiumWall = true
+            } else {
+                inputFocused = true
+            }
+        }
+        .onChange(of: model.needsPremium) { _, needs in
+            if needs { showPremiumWall = true }
+        }
+        .fullScreenCover(isPresented: $showPremiumWall) {
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
         }
     }
 
@@ -98,7 +124,8 @@ struct ChatSceneView: View {
         await model.send(
             store: store,
             languageStore: languageStore,
-            goal: learningProfile.goal.localizedTitle
+            goal: learningProfile.goal.localizedTitle,
+            isPremium: isPremium
         )
         if model.isDone {
             inputFocused = false
@@ -116,4 +143,18 @@ struct ChatSceneView: View {
             }
         }
     }
+}
+
+#Preview {
+    ChatSceneView(
+        target: ChatSceneTarget(
+            id: UUID(),
+            word: "hola",
+            translation: "hello",
+            example: "¡Hola!"
+        )
+    )
+    .environmentObject(WordsStore())
+    .environmentObject(LanguageStore())
+    .environmentObject(ThemeStore())
 }

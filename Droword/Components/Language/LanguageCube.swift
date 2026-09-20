@@ -109,3 +109,14 @@ struct PressActionsModifier: ViewModifier {
             )
     }
 }
+
+#Preview {
+    LanguageCube(
+        language: LanguageCatalog.availableLanguages[0],
+        isSelected: true,
+        isBlocked: false,
+        onTap: {}
+    )
+    .padding()
+    .environmentObject(ThemeStore())
+}

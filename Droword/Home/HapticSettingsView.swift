@@ -96,3 +96,10 @@ struct HapticSettingsView: View {
         Haptics.preview(feel)
     }
 }
+
+#Preview {
+    NavigationStack {
+        HapticSettingsView()
+    }
+    .environmentObject(ThemeStore())
+}

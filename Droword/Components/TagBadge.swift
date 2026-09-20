@@ -16,3 +16,9 @@ struct TagBadge: View {
             )
     }
 }
+
+#Preview {
+    TagBadge(text: "Travel")
+        .padding()
+        .environmentObject(ThemeStore())
+}

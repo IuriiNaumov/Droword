@@ -86,3 +86,9 @@ struct QuickSessionCard: View {
         .accessibilityHint(Text("Double tap to start"))
     }
 }
+
+#Preview {
+    QuickSessionCard(dueCount: 6, onStart: {})
+        .padding()
+        .environmentObject(ThemeStore())
+}

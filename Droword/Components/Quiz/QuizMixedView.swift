@@ -42,6 +42,10 @@ struct QuizMixedView: View {
     @State private var matchingWrongAttempts: Int = 0
     private let matchingMaxAttempts: Int = 3
 
+    @State private var sentenceWords: [String] = []
+    @State private var selectedSentenceWords: [String] = []
+    @State private var correctSentenceWords: [String] = []
+
     @State private var streakScale: CGFloat = 1.0
     @State private var streakMilestone: Int? = nil
     @State private var streakMilestoneOpacity: Double = 0
@@ -52,6 +56,8 @@ struct QuizMixedView: View {
     @State private var rewardCounter = 0
     @State private var completionMoments: [StudyMoment] = []
     @State private var chatSceneTarget: ChatSceneTarget?
+    @ObservedObject private var network = NetworkMonitor.shared
+    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
 
     var body: some View {
         ZStack {
@@ -70,7 +76,7 @@ struct QuizMixedView: View {
                     },
                     moments: completionMoments,
                     isLesson: recordsLesson,
-                    onScene: recordsLesson ? { openLessonScene() } : nil
+                    onScene: recordsLesson && showHomeChat && network.isConnected ? { openLessonScene() } : nil
                 ) {
                     startSession()
                 }
@@ -174,7 +180,15 @@ struct QuizMixedView: View {
                                 }
                             )
                         case .sentenceBuilding:
-                            EmptyView()
+                            QuizSentenceBuildingExercise(
+                                item: item,
+                                hasAnswered: hasAnswered,
+                                isCorrect: isCorrect,
+                                shakeOffset: shakeOffset,
+                                sentenceWords: $sentenceWords,
+                                selectedSentenceWords: $selectedSentenceWords,
+                                correctSentenceWords: correctSentenceWords
+                            )
                         case .listening:
                             QuizListeningExercise(
                                 item: item,
@@ -306,6 +320,31 @@ struct QuizMixedView: View {
                         skipQuestion()
                     } label: {
                         Text(hintShown ? LocalizedStringKey("Show answer") : LocalizedStringKey("Don't know"))
+                            .font(themeStore.medium(14))
+                            .foregroundStyle(themeStore.secondaryText)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+            } else if exerciseType == .sentenceBuilding && !hasAnswered {
+                VStack(spacing: 10) {
+                    Button {
+                        checkSentenceBuildingAnswer()
+                    } label: {
+                        Text("Check")
+                            .duo3DStyle(
+                                themeStore.mainAccentColor,
+                                isDisabled: selectedSentenceWords.isEmpty
+                            )
+                    }
+                    .buttonStyle(Duo3DButtonStyle())
+                    .disabled(selectedSentenceWords.isEmpty)
+
+                    Button {
+                        skipSentenceBuilding()
+                    } label: {
+                        Text("Don't know")
                             .font(themeStore.medium(14))
                             .foregroundStyle(themeStore.secondaryText)
                     }
@@ -523,7 +562,19 @@ struct QuizMixedView: View {
             shuffledTranslationIDs = matchingPairs.map(\.id).shuffled()
 
         case .sentenceBuilding:
-            break
+            let source: String = {
+                if let example = item.example?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   !example.isEmpty {
+                    return example
+                }
+                return item.word
+            }()
+            let words = source
+                .components(separatedBy: .whitespacesAndNewlines)
+                .filter { !$0.isEmpty }
+            correctSentenceWords = words
+            sentenceWords = words.shuffled()
+            selectedSentenceWords = []
 
         case .listening:
 
@@ -543,6 +594,7 @@ struct QuizMixedView: View {
     }
 
     private func openLessonScene() {
+        guard showHomeChat, network.isConnected else { return }
         let items = session.queue.map { item in
             (
                 id: item.id,
@@ -567,7 +619,7 @@ struct QuizMixedView: View {
                 }
                 prepareStateForItem(nextItem, exerciseType: nextType)
 
-                if nextType == .listening {
+                if nextType == .listening, NetworkMonitor.shared.isConnected {
                     Task { await AudioManager.shared.play(word: nextItem.word) }
                 }
             }
@@ -754,6 +806,46 @@ struct QuizMixedView: View {
         }
     }
 
+    private func checkSentenceBuildingAnswer() {
+        guard !hasAnswered, let item = session.currentItem else { return }
+        guard !selectedSentenceWords.isEmpty else { return }
+
+        hasAnswered = true
+        isCorrect = selectedSentenceWords == correctSentenceWords
+
+        session.recordAnswer(correct: isCorrect)
+        if isCorrect {
+            celebrateCorrectAnswer()
+        } else {
+            Haptics.error()
+            triggerShake()
+        }
+
+        QuizSessionManager.applyScheduling(
+            for: item.id,
+            correct: isCorrect,
+            store: store,
+            languageStore: languageStore
+        )
+    }
+
+    private func skipSentenceBuilding() {
+        guard !hasAnswered, let item = session.currentItem else { return }
+        Haptics.error()
+        hasAnswered = true
+        isCorrect = false
+        selectedSentenceWords = correctSentenceWords
+        sentenceWords = []
+        triggerShake()
+        session.recordAnswer(correct: false)
+        QuizSessionManager.applyScheduling(
+            for: item.id,
+            correct: false,
+            store: store,
+            languageStore: languageStore
+        )
+    }
+
     private func triggerShake() {
         let steps: [CGFloat] = [12, -10, 6, -3, 0]
         Task { @MainActor in
@@ -769,13 +861,12 @@ struct QuizMixedView: View {
         let current = rewardCounter
         reward = (current, text)
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.3))
+            try? await Task.sleep(for: .seconds(0.7))
             if rewardCounter == current { reward = nil }
         }
     }
 
     private func celebrateCorrectAnswer() {
-        SoundFX.play(.ding)
         Haptics.success()
         showReward("+1")
         animateStreakPulse()
@@ -790,7 +881,6 @@ struct QuizMixedView: View {
         }
 
         if streak == 3 || streak == 5 || streak == 7 || streak == 10 || (streak > 10 && streak % 5 == 0) {
-            SoundFX.play(.combo)
             Haptics.combo(streak: streak)
             showStreakMilestone(streak)
         } else if streak >= 3 {
@@ -803,11 +893,11 @@ struct QuizMixedView: View {
             streakMilestone = streak
             streakMilestoneOpacity = 1
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation(.easeOut(duration: 0.4)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.easeOut(duration: 0.28)) {
                 streakMilestoneOpacity = 0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 streakMilestone = nil
             }
         }

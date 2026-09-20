@@ -75,3 +75,10 @@ struct FeatureFlagsView: View {
         .enableSwipeBack()
     }
 }
+
+#Preview {
+    NavigationStack {
+        FeatureFlagsView()
+    }
+    .environmentObject(ThemeStore())
+}

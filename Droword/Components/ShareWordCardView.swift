@@ -152,3 +152,18 @@ extension ShareWordCardView {
         }
     }
 }
+
+#Preview {
+    ShareWordCardView(
+        word: StoredWord(
+        word: "hola",
+        type: "interjection",
+        translation: "hello",
+        example: "¡Hola! ¿Cómo estás?",
+        fromLanguage: "Español",
+        toLanguage: "English"
+    ),
+        backgroundColor: Color(red: 0.95, green: 0.95, blue: 0.97)
+    )
+    .padding()
+}

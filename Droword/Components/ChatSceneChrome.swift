@@ -128,3 +128,35 @@ struct ChatDoneBar: View {
         .padding(.vertical, 16)
     }
 }
+
+#Preview("Header") {
+    ChatSceneHeaderView(word: "hola", translation: "hello", userTurns: 1)
+        .padding()
+        .environmentObject(ThemeStore())
+}
+
+#Preview("Typing") {
+    ChatTypingRow()
+        .padding()
+        .environmentObject(ThemeStore())
+}
+
+private struct ChatComposerBarPreview: View {
+    @State private var draft = "Hola"
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        ChatComposerBar(draft: $draft, canSend: true, isFocused: $focused, onSend: {})
+            .environmentObject(ThemeStore())
+    }
+}
+
+#Preview("Composer") {
+    ChatComposerBarPreview()
+}
+
+#Preview("Done") {
+    ChatDoneBar(usedWord: true, onDone: {})
+        .padding()
+        .environmentObject(ThemeStore())
+}

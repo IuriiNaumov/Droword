@@ -13,7 +13,6 @@ struct BadgeCardView: View {
                 .font(.system(size: 32))
                 .grayscale(isUnlocked ? 0 : 1.0)
                 .opacity(isUnlocked ? 1.0 : 0.4)
-
                 .scaleEffect(appeared ? 1.0 : 0.6)
 
             Text(badge.title)
@@ -63,4 +62,24 @@ struct BadgeCardView: View {
             }
         }
     }
+}
+
+#Preview("Locked") {
+    BadgeCardView(
+        badge: BadgeStore.allBadges[0],
+        currentProgress: 4,
+        isUnlocked: false
+    )
+    .padding()
+    .environmentObject(ThemeStore())
+}
+
+#Preview("Unlocked") {
+    BadgeCardView(
+        badge: BadgeStore.allBadges[3],
+        currentProgress: 100,
+        isUnlocked: true
+    )
+    .padding()
+    .environmentObject(ThemeStore())
 }

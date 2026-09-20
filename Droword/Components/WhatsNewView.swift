@@ -114,3 +114,8 @@ private struct WhatsNewFeature: Identifiable {
     let title: LocalizedStringKey
     let description: LocalizedStringKey
 }
+
+#Preview {
+    WhatsNewView()
+        .environmentObject(ThemeStore())
+}

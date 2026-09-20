@@ -8,6 +8,7 @@ struct OnboardingView: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     @AppStorage(AppStorageKeys.userName) private var userName: String = ""
+    @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
 
     @State private var animateStage: Bool = false
     @State private var dragOffset: CGSize = .zero
@@ -24,12 +25,6 @@ struct OnboardingView: View {
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
             accent: themeStore.accentGreen
-        ),
-        .init(
-            title: "Make it yours",
-            subtitle: "Choose languages, voices and themes. Make it yours!",
-            illustrationStyle: .customize,
-            accent: themeStore.accentGold
         )
     ]}
 
@@ -66,7 +61,7 @@ struct OnboardingView: View {
                             .padding(.horizontal, 18)
                             .padding(.top, 24)
 
-                        OnboardingPreferencesPage()
+                        OnboardingNotificationsPage()
                             .tag(pages.count + 2)
                             .padding(.horizontal, 18)
                             .padding(.top, 24)
@@ -166,8 +161,10 @@ struct OnboardingView: View {
                 Image(systemName: page == totalPages - 1 ? (canProceedOnCurrentPage ? "checkmark" : "xmark") : "arrow.right")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.white)
+                    .frame(width: 24, height: 24)
                     .frame(width: 56, height: 56)
                     .background(Circle().fill(themeStore.mainAccentColor))
+                    .contentShape(Circle())
                     .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
             }
             .buttonStyle(ScaledPressStyle())
@@ -196,9 +193,6 @@ struct OnboardingView: View {
     private func next() {
         Haptics.selection()
         if page < totalPages - 1 {
-            if page == pages.count + 2 {
-                LearningProfileStore.shared.markConfigured()
-            }
             withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
                 page += 1
             }
@@ -214,6 +208,7 @@ struct OnboardingView: View {
 
     private func finish() {
         LearningProfileStore.shared.markConfigured()
+        homeQuietedV1 = true
         Haptics.success()
         withAnimation(.easeInOut(duration: 0.25)) {
             isCompleted = true

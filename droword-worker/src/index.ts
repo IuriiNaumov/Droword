@@ -17,7 +17,6 @@ function errorResponse(message: string, status = 500): Response {
   return jsonResponse({ error: message }, status);
 }
 
-// Maps the app's endonym language names to English names for TTS instructions.
 function ttsLanguageName(language: string): string {
   const map: Record<string, string> = {
     English: "English",
@@ -36,9 +35,6 @@ function ttsLanguageName(language: string): string {
   return map[language] || language;
 }
 
-// Maps a proficiency tier (CEFR code A1–C2) to a descriptive label plus
-// difficulty guidance, layering language-specific script rules on top (e.g.
-// kana-only for a beginner in Japanese).
 function levelGuideline(
   language: string,
   level: string
@@ -64,7 +60,7 @@ function levelGuideline(
     C2: "Use sophisticated, native-level language with nuanced vocabulary, idioms, and complex grammar.",
   };
 
-  // Language-specific writing-system rules layered on top of the difficulty tier.
+
   const scripts: Record<string, Record<string, string>> = {
     "日本語": {
       A1: " Write ONLY in hiragana and katakana — do NOT use any kanji.",
@@ -96,7 +92,6 @@ function levelGuideline(
   return { label: labels[tier], guideline: cefr[tier] + script };
 }
 
-// ─── /translate ───
 async function handleTranslate(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     word: string;
@@ -194,7 +189,6 @@ Return ONLY valid JSON:
     return errorResponse("Empty response from Claude", 502);
   }
 
-  // Extract JSON from response
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     return errorResponse("Invalid JSON from Claude", 502);
@@ -208,7 +202,6 @@ Return ONLY valid JSON:
   }
 }
 
-// ─── /suggest ───
 async function handleSuggest(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     words: string[];
@@ -346,7 +339,6 @@ STRICT:
   }
 }
 
-// ─── /story ───
 async function handleStory(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     words: string[];
@@ -455,7 +447,6 @@ Return ONLY valid JSON:
   }
 }
 
-// ─── /extract-words ───
 async function handleExtractWords(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     image: string;
@@ -615,7 +606,6 @@ async function claudeJSON(
   }
 }
 
-// ─── /scene ───
 async function handleScene(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     word: string;
@@ -691,7 +681,6 @@ Return ONLY valid JSON:
   return claudeJSON(env, prompt, 400);
 }
 
-// ─── /tts ───
 async function handleTTS(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
     text: string;
@@ -716,7 +705,6 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
     format: format,
   };
 
-  // Steer pronunciation toward a native accent for the learning language.
   if (language) {
     const name = ttsLanguageName(language);
     ttsBody.instructions = `Read the text in ${name} using natural, native ${name} pronunciation, accent, and intonation. Do not read it with an English or American accent.`;
@@ -745,7 +733,6 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
   });
 }
 
-// ─── Router ───
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {

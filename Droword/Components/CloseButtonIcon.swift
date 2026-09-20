@@ -34,3 +34,12 @@ struct CloseButton: View {
         .accessibilityLabel(Text("Close"))
     }
 }
+
+#Preview {
+    HStack(spacing: 20) {
+        CloseButtonIcon()
+        CloseButton()
+    }
+    .padding()
+    .environmentObject(ThemeStore())
+}

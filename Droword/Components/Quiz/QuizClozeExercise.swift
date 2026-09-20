@@ -178,3 +178,36 @@ struct QuizClozeExercise: View {
         }
     }
 }
+
+private struct QuizClozeExercisePreview: View {
+    @State private var typingInput = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        QuizClozeExercise(
+            item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+            hasAnswered: false,
+            isCorrect: false,
+            isAlmostCorrect: false,
+            clozeRevealed: false,
+            shakeOffset: 0,
+            hintShown: false,
+            hintText: "",
+            typingInput: $typingInput,
+            isInputFocused: $focused,
+            onSubmit: {}
+        )
+        .environmentObject(ThemeStore())
+    }
+}
+
+#Preview {
+    QuizClozeExercisePreview()
+}

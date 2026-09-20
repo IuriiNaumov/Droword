@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Solid red flame for streaks — no flicker, no gradient.
 struct BurningFlameIcon: View {
     var size: CGFloat = 14
     var monochrome: Bool = false
@@ -14,7 +13,6 @@ struct BurningFlameIcon: View {
     }
 }
 
-/// Capsule streak chip: solid red + flame + count.
 struct StreakFireBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -56,4 +54,13 @@ struct StreakFireBadge: View {
 
 enum StreakFireStyle {
     static let red = Color(hex: "#FF3B30")
+}
+
+#Preview {
+    HStack(spacing: 16) {
+        BurningFlameIcon(size: 24)
+        StreakFireBadge(count: 7)
+    }
+    .padding()
+    .environmentObject(ThemeStore())
 }

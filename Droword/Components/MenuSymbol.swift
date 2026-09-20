@@ -17,3 +17,9 @@ struct MenuSymbol: View {
             .accessibilityHidden(true)
     }
 }
+
+#Preview {
+    MenuSymbol(systemName: "gearshape")
+        .padding()
+        .environmentObject(ThemeStore())
+}

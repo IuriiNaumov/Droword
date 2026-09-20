@@ -34,7 +34,6 @@ struct DoodleStar: View {
     }
 }
 
-/// Same sparkle language as the settings PRO block — blob + sparkles + doodle stars.
 struct SparkleCluster: View {
     @EnvironmentObject private var themeStore: ThemeStore
     var size: CGFloat = 120
@@ -62,7 +61,6 @@ struct SparkleCluster: View {
     }
 }
 
-/// Concentric translucent circles — fully inside the frame, no crop.
 struct HaloRings: View {
     var color: Color
     var size: CGFloat
@@ -107,7 +105,11 @@ struct EmptyDictionaryArt: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        HaloIcon(symbol: "plus", color: themeStore.mainAccentColor, size: 168)
+        Image("dictionaryEmptyCry")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 176, height: 132)
+            .accessibilityHidden(true)
     }
 }
 
@@ -117,4 +119,15 @@ struct EmptyPracticeArt: View {
     var body: some View {
         HaloIcon(symbol: "bolt.fill", color: themeStore.accentGreen, size: 168)
     }
+}
+
+#Preview {
+    VStack(spacing: 24) {
+        SoftBlob(color: .blue, size: 120)
+        HaloIcon(symbol: "plus", color: .blue, size: 120)
+        EmptyDictionaryArt()
+        EmptyPracticeArt()
+    }
+    .padding()
+    .environmentObject(ThemeStore())
 }

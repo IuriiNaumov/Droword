@@ -57,7 +57,11 @@ struct PracticeView: View {
             icon: "rectangle.stack.badge.plus",
             title: copy.title,
             subtitle: copy.subtitle,
-            tip: copy.tip
+            tip: copy.tip,
+            ctaTitle: "Add a word",
+            onCTA: {
+                NotificationCenter.default.post(name: .openAddWord, object: nil)
+            }
         )
     }
 }

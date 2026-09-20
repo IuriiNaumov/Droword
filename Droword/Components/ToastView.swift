@@ -33,7 +33,6 @@ enum AppToastType {
     }
 }
 
-/// Shared pill for overlay toasts and in-flow feedback.
 struct AppToastChrome: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -97,12 +96,12 @@ struct BannerToastView: View {
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: isVisible)
+        .animation(DesignMotion.toast, value: isVisible)
         .onAppear {
             isVisible = true
             guard duration > 0 else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                withAnimation(DesignMotion.toast) {
                     isVisible = false
                 }
             }

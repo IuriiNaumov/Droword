@@ -40,12 +40,22 @@ final class BadgeStore: ObservableObject {
     @Published var suggestedWordsAccepted: Int {
         didSet { UserDefaults.standard.set(suggestedWordsAccepted, forKey: "badge.suggestedWordsAccepted") }
     }
+    @Published var pendingCelebration: BadgeDefinition?
+
+    private var celebratedIDs: Set<String>
+    private let celebratedKey = "badge.celebratedIDs"
+    private let seededKey = "badge.celebrationsSeeded"
 
     init() {
         let defaults = UserDefaults.standard
         self.quizCompletions = defaults.integer(forKey: "badge.quizCompletions")
         self.dailyGoalCompletions = defaults.integer(forKey: "badge.dailyGoalCompletions")
         self.suggestedWordsAccepted = defaults.integer(forKey: "badge.suggestedWordsAccepted")
+        if let stored = defaults.array(forKey: celebratedKey) as? [String] {
+            celebratedIDs = Set(stored)
+        } else {
+            celebratedIDs = []
+        }
     }
 
     func recordQuizCompletion() {
@@ -72,6 +82,38 @@ final class BadgeStore: ObservableObject {
 
     func isUnlocked(_ badge: BadgeDefinition, totalWords: Int, currentStreak: Int) -> Bool {
         progress(for: badge, totalWords: totalWords, currentStreak: currentStreak) >= badge.requiredCount
+    }
+
+    func seedCelebratedIfNeeded(totalWords: Int, currentStreak: Int) {
+        guard !UserDefaults.standard.bool(forKey: seededKey) else { return }
+        for badge in Self.allBadges where isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) {
+            celebratedIDs.insert(badge.id)
+        }
+        persistCelebrated()
+        UserDefaults.standard.set(true, forKey: seededKey)
+    }
+
+    func checkForNewUnlocks(totalWords: Int, currentStreak: Int) {
+        guard pendingCelebration == nil else { return }
+        seedCelebratedIfNeeded(totalWords: totalWords, currentStreak: currentStreak)
+
+        for badge in Self.allBadges {
+            guard badge.category == .quizMastery || badge.category == .suggestedWords else { continue }
+            guard isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) else { continue }
+            guard !celebratedIDs.contains(badge.id) else { continue }
+            celebratedIDs.insert(badge.id)
+            persistCelebrated()
+            pendingCelebration = badge
+            return
+        }
+    }
+
+    func dismissPendingCelebration() {
+        pendingCelebration = nil
+    }
+
+    private func persistCelebrated() {
+        UserDefaults.standard.set(Array(celebratedIDs), forKey: celebratedKey)
     }
 
     static let allBadges: [BadgeDefinition] = [

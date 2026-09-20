@@ -115,7 +115,6 @@ struct SelectionChip: View {
     }
 }
 
-/// Hero pair: I speak ↔ I'm learning, with swap in the middle.
 struct LanguagePairHero: View {
     @EnvironmentObject private var themeStore: ThemeStore
 

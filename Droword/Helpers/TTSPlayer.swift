@@ -8,8 +8,13 @@ enum TTSPlayer {
         word: String,
         isPremium: Bool,
         onNeedsPremium: @escaping () -> Void,
+        onNeedsNetwork: (() -> Void)? = nil,
         onPlayingChanged: @escaping (Bool) -> Void
     ) {
+        guard NetworkMonitor.shared.isConnected else {
+            onNeedsNetwork?()
+            return
+        }
         guard isPremium || DailyLimitsManager.canPlayTTS else {
             onNeedsPremium()
             return
@@ -39,13 +44,17 @@ enum TTSPlayer {
         }
     }
 
-    /// Start TTS while the user holds; call `endHold()` on release.
     static func beginHold(
         word: String,
         isPremium: Bool,
         onNeedsPremium: @escaping () -> Void,
+        onNeedsNetwork: (() -> Void)? = nil,
         onPlayingChanged: @escaping (Bool) -> Void
     ) {
+        guard NetworkMonitor.shared.isConnected else {
+            onNeedsNetwork?()
+            return
+        }
         guard isPremium || DailyLimitsManager.canPlayTTS else {
             onNeedsPremium()
             return

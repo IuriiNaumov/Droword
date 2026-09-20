@@ -29,3 +29,8 @@ struct FloatingRewardLabel: View {
             }
     }
 }
+
+#Preview {
+    FloatingRewardLabel(text: "+10", color: .orange)
+        .frame(width: 120, height: 120)
+}

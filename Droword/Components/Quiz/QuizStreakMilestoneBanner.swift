@@ -21,3 +21,9 @@ struct QuizStreakMilestoneBanner: View {
         }
     }
 }
+
+#Preview {
+    QuizStreakMilestoneBanner(streak: 10)
+        .padding()
+        .environmentObject(ThemeStore())
+}

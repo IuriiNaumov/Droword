@@ -90,7 +90,7 @@ struct TermsOfUseView: View {
 
                     section(
                         title: "14. Contact",
-                        body: "If you have any questions about these Terms, please contact us via the App Store support link."
+                        body: "Questions about these Terms: hello@droword.app"
                     )
                 }
                 .padding(.horizontal)
@@ -121,4 +121,11 @@ struct TermsOfUseView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous).fill(themeStore.cardBg))
     }
+}
+
+#Preview {
+    NavigationStack {
+        TermsOfUseView()
+    }
+    .environmentObject(ThemeStore())
 }

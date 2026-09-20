@@ -277,5 +277,6 @@ extension Notification.Name {
     static let copiedToClipboard = Notification.Name("copiedToClipboard")
     static let perfectQuizCompleted = Notification.Name("perfectQuizCompleted")
     static let openFromWidget = Notification.Name("openFromWidget")
+    static let openAddWord = Notification.Name("openAddWord")
     static let openChatScene = Notification.Name("openChatScene")
 }

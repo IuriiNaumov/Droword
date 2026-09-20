@@ -2,18 +2,21 @@ import SwiftUI
 
 struct QuizNotEnoughView: View {
     var body: some View {
-        VStack(spacing: 18) {
-            Text("Not enough words yet")
-                .font(.title3.weight(.medium))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            Text("Add at least 4 words with translations to start practicing. Every word counts!")
-                .font(.subheadline)
-                .foregroundStyle(.secondary.opacity(0.8))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        PracticeEmptyContent(
+            illustration: AnyView(EmptyPracticeArt()),
+            icon: "rectangle.stack.badge.plus",
+            title: String(localized: "Not enough words yet"),
+            subtitle: String(localized: "Add at least 4 words with translations to start practicing. Every word counts!"),
+            tip: String(localized: "Four words unlock practice"),
+            ctaTitle: "Add a word",
+            onCTA: {
+                NotificationCenter.default.post(name: .openAddWord, object: nil)
+            }
+        )
     }
+}
+
+#Preview {
+    QuizNotEnoughView()
+        .environmentObject(ThemeStore())
 }

@@ -49,3 +49,9 @@ struct SoundWavesView: View {
         }
     }
 }
+
+#Preview {
+    SoundWavesView(isPlaying: true)
+        .padding()
+        .environmentObject(ThemeStore())
+}

@@ -139,10 +139,12 @@ final class QuizSessionManager: ObservableObject {
             let isClozeEligible = item.example != nil
                 && !item.example!.isEmpty
                 && ClozeMatcher.find(word: item.word, in: item.example!) != nil
+            let isSentenceBuildingEligible = Self.isSentenceBuildingEligible(example: item.example)
 
             exerciseTypes[item.id] = pickExerciseType(
                 reps: reps,
                 isClozeEligible: isClozeEligible,
+                isSentenceBuildingEligible: isSentenceBuildingEligible,
                 style: learningStyle
             )
         }
@@ -164,7 +166,7 @@ final class QuizSessionManager: ObservableObject {
             }
         }
 
-        let directionExcluded: Set<ExerciseType> = [.cloze, .listening]
+        let directionExcluded: Set<ExerciseType> = [.cloze, .listening, .sentenceBuilding]
         let nonCloze = queue.filter { !directionExcluded.contains(exerciseTypes[$0.id] ?? .multipleChoice) }
         let reverseRatio: Double = {
             switch learningStyle {
@@ -221,6 +223,7 @@ final class QuizSessionManager: ObservableObject {
             let isClozeEligible = item.example != nil
                 && !item.example!.isEmpty
                 && ClozeMatcher.find(word: item.word, in: item.example!) != nil
+            let isSentenceBuildingEligible = Self.isSentenceBuildingEligible(example: item.example)
 
             if index == 0 || reps == 0 {
                 exerciseTypes[item.id] = .multipleChoice
@@ -228,6 +231,7 @@ final class QuizSessionManager: ObservableObject {
                 exerciseTypes[item.id] = pickExerciseType(
                     reps: reps,
                     isClozeEligible: isClozeEligible,
+                    isSentenceBuildingEligible: isSentenceBuildingEligible,
                     style: learningStyle
                 )
             }
@@ -251,7 +255,7 @@ final class QuizSessionManager: ObservableObject {
             }
         }
 
-        let directionExcluded: Set<ExerciseType> = [.cloze, .listening]
+        let directionExcluded: Set<ExerciseType> = [.cloze, .listening, .sentenceBuilding]
         let nonCloze = queue.filter { !directionExcluded.contains(exerciseTypes[$0.id] ?? .multipleChoice) }
         let reverseRatio: Double = {
             switch learningStyle {
@@ -270,9 +274,18 @@ final class QuizSessionManager: ObservableObject {
         }
     }
 
+    private static func isSentenceBuildingEligible(example: String?) -> Bool {
+        guard let example, !example.isEmpty else { return false }
+        let words = example
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+        return words.count >= 3
+    }
+
     private func pickExerciseType(
         reps: Int,
         isClozeEligible: Bool,
+        isSentenceBuildingEligible: Bool = false,
         style: LearningStyle
     ) -> ExerciseType {
         switch style {
@@ -297,11 +310,17 @@ final class QuizSessionManager: ObservableObject {
             case 1:
                 return Bool.random() ? .multipleChoice : .typing
             case 2...3:
+                if isSentenceBuildingEligible && Bool.random() {
+                    return .sentenceBuilding
+                }
                 if isClozeEligible {
                     return Bool.random() ? .typing : .cloze
                 }
                 return .typing
             default:
+                if isSentenceBuildingEligible && Int.random(in: 0..<10) < 3 {
+                    return .sentenceBuilding
+                }
                 if isClozeEligible {
                     return Int.random(in: 0..<10) < 7 ? .cloze : .typing
                 }
@@ -449,8 +468,7 @@ final class QuizSessionManager: ObservableObject {
         exerciseTypes = Dictionary(uniqueKeysWithValues: snapshot.exerciseTypes.compactMap { key, val in
             guard let uuid = UUID(uuidString: key),
                   let type = ExerciseType(rawValue: val) else { return nil }
-
-            return (uuid, type == .sentenceBuilding ? .multipleChoice : type)
+            return (uuid, type)
         })
         directionMap = Dictionary(uniqueKeysWithValues: snapshot.directionMap.compactMap { key, val in
             guard let uuid = UUID(uuidString: key) else { return nil }

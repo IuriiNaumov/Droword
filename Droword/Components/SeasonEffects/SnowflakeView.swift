@@ -51,3 +51,8 @@ struct SnowflakeView: View {
             .frame(width: size, height: size)
     }
 }
+
+#Preview {
+    SnowflakeView(size: 40)
+        .padding()
+}

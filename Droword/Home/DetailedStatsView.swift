@@ -69,21 +69,22 @@ struct DetailedStatsView: View {
 
     private func recalculate() {
         let words = store.words
-        let today = Calendar.current.startOfDay(for: Date())
+        let now = Date()
 
-        dueToday = words.filter { w in
-            if let due = w.dueDate { return due <= today }
-            return true
+        dueToday = words.filter {
+            WordDue.isDue(introduced: $0.introduced, dueDate: $0.dueDate, now: now)
         }.count
 
         var n = 0, l = 0, k = 0
         var lapses = 0
         var easeSum = 0.0
         for w in words {
-            switch w.repetitions {
-            case 0: n += 1
-            case 1...2: l += 1
-            default: k += 1
+            if !w.introduced || w.repetitions == 0 {
+                n += 1
+            } else if w.intervalDays >= 21 || w.repetitions >= 5 {
+                k += 1
+            } else {
+                l += 1
             }
             lapses += w.lapses
             easeSum += w.easeFactor

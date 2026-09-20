@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TagsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var store: WordsStore
     @Binding var selectedTag: String?
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
@@ -49,15 +50,14 @@ struct TagsView: View {
                         if isDeleteMode {
                             if tag.isCustom {
                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                    store.clearTag(tag.name)
                                     TagStore.shared.removeTag(named: tag.name)
                                     if selectedTag == tag.name { selectedTag = nil }
                                 }
                                 Haptics.warning()
                             }
                         } else {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.72)) {
-                                selectedTag = selectedTag == tag.name ? nil : tag.name
-                            }
+                            selectedTag = selectedTag == tag.name ? nil : tag.name
                             Haptics.tick()
                         }
                     } label: {
@@ -185,5 +185,6 @@ struct TagsView: View {
 #Preview {
     TagsView(selectedTag: .constant("Street"), hasSuggestedWords: true)
         .environmentObject(ThemeStore())
+        .environmentObject(WordsStore())
         .padding()
 }

@@ -11,6 +11,7 @@ struct HomeView: View {
     @StateObject private var challengeManager = DailyChallengeManager.shared
     @ObservedObject private var learningProfile = LearningProfileStore.shared
     @ObservedObject private var studyActivity = StudyActivityStore.shared
+    @ObservedObject private var network = NetworkMonitor.shared
 
     @State private var showAddWordView = false
     @State private var sharedWord: String = ""
@@ -30,6 +31,9 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.lastCelebratedStreak) private var lastCelebratedStreak: Int = 0
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacksSection: Bool = true
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallengesSection: Bool = false
+    @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
+    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
+    @AppStorage(AppStorageKeys.showHomeNextReview) private var showHomeNextReview: Bool = true
     @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
 
     @State private var showFirstWords = false
@@ -89,6 +93,20 @@ struct HomeView: View {
 
     private var nextReviewInfo: (count: Int, date: Date)? { cachedNextReviewInfo }
 
+    private var dailyLessonPlan: DailyLessonPlan {
+        DailyLessonBuilder.plan(
+            words: store.words,
+            profile: learningProfile,
+            learningLanguage: languageStore.learningLanguage
+        )
+    }
+
+    private var shouldShowDailyLessonCard: Bool {
+        let plan = dailyLessonPlan
+        if plan.isDone { return showHomeNextReview }
+        return true
+    }
+
     var body: some View {
         homeOverlays(homeEvents(homeCovers(tabRoot)))
     }
@@ -133,7 +151,9 @@ struct HomeView: View {
             checkSuggestionTrigger()
         }) {
             AddWordView(initialWord: sharedWord, store: store)
+                .environmentObject(store)
                 .environmentObject(themeStore)
+                .environmentObject(languageStore)
                 .tint(themeStore.mainAccentColor)
                 .transaction { $0.disablesAnimations = true }
         }
@@ -245,6 +265,12 @@ struct HomeView: View {
                 showAddWordView = true
             } else if !StudyActivityStore.shared.isLessonDone() {
                 showDailyLesson = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openAddWord)) { _ in
+            selectedTab = .home
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                showAddWordView = true
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .copiedToClipboard)) { _ in
@@ -404,17 +430,15 @@ struct HomeView: View {
                 ProfileHeaderView()
                     .padding(.bottom, 16)
 
-                DailyLessonCard(
-                    plan: DailyLessonBuilder.plan(
-                        words: store.words,
-                        profile: learningProfile,
-                        learningLanguage: languageStore.learningLanguage
-                    ),
-                    onStart: {
-                        showDailyLesson = true
-                    }
-                )
-                .padding(.horizontal, 20)
+                if shouldShowDailyLessonCard {
+                    DailyLessonCard(
+                        plan: dailyLessonPlan,
+                        onStart: {
+                            showDailyLesson = true
+                        }
+                    )
+                    .padding(.horizontal, 20)
+                }
 
                 HomeStreakStrip(
                     onOpenCalendar: {
@@ -424,7 +448,9 @@ struct HomeView: View {
                 )
                 .padding(.horizontal, 20)
 
-                if store.words.filter({ $0.translation?.isEmpty == false }).count >= 3 {
+                if showHomeReading,
+                   network.isConnected,
+                   store.words.filter({ $0.translation?.isEmpty == false }).count >= 3 {
                     ReadingStoryCard {
                         Haptics.buttonPress()
                         showStory = true
@@ -432,7 +458,7 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                 }
 
-                if store.words.count < 8, showWordPacksSection {
+                if showWordPacksSection {
                     let packsReady = WordPacksHome.availableCount(
                         learning: languageStore.learningLanguage,
                         native: languageStore.nativeLanguage
@@ -451,29 +477,41 @@ struct HomeView: View {
                     }
                 }
 
-                if showDailyChallengesSection {
-                    Button {
-                        Haptics.buttonPress()
+                if showDailyChallengesSection, challengeManager.showsOnHome {
+                    DailyChallengeButton(manager: challengeManager) {
                         showChallenges = true
-                    } label: {
-                        DailyChallengeButton(manager: challengeManager)
                     }
-                    .buttonStyle(PressableButtonStyle())
                     .accessibilityLabel(Text("Daily Challenges"))
                     .accessibilityHint(Text("\(challengeManager.completedCount) of \(challengeManager.challenges.count) completed"))
                     .padding(.horizontal, 20)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                if dueWordsCount == 0, !reviewTimerDismissed, let info = nextReviewInfo {
+                if showHomeNextReview,
+                   dueWordsCount == 0,
+                   !reviewTimerDismissed,
+                   let info = nextReviewInfo {
                     HomeNextReviewCard(count: info.count, date: info.date) {
                         reviewTimerDismissed = true
                     }
                 }
 
-                if dueWordsCount == 0 {
+                if network.isConnected,
+                   suggested.isLoading || !suggested.suggestedWords.isEmpty || suggested.lastError != nil {
                     SuggestedWordsView()
                         .environmentObject(suggested)
                         .padding(.horizontal, 20)
+                }
+
+                if !network.isConnected {
+                    StatusBannerView(
+                        icon: "wifi.slash",
+                        iconColor: themeStore.accentGold,
+                        title: "You're offline",
+                        subtitle: "Dictionary works. AI features wait for a connection.",
+                        useCard: true
+                    )
+                    .padding(.horizontal, 20)
                 }
 
                 if !cachedRecentWords.isEmpty {
@@ -504,7 +542,8 @@ struct HomeView: View {
                                 synonyms: word.synonyms,
                                 antonyms: word.antonyms,
                                 mnemonic: word.mnemonic,
-                                reaction: word.reaction
+                                reaction: word.reaction,
+                                storedWord: word
                             ) {
                                 store.remove(word)
                             } onReaction: { emoji in
@@ -523,29 +562,24 @@ struct HomeView: View {
                     }
                     .padding(.top, 4)
                 } else {
-                    VStack(spacing: 14) {
-                        Button {
+                    let empty = DuoChaosCopy.homeEmpty(hasWords: hasEverAddedWord)
+                    PracticeEmptyContent(
+                        icon: "text.badge.plus",
+                        title: hasEverAddedWord
+                            ? String(localized: "No recent words")
+                            : String(localized: "Your word garden is waiting"),
+                        subtitle: empty.subtitle,
+                        tip: String(localized: "One word unlocks lessons and practice"),
+                        ctaTitle: LocalizedStringKey(empty.cta),
+                        onCTA: {
                             Haptics.buttonPress()
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 showAddWordView = true
                             }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                Text(DuoChaosCopy.homeEmpty(hasWords: hasEverAddedWord).cta)
-                            }
-                            .duo3DStyle(themeStore.mainAccentColor)
                         }
-                        .buttonStyle(Duo3DButtonStyle())
-                        .padding(.horizontal, 20)
-
-                        Text(DuoChaosCopy.homeEmpty(hasWords: hasEverAddedWord).subtitle)
-                            .font(themeStore.regular(14))
-                            .foregroundStyle(themeStore.secondaryText)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-                    }
-                    .padding(.top, 40)
+                    )
+                    .padding(.top, 12)
+                    .frame(minHeight: 320)
                 }
             }
             .padding(.bottom, 20)
@@ -598,9 +632,32 @@ struct HomeView: View {
                     break
                 }
             }
+
+            presentPendingBadgeCelebrationIfNeeded()
         }
         .onChange(of: store.revision) { _, _ in refreshCachedWordData() }
+        .onChange(of: badgeStore.quizCompletions) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
+        .onChange(of: badgeStore.suggestedWordsAccepted) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
+        .onChange(of: activeMilestone) { _, newValue in
+            if newValue == nil {
+                presentPendingBadgeCelebrationIfNeeded()
+            }
         }
+        }
+    }
+
+    private func presentPendingBadgeCelebrationIfNeeded() {
+        guard activeMilestone == nil else { return }
+        let streak = WordsStore.computeCurrentStreak(from: store.words)
+        badgeStore.checkForNewUnlocks(totalWords: store.totalWordsAdded, currentStreak: streak)
+        guard let badge = badgeStore.pendingCelebration else { return }
+        badgeStore.dismissPendingCelebration()
+        activeMilestone = .badge(
+            id: badge.id,
+            emoji: badge.emoji,
+            title: String(localized: "Badge unlocked!"),
+            message: "\(badge.title) — \(badge.description)"
+        )
     }
 
     private var enrichmentLimitBanner: some View {
@@ -616,11 +673,7 @@ struct HomeView: View {
                 .foregroundStyle(themeStore.secondaryText.opacity(0.45))
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
-                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-        )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
         .onTapGesture {
             Haptics.softTap()
             showPremiumFromLimit = true
@@ -636,6 +689,8 @@ struct HomeView: View {
     }
 
     private func openChatScene(wordId: String?, word: String?) {
+        guard showHomeChat else { return }
+        guard network.isConnected else { return }
         guard let target = ChatScenePicker.from(
             wordId: wordId,
             word: word,
@@ -668,6 +723,7 @@ struct HomeView: View {
     }
 
     private func checkSuggestionTrigger() {
+        guard network.isConnected else { return }
         let startOfDay = Calendar.current.startOfDay(for: Date())
         let todayCount = store.words.filter { $0.dateAdded >= startOfDay }.count
         guard todayCount > 0, todayCount % 5 == 0, todayCount != lastSuggestionTodayCount else { return }
@@ -681,4 +737,14 @@ struct HomeView: View {
             }
         }
     }
+}
+
+#Preview {
+    HomeView()
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
+        .environmentObject(BadgeStore())
+        .environmentObject(SuggestedWordsStore())
+        .environmentObject(StudyTimeTracker.shared)
 }

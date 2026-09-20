@@ -32,3 +32,9 @@ struct Loader: View {
         return 0.6 + 0.4 * sin(phase + offset)
     }
 }
+
+#Preview {
+    Loader()
+        .padding()
+        .environmentObject(ThemeStore())
+}

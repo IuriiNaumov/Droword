@@ -30,10 +30,15 @@ struct DailyLessonSessionView: View {
                         icon: "rectangle.stack.badge.plus",
                         title: String(localized: "Need a few more words"),
                         subtitle: String(localized: "Add at least 4 words with translations and this lesson unlocks."),
-                        tip: String(localized: "Tag them with your topics so the next lesson hits harder.")
+                        tip: String(localized: "Tag them with your topics so the next lesson hits harder."),
+                        ctaTitle: "Add a word",
+                        onCTA: {
+                            NotificationCenter.default.post(name: .openAddWord, object: nil)
+                        }
                     )
                 }
             }
+            .iPadContentWidth(600)
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -43,4 +48,24 @@ struct DailyLessonSessionView: View {
             }
         }
     }
+}
+
+#Preview {
+    DailyLessonSessionView(plan: DailyLessonPlan(
+        title: "Today's lesson",
+        subtitle: "A short set for today",
+        words: [],
+        minutes: 4,
+        styleLabel: "Mixed",
+        topicLabels: ["Travel"],
+        canStart: true,
+        isDone: false,
+        correct: 0,
+        total: 0,
+        tomorrowWords: []
+    ))
+        .environmentObject(WordsStore())
+        .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
+        .environmentObject(BadgeStore())
 }

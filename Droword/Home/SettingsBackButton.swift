@@ -21,3 +21,9 @@ struct SettingsBackButton: View {
         .accessibilityLabel(Text("Back"))
     }
 }
+
+#Preview {
+    SettingsBackButton()
+        .padding()
+        .environmentObject(ThemeStore())
+}

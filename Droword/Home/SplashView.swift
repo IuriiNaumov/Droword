@@ -7,7 +7,6 @@ struct SplashView: View {
 
     var onFinished: () -> Void
 
-    /// 0 = open (dro / ord away), 1 = locked as droword.
     @State private var join: CGFloat = 1
     @State private var wOn = false
     @State private var sidesOn = false

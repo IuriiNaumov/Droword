@@ -133,3 +133,25 @@ struct QuizMultipleChoiceExercise: View {
         .accessibilityAddTraits(hasAnswered && isThisCorrect ? .isSelected : [])
     }
 }
+
+#Preview {
+    QuizMultipleChoiceExercise(
+        item: QuizSessionManager.QuizItem(
+        id: UUID(),
+        word: "hola",
+        translation: "hello",
+        transcription: "ˈola",
+        tag: "basics",
+        example: "¡Hola!"
+    ),
+        hasAnswered: false,
+        isCorrect: false,
+        isReversed: false,
+        options: ["hello", "bye", "please", "thanks"],
+        selectedOption: nil,
+        shakeOffset: 0,
+        onSelect: { _ in }
+    )
+    .padding()
+    .environmentObject(ThemeStore())
+}

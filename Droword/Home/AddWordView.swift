@@ -17,6 +17,8 @@ struct AddWordView: View {
     @State private var showDuplicateAlert = false
     @State private var showErrorToast = false
     @State private var showScanWords = false
+    @State private var showPremiumFromLimit = false
+    @ObservedObject private var network = NetworkMonitor.shared
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenOfflineAlert) private var hasSeenOfflineAlert: Bool = false
     @FocusState private var focusedField: Field?
@@ -60,6 +62,7 @@ struct AddWordView: View {
                     Group {
                         if didAppear {
                             TagsView(selectedTag: $selectedTag, showManagementControls: false)
+                                .environmentObject(store)
                         } else {
                             Color.clear.frame(height: 1)
                         }
@@ -104,13 +107,24 @@ struct AddWordView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
+                        guard network.isConnected else { return }
                         showScanWords = true
                     } label: {
                         Image(systemName: "doc.text.viewfinder")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(themeStore.mainAccentColor)
+                            .foregroundStyle(
+                                network.isConnected
+                                    ? themeStore.mainAccentColor
+                                    : themeStore.secondaryText.opacity(0.35)
+                            )
                     }
+                    .disabled(!network.isConnected)
                     .accessibilityLabel(Text("Scan words from photo"))
+                    .accessibilityHint(
+                        Text(network.isConnected
+                             ? "Opens camera to scan a word list"
+                             : "Needs an internet connection")
+                    )
                 }
             }
             .fullScreenCover(isPresented: $showScanWords) {
@@ -119,6 +133,10 @@ struct AddWordView: View {
                     .environmentObject(languageStore)
                     .tint(themeStore.mainAccentColor)
                     .transaction { $0.disablesAnimations = true }
+            }
+            .fullScreenCover(isPresented: $showPremiumFromLimit) {
+                PremiumView(asWall: true)
+                    .environmentObject(themeStore)
             }
         }
 
@@ -169,7 +187,7 @@ struct AddWordView: View {
             }
             if showErrorToast {
                 BannerToastView(
-                    type: .success,
+                    type: .info,
                     message: String(localized: "Saved. Translation will update when available."),
                     duration: 2.0
                 )
@@ -282,11 +300,11 @@ struct AddWordView: View {
         let canUseAI = isPremium || DailyLimitsManager.canTranslate
 
         guard canUseAI else {
-            addWordOffline(trimmedWord)
+            showPremiumFromLimit = true
             return
         }
 
-        guard NetworkMonitor.shared.isConnected else {
+        guard network.isConnected else {
             if hasSeenOfflineAlert {
                 addWordOffline(trimmedWord, showToast: true)
             } else {
@@ -368,5 +386,5 @@ struct AddWordView: View {
 #Preview {
     AddWordView(store: WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
 }
-
