@@ -7,7 +7,6 @@ struct HomeExtrasToggleList: View {
     @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallenges: Bool = false
-    @AppStorage(AppStorageKeys.showHomeNextReview) private var showHomeNextReview: Bool = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,12 +16,14 @@ struct HomeExtrasToggleList: View {
                 subtitle: "A short story that hides a few of your words.",
                 isOn: $showHomeReading
             )
-            row(
-                icon: "bubble.left.and.bubble.right.fill",
-                title: "Chat",
-                subtitle: "Tiny role-play scenes to use a word in conversation.",
-                isOn: $showHomeChat
-            )
+            if FeatureGates.homeChatEnabled {
+                row(
+                    icon: "bubble.left.and.bubble.right.fill",
+                    title: "Chat",
+                    subtitle: "Tiny role-play scenes to use a word in conversation.",
+                    isOn: $showHomeChat
+                )
+            }
             row(
                 icon: "rectangle.stack.fill",
                 title: "Word Packs",
@@ -33,13 +34,7 @@ struct HomeExtrasToggleList: View {
                 icon: "dumbbell.fill",
                 title: "Daily Challenges",
                 subtitle: "Small daily goals that keep you coming back.",
-                isOn: $showDailyChallenges
-            )
-            row(
-                icon: "timer",
-                title: "See you tomorrow",
-                subtitle: "After today’s lesson — the done card with tomorrow’s words.",
-                isOn: $showHomeNextReview,
+                isOn: $showDailyChallenges,
                 showDivider: false
             )
         }

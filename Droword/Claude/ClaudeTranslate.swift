@@ -29,5 +29,18 @@ func translateWithClaude(
     let request = try APIClient.makeRequest(endpoint: "translate", body: body)
     let (data, response) = try await APIClient.perform(request)
     let validated = try APIClient.validateResponse(data, response)
-    return try JSONDecoder().decode(TranslationResult.self, from: validated)
+    let result = try JSONDecoder().decode(TranslationResult.self, from: validated)
+    return TranslationResult(
+        translation: result.translation.displayCapitalized,
+        example: result.example,
+        type: result.type,
+        explanation: result.explanation,
+        breakdown: result.breakdown,
+        transcription: result.transcription,
+        examples: result.examples,
+        collocations: result.collocations,
+        synonyms: result.synonyms,
+        antonyms: result.antonyms,
+        mnemonic: result.mnemonic
+    )
 }

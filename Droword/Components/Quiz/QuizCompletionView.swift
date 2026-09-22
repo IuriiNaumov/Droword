@@ -10,6 +10,7 @@ struct QuizCompletionView: View {
     var moments: [StudyMoment] = []
     var isLesson: Bool = false
     var onScene: (() -> Void)? = nil
+    var onClose: (() -> Void)? = nil
     let onRestart: () -> Void
 
     @State private var animatedProgress: Double = 0
@@ -92,11 +93,20 @@ struct QuizCompletionView: View {
     }
 
     private var subtitleBlock: some View {
-        Text(subtitleCopy)
-            .font(themeStore.regular(15))
-            .foregroundStyle(themeStore.secondaryText)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 28)
+        HStack(spacing: 4) {
+            Text(subtitleCopy)
+                .font(themeStore.regular(15))
+                .foregroundStyle(themeStore.secondaryText)
+
+            if isLesson, missedWords.isEmpty {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(themeStore.accentPink)
+                    .accessibilityHidden(true)
+            }
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 28)
     }
 
     private var subtitleCopy: String {
@@ -170,7 +180,7 @@ struct QuizCompletionView: View {
 
             ForEach(moments) { moment in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(moment.word)
+                    Text(moment.word.displayCapitalized)
                         .font(themeStore.medium(15))
                         .foregroundStyle(themeStore.mainText)
                     Text(moment.landed
@@ -201,11 +211,11 @@ struct QuizCompletionView: View {
 
             ForEach(Array(missedWords.enumerated()), id: \.offset) { _, pair in
                 HStack {
-                    Text(pair.word)
+                    Text(pair.word.displayCapitalized)
                         .font(themeStore.medium(15))
                         .foregroundStyle(themeStore.mainText)
                     Spacer()
-                    Text(pair.translation)
+                    Text(pair.translation.displayCapitalized)
                         .font(themeStore.regular(15))
                         .foregroundStyle(themeStore.secondaryText)
                 }
@@ -224,36 +234,58 @@ struct QuizCompletionView: View {
     @ViewBuilder
     private var actionButtons: some View {
         if isLesson, let onScene {
-            Button {
-                Haptics.buttonPress()
-                onScene()
-            } label: {
-                Text("Drop it in a chat")
-                    .duo3DStyle(themeStore.mainAccentColor)
+            VStack(spacing: 10) {
+                Button {
+                    Haptics.buttonPress()
+                    onScene()
+                } label: {
+                    Text("Drop it in a chat")
+                        .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+
+                Button {
+                    Haptics.softTap()
+                    onRestart()
+                } label: {
+                    Text("Once more")
+                        .font(themeStore.medium(15))
+                        .foregroundStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(.plain)
+
+                if let onClose {
+                    closeButton(onClose)
+                }
             }
-            .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, 40)
             .padding(.top, 8)
-
-            Button {
-                Haptics.softTap()
-                onRestart()
-            } label: {
-                Text("Once more")
-                    .font(themeStore.medium(15))
-                    .foregroundStyle(themeStore.mainAccentColor)
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 4)
         } else {
-            Button(action: { Haptics.buttonPress(); onRestart() }) {
-                Text(isLesson ? "Once more" : "Try Again")
-                    .duo3DStyle(themeStore.mainAccentColor)
+            VStack(spacing: 10) {
+                Button(action: { Haptics.buttonPress(); onRestart() }) {
+                    Text(isLesson ? "Once more" : "Try Again")
+                        .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+
+                if let onClose {
+                    closeButton(onClose)
+                }
             }
-            .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, 40)
             .padding(.top, 8)
         }
+    }
+
+    private func closeButton(_ action: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.softTap()
+            action()
+        } label: {
+            Text("Close")
+                .duo3DStyle(themeStore.secondaryText.opacity(0.55))
+        }
+        .buttonStyle(Duo3DButtonStyle())
     }
 
     private func statBubble(icon: String, value: String, label: LocalizedStringKey, color: Color) -> some View {

@@ -103,10 +103,14 @@ struct StreakCalendarView: View {
         VStack(spacing: 2) {
             if fire {
                 HStack(spacing: 4) {
-                    BurningFlameIcon(size: 14)
+                    Image(systemName: "flame")
+                        .font(.system(size: 14, weight: .regular))
+                        .symbolRenderingMode(.monochrome)
+                        .symbolVariant(.none)
+                        .foregroundStyle(themeStore.mainText)
                     Text(value)
                         .font(themeStore.bold(18))
-                        .foregroundStyle(StreakFireStyle.red)
+                        .foregroundStyle(themeStore.mainText)
                 }
             } else {
                 Text(value)
@@ -334,7 +338,9 @@ struct StreakCalendarView: View {
                     Label {
                         Text("Studied")
                     } icon: {
-                        Image(systemName: "bolt.fill")
+                        Image(systemName: "bolt")
+                            .symbolRenderingMode(.monochrome)
+                            .symbolVariant(.none)
                     }
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.mainText)

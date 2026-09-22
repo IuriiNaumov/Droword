@@ -18,7 +18,7 @@ struct HomeNextReviewCard: View {
                 Text(DuoChaosCopy.nextReviewTitle())
                     .font(themeStore.bold(16))
                     .foregroundStyle(themeStore.mainText)
-                Text("\(count) words to review in \(timeUntil(date))")
+                Text("\(count) words will be ready for review in \(timeUntil(date))")
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
                 if let hint = longIntervalHint(for: date) {
@@ -34,11 +34,18 @@ struct HomeNextReviewCard: View {
                     onDismiss()
                 }
             } label: {
-                CloseButtonIcon()
+                MenuSymbol(
+                    systemName: "xmark",
+                    color: themeStore.mainAccentColor,
+                    size: 14,
+                    weight: .semibold,
+                    frameSize: 28
+                )
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(Text("Close"))
         }
-        .padding(16)
+        .padding(DesignSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)

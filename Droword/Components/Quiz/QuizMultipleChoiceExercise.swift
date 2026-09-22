@@ -26,7 +26,7 @@ struct QuizMultipleChoiceExercise: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text(prompt)
+                Text(prompt.displayCapitalized)
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
@@ -101,7 +101,7 @@ struct QuizMultipleChoiceExercise: View {
             onSelect(option)
         } label: {
             HStack {
-                Text(option)
+                Text(option.displayCapitalized)
                     .font(themeStore.medium(16))
                     .foregroundStyle(textColor)
 

@@ -90,7 +90,7 @@ struct QuizMatchingExercise: View {
         let isWrong = isWord
             ? matchingWrongIDs?.0 == pair.id
             : matchingWrongIDs?.1 == pair.id
-        let text = isWord ? pair.word : pair.translation
+        let text = (isWord ? pair.word : pair.translation).displayCapitalized
 
         var bgColor: Color {
             if isMatched { return themeStore.accentGreen.opacity(0.2) }

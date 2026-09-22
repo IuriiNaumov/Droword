@@ -105,7 +105,7 @@ struct QuizListeningExercise: View {
             onSelect(option)
         } label: {
             HStack {
-                Text(option)
+                Text(option.displayCapitalized)
                     .font(themeStore.medium(16))
                     .foregroundStyle(hasAnswered && isIrrelevant ? themeStore.mainText.opacity(0.4) : themeStore.mainText)
 

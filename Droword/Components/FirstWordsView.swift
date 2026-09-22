@@ -7,10 +7,12 @@ struct FirstWordsView: View {
 
     let onDismiss: () -> Void
 
-    @State private var emojiScale: CGFloat = 0.3
+    @State private var iconScale: CGFloat = 0.4
     @State private var textOpacity: Double = 0
     @State private var wordsOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
+    @State private var cardScale: CGFloat = 0.92
+    @State private var cardOpacity: Double = 0
     @State private var addedWords: Set<Int> = []
 
     private var starterWords: [StarterWord] {
@@ -22,21 +24,25 @@ struct FirstWordsView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.5)
+            themeStore.appBg.opacity(0.55)
+                .background(.ultraThinMaterial)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Text("📚")
-                    .font(.system(size: 64))
-                    .scaleEffect(emojiScale)
+            VStack(spacing: 18) {
+                Image(systemName: "textformat")
+                    .font(.system(size: 36, weight: .semibold))
+                    .foregroundStyle(themeStore.accentBlue)
+                    .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text("Start with these words")
-                        .font(themeStore.bold(24))
+                        .font(themeStore.display(22))
                         .foregroundStyle(themeStore.mainText)
+                        .tracking(-0.4)
+                        .multilineTextAlignment(.center)
 
                     Text("Tap any word to add it to your dictionary")
-                        .font(themeStore.regular(14))
+                        .font(themeStore.regular(15))
                         .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
@@ -54,34 +60,34 @@ struct FirstWordsView: View {
                     onDismiss()
                 } label: {
                     Text(addedWords.isEmpty ? "Skip" : "Continue")
-                        .font(themeStore.bold(17))
-                        .foregroundStyle(.white)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
             }
-            .padding(28)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(themeStore.appBg)
-            )
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 28)
+            .frame(maxWidth: 360)
+            .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.dialog)
+            .padding(.horizontal, 28)
+            .scaleEffect(cardScale)
+            .opacity(cardOpacity)
         }
         .onAppear {
             Haptics.mediumImpact()
-
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                emojiScale = 1.0
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                cardScale = 1
+                cardOpacity = 1
+                iconScale = 1
             }
-            withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
-                textOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
+                textOpacity = 1
             }
-            withAnimation(.easeOut(duration: 0.35).delay(0.5)) {
-                wordsOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.35).delay(0.22)) {
+                wordsOpacity = 1
             }
-            withAnimation(.easeOut(duration: 0.3).delay(0.75)) {
-                buttonOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.3).delay(0.32)) {
+                buttonOpacity = 1
             }
         }
     }
@@ -128,16 +134,17 @@ struct FirstWordsView: View {
                 store.add(storedWord)
             } label: {
                 Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(themeStore.accentBlue)
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
             }
             .buttonStyle(.plain)
+            .disabled(isAdded)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(themeStore.cardBg)
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                .fill(themeStore.secondaryText.opacity(0.08))
         )
     }
 }

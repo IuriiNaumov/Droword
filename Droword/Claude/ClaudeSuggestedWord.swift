@@ -80,5 +80,17 @@ func fetchSuggestionsWithTopic(
     let (data, response) = try await APIClient.perform(request)
     let validated = try APIClient.validateResponse(data, response)
     let container = try JSONDecoder().decode(SuggestionsContainer.self, from: validated)
-    return (topic: container.topic, suggestions: container.suggestions)
+    let normalized = container.suggestions.map {
+        SuggestedWord(
+            id: $0.id,
+            word: $0.word.displayCapitalized,
+            translation: $0.translation.displayCapitalized,
+            type: $0.type,
+            example: $0.example,
+            explanation: $0.explanation,
+            breakdown: $0.breakdown,
+            transcription: $0.transcription
+        )
+    }
+    return (topic: container.topic, suggestions: normalized)
 }

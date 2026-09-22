@@ -5,6 +5,7 @@ struct QuizMixedView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var session = QuizSessionManager()
 
     var sessionSize: Int = 10
@@ -13,6 +14,8 @@ struct QuizMixedView: View {
     var persistSession: Bool = true
     var presetWords: [StoredWord] = []
     var recordsLesson: Bool = false
+    var onClose: (() -> Void)? = nil
+    var onCompleteChange: ((Bool) -> Void)? = nil
 
     @State private var hasAnswered = false
     @State private var isCorrect = false
@@ -76,7 +79,14 @@ struct QuizMixedView: View {
                     },
                     moments: completionMoments,
                     isLesson: recordsLesson,
-                    onScene: recordsLesson && showHomeChat && network.isConnected ? { openLessonScene() } : nil
+                    onScene: recordsLesson && FeatureGates.homeChatEnabled && showHomeChat && network.isConnected ? { openLessonScene() } : nil,
+                    onClose: {
+                        if let onClose {
+                            onClose()
+                        } else {
+                            dismiss()
+                        }
+                    }
                 ) {
                     startSession()
                 }
@@ -231,6 +241,7 @@ struct QuizMixedView: View {
                 : presetWords.count
             hasEnoughWords = usable >= 4
             restoreOrStartSession()
+            onCompleteChange?(session.isComplete)
         }
         .fullScreenCover(item: $chatSceneTarget) { target in
             ChatSceneView(target: target)
@@ -240,6 +251,7 @@ struct QuizMixedView: View {
                 .tint(themeStore.mainAccentColor)
         }
         .onChange(of: session.isComplete) { _, isComplete in
+            onCompleteChange?(isComplete)
             if isComplete {
                 if persistSession {
                     session.clearSavedSession()
@@ -396,12 +408,12 @@ struct QuizMixedView: View {
                     .foregroundStyle(themeStore.secondaryText)
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(item.word)
+                Text(item.word.displayCapitalized)
                     .font(themeStore.bold(18))
                     .foregroundStyle(themeStore.mainText)
                 Text("—")
                     .foregroundStyle(themeStore.secondaryText)
-                Text(item.translation)
+                Text(item.translation.displayCapitalized)
                     .font(themeStore.medium(16))
                     .foregroundStyle(themeStore.mainText)
             }
@@ -594,7 +606,7 @@ struct QuizMixedView: View {
     }
 
     private func openLessonScene() {
-        guard showHomeChat, network.isConnected else { return }
+        guard FeatureGates.homeChatEnabled, showHomeChat, network.isConnected else { return }
         let items = session.queue.map { item in
             (
                 id: item.id,
@@ -718,18 +730,16 @@ struct QuizMixedView: View {
             return
         }
 
-        let input = trimmed.lowercased()
-
         let variants = rawAnswer
             .components(separatedBy: CharacterSet(charactersIn: ",;"))
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
 
         var correct = false
         var almostCorrect = false
 
         for variant in variants {
-            if input == variant {
+            if QuizAnswerMatching.isExactMatch(trimmed, expected: variant) {
                 correct = true
                 break
             }
@@ -737,9 +747,7 @@ struct QuizMixedView: View {
 
         if !correct {
             for variant in variants {
-                let dist = levenshteinDistance(input, variant)
-                let threshold = max(1, variant.count / 4)
-                if dist <= threshold {
+                if QuizAnswerMatching.isAlmostMatch(trimmed, expected: variant) {
                     almostCorrect = true
                     correct = true
                     break
@@ -773,7 +781,7 @@ struct QuizMixedView: View {
             Haptics.error()
             triggerShake()
 
-            let primary = variants.first ?? rawAnswer.lowercased()
+            let primary = QuizAnswerMatching.normalize(variants.first ?? rawAnswer)
             let firstChar = primary.first.map { String($0).uppercased() } ?? "?"
             let letterCount = primary.count
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {

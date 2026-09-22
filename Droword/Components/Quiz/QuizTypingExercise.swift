@@ -30,7 +30,7 @@ struct QuizTypingExercise: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text(prompt)
+                Text(prompt.displayCapitalized)
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)

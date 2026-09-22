@@ -601,6 +601,7 @@ struct ReviewSectionView: View {
         showTranslation = false
         nextReviewText = nil
         DailyChallengeManager.shared.recordWordsReviewed(count: 1)
+        StudyActivityStore.shared.recordStudy()
         withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
             if !didReinsert {
                 currentIndex += 1

@@ -6,7 +6,6 @@ struct ProfileHeaderView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var showSettings = false
     @State private var avatarImage: UIImage?
-    @State private var showStats = false
     private let cuteTags: [String] = [
         "keep it up",
         "proud of you",
@@ -27,6 +26,8 @@ struct ProfileHeaderView: View {
     @AppStorage(AppStorageKeys.firstUseDate) private var firstUseDate: String = ""
     @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
+
+    var onOpenStreak: (() -> Void)? = nil
 
     private var displayName: String {
         let name = storedUserName.trimmingCharacters(in: .whitespaces)
@@ -76,27 +77,40 @@ struct ProfileHeaderView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(alignment: .center, spacing: 8) {
+                    HStack(alignment: .center, spacing: 6) {
                         Text(displayName)
                             .font(themeStore.display(20))
                             .foregroundStyle(themeStore.mainText)
                             .tracking(-0.4)
 
                         if isPremium {
-                            GlassProStar(size: 22)
+                            MenuSymbol(
+                                systemName: "sparkles",
+                                color: themeStore.accentBlue,
+                                size: 16,
+                                weight: .medium,
+                                frameSize: 20
+                            )
+                            .accessibilityLabel(Text("PRO"))
                         }
                     }
 
                     Text("\(usageDurationString()) with Droword")
                         .font(themeStore.regular(14))
                         .foregroundStyle(themeStore.secondaryText)
-
                 }
 
                 Spacer()
 
-                StreakFireBadge(count: currentStreak)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
+                Button {
+                    Haptics.softTap()
+                    onOpenStreak?()
+                } label: {
+                    StreakFireBadge(count: currentStreak)
+                }
+                .buttonStyle(.plain)
+                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
+                .accessibilityHint(Text("Opens streak calendar and stats"))
             }
 
         }

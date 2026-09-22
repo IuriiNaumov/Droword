@@ -4,27 +4,34 @@ struct SuggestedWordsIntroView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     let onDismiss: () -> Void
 
-    @State private var iconScale: CGFloat = 0.3
+    @State private var iconScale: CGFloat = 0.4
     @State private var textOpacity: Double = 0
     @State private var bulletOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
+    @State private var cardScale: CGFloat = 0.92
+    @State private var cardOpacity: Double = 0
 
     private var accent: Color { themeStore.accentBlue }
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.5)
+            themeStore.appBg.opacity(0.55)
+                .background(.ultraThinMaterial)
                 .ignoresSafeArea()
                 .onTapGesture { onDismiss() }
 
-            VStack(spacing: 20) {
-                ModalIconView(kind: .idea, color: themeStore.accentGold, size: 104)
+            VStack(spacing: 18) {
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 36, weight: .semibold))
+                    .foregroundStyle(themeStore.accentGold)
                     .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text("Suggested Words")
-                        .font(themeStore.bold(26))
+                        .font(themeStore.display(22))
                         .foregroundStyle(themeStore.mainText)
+                        .tracking(-0.4)
+                        .multilineTextAlignment(.center)
 
                     Text("Smart suggestions just for you")
                         .font(themeStore.regular(15))
@@ -54,39 +61,39 @@ struct SuggestedWordsIntroView: View {
                     onDismiss()
                 } label: {
                     Text("Got it!")
-                        .font(themeStore.bold(17))
-                        .foregroundStyle(.white)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
             }
-            .padding(28)
-            .background(
-                RoundedRectangle(cornerRadius: DesignRadius.dialog, style: .continuous)
-                    .fill(themeStore.appBg)
-            )
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 28)
+            .frame(maxWidth: 360)
+            .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.dialog)
+            .padding(.horizontal, 28)
+            .scaleEffect(cardScale)
+            .opacity(cardOpacity)
         }
         .onAppear {
             Haptics.mediumImpact()
-
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                iconScale = 1.0
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                cardScale = 1
+                cardOpacity = 1
+                iconScale = 1
             }
-            withAnimation(.easeOut(duration: 0.4).delay(0.25)) {
-                textOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
+                textOpacity = 1
             }
-            withAnimation(.easeOut(duration: 0.35).delay(0.5)) {
-                bulletOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.35).delay(0.22)) {
+                bulletOpacity = 1
             }
-            withAnimation(.easeOut(duration: 0.3).delay(0.75)) {
-                buttonOpacity = 1.0
+            withAnimation(.easeOut(duration: 0.3).delay(0.32)) {
+                buttonOpacity = 1
             }
         }
     }
 
-    private func bulletRow(icon: String, text: String) -> some View {
+    private func bulletRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .medium))

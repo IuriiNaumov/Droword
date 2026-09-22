@@ -11,18 +11,32 @@ struct PracticeView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
 
+    var onCloseResults: (() -> Void)? = nil
+
     @State private var hasEnoughWords: Bool = false
+    @State private var showingResults: Bool = false
 
     var body: some View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                header
-                    .padding(.bottom, 8)
+                if !showingResults {
+                    header
+                        .padding(.bottom, 8)
+                }
 
                 if hasEnoughWords {
-                    QuizMixedView(sessionSize: 10)
+                    QuizMixedView(
+                        sessionSize: 10,
+                        onClose: {
+                            showingResults = false
+                            onCloseResults?()
+                        },
+                        onCompleteChange: { complete in
+                            showingResults = complete
+                        }
+                    )
                 } else {
                     practiceEmptyState
                 }

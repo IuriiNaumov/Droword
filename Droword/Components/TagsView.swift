@@ -10,27 +10,28 @@ struct TagsView: View {
     var showManagementControls: Bool = true
     var onAddTag: (() -> Void)? = nil
     var sortOption: Binding<DictionarySortOption>? = nil
+    var contentInset: CGFloat = 0
     @State private var isDeleteMode: Bool = false
 
-    private let builtInNames: Set<String> = ["Suggested", "Travel", "Movie", "Street", "Social media"]
+    private let builtInNames: Set<String> = BuiltInTag.allStoredNames
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
             ($0.name, themeStore.resolvedTagColor($0.colorHex), true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
-            ("Suggested", themeStore.accentBlue, false),
-            ("Travel", themeStore.accentBlue, false),
-            ("Movie", themeStore.accentPink, false),
-            ("Street", themeStore.accentPurple, false),
-            ("Social media", themeStore.accentGold, false),
+            (BuiltInTag.suggested, themeStore.accentBlue, false),
+            (BuiltInTag.travel, themeStore.accentBlue, false),
+            (BuiltInTag.movie, themeStore.accentPink, false),
+            (BuiltInTag.street, themeStore.accentPurple, false),
+            (BuiltInTag.socialMedia, themeStore.accentGold, false),
         ]
         return custom + builtIn
     }
 
     var visibleTags: [(name: String, color: Color, isCustom: Bool)] {
         allTags.filter { tag in
-            tag.name == "Suggested" ? hasSuggestedWords : true
+            tag.name == BuiltInTag.suggested ? hasSuggestedWords : true
         }
     }
 
@@ -69,7 +70,7 @@ struct TagsView: View {
                                     .transition(.scale.combined(with: .opacity))
                             }
 
-                            Text(LocalizedStringKey(tag.name))
+                            Text(BuiltInTag.displayName(tag.name))
                                 .font(themeStore.medium(compact ? 13 : 15))
                                 .foregroundStyle(tagTextColor(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed))
 
@@ -153,9 +154,10 @@ struct TagsView: View {
                     .animation(.easeInOut(duration: 0.2), value: isDeleteMode)
                 }
             }
-            .padding(.horizontal, compact ? 10 : 0)
-            .padding(.vertical, compact ? 14 : 8)
+            .padding(.horizontal, compact ? 10 : contentInset)
+            .padding(.vertical, compact ? 14 : 10)
         }
+        .scrollClipDisabled()
         .onChange(of: tagStore.tags.count) { _, newCount in
             if newCount == 0 && isDeleteMode {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {

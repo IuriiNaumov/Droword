@@ -20,14 +20,6 @@ struct SuggestedWordsView: View {
                     .padding(.leading, 16)
                     .padding(.top, 8)
 
-                if let topic = suggested.topic, !topic.isEmpty {
-                    Text(topic)
-                        .font(themeStore.regular(14))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .padding(.leading, 16)
-                        .padding(.top, -8)
-                }
-
                 if let lastError = suggested.lastError {
                     StatusBannerView(
                         icon: "exclamationmark.triangle.fill",
@@ -46,11 +38,11 @@ struct SuggestedWordsView: View {
                     VStack(spacing: 16) {
                         ForEach(suggested.suggestedWords) { word in
                             VStack(alignment: .leading, spacing: 10) {
-                                Text(word.word.capitalized)
+                                Text(word.word.displayCapitalized)
                                     .font(themeStore.medium(24))
                                     .foregroundStyle(themeStore.mainText)
 
-                                Text(word.translation)
+                                Text(word.translation.displayCapitalized)
                                     .font(themeStore.regular(16))
                                     .foregroundStyle(themeStore.secondaryText)
 
@@ -160,7 +152,6 @@ extension Color {
     let mockStore = WordsStore()
     let suggested: SuggestedWordsStore = {
         let s = SuggestedWordsStore()
-        s.topic = "Everyday life"
         s.suggestedWords = [
             SuggestedWord(
                 word: "cabeza",

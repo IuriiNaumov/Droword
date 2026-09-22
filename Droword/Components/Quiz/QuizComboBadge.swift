@@ -7,7 +7,7 @@ struct QuizComboBadge: View {
     var scale: CGFloat = 1
 
     private var label: String {
-        if streak >= 7 { return "ON FIRE" }
+        if streak >= 7 { return DuoChaosCopy.comboOnFire() }
         return "x\(streak)"
     }
 

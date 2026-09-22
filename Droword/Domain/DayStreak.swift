@@ -7,8 +7,12 @@ enum DayStreak {
         calendar: Calendar = .current
     ) -> Int {
         let start = calendar.startOfDay(for: today)
-        var streak = 0
         var day = start
+        if !activityDays.contains(day) {
+            guard let yesterday = calendar.date(byAdding: .day, value: -1, to: day) else { return 0 }
+            day = yesterday
+        }
+        var streak = 0
         while activityDays.contains(day) {
             streak += 1
             guard let prev = calendar.date(byAdding: .day, value: -1, to: day) else { break }
@@ -27,6 +31,12 @@ enum DayStreak {
         var streak = 0
         var day = start
         var freezeDate: Date? = nil
+
+        if !activityDays.contains(day) {
+            if let yesterday = calendar.date(byAdding: .day, value: -1, to: day) {
+                day = yesterday
+            }
+        }
 
         while true {
             if activityDays.contains(day) {

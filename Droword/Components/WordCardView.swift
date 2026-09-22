@@ -97,29 +97,10 @@ struct WordCardView: View {
 
     var body: some View {
         cardContent
-            .overlay {
-
-                if showReactionPicker {
-                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
-                        .fill(Color.black.opacity(colorScheme == .dark ? 0.4 : 0.14))
-                        .transition(.opacity)
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                                showReactionPicker = false
-                            }
-                        }
-                }
-            }
             .overlay(alignment: .topTrailing) {
                 if let reaction = reaction {
                     Button {
-                        Haptics.open()
-                        if !showReactionPicker {
-                            NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
-                        }
-                        withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
-                            showReactionPicker.toggle()
-                        }
+                        openReactionPicker()
                     } label: {
                         Text(reaction)
                             .font(.system(size: 24))
@@ -131,127 +112,49 @@ struct WordCardView: View {
                     }
                     .buttonStyle(ReactionButtonStyle())
                     .offset(x: 8, y: -22)
+                    .zIndex(20)
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.2, anchor: .center).combined(with: .opacity),
                         removal: .scale(scale: 0.6).combined(with: .opacity)
                     ))
                 }
             }
-            .overlay(alignment: .top) {
-                if showReactionPicker, onReaction != nil {
-                    ReactionPickerBar(
-                        reactions: pickerReactions,
-                        current: reaction,
-                        onSelect: { emoji in
-                            if reaction == emoji {
-                                Haptics.softTap()
-                            } else {
-                                Haptics.success()
-                            }
-                            withAnimation(DesignMotion.card) {
-                                onReaction?(reaction == emoji ? nil : emoji)
-                                showReactionPicker = false
-                            }
-                        },
-                        onCustom: {
-                            Haptics.softTap()
-                            showEmojiKeyboard = true
-                        }
-                    )
-                    .transition(.scale(scale: 0.65, anchor: .bottomTrailing).combined(with: .opacity))
-                    .offset(y: -52)
-                    .zIndex(10)
-                    .overlay {
-                        EmojiKeyboardField(isPresented: $showEmojiKeyboard) { emoji in
-                            Haptics.softTap()
-                            withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
-                                onReaction?(emoji)
-                                showReactionPicker = false
-                            }
-                        }
-                        .frame(width: 0, height: 0)
-                        .opacity(0)
-                    }
-                }
-            }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text("\(word), \(translation ?? "")"))
-            .contextMenu {
-                if storedWord != nil {
-                    Button {
-                        showEditWord = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-
-                    Button {
-                        shareWord()
-                    } label: {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                    }
-                }
-
-                Button {
-                    UIPasteboard.general.string = word
-                    NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
-                } label: {
-                    Label(word, systemImage: "doc.on.doc")
-                }
-
-                if let translation = translation, !translation.isEmpty {
-                    Button {
-                        UIPasteboard.general.string = translation
-                        NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
-                    } label: {
-                        Label(translation, systemImage: "doc.on.doc")
-                    }
-                }
-
-                if let example = example, !example.isEmpty {
-                    Button {
-                        UIPasteboard.general.string = example
-                        NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
-                    } label: {
-                        Label("Example", systemImage: "text.quote")
-                    }
-                }
-
-                Button {
-                    var parts: [String] = [word]
-                    if let transcription = transcription, !transcription.isEmpty { parts.append(transcription) }
-                    if let translation = translation, !translation.isEmpty { parts.append(translation) }
-                    if let type = type, !type.isEmpty { parts.append(type.capitalized) }
-                    if let example = example, !example.isEmpty { parts.append(example) }
-                    if let explanation = explanation, !explanation.isEmpty { parts.append(explanation) }
-                    if let comment = comment, !comment.isEmpty { parts.append(comment) }
-                    UIPasteboard.general.string = parts.joined(separator: "\n")
-                    NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
-                } label: {
-                    Label("Copy all", systemImage: "doc.on.doc.fill")
-                }
-            }
+            .accessibilityHint(Text("Double tap for heart. Press and hold for reactions and actions"))
         .animation(.spring(response: 0.4, dampingFraction: 0.58), value: reaction)
         .animation(.spring(response: 0.32, dampingFraction: 0.72), value: showReactionPicker)
         .padding(.top, reaction != nil ? 14 : 12)
         .padding(.bottom, 0)
+        .zIndex(reaction != nil ? 5 : 0)
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.45, maximumDistance: 12)
+                .onEnded { _ in
+                    openReactionPicker()
+                }
+        )
         .onTapGesture(count: 2) {
             guard onReaction != nil else { return }
-            Haptics.open()
+            if let until = ignoreCardTapUntil, Date() < until { return }
+
             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) {
-                showReactionPicker = true
+            let heart = "❤️"
+            if reaction == heart {
+                Haptics.softTap()
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
+                    onReaction?(nil)
+                }
+            } else {
+                Haptics.success()
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.7)) {
+                    onReaction?(heart)
+                }
             }
         }
         .onTapGesture {
             if let until = ignoreCardTapUntil, Date() < until { return }
 
             NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
-            if showReactionPicker {
-                withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                    showReactionPicker = false
-                }
-                return
-            }
             if isExpanded {
                 Haptics.cardCollapse()
             } else {
@@ -264,13 +167,11 @@ struct WordCardView: View {
         .onReceive(NotificationCenter.default.publisher(for: .dismissReactionPicker)) { note in
             guard showReactionPicker else { return }
             if let senderID = note.object as? UUID, senderID == cardID { return }
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                showReactionPicker = false
-            }
+            closeReactionPicker()
         }
         .onDisappear {
-
             showReactionPicker = false
+            showEmojiKeyboard = false
         }
         .onAppear {
             if let example = example {
@@ -299,6 +200,85 @@ struct WordCardView: View {
                 .environmentObject(themeStore)
                 .tint(themeStore.mainAccentColor)
         }
+        .fullScreenCover(isPresented: $showReactionPicker) {
+            WordCardFocusOverlay(
+                word: word,
+                translation: translation,
+                type: type,
+                tag: tag,
+                reactions: pickerReactions,
+                currentReaction: reaction,
+                canEdit: storedWord != nil,
+                canShare: storedWord != nil,
+                allowsReactions: onReaction != nil,
+                onReaction: { emoji in
+                    if reaction == emoji {
+                        Haptics.softTap()
+                        onReaction?(nil)
+                    } else {
+                        Haptics.success()
+                        onReaction?(emoji)
+                    }
+                    closeReactionPicker()
+                },
+                onCustomReaction: {
+                    Haptics.softTap()
+                    showEmojiKeyboard = true
+                },
+                onCopy: {
+                    UIPasteboard.general.string = word
+                    closeReactionPicker()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+                    }
+                },
+                onCopyTranslation: {
+                    guard let translation, !translation.isEmpty else { return }
+                    UIPasteboard.general.string = translation
+                    closeReactionPicker()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+                    }
+                },
+                onCopyAll: {
+                    closeReactionPicker()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        copyAllFields()
+                    }
+                },
+                onShare: {
+                    closeReactionPicker()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        shareWord()
+                    }
+                },
+                onEdit: {
+                    closeReactionPicker()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        showEditWord = true
+                    }
+                },
+                onDelete: {
+                    closeReactionPicker()
+                    Haptics.warning()
+                    onDelete()
+                },
+                onDismiss: {
+                    closeReactionPicker()
+                }
+            )
+            .environmentObject(themeStore)
+            .presentationBackground(.clear)
+            .overlay {
+                EmojiKeyboardField(isPresented: $showEmojiKeyboard) { emoji in
+                    Haptics.success()
+                    onReaction?(emoji)
+                    closeReactionPicker()
+                }
+                .frame(width: 0, height: 0)
+                .opacity(0)
+            }
+        }
         .sheet(isPresented: $showEditWord) {
             if let storedWord {
                 EditWordView(word: storedWord)
@@ -311,11 +291,39 @@ struct WordCardView: View {
         }
     }
 
+    private func openReactionPicker() {
+        ignoreCardTapUntil = Date().addingTimeInterval(0.55)
+        Haptics.open()
+        NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            showReactionPicker = true
+        }
+    }
+
+    private func closeReactionPicker() {
+        showEmojiKeyboard = false
+        showReactionPicker = false
+    }
+
+    private func copyAllFields() {
+        var parts: [String] = [word]
+        if let transcription = transcription, !transcription.isEmpty { parts.append(transcription) }
+        if let translation = translation, !translation.isEmpty { parts.append(translation) }
+        if let type = type, !type.isEmpty { parts.append(type.capitalized) }
+        if let example = example, !example.isEmpty { parts.append(example) }
+        if let explanation = explanation, !explanation.isEmpty { parts.append(explanation) }
+        if let comment = comment, !comment.isEmpty { parts.append(comment) }
+        UIPasteboard.general.string = parts.joined(separator: "\n")
+        NotificationCenter.default.post(name: .copiedToClipboard, object: nil)
+    }
+
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: 8) {
 
             if let tag = tag, !tag.isEmpty {
-                Text(LocalizedStringKey(tag))
+                Text(BuiltInTag.displayName(tag))
                     .font(themeStore.bold(12))
                     .foregroundStyle(themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
                     .padding(.vertical, 5)
@@ -476,43 +484,8 @@ struct WordCardView: View {
                     .transition(Self.revealTransition)
                 }
             }
-
-            HStack {
-                if storedWord != nil {
-                    Menu {
-                        Button {
-                            shareWord()
-                        } label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                        }
-                        Button {
-                            shareToStories()
-                        } label: {
-                            Label {
-                                Text("Instagram Stories")
-                            } icon: {
-                                Image("instagram")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16))
-                            .foregroundStyle(secondaryTextColor)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Share word"))
-                }
-                Spacer()
-                Button(action: { Haptics.warning(); onDelete() }) {
-                    Image(systemName: "trash.fill")
-                        .foregroundStyle(Color.accentRed)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Delete word"))
-            }
-            .padding(.top, 8)
         }
-        .padding()
+        .padding(DesignSpacing.md)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
@@ -534,7 +507,7 @@ struct WordCardView: View {
             Spacer()
 
             SoundWavesView(isPlaying: isPlaying)
-                .frame(width: 40, height: 40)
+                .frame(width: 28, height: 28)
                 .contentShape(Rectangle())
                 .opacity(network.isConnected ? 1 : 0.35)
                 .allowsHitTesting(network.isConnected)
@@ -607,34 +580,181 @@ struct WordCardView: View {
         }
     }
 
-    private func shareToStories() {
-        guard let stored = storedWord else { return }
-        Haptics.softTap()
+    private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
+        HighlightedExample.make(example: comment, word: word)
+    }
+}
 
-        if InstagramStoriesShare.isInstagramInstalled {
-            InstagramStoriesShare.shareToInstagramStories(word: stored, themeStore: themeStore)
-        } else {
+private struct WordCardFocusOverlay: View {
+    @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
 
-            guard let image = InstagramStoriesShare.renderStoriesImage(for: stored, themeStore: themeStore) else { return }
+    let word: String
+    let translation: String?
+    let type: String?
+    let tag: String?
+    let reactions: [String]
+    let currentReaction: String?
+    let canEdit: Bool
+    let canShare: Bool
+    let allowsReactions: Bool
 
-            let text = "\(stored.word) — \(stored.translation ?? "")"
-            let items: [Any] = [image, text]
+    let onReaction: (String) -> Void
+    let onCustomReaction: () -> Void
+    let onCopy: () -> Void
+    let onCopyTranslation: () -> Void
+    let onCopyAll: () -> Void
+    let onShare: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onDismiss: () -> Void
 
-            let ac = UIActivityViewController(activityItems: items, applicationActivities: nil)
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-               let root = windowScene.keyWindow?.rootViewController {
-                if let popover = ac.popoverPresentationController {
-                    popover.sourceView = root.view
-                    popover.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
-                    popover.permittedArrowDirections = []
+    @State private var appeared = false
+
+    var body: some View {
+        ZStack {
+            Color.black
+                .opacity(appeared ? (colorScheme == .dark ? 0.55 : 0.28) : 0)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onDismiss)
+
+            VStack(spacing: 14) {
+                if allowsReactions {
+                    ReactionPickerBar(
+                        reactions: reactions,
+                        current: currentReaction,
+                        onSelect: onReaction,
+                        onCustom: onCustomReaction
+                    )
+                    .scaleEffect(appeared ? 1 : 0.88)
+                    .opacity(appeared ? 1 : 0)
                 }
-                root.present(ac, animated: true)
+
+                collapsedCard
+                    .scaleEffect(appeared ? 1 : 0.94)
+                    .opacity(appeared ? 1 : 0)
+
+                actionMenu
+                    .frame(maxWidth: 200, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .scaleEffect(appeared ? 1 : 0.94)
+                    .opacity(appeared ? 1 : 0)
+            }
+            .padding(.horizontal, 28)
+            .frame(maxWidth: 420)
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.78)) {
+                appeared = true
             }
         }
     }
 
-    private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
-        HighlightedExample.make(example: comment, word: word)
+    private var collapsedCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let tag, !tag.isEmpty {
+                Text(BuiltInTag.displayName(tag))
+                    .font(themeStore.bold(12))
+                    .foregroundStyle(themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2))
+                    )
+            }
+
+            Text(word)
+                .font(themeStore.medium(24))
+                .tracking(-0.2)
+                .foregroundStyle(themeStore.mainText)
+                .lineLimit(2)
+
+            if let type, !type.isEmpty {
+                Text(type.capitalized)
+                    .font(themeStore.regular(14))
+                    .foregroundStyle(themeStore.mainText.opacity(0.75))
+            }
+
+            if let translation, !translation.isEmpty {
+                Text(translation)
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
+                    .lineLimit(2)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .shadow(color: .black.opacity(0.16), radius: 20, y: 10)
+    }
+
+    private var actionMenu: some View {
+        VStack(spacing: 0) {
+            menuRow(title: "Copy", systemImage: "doc.on.doc", action: onCopy)
+
+            if !(translation ?? "").isEmpty {
+                menuDivider
+                menuRow(title: "Copy translation", systemImage: "character.textbox", action: onCopyTranslation)
+            }
+
+            menuDivider
+            menuRow(title: "Copy all", systemImage: "square.on.square", action: onCopyAll)
+
+            if canShare {
+                menuDivider
+                menuRow(title: "Share", systemImage: "square.and.arrow.up", action: onShare)
+            }
+
+            if canEdit {
+                menuDivider
+                menuRow(title: "Edit", systemImage: "square.and.pencil", action: onEdit)
+            }
+
+            menuDivider
+            menuRow(title: "Delete", systemImage: "trash", destructive: true, action: onDelete)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous))
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: DesignRadius.small))
+        .shadow(color: Color.black.opacity(0.14), radius: 20, y: 10)
+    }
+
+    private var menuDivider: some View {
+        Divider()
+            .padding(.leading, 18)
+    }
+
+    private func menuRow(
+        title: LocalizedStringKey,
+        systemImage: String,
+        destructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Text(title)
+                    .font(themeStore.regular(17))
+                    .foregroundStyle(destructive ? Color.accentRed : themeStore.mainText)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .regular))
+                    .symbolRenderingMode(.monochrome)
+                    .foregroundStyle(destructive ? Color.accentRed : themeStore.mainText)
+                    .frame(width: 24, alignment: .trailing)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle(scale: 0.98))
     }
 }
 
@@ -694,10 +814,8 @@ private struct ReactionPickerBar: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(
-            Capsule()
-                .fill(.ultraThickMaterial)
-        )
+        .clipShape(Capsule())
+        .glassEffect(.regular.interactive(), in: .capsule)
         .onAppear { appeared = true }
     }
 

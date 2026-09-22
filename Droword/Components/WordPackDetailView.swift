@@ -74,7 +74,7 @@ struct WordPackDetailView: View {
                                 addAllWords()
                             } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "plus.circle.fill")
+                                    Image(systemName: "plus.circle")
                                     Text(isPremium ? "Add all" : "Add preview")
                                 }
                                 .duo3DStyle(color)
@@ -145,7 +145,7 @@ struct WordPackDetailView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: canAddMoreFree ? "plus.circle.fill" : "lock.fill")
+                        Image(systemName: canAddMoreFree ? "plus.circle" : "lock")
                         Text(canAddMoreFree ? "Add" : "PRO")
                     }
                     .font(themeStore.medium(13))
@@ -185,8 +185,9 @@ struct WordPackDetailView: View {
 
     private var completionView: some View {
         VStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
+            Image(systemName: "checkmark.circle")
                 .font(.system(size: 40))
+                .symbolRenderingMode(.monochrome)
                 .foregroundStyle(themeStore.accentBlue)
 
             Text("All done!")

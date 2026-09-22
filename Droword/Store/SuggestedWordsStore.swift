@@ -71,9 +71,9 @@ final class SuggestedWordsStore: ObservableObject {
 
     func accept(_ word: SuggestedWord, store: WordsStore, languageStore: LanguageStore) {
         let newWord = StoredWord(
-            word: word.word,
+            word: word.word.displayCapitalized,
             type: word.type ?? "",
-            translation: word.translation,
+            translation: word.translation.displayCapitalized,
             example: word.example,
             explanation: word.explanation,
             breakdown: word.breakdown,

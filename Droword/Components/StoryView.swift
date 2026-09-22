@@ -25,8 +25,9 @@ struct ReadingStoryCard: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(themeStore.accentBlue)
+                    .frame(width: 28, height: 28)
             }
-            .padding(16)
+            .padding(DesignSpacing.md)
             .background(
                 RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
@@ -47,6 +48,7 @@ struct StoryView: View {
 
     @State private var story: StoryResult?
     @State private var isLoading = false
+    @State private var loadingLine = DuoChaosCopy.storyWriting()
     @State private var errorMessage: String?
     @State private var showTranslation = false
     @State private var showPremiumWall = false
@@ -167,6 +169,16 @@ struct StoryView: View {
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.top, 8)
+
+            Button {
+                Haptics.softTap()
+                dismiss()
+            } label: {
+                Text("Close")
+                    .duo3DStyle(themeStore.secondaryText.opacity(0.55))
+            }
+            .buttonStyle(Duo3DButtonStyle())
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -181,12 +193,28 @@ struct StoryView: View {
             )
             .frame(height: 34)
 
-            Text(DuoChaosCopy.storyWriting())
+            Text(loadingLine)
                 .font(themeStore.regular(15))
                 .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
+                .id(loadingLine)
+                .transition(.opacity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            loadingLine = DuoChaosCopy.storyWriting()
+        }
+        .task(id: isLoading) {
+            guard isLoading else { return }
+            while !Task.isCancelled && isLoading {
+                try? await Task.sleep(for: .seconds(2.4))
+                guard isLoading else { break }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    loadingLine = DuoChaosCopy.storyWriting()
+                }
+            }
+        }
     }
 
     private func errorView(_ message: String) -> some View {

@@ -21,7 +21,7 @@ struct QuizSentenceBuildingExercise: View {
                     .font(themeStore.regular(14))
                     .foregroundStyle(themeStore.secondaryText.opacity(0.7))
 
-                Text(item.translation)
+                Text(item.translation.displayCapitalized)
                     .font(themeStore.bold(22))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)

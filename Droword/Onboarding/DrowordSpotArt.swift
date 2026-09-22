@@ -105,11 +105,7 @@ struct EmptyDictionaryArt: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        Image("dictionaryEmptyCry")
-            .resizable()
-            .scaledToFit()
-            .frame(width: 176, height: 132)
-            .accessibilityHidden(true)
+        HaloIcon(symbol: "textformat", color: themeStore.accentBlue, size: 168)
     }
 }
 

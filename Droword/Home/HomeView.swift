@@ -33,7 +33,6 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallengesSection: Bool = false
     @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
     @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
-    @AppStorage(AppStorageKeys.showHomeNextReview) private var showHomeNextReview: Bool = true
     @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
 
     @State private var showFirstWords = false
@@ -46,6 +45,7 @@ struct HomeView: View {
     @State private var showCoachMarks = false
     @State private var enrichmentToast: String?
     @State private var copiedToast = false
+    @State private var copiedToastToken = 0
     @State private var cachedRecentWords: [StoredWord] = []
     @State private var cachedDueWordsCount: Int = 0
     @State private var cachedNextReviewInfo: (count: Int, date: Date)? = nil
@@ -64,30 +64,27 @@ struct HomeView: View {
         case list
 
         var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .home: return "Home"
+            case .list: return "Dictionary"
+            case .practice: return "Practice"
+            case .add: return "Add"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .home: return "house"
+            case .list: return "rectangle.portrait.on.rectangle.portrait"
+            case .practice: return "lightbulb"
+            case .add: return "plus.circle"
+            }
+        }
     }
 
-    private let coachMarkSteps: [CoachMarkStep] = [
-        CoachMarkStep(
-            title: "Add words",
-            message: "Tap + to add a word. I translate it, find examples, and make a card.",
-            icon: "plus.circle.fill"
-        ),
-        CoachMarkStep(
-            title: "Today's lesson",
-            message: "One short session on Home. Due words and your vibe go in there.",
-            icon: "bolt.fill"
-        ),
-        CoachMarkStep(
-            title: "Practice",
-            message: "Want another round? Practice is extra. Home is just the lesson.",
-            icon: "brain.head.profile"
-        ),
-        CoachMarkStep(
-            title: "Your week",
-            message: "The fire and the week dots are the same streak. Study keeps it alive.",
-            icon: "flame.fill"
-        ),
-    ]
+    private let coachMarkSteps: [CoachMarkStep] = CoachMarkCatalog.homeSteps
 
     private var dueWordsCount: Int { cachedDueWordsCount }
 
@@ -101,12 +98,6 @@ struct HomeView: View {
         )
     }
 
-    private var shouldShowDailyLessonCard: Bool {
-        let plan = dailyLessonPlan
-        if plan.isDone { return showHomeNextReview }
-        return true
-    }
-
     var body: some View {
         homeOverlays(homeEvents(homeCovers(tabRoot)))
     }
@@ -114,19 +105,19 @@ struct HomeView: View {
     private var tabRoot: some View {
         TabView(selection: $selectedTab) {
             mainContent
-                .tabItem { Label("", systemImage: "house") }
+                .tabItem { Label(Tab.home.title, systemImage: Tab.home.systemImage) }
                 .tag(Tab.home)
 
             DictionaryView()
-                .tabItem { Label("", systemImage: "rectangle.portrait.on.rectangle.portrait") }
+                .tabItem { Label(Tab.list.title, systemImage: Tab.list.systemImage) }
                 .tag(Tab.list)
 
-            PracticeView()
-                .tabItem { Label("", systemImage: "lightbulb") }
+            PracticeView(onCloseResults: { selectedTab = .home })
+                .tabItem { Label(Tab.practice.title, systemImage: Tab.practice.systemImage) }
                 .tag(Tab.practice)
 
             Color.clear
-                .tabItem { Label("", systemImage: "plus.circle") }
+                .tabItem { Label(Tab.add.title, systemImage: Tab.add.systemImage) }
                 .tag(Tab.add)
         }
         .tint(themeStore.tabTint)
@@ -275,11 +266,14 @@ struct HomeView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .copiedToClipboard)) { _ in
             Haptics.tick()
+            copiedToastToken += 1
             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                 copiedToast = true
             }
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(2))
+                let token = copiedToastToken
+                try? await Task.sleep(for: .seconds(1.8))
+                guard token == copiedToastToken else { return }
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     copiedToast = false
                 }
@@ -416,9 +410,33 @@ struct HomeView: View {
                 BannerToastView(type: .success, message: toast)
                     .zIndex(200)
             }
-            if copiedToast {
-                BannerToastView(type: .success, message: String(localized: "Copied"), duration: 1.5)
-                    .zIndex(201)
+
+            if copiedToast, selectedTab == .list {
+                BannerToastView(
+                    type: .dark,
+                    message: String(localized: "Copied"),
+                    icon: "doc.on.doc.fill",
+                    duration: 1.5,
+                    fromEdge: .top,
+                    compact: true
+                )
+                .id(copiedToastToken)
+                .padding(.top, 8)
+                .zIndex(201)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if copiedToast, selectedTab != .list {
+                BannerToastView(
+                    type: .success,
+                    message: String(localized: "Copied"),
+                    duration: 1.5,
+                    fromEdge: .bottom,
+                    compact: true
+                )
+                .id(copiedToastToken)
+                .padding(.bottom, 58)
+                .zIndex(201)
             }
         }
     }
@@ -427,18 +445,21 @@ struct HomeView: View {
         ScrollViewReader { _ in
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
-                ProfileHeaderView()
+                ProfileHeaderView(
+                    onOpenStreak: {
+                        Haptics.softTap()
+                        showStreakCalendar = true
+                    }
+                )
                     .padding(.bottom, 16)
 
-                if shouldShowDailyLessonCard {
-                    DailyLessonCard(
-                        plan: dailyLessonPlan,
-                        onStart: {
-                            showDailyLesson = true
-                        }
-                    )
-                    .padding(.horizontal, 20)
-                }
+                DailyLessonCard(
+                    plan: dailyLessonPlan,
+                    onStart: {
+                        showDailyLesson = true
+                    }
+                )
+                .padding(.horizontal, 20)
 
                 HomeStreakStrip(
                     onOpenCalendar: {
@@ -487,8 +508,7 @@ struct HomeView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
-                if showHomeNextReview,
-                   dueWordsCount == 0,
+                if dueWordsCount == 0,
                    !reviewTimerDismissed,
                    let info = nextReviewInfo {
                     HomeNextReviewCard(count: info.count, date: info.date) {
@@ -689,7 +709,7 @@ struct HomeView: View {
     }
 
     private func openChatScene(wordId: String?, word: String?) {
-        guard showHomeChat else { return }
+        guard FeatureGates.homeChatEnabled, showHomeChat else { return }
         guard network.isConnected else { return }
         guard let target = ChatScenePicker.from(
             wordId: wordId,

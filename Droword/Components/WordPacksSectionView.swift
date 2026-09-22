@@ -10,8 +10,10 @@ struct WordPacksButton: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "rectangle.stack")
+                Image(systemName: "rectangle.stack")
                 .font(.system(size: 20, weight: .regular))
+                .symbolRenderingMode(.monochrome)
+                .symbolVariant(.none)
                 .foregroundStyle(themeStore.mainText)
                 .frame(width: 28, height: 28)
 
@@ -38,8 +40,9 @@ struct WordPacksButton: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(themeStore.accentBlue)
+                .frame(width: 28, height: 28)
         }
-        .padding(16)
+        .padding(DesignSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
@@ -105,7 +108,6 @@ struct WordPacksDetailView: View {
                         .frame(minHeight: 220)
                     } else {
                         if !availablePacks.isEmpty {
-                            sectionHeader(String(localized: "Ready to learn"))
                             VStack(spacing: 12) {
                                 ForEach(availablePacks) { pack in
                                     packRow(pack, completed: false)
@@ -161,6 +163,8 @@ struct WordPacksDetailView: View {
             HStack(spacing: 14) {
                 Image(systemName: completed ? "checkmark" : pack.icon)
                     .font(.system(size: 20, weight: completed ? .bold : .regular))
+                    .symbolRenderingMode(.monochrome)
+                    .symbolVariant(.none)
                     .foregroundStyle(completed ? themeStore.accentBlue : themeStore.mainText)
                     .frame(width: 28, height: 28)
 

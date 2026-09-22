@@ -17,6 +17,15 @@ function errorResponse(message: string, status = 500): Response {
   return jsonResponse({ error: message }, status);
 }
 
+function capitalizeFirst(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const first = trimmed[0];
+  const upper = first.toLocaleUpperCase();
+  if (upper === first) return trimmed;
+  return upper + trimmed.slice(1);
+}
+
 function ttsLanguageName(language: string): string {
   const map: Record<string, string> = {
     English: "English",
@@ -59,7 +68,6 @@ function levelGuideline(
     C1: "Use advanced vocabulary, complex sentence structures, and natural idiomatic expressions.",
     C2: "Use sophisticated, native-level language with nuanced vocabulary, idioms, and complex grammar.",
   };
-
 
   const scripts: Record<string, Record<string, string>> = {
     "日本語": {
@@ -124,7 +132,7 @@ STRICT RULES:
 - type → part of speech, only ${nativeLanguage} (e.g. "существительное", "глагол" for Russian).
 - explanation → 1–2 short sentences in ${nativeLanguage}. Write like you're explaining to a friend — casual, clear, helpful. Focus on when and how the word is used, not a dictionary definition. Adapt to ${lvl.label} level.
 - breakdown → only ${nativeLanguage} or null. Brief etymology or word structure if helpful.
-- example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match the ${lvl.label} level. ${lvl.guideline}
+- example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match the ${lvl.label} level. ${lvl.guideline} Capitalize only the first letter of each sentence (and proper nouns). Do NOT capitalize the headword mid-sentence.
 - collocations → an array of 2–4 short, very common collocations or set phrases built with "${word}", ONLY in ${learningLanguage} (no translation). Natural word combinations a native speaker actually uses (e.g. for English "make": ["make a decision", "make a mistake", "make friends"]). Keep them short. Return [] if none are natural.
 - synonyms → an array of 0–3 common synonyms of "${word}", ONLY in ${learningLanguage} (no translation). Return [] if there are no close synonyms.
 - antonyms → an array of 0–2 common antonyms of "${word}", ONLY in ${learningLanguage} (no translation). Return [] if the word has no natural opposite.
@@ -139,6 +147,7 @@ STRICT RULES:
   • Hindi → use IAST or simplified transliteration
   Return null if not applicable.
 - Do not mix languages inside fields.
+- Capitalization: for scripts that have letter case (Latin, Cyrillic, Greek, etc.), always start "translation" with an uppercase letter. Keep the rest of the string as natural writing (do not Title Case every word). If the script has no case (e.g. Japanese, Chinese, Korean, Arabic), leave as-is.
 
 Return ONLY valid JSON:
 
@@ -196,6 +205,9 @@ Return ONLY valid JSON:
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
+    if (typeof parsed.translation === "string") {
+      parsed.translation = capitalizeFirst(parsed.translation);
+    }
     return jsonResponse(parsed);
   } catch {
     return errorResponse("Failed to parse Claude response", 502);
@@ -251,7 +263,7 @@ TASK:
    - not in the list
    - suitable for the ${lvl.label} level. ${lvl.guideline}
    - common in daily use
-- Provide a short example sentence in the learning language, appropriate for the ${lvl.label} level.
+- Provide a short example sentence in the learning language, appropriate for the ${lvl.label} level. Natural sentence casing only (capitalize sentence start and proper nouns — never Title Case every word, and do not capitalize the headword mid-sentence).
 - Provide a short one‑sentence explanation in the native language.
 - Provide a brief breakdown/etymology in the native language if relevant (optional).
 - Provide transcription that helps the learner pronounce the word correctly.
@@ -259,6 +271,7 @@ TASK:
 STRICT:
 - word and example → only ${learningLanguage}
 - translation, explanation, breakdown → only ${nativeLanguage}
+- Capitalization: for scripts with letter case (Latin, Cyrillic, Greek, etc.), always start both "word" and "translation" with an uppercase letter. Do not Title Case every word. Scripts without case stay as-is.
 - transcription → use the most practical system for ${learningLanguage}:
   • Japanese → if the word contains kanji, show hiragana reading. If already hiragana/katakana, show romaji
   • Chinese → pinyin with tones (e.g. "chī fàn")
@@ -333,6 +346,13 @@ STRICT:
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
+    if (Array.isArray(parsed.suggestions)) {
+      parsed.suggestions = parsed.suggestions.map((s: Record<string, unknown>) => {
+        if (typeof s.word === "string") s.word = capitalizeFirst(s.word);
+        if (typeof s.translation === "string") s.translation = capitalizeFirst(s.translation);
+        return s;
+      });
+    }
     return jsonResponse(parsed);
   } catch {
     return errorResponse("Failed to parse Claude response", 502);
@@ -386,6 +406,7 @@ WORD RULES:
 - Never write one sentence per word. Never list. Never "and then they used X".
 - If a word would make the story worse, drop it.
 - Never mark the candidate words. No quotation marks, no guillemets, no asterisks, no markdown, no italics, no bold. Write them as plain words in the sentence.
+- Capitalization: only capitalize sentence starts and proper nouns. Candidate words mid-sentence must use natural casing (usually lowercase), even if the candidate list shows a capitalized form.
 
 LANGUAGE:
 - title and story → only ${learningLanguage}

@@ -98,11 +98,8 @@ struct SettingsView: View {
                     VStack(spacing: 20) {
                         groupedSettingsSection([
                             SettingItem(icon: "person", title: "Personal details"),
-                            SettingItem(icon: "sparkles", title: "Learning vibe", destination: .learningPreferences),
                         ]) { item in
-                            if let destination = item.destination {
-                                path.append(destination)
-                            } else if item.icon == "person" {
+                            if item.icon == "person" {
                                 showPersonalDetailsSheet = true
                             }
                         }
@@ -195,6 +192,8 @@ struct SettingsView: View {
                         .environmentObject(languageStore)
                 case .featureFlags:
                     FeatureFlagsView()
+                        .environmentObject(store)
+                        .environmentObject(languageStore)
                 case .privacyPolicy:
                     PrivacyPolicyView()
                 case .termsOfUse:

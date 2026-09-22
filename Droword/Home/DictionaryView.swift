@@ -21,9 +21,6 @@ struct DictionaryView: View {
     @State private var selectedWordIDs: Set<UUID> = []
     @State private var showBulkDeleteConfirmation = false
     @State private var cardAppeared: Set<UUID> = []
-    @State private var refreshPhrase: String = ""
-    @State private var showRefreshPhrase = false
-    @State private var refreshBounce = false
     @AppStorage(AppStorageKeys.hasSeenReactionHint) private var hasSeenReactionHint: Bool = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
@@ -37,7 +34,6 @@ struct DictionaryView: View {
 
     var body: some View {
         dictionaryContent
-            .overlay(alignment: .top) { refreshPhraseBanner }
             .overlay(alignment: .bottom) { bulkDeleteBar }
             .overlay { bulkDeleteAlert }
             .background(themeStore.appBg)
@@ -101,7 +97,32 @@ struct DictionaryView: View {
     }
 
     private var populatedDictionary: some View {
-        VStack(spacing: 16) {
+        Group {
+            if showsDictionaryFilterEmpty {
+                VStack(spacing: 0) {
+                    dictionaryChrome
+                    dictionaryEmptyFilter
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .iPadContentWidth(1000)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        dictionaryChrome
+                        wordGrid
+                            .padding(.top, 10)
+                    }
+                    .iPadContentWidth(1000)
+                }
+                .scrollClipDisabled()
+                .scrollDismissesKeyboard(.immediately)
+            }
+        }
+        .iPadContentWidth(1000)
+    }
+
+    private var dictionaryChrome: some View {
+        VStack(spacing: 12) {
             dictionaryHeader(showsSelect: true)
 
             DictionarySearchBar(
@@ -111,21 +132,9 @@ struct DictionaryView: View {
             )
 
             tagsRow
-
-            if showsDictionaryFilterEmpty {
-                dictionaryEmptyFilter
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .iPadContentWidth(1000)
-            } else {
-                ScrollView(showsIndicators: false) {
-                    wordGrid
-                        .iPadContentWidth(1000)
-                }
-                .refreshable { await runDictionaryRefresh() }
-                .scrollDismissesKeyboard(.immediately)
-            }
         }
-        .iPadContentWidth(1000)
+        .padding(.bottom, 10)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
     private func dictionaryHeader(showsSelect: Bool) -> some View {
@@ -133,8 +142,6 @@ struct DictionaryView: View {
             Text("Dictionary")
                 .zoomerTitle(38)
                 .environmentObject(themeStore)
-                .scaleEffect(refreshBounce ? 1.04 : 1)
-                .animation(.spring(response: 0.35, dampingFraction: 0.65), value: refreshBounce)
             Spacer()
             if showsSelect {
                 selectModeButton
@@ -186,9 +193,9 @@ struct DictionaryView: View {
             selectedTag: $selectedTag,
             hasSuggestedWords: store.words.contains { $0.tag == "Suggested" },
             onAddTag: { showAddTag = true },
-            sortOption: $sortOption
+            sortOption: $sortOption,
+            contentInset: horizontalPadding
         )
-            .padding(.horizontal, horizontalPadding)
     }
 
     private var wordGrid: some View {
@@ -271,18 +278,6 @@ struct DictionaryView: View {
             .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private var refreshPhraseBanner: some View {
-        if showRefreshPhrase {
-            AppToastChrome(
-                icon: "sparkles",
-                text: refreshPhrase,
-                tint: themeStore.accentGreen
-            )
-            .transition(.move(edge: .top).combined(with: .opacity))
-        }
     }
 
     @ViewBuilder
@@ -417,22 +412,6 @@ struct DictionaryView: View {
         }
     }
 
-    @MainActor
-    private func runDictionaryRefresh() async {
-        refreshPhrase = DuoChaosCopy.dictionaryRefresh()
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-            showRefreshPhrase = true
-            refreshBounce = true
-        }
-        Haptics.tick()
-        SoundFX.play(.pop)
-        store.reloadFromDisk(force: true)
-        try? await Task.sleep(for: .milliseconds(700))
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            refreshBounce = false
-            showRefreshPhrase = false
-        }
-    }
 }
 
 private struct DictionarySearchBar: View {
@@ -537,7 +516,7 @@ private struct DictionaryWordRow: View {
                 HStack(spacing: 6) {
                     Image(systemName: "hand.tap")
                         .font(.system(size: 13))
-                    Text("Double tap the card to add a reaction")
+                    Text("Press and hold the card for reactions")
                         .font(themeStore.regular(13))
                 }
                 .foregroundStyle(themeStore.secondaryText)
@@ -548,6 +527,7 @@ private struct DictionaryWordRow: View {
         }
         .opacity(hasAppeared ? 1 : 0)
         .offset(y: hasAppeared ? 0 : 20)
+        .zIndex(word.reaction != nil ? 10 : 0)
         .id(word.id)
         .onAppear(perform: onAppearCard)
     }

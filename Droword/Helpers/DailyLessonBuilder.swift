@@ -138,7 +138,7 @@ enum DailyLessonBuilder {
 
     private static func lessonTitle(goal: LearningGoal) -> String {
         switch goal {
-        case .dailyChat: return String(localized: "Today's chat pack")
+        case .dailyChat: return String(localized: "Today's lesson")
         case .travel: return String(localized: "Travel day")
         case .work: return String(localized: "Work vocab run")
         case .exam: return String(localized: "Exam drill")
@@ -173,7 +173,7 @@ enum DailyLessonBuilder {
         }
         var parts = [String(localized: "\(snapshot.correct)/\(snapshot.total) today")]
         if !snapshot.tomorrowWords.isEmpty {
-            let preview = snapshot.tomorrowWords.prefix(3).joined(separator: ", ")
+            let preview = snapshot.tomorrowWords.prefix(3).map(\.displayCapitalized).joined(separator: ", ")
             parts.append(String(localized: "Tomorrow: \(preview)"))
         }
         return parts.joined(separator: " · ")

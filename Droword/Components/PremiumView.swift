@@ -156,9 +156,16 @@ struct PremiumView: View {
 
     private var headerSection: some View {
         VStack(spacing: 18) {
-            GlassProStar(size: 128, animated: true)
-                .scaleEffect(appeared ? 1.0 : 0.82)
-                .opacity(appeared ? 1.0 : 0)
+            MenuSymbol(
+                systemName: "sparkles",
+                color: themeStore.accentBlue,
+                size: 56,
+                weight: .medium,
+                frameSize: 64
+            )
+            .scaleEffect(appeared ? 1.0 : 0.82)
+            .opacity(appeared ? 1.0 : 0)
+            .accessibilityLabel(Text("Droword PRO"))
 
             if isPremium {
                 Text("DROWORD PRO IS YOURS")

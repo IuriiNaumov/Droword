@@ -56,11 +56,12 @@ struct DailyChallengeButton: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(themeStore.accentBlue)
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(16)
+        .padding(DesignSpacing.md)
         .background(
             RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)

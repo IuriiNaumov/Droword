@@ -10,9 +10,18 @@ struct DailyLessonCard: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 8) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(plan.title)
-                        .font(themeStore.bold(22))
-                        .foregroundStyle(themeStore.mainText)
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(plan.title)
+                            .font(themeStore.bold(22))
+                            .foregroundStyle(themeStore.mainText)
+
+                        if plan.isDone {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(themeStore.accentPink)
+                                .accessibilityHidden(true)
+                        }
+                    }
 
                     Text(plan.subtitle)
                         .font(themeStore.regular(14))
@@ -45,7 +54,7 @@ struct DailyLessonCard: View {
                                 color: themeStore.mainAccentColor,
                                 size: 15,
                                 weight: .semibold,
-                                frameSize: 32
+                                frameSize: 28
                             )
                         }
                         .buttonStyle(.plain)
@@ -55,7 +64,7 @@ struct DailyLessonCard: View {
             }
 
             if plan.isDone, !plan.tomorrowWords.isEmpty {
-                Text(plan.tomorrowWords.prefix(4).joined(separator: "  ·  "))
+                Text(plan.tomorrowWords.prefix(4).map(\.displayCapitalized).joined(separator: "  ·  "))
                     .font(themeStore.medium(13))
                     .foregroundStyle(themeStore.mainText)
             } else if !plan.topicLabels.isEmpty, !plan.isDone {
@@ -91,7 +100,7 @@ struct DailyLessonCard: View {
                 .disabled(!plan.canStart)
             }
         }
-        .padding(18)
+        .padding(DesignSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)

@@ -10,7 +10,8 @@ struct QuizStreakMilestoneBanner: View {
         AppToastChrome(
             icon: "flame.fill",
             text: DuoChaosCopy.streak(streak),
-            tint: themeStore.accentGreen
+            tint: themeStore.accentGreen,
+            dark: true
         )
         .scaleEffect(appeared ? 1 : 0.94)
         .opacity(appeared ? 1 : 0)

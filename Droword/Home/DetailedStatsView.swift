@@ -6,33 +6,30 @@ struct DetailedStatsView: View {
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
+    @ObservedObject private var studyActivity = StudyActivityStore.shared
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
 
     var embedded: Bool = false
 
     @State private var dueToday: Int = 0
+    @State private var dueSoon: Int = 0
     @State private var masteryBreakdown: (new: Int, learning: Int, known: Int) = (0, 0, 0)
-    @State private var totalLapses: Int = 0
-    @State private var averageEase: Double = 0
-    @State private var bestDay: (date: Date, count: Int)? = nil
+    @State private var studiedThisWeek: Int = 0
+    @State private var weakWords: [(word: String, lapses: Int)] = []
     @State private var tagDistribution: [(tag: String, count: Int)] = []
-    @State private var typeDistribution: [(type: String, count: Int)] = []
-
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f
-    }()
 
     private static let pieColors: [Color] = [
-        Color.accentBlue, Color.accentGreen, Color.accentGold, Color.accentPurple, Color.accentPink, Color.accentBlue, Color.accentGold, Color.accentRed, .indigo, .mint
+        Color.accentBlue, Color.accentGreen, Color.accentGold,
+        Color.accentPurple, Color.accentPink, Color.accentRed, .indigo, .mint
     ]
 
     var body: some View {
         if embedded {
             statsStack
-                .onAppear { recalculate() }
+                .onAppear(perform: recalculate)
+                .onChange(of: store.revision) { _, _ in recalculate() }
+                .onChange(of: studyActivity.dayKeys) { _, _ in recalculate() }
         } else {
             NavigationStack {
                 ScrollView(showsIndicators: false) {
@@ -47,7 +44,8 @@ struct DetailedStatsView: View {
                         CloseButton()
                     }
                 }
-                .onAppear { recalculate() }
+                .onAppear(perform: recalculate)
+                .onChange(of: store.revision) { _, _ in recalculate() }
             }
         }
     }
@@ -55,29 +53,43 @@ struct DetailedStatsView: View {
     private var statsStack: some View {
         VStack(spacing: 20) {
             if !embedded {
-                Text("Stats")
+                Text("Your progress")
                     .sheetTitle()
             }
-            studyTimeSection
+
+            snapshotSection
             masterySection
-            reviewSection
-            tagChartSection
-            typeSection
-            factsSection
+            focusSection
+            habitSection
+            studyTimeSection
+
+            if !weakWords.isEmpty {
+                weakWordsSection
+            }
+
+            if !tagDistribution.isEmpty {
+                tagChartSection
+            }
         }
     }
 
     private func recalculate() {
         let words = store.words
         let now = Date()
+        let cal = Calendar.current
+        let weekStart = cal.date(byAdding: .day, value: -6, to: cal.startOfDay(for: now)) ?? now
 
         dueToday = words.filter {
             WordDue.isDue(introduced: $0.introduced, dueDate: $0.dueDate, now: now)
         }.count
 
+        let weekEnd = cal.date(byAdding: .day, value: 7, to: now) ?? now
+        dueSoon = words.filter { w in
+            guard w.introduced, let due = w.dueDate else { return false }
+            return due > now && due <= weekEnd
+        }.count
+
         var n = 0, l = 0, k = 0
-        var lapses = 0
-        var easeSum = 0.0
         for w in words {
             if !w.introduced || w.repetitions == 0 {
                 n += 1
@@ -86,41 +98,211 @@ struct DetailedStatsView: View {
             } else {
                 l += 1
             }
-            lapses += w.lapses
-            easeSum += w.easeFactor
         }
         masteryBreakdown = (n, l, k)
-        totalLapses = lapses
-        averageEase = words.isEmpty ? 0 : easeSum / Double(words.count)
 
-        let cal = Calendar.current
-        let grouped = Dictionary(grouping: words) { cal.startOfDay(for: $0.dateAdded) }
-        if let best = grouped.max(by: { $0.value.count < $1.value.count }) {
-            bestDay = (best.key, best.value.count)
-        } else {
-            bestDay = nil
-        }
+        studiedThisWeek = studyActivity.activityDates().filter { $0 >= weekStart }.count
+
+        weakWords = words
+            .filter { $0.lapses > 0 }
+            .sorted { $0.lapses > $1.lapses }
+            .prefix(5)
+            .map { (word: $0.word.displayCapitalized, lapses: $0.lapses) }
 
         var tagDict: [String: Int] = [:]
-        var typeDict: [String: Int] = [:]
         for w in words {
             tagDict[w.tag ?? String(localized: "No tag"), default: 0] += 1
-            typeDict[w.type.isEmpty ? String(localized: "Other") : w.type.capitalized, default: 0] += 1
         }
         tagDistribution = tagDict.sorted { $0.value > $1.value }.map { (tag: $0.key, count: $0.value) }
-        typeDistribution = typeDict.sorted { $0.value > $1.value }.map { (type: $0.key, count: $0.value) }
+    }
+
+    private var snapshotSection: some View {
+        let known = masteryBreakdown.known
+        let total = store.words.count
+        let knownShare = total > 0 ? Int(round(Double(known) / Double(total) * 100)) : 0
+
+        return sectionCard(title: "At a glance", subtitle: String(localized: "How your dictionary is growing")) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                snapshotTile(
+                    value: "\(total)",
+                    label: String(localized: "In dictionary"),
+                    tint: themeStore.accentBlue
+                )
+                snapshotTile(
+                    value: "\(known)",
+                    label: String(localized: "Known · \(knownShare)%"),
+                    tint: themeStore.accentGreen
+                )
+                snapshotTile(
+                    value: "\(dueToday)",
+                    label: String(localized: "Due today"),
+                    tint: dueToday > 0 ? themeStore.accentGold : themeStore.secondaryText
+                )
+                snapshotTile(
+                    value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
+                    label: String(localized: "Day streak"),
+                    tint: themeStore.accentPink
+                )
+            }
+
+            if let level = cefrLine {
+                Text(level)
+                    .font(themeStore.regular(13))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    private var cefrLine: String? {
+        let level = languageStore.learningLevel
+        guard !level.isEmpty else { return nil }
+        return String(localized: "Learning level: \(level)")
+    }
+
+    private func snapshotTile(value: String, label: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(value)
+                .font(themeStore.bold(28))
+                .foregroundStyle(themeStore.mainText)
+                .contentTransition(.numericText())
+            Text(label)
+                .font(themeStore.regular(12))
+                .foregroundStyle(themeStore.secondaryText)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous)
+                .fill(tint.opacity(0.12))
+        )
+    }
+
+    private var masterySection: some View {
+        let m = masteryBreakdown
+        let total = max(store.words.count, 1)
+
+        return sectionCard(
+            title: "Mastery",
+            subtitle: String(localized: "New → learning → known as you review")
+        ) {
+            VStack(spacing: 12) {
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(themeStore.accentGold.opacity(0.85))
+                            .frame(width: max(0, geo.size.width * CGFloat(m.new) / CGFloat(total)))
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(themeStore.accentBlue.opacity(0.85))
+                            .frame(width: max(0, geo.size.width * CGFloat(m.learning) / CGFloat(total)))
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(themeStore.accentGreen.opacity(0.85))
+                            .frame(width: max(0, geo.size.width * CGFloat(m.known) / CGFloat(total)))
+                    }
+                }
+                .frame(height: 12)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                HStack(spacing: 12) {
+                    masteryLabel(color: themeStore.accentGold, title: String(localized: "New"), count: m.new)
+                    masteryLabel(color: themeStore.accentBlue, title: String(localized: "Learning"), count: m.learning)
+                    masteryLabel(color: themeStore.accentGreen, title: String(localized: "Known"), count: m.known)
+                }
+            }
+        }
+    }
+
+    private func masteryLabel(color: Color, title: String, count: Int) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            Text("\(title) (\(count))")
+                .font(themeStore.regular(13))
+                .foregroundStyle(themeStore.mainText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var focusSection: some View {
+        sectionCard(title: "Focus", subtitle: String(localized: "What moves you forward next")) {
+            VStack(alignment: .leading, spacing: 12) {
+                focusRow(
+                    icon: "clock.arrow.circlepath",
+                    title: dueToday == 0
+                        ? String(localized: "Nothing due right now")
+                        : String(localized: "\(dueToday) words ready to review"),
+                    detail: dueSoon > 0
+                        ? String(localized: "+\(dueSoon) more in the next 7 days")
+                        : String(localized: "Keep the streak with a short lesson")
+                )
+
+                if let lesson = studyActivity.lastLesson, lesson.total > 0 {
+                    let pct = Int(round(Double(lesson.correct) / Double(lesson.total) * 100))
+                    focusRow(
+                        icon: "checkmark.circle",
+                        title: String(localized: "Last lesson · \(pct)%"),
+                        detail: String(localized: "\(lesson.correct) of \(lesson.total) correct")
+                    )
+                }
+            }
+        }
+    }
+
+    private func focusRow(icon: String, title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .regular))
+                .symbolRenderingMode(.monochrome)
+                .symbolVariant(.none)
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(themeStore.medium(15))
+                    .foregroundStyle(themeStore.mainText)
+                Text(detail)
+                    .font(themeStore.regular(13))
+                    .foregroundStyle(themeStore.secondaryText)
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var habitSection: some View {
+        sectionCard(title: "Habit", subtitle: String(localized: "Consistency beats cramming")) {
+            HStack(spacing: 12) {
+                studyTimeStat(value: "\(studiedThisWeek)/7", label: String(localized: "Days this week"))
+                studyTimeStat(
+                    value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
+                    label: String(localized: "Streak")
+                )
+                studyTimeStat(value: studyTimeTracker.todayFormatted, label: String(localized: "Today"))
+            }
+        }
     }
 
     private var studyTimeSection: some View {
         let data = studyTimeTracker.minutesPerDay(last: 14)
-        let maxMin = data.map { $0.minutes }.max() ?? 1
+        let maxMin = data.map(\.minutes).max() ?? 1
 
-        return sectionCard(title: "Study time") {
+        return sectionCard(
+            title: "Time in app",
+            subtitle: String(localized: "Minutes the app was open — a rough signal")
+        ) {
             VStack(spacing: 14) {
                 HStack(spacing: 12) {
                     studyTimeStat(value: studyTimeTracker.todayFormatted, label: String(localized: "Today"))
                     studyTimeStat(value: studyTimeTracker.weekFormatted, label: String(localized: "This week"))
-                    studyTimeStat(value: StudyTimeTracker.format(seconds: studyTimeTracker.averageDailyMinutes * 60), label: String(localized: "Avg/day"))
+                    studyTimeStat(
+                        value: StudyTimeTracker.format(seconds: studyTimeTracker.averageDailyMinutes * 60),
+                        label: String(localized: "Avg/day")
+                    )
                 }
 
                 if data.contains(where: { $0.minutes > 0 }) {
@@ -159,11 +341,6 @@ struct DetailedStatsView: View {
                         .frame(height: 80)
                         .frame(maxWidth: .infinity)
                 }
-
-                Text("Based on the last 14 days")
-                    .font(themeStore.regular(12))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -172,120 +349,68 @@ struct DetailedStatsView: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(themeStore.bold(18))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
             Text(label)
                 .font(themeStore.regular(12))
-                .foregroundStyle(themeStore.secondaryText)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private var masterySection: some View {
-        let m = masteryBreakdown
-        let total = max(store.words.count, 1)
-
-        return sectionCard(title: "Mastery") {
-            VStack(spacing: 12) {
-                GeometryReader { geo in
-                    HStack(spacing: 2) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.orange.opacity(0.7))
-                            .frame(width: max(0, geo.size.width * CGFloat(m.new) / CGFloat(total)))
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.yellow.opacity(0.8))
-                            .frame(width: max(0, geo.size.width * CGFloat(m.learning) / CGFloat(total)))
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.accentGreen.opacity(0.7))
-                            .frame(width: max(0, geo.size.width * CGFloat(m.known) / CGFloat(total)))
-                    }
-                }
-                .frame(height: 10)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-
-                HStack(spacing: 16) {
-                    masteryLabel(color: Color.accentRed.opacity(0.7), title: String(localized: "New"), count: m.new)
-                    masteryLabel(color: Color.accentGold.opacity(0.8), title: String(localized: "Learning"), count: m.learning)
-                    masteryLabel(color: Color.accentGreen.opacity(0.7), title: String(localized: "Known"), count: m.known)
-                }
-            }
-        }
-    }
-
-    private func masteryLabel(color: Color, title: String, count: Int) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            Text("\(title) (\(count))")
-                .font(themeStore.regular(13))
-                .foregroundStyle(.primary)
-        }
-    }
-
-    private var reviewSection: some View {
-        sectionCard(title: "Review") {
-            HStack(alignment: .top, spacing: 16) {
-                reviewStat(value: "\(dueToday)", label: String(localized: "Due today"))
-                reviewStat(value: "\(totalLapses)", label: String(localized: "Total lapses"))
-                reviewStat(value: String(format: "%.1f", averageEase), label: String(localized: "Avg ease"))
-            }
-        }
-    }
-
-    private func reviewStat(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(themeStore.bold(28))
-                .foregroundStyle(.primary)
-            Text(label)
-                .font(themeStore.regular(13))
                 .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
     }
 
+    private var weakWordsSection: some View {
+        sectionCard(
+            title: "Needs more love",
+            subtitle: String(localized: "Words you missed most — good to revisit")
+        ) {
+            VStack(spacing: 8) {
+                ForEach(Array(weakWords.enumerated()), id: \.offset) { _, item in
+                    HStack {
+                        Text(item.word)
+                            .font(themeStore.medium(15))
+                            .foregroundStyle(themeStore.mainText)
+                        Spacer()
+                        Text(String(localized: "\(item.lapses) misses"))
+                            .font(themeStore.regular(13))
+                            .foregroundStyle(themeStore.secondaryText)
+                    }
+                }
+            }
+        }
+    }
+
     private var tagChartSection: some View {
         let tags = tagDistribution
 
-        return Group {
-            if !tags.isEmpty {
-                sectionCard(title: "By tags") {
-                    HStack(spacing: 16) {
-                        Chart {
-                            ForEach(Array(tags.prefix(8).enumerated()), id: \.offset) { index, item in
-                                SectorMark(
-                                    angle: .value("Count", item.count),
-                                    innerRadius: .ratio(0.55),
-                                    angularInset: 1.5
-                                )
-                                .foregroundStyle(Self.pieColors[index % Self.pieColors.count])
-                                .cornerRadius(4)
-                            }
-                        }
-                        .frame(width: 120, height: 120)
+        return sectionCard(title: "By tags", subtitle: nil) {
+            HStack(spacing: 16) {
+                Chart {
+                    ForEach(Array(tags.prefix(8).enumerated()), id: \.offset) { index, item in
+                        SectorMark(
+                            angle: .value("Count", item.count),
+                            innerRadius: .ratio(0.55),
+                            angularInset: 1.5
+                        )
+                        .foregroundStyle(Self.pieColors[index % Self.pieColors.count])
+                        .cornerRadius(4)
+                    }
+                }
+                .frame(width: 110, height: 110)
 
-                        VStack(alignment: .leading, spacing: 6) {
-                            ForEach(Array(tags.prefix(6).enumerated()), id: \.offset) { index, item in
-                                HStack(spacing: 8) {
-                                    Circle()
-                                        .fill(Self.pieColors[index % Self.pieColors.count])
-                                        .frame(width: 8, height: 8)
-                                    Text(LocalizedStringKey(item.tag))
-                                        .font(themeStore.regular(13))
-                                        .foregroundStyle(.primary)
-                                        .lineLimit(1)
-                                    Spacer()
-                                    Text("\(item.count)")
-                                        .font(themeStore.bold(13))
-                                        .foregroundStyle(themeStore.secondaryText)
-                                }
-                            }
-                            if tags.count > 6 {
-                                Text("+\(tags.count - 6) more", comment: "Additional tags count")
-                                    .font(themeStore.regular(12))
-                                    .foregroundStyle(themeStore.secondaryText)
-                            }
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(tags.prefix(5).enumerated()), id: \.offset) { index, item in
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(Self.pieColors[index % Self.pieColors.count])
+                                .frame(width: 8, height: 8)
+                            Text(BuiltInTag.displayName(item.tag))
+                                .font(themeStore.regular(13))
+                                .foregroundStyle(themeStore.mainText)
+                                .lineLimit(1)
+                            Spacer()
+                            Text("\(item.count)")
+                                .font(themeStore.bold(13))
+                                .foregroundStyle(themeStore.secondaryText)
                         }
                     }
                 }
@@ -293,61 +418,22 @@ struct DetailedStatsView: View {
         }
     }
 
-    private var typeSection: some View {
-        let types = typeDistribution
-
-        return Group {
-            if !types.isEmpty {
-                sectionCard(title: "Parts of speech") {
-                    VStack(spacing: 8) {
-                        ForEach(Array(types.prefix(6).enumerated()), id: \.offset) { _, item in
-                            HStack {
-                                Text(item.type)
-                                    .font(themeStore.regular(14))
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Text("\(item.count)")
-                                    .font(themeStore.bold(14))
-                                    .foregroundStyle(themeStore.secondaryText)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private var factsSection: some View {
-        sectionCard(title: "Fun facts") {
-            VStack(alignment: .leading, spacing: 10) {
-                if let best = bestDay {
-                    factRow(text: "Best day: \(Self.dateFormatter.string(from: best.date)) (\(best.count) words)")
-                }
-
-                if let first = store.words.map({ $0.dateAdded }).min() {
-                    let days = max(1, Calendar.current.dateComponents([.day], from: first, to: Date()).day ?? 1)
-                    factRow(text: "Learning for \(days) days")
-                }
-
-                let totalMinutes = studyTimeTracker.totalAllTimeMinutes
-                if totalMinutes > 0 {
-                    factRow(text: "Total study time: \(StudyTimeTracker.format(seconds: totalMinutes * 60))")
-                }
-            }
-        }
-    }
-
-    private func factRow(text: LocalizedStringKey) -> some View {
-        Text(text)
-            .font(themeStore.regular(14))
-            .foregroundStyle(.primary)
-    }
-
-    private func sectionCard<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+    private func sectionCard<Content: View>(
+        title: LocalizedStringKey,
+        subtitle: String?,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(themeStore.bold(18))
-                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(themeStore.bold(18))
+                    .foregroundStyle(themeStore.mainText)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+                }
+            }
 
             content()
         }
@@ -366,4 +452,6 @@ struct DetailedStatsView: View {
     DetailedStatsView()
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
+        .environmentObject(ThemeStore())
+        .environmentObject(StudyTimeTracker.shared)
 }

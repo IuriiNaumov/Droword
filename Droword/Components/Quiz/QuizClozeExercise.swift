@@ -33,7 +33,7 @@ struct QuizClozeExercise: View {
                 }
 
                 if !item.translation.isEmpty {
-                    Text("(\(item.translation))")
+                    Text("(\(item.translation.displayCapitalized))")
                         .font(themeStore.medium(16))
                         .foregroundStyle(themeStore.secondaryText)
                         .padding(.top, 4)
