@@ -122,9 +122,7 @@ struct FeatureFlagsView: View {
                                         .font(themeStore.regular(16))
                                         .foregroundStyle(themeStore.mainText)
                                     Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(themeStore.secondaryText.opacity(0.55))
+                                    DisclosureChevron()
                                 }
                                 .padding(.vertical, 14)
                                 .padding(.horizontal, 18)
@@ -160,9 +158,7 @@ struct FeatureFlagsView: View {
                                         .font(themeStore.regular(16))
                                         .foregroundStyle(themeStore.mainText)
                                     Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundStyle(themeStore.secondaryText.opacity(0.55))
+                                    DisclosureChevron()
                                 }
                                 .padding(.vertical, 14)
                                 .padding(.horizontal, 18)

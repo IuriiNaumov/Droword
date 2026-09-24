@@ -93,7 +93,7 @@ struct SettingsView: View {
                     .padding(.top, 32)
 
                     premiumBanner
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, 16)
 
                     VStack(spacing: 20) {
                         groupedSettingsSection([
@@ -289,37 +289,43 @@ struct SettingsView: View {
                     weight: .medium
                 )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    if let days = trialDaysRemaining, isPremium {
-                        Text("PRO Trial")
+                if isPremium {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Droword PRO")
                             .font(themeStore.bold(16))
                             .foregroundStyle(themeStore.mainText)
-                        Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
-                            .font(themeStore.regular(12))
-                            .foregroundStyle(themeStore.accentGold)
-                    } else {
-                        Text(isPremium ? LocalizedStringKey("PRO Active") : LocalizedStringKey("Get Droword PRO"))
+                        if let days = trialDaysRemaining {
+                            Text("\(days) days remaining", comment: "PRO trial days remaining in settings")
+                                .font(themeStore.regular(12))
+                                .foregroundStyle(themeStore.accentGold)
+                        }
+                    }
+
+                    Spacer()
+
+                    Text("Active")
+                        .font(themeStore.regular(15))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    DisclosureChevron()
+                } else {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Get Droword PRO")
                             .font(themeStore.bold(16))
                             .foregroundStyle(themeStore.mainText)
-                        Text(isPremium ? LocalizedStringKey("Unlimited access") : LocalizedStringKey("Unlock unlimited AI features"))
+                        Text("Unlock unlimited AI features")
                             .font(themeStore.regular(12))
                             .foregroundStyle(themeStore.secondaryText)
                     }
-                }
 
-                Spacer()
+                    Spacer()
 
-                if !isPremium {
                     Text("Upgrade")
                         .font(themeStore.bold(13))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
                         .background(Capsule().fill(themeStore.accentBlue))
-                } else {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(themeStore.accentBlue)
                 }
             }
             .padding(.horizontal, 18)
@@ -365,9 +371,7 @@ struct SettingsView: View {
                                 .foregroundStyle(themeStore.secondaryText)
                         }
 
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(themeStore.secondaryText.opacity(0.45))
+                        DisclosureChevron()
                     }
                     .padding(.vertical, 16)
                     .padding(.horizontal, 18)

@@ -192,15 +192,19 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
     }
 
     private func playAudioSync(data: Data, rate: Float? = nil) async throws {
+        try Task.checkCancellation()
         try await Task.detached { [self] in
             try activateSession(mixWithOthers: false)
         }.value
+
+        try Task.checkCancellation()
 
         player = try AVAudioPlayer(data: data)
         player?.delegate = self
         player?.prepareToPlay()
         player?.enableRate = true
         player?.rate = rate ?? effectiveRate
+        let duration = max(player?.duration ?? 1.5, 0.4)
 
         if let existing = playbackContinuation {
             playbackContinuation = nil
@@ -213,7 +217,20 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
             if !ok {
                 self.playbackContinuation = nil
                 cont.resume()
+                return
+            }
+
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(duration + 0.6))
+                if let pending = self.playbackContinuation {
+                    self.playbackContinuation = nil
+                    self.player?.stop()
+                    self.player = nil
+                    pending.resume()
+                }
             }
         }
+
+        try Task.checkCancellation()
     }
 }

@@ -22,10 +22,6 @@ struct ReadingStoryCard: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeStore.accentBlue)
-                    .frame(width: 28, height: 28)
             }
             .padding(DesignSpacing.md)
             .background(
@@ -175,9 +171,12 @@ struct StoryView: View {
                 dismiss()
             } label: {
                 Text("Close")
-                    .duo3DStyle(themeStore.secondaryText.opacity(0.55))
+                    .font(themeStore.medium(16))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
-            .buttonStyle(Duo3DButtonStyle())
+            .buttonStyle(.plain)
             .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

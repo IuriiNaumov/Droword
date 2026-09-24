@@ -147,7 +147,7 @@ struct StreakCalendarView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(canGoBack ? themeStore.mainAccentColor : themeStore.mainAccentColor.opacity(0.25))
+                    .foregroundStyle(canGoBack ? themeStore.secondaryText.opacity(0.55) : themeStore.secondaryText.opacity(0.2))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -171,7 +171,7 @@ struct StreakCalendarView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(canGoForward ? themeStore.mainAccentColor : themeStore.mainAccentColor.opacity(0.25))
+                    .foregroundStyle(canGoForward ? themeStore.secondaryText.opacity(0.55) : themeStore.secondaryText.opacity(0.2))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }

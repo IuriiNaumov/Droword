@@ -96,8 +96,9 @@ struct AvatarPickerView: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(color.opacity(0.12))
+                        .fill(color.opacity(themeStore.isGlass ? 0.22 : 0.12))
                         .frame(width: 44, height: 44)
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
                     Image(systemName: icon)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(color)
@@ -109,18 +110,17 @@ struct AvatarPickerView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.5))
+                DisclosureChevron()
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
-                    .fill(themeStore.cardBg)
+                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                    .fill(themeStore.isGlass ? color.opacity(0.18) : themeStore.cardBg)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
     }
 }
 

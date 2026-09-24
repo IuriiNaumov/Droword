@@ -11,7 +11,7 @@ struct SettingsBackButton: View {
         } label: {
             MenuSymbol(
                 systemName: "chevron.left",
-                color: themeStore.mainAccentColor,
+                color: themeStore.mainText,
                 size: 14,
                 weight: .semibold,
                 frameSize: 22

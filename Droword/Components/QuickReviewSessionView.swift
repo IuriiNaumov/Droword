@@ -112,14 +112,23 @@ struct QuickReviewSessionView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if let tag = word.tag, !tag.isEmpty {
                     Text(LocalizedStringKey(tag))
-                        .font(themeStore.bold(12))
-                        .foregroundStyle(themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 12)
+                        .font(themeStore.medium(11))
+                        .foregroundStyle(
+                            themeStore.isGlass
+                                ? themeStore.mainText
+                                : (themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
+                        )
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2))
+                                .fill(
+                                    themeStore.isGlass
+                                        ? themeStore.colorForTag(tag).opacity(0.28)
+                                        : themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2)
+                                )
                         )
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
                         .padding(.bottom, 2)
                 }
 

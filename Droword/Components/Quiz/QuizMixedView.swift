@@ -45,8 +45,8 @@ struct QuizMixedView: View {
     @State private var matchingWrongAttempts: Int = 0
     private let matchingMaxAttempts: Int = 3
 
-    @State private var sentenceWords: [String] = []
-    @State private var selectedSentenceWords: [String] = []
+    @State private var sentenceWords: [SentenceChip] = []
+    @State private var selectedSentenceWords: [SentenceChip] = []
     @State private var correctSentenceWords: [String] = []
 
     @State private var streakScale: CGFloat = 1.0
@@ -581,11 +581,15 @@ struct QuizMixedView: View {
                 }
                 return item.word
             }()
-            let words = source
-                .components(separatedBy: .whitespacesAndNewlines)
-                .filter { !$0.isEmpty }
+            let words = QuizSessionManager.sentenceTokens(from: source)
+            let distractorCount = min(4, max(2, words.count / 2))
+            let distractors = session.sentenceDistractors(
+                correctTokens: words,
+                from: store.words,
+                count: distractorCount
+            )
             correctSentenceWords = words
-            sentenceWords = words.shuffled()
+            sentenceWords = SentenceChip.chips(from: words + distractors).shuffled()
             selectedSentenceWords = []
 
         case .listening:
@@ -819,7 +823,7 @@ struct QuizMixedView: View {
         guard !selectedSentenceWords.isEmpty else { return }
 
         hasAnswered = true
-        isCorrect = selectedSentenceWords == correctSentenceWords
+        isCorrect = selectedSentenceWords.map(\.text) == correctSentenceWords
 
         session.recordAnswer(correct: isCorrect)
         if isCorrect {
@@ -842,7 +846,7 @@ struct QuizMixedView: View {
         Haptics.error()
         hasAnswered = true
         isCorrect = false
-        selectedSentenceWords = correctSentenceWords
+        selectedSentenceWords = SentenceChip.chips(from: correctSentenceWords)
         sentenceWords = []
         triggerShake()
         session.recordAnswer(correct: false)

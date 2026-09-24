@@ -34,6 +34,7 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
     @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
     @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
+    @AppStorage(AppStorageKeys.dailyLessonDoneDismissedDay) private var dailyLessonDoneDismissedDay: String = ""
 
     @State private var showFirstWords = false
     @State private var showSuggestedIntro = false
@@ -96,6 +97,18 @@ struct HomeView: View {
             profile: learningProfile,
             learningLanguage: languageStore.learningLanguage
         )
+    }
+
+    private var todayDayString: String {
+        DateFormatting.dayFormatter.string(from: Date())
+    }
+
+    private var showDailyLessonCard: Bool {
+        let plan = dailyLessonPlan
+        if plan.isDone, dailyLessonDoneDismissedDay == todayDayString {
+            return false
+        }
+        return true
     }
 
     var body: some View {
@@ -453,13 +466,19 @@ struct HomeView: View {
                 )
                     .padding(.bottom, 16)
 
-                DailyLessonCard(
-                    plan: dailyLessonPlan,
-                    onStart: {
-                        showDailyLesson = true
-                    }
-                )
-                .padding(.horizontal, 20)
+                if showDailyLessonCard {
+                    DailyLessonCard(
+                        plan: dailyLessonPlan,
+                        onStart: {
+                            showDailyLesson = true
+                        },
+                        onDismissDone: {
+                            dailyLessonDoneDismissedDay = todayDayString
+                        }
+                    )
+                    .padding(.horizontal, 20)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
 
                 HomeStreakStrip(
                     onOpenCalendar: {
@@ -493,7 +512,7 @@ struct HomeView: View {
                         }
                         .buttonStyle(PressableButtonStyle())
                         .accessibilityLabel(Text("Word Packs"))
-                        .accessibilityHint(Text("\(packsReady) packs ready"))
+                        .accessibilityHint(Text(RussianPlural.packsReady(packsReady)))
                         .padding(.horizontal, 20)
                     }
                 }
@@ -681,17 +700,12 @@ struct HomeView: View {
     }
 
     private var enrichmentLimitBanner: some View {
-        HStack(spacing: 14) {
-            StatusBannerView(
-                icon: "clock",
-                iconColor: themeStore.mainAccentColor,
-                title: "Daily limit reached",
-                subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
-            )
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(themeStore.secondaryText.opacity(0.45))
-        }
+        StatusBannerView(
+            icon: "clock",
+            iconColor: themeStore.mainAccentColor,
+            title: "Daily limit reached",
+            subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
+        )
         .padding(16)
         .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
         .onTapGesture {

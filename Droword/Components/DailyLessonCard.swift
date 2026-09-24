@@ -5,6 +5,7 @@ struct DailyLessonCard: View {
 
     let plan: DailyLessonPlan
     var onStart: () -> Void
+    var onDismissDone: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -47,18 +48,20 @@ struct DailyLessonCard: View {
                     if plan.isDone {
                         Button {
                             Haptics.softTap()
-                            onStart()
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                onDismissDone?()
+                            }
                         } label: {
                             MenuSymbol(
-                                systemName: "arrow.clockwise",
-                                color: themeStore.mainAccentColor,
-                                size: 15,
+                                systemName: "xmark",
+                                color: themeStore.secondaryText.opacity(0.45),
+                                size: 14,
                                 weight: .semibold,
                                 frameSize: 28
                             )
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(Text("Once more"))
+                        .accessibilityLabel(Text("Close"))
                     }
                 }
             }

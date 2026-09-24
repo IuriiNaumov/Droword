@@ -48,7 +48,7 @@ struct DictionarySettingsView: View {
                     .padding(.top, -8)
 
                 VStack(spacing: 0) {
-                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear \(store.words.count) words") {
+                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear dictionary") {
                         guard !store.words.isEmpty else { return }
                         showClearConfirm = true
                     }
@@ -104,7 +104,7 @@ struct DictionarySettingsView: View {
                     icon: "trash.fill",
                     iconColor: Color.accentRed,
                     title: "Clear dictionary?",
-                    message: "This deletes all \(store.words.count) words. This can't be undone.",
+                    message: "This action cannot be undone.",
                     primaryButton: .init(title: "Clear all", style: .destructive) {
                         store.clear()
                         showClearConfirm = false
@@ -171,9 +171,7 @@ struct DictionarySettingsView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.45))
+                DisclosureChevron()
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 18)

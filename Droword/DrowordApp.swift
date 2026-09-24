@@ -124,6 +124,11 @@ struct DrowordApp: App {
                 .onChange(of: themeStore.palette) { _, newPalette in
                     Self.applyNavigationTint(for: newPalette.rawValue)
                 }
+                .onChange(of: themeStore.customAccentHex) { _, _ in
+                    if themeStore.palette == .custom {
+                        Self.applyNavigationTint(for: "custom")
+                    }
+                }
         }
     }
 
@@ -153,6 +158,10 @@ struct DrowordApp: App {
             tintColor = UIColor(red: 0.77, green: 0.47, blue: 0.29, alpha: 1)
         case "glass":
             tintColor = UIColor.systemBlue
+        case "custom":
+            let hex = UserDefaults.standard.string(forKey: AppStorageKeys.customThemeAccentHex)
+                ?? ThemeStore.defaultCustomAccentHex
+            tintColor = UIColor(Color(hex: hex))
         default:
             tintColor = UIColor(named: "AccentBlue") ?? .systemBlue
         }

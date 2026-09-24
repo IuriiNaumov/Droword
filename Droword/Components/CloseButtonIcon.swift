@@ -6,7 +6,7 @@ struct CloseButtonIcon: View {
     var body: some View {
         MenuSymbol(
             systemName: "xmark",
-            color: themeStore.mainAccentColor,
+            color: themeStore.mainText,
             size: 14,
             weight: .semibold,
             frameSize: 22

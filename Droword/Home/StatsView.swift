@@ -16,9 +16,7 @@ struct StatsView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(themeStore.accentBlue)
+                DisclosureChevron()
             }
 
             HStack(spacing: 12) {

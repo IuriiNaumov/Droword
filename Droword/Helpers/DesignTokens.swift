@@ -75,8 +75,17 @@ extension View {
     }
 
     func modernSheet() -> some View {
-        self
+        modifier(ModernSheetModifier())
+    }
+}
+
+private struct ModernSheetModifier: ViewModifier {
+    @EnvironmentObject private var themeStore: ThemeStore
+
+    func body(content: Content) -> some View {
+        content
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(DesignRadius.dialog)
+            .presentationBackground(themeStore.sheetBg)
     }
 }

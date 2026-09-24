@@ -74,10 +74,12 @@ struct AppCustomizationView: View {
             .modernSheet()
         }
         .sheet(isPresented: $showThemeSheet) {
-            ThemePickerView(initialPalette: themeSheetPalette, isSheet: true)
-                .environmentObject(themeStore)
-                .presentationDetents([.large])
-                .modernSheet()
+            NavigationStack {
+                ThemePickerView(initialPalette: themeSheetPalette, isSheet: true)
+                    .environmentObject(themeStore)
+            }
+            .presentationDetents([.large])
+            .modernSheet()
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
@@ -112,7 +114,14 @@ struct AppCustomizationView: View {
 
     private func backgroundTile(_ palette: ThemeStore.Palette) -> some View {
         let selected = themeStore.palette == palette
-        let colors = palette.tileColors
+        let colors: [Color] = {
+            if palette == .custom {
+                let accent = Color(hex: themeStore.customAccentHex)
+                return [accent.opacity(0.35), accent]
+            }
+            return palette.tileColors
+        }()
+        let accent = palette == .custom ? Color(hex: themeStore.customAccentHex) : palette.tileAccent
 
         return Button {
             Haptics.menuTap()
@@ -127,10 +136,6 @@ struct AppCustomizationView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .overlay {
-                    backgroundTilePattern(palette)
-                        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
-                }
                 .overlay {
                     RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                         .fill(
@@ -147,14 +152,14 @@ struct AppCustomizationView: View {
                 .frame(width: 92, height: 122)
                 .overlay {
                     RoundedRectangle(cornerRadius: DesignRadius.large - 1.5, style: .continuous)
-                        .strokeBorder(selected ? palette.tileAccent : Color.clear, lineWidth: 1.5)
+                        .strokeBorder(selected ? accent : Color.clear, lineWidth: 1.5)
                         .padding(1.5)
                 }
                 .overlay {
                     if selected {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(palette.tileAccent)
+                            .foregroundStyle(accent)
                             .background(Circle().fill(themeStore.cardBg).padding(1))
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                             .padding(7)
@@ -172,53 +177,6 @@ struct AppCustomizationView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text(palette.title))
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
-    @ViewBuilder
-    private func backgroundTilePattern(_ palette: ThemeStore.Palette) -> some View {
-        switch palette {
-        case .night:
-            Circle()
-                .fill(Color.white.opacity(0.06))
-                .frame(width: 90, height: 90)
-                .offset(x: 18, y: -28)
-        case .ocean:
-            VStack(spacing: 10) {
-                ForEach(0..<6, id: \.self) { i in
-                    Capsule()
-                        .fill(Color.white.opacity(0.12))
-                        .frame(height: 8)
-                        .offset(x: i.isMultiple(of: 2) ? 8 : -8)
-                }
-            }
-        case .sunset:
-            Circle()
-                .fill(Color.white.opacity(0.18))
-                .frame(width: 70, height: 70)
-                .offset(y: 28)
-        case .paper:
-            VStack(spacing: 9) {
-                ForEach(0..<10, id: \.self) { _ in
-                    Rectangle().fill(Color.black.opacity(0.05)).frame(height: 1)
-                }
-            }
-            .padding(.horizontal, 10)
-        case .duolingo:
-            Circle()
-                .stroke(Color.white.opacity(0.28), lineWidth: 10)
-                .frame(width: 54, height: 54)
-                .offset(y: 20)
-        case .glass:
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.35))
-                .frame(width: 36, height: 48)
-                .offset(y: 18)
-        case .colorful:
-            Circle()
-                .fill(Color.white.opacity(0.45))
-                .frame(width: 48, height: 48)
-                .offset(x: -16, y: 22)
-        }
     }
 
 
@@ -328,9 +286,7 @@ struct AppCustomizationView: View {
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.5))
+                DisclosureChevron()
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
@@ -366,9 +322,7 @@ struct AppCustomizationView: View {
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.5))
+                DisclosureChevron()
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
@@ -379,7 +333,7 @@ struct AppCustomizationView: View {
     }
 
     private var availablePalettes: [ThemeStore.Palette] {
-        ThemeStore.Palette.allCases.filter { palette in
+        ThemeStore.Palette.pickerOrder.filter { palette in
             if palette.requiresIOS26 {
                 if #available(iOS 26, *) { return true }
                 return false

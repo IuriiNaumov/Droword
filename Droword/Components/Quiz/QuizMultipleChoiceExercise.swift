@@ -83,19 +83,25 @@ struct QuizMultipleChoiceExercise: View {
         let isSelected = selectedOption == option
         let isIrrelevant = hasAnswered && !isThisCorrect && !isSelected
 
-        var bgColor: Color {
-            if !hasAnswered { return themeStore.cardBg }
-            if isThisCorrect { return themeStore.accentGreen }
-            if isSelected && !isThisCorrect { return themeStore.accentRed }
-            return themeStore.cardBg
-        }
+        let bgColor: Color = {
+            if !hasAnswered {
+                return themeStore.isGlass ? Color.clear : themeStore.cardBg
+            }
+            if isThisCorrect {
+                return themeStore.isGlass ? themeStore.accentGreen.opacity(0.35) : themeStore.accentGreen
+            }
+            if isSelected && !isThisCorrect {
+                return themeStore.isGlass ? themeStore.accentRed.opacity(0.35) : themeStore.accentRed
+            }
+            return themeStore.isGlass ? Color.clear : themeStore.cardBg
+        }()
 
-        var textColor: Color {
+        let textColor: Color = {
             if !hasAnswered { return themeStore.mainText }
             if isThisCorrect { return themeStore.mainText }
             if isSelected && !isThisCorrect { return themeStore.mainText }
             return themeStore.mainText.opacity(0.4)
-        }
+        }()
 
         return Button {
             onSelect(option)
@@ -124,6 +130,7 @@ struct QuizMultipleChoiceExercise: View {
                 RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
                     .fill(bgColor)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
         }
         .buttonStyle(.plain)
         .disabled(hasAnswered)

@@ -14,6 +14,7 @@ struct InstagramStoriesTemplateView: View {
         case .paper:      return Color(red: 0.77, green: 0.47, blue: 0.29)
         case .duolingo:   return Color(red: 0.27, green: 0.72, blue: 0.00)
         case .glass:      return Color(red: 0.0, green: 0.48, blue: 1.0)
+        case .custom:     return themeStore.mainAccentColor
         }
     }
 
@@ -26,6 +27,7 @@ struct InstagramStoriesTemplateView: View {
         case .paper:      return Color(red: 0.90, green: 0.82, blue: 0.68)
         case .duolingo:   return Color(red: 0.10, green: 0.54, blue: 0.43)
         case .glass:      return Color(red: 0.69, green: 0.32, blue: 0.87)
+        case .custom:     return themeStore.accentPink
         }
     }
 
@@ -180,6 +182,9 @@ enum InstagramStoriesShare {
         case .glass:
             topHex = "#007AFF"
             bottomHex = "#AF52DE"
+        case .custom:
+            topHex = themeStore.customAccentHex
+            bottomHex = themeStore.customAccentHex
         }
 
         let pasteboardItems: [String: Any] = [

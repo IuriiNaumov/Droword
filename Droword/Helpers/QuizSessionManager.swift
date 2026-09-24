@@ -279,7 +279,46 @@ final class QuizSessionManager: ObservableObject {
         let words = example
             .components(separatedBy: .whitespacesAndNewlines)
             .filter { !$0.isEmpty }
-        return words.count >= 3
+        return words.count >= 4
+    }
+
+    static func sentenceTokens(from example: String) -> [String] {
+        example
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+    }
+
+    func sentenceDistractors(
+        correctTokens: [String],
+        from allWords: [StoredWord],
+        count: Int = 3
+    ) -> [String] {
+        let correctKeys = Set(correctTokens.map { QuizAnswerMatching.normalize($0) })
+        var seen = correctKeys
+        var pool: [String] = []
+
+        for word in allWords.shuffled() {
+            let sources: [String] = {
+                var list: [String] = []
+                if let example = word.example, !example.isEmpty { list.append(example) }
+                list.append(contentsOf: word.examples)
+                list.append(word.word)
+                return list
+            }()
+
+            for source in sources {
+                for token in Self.sentenceTokens(from: source) {
+                    let key = QuizAnswerMatching.normalize(token)
+                    guard !key.isEmpty, seen.insert(key).inserted else { continue }
+                    pool.append(token)
+                    if pool.count >= count * 4 { break }
+                }
+                if pool.count >= count * 4 { break }
+            }
+            if pool.count >= count * 4 { break }
+        }
+
+        return Array(pool.shuffled().prefix(count))
     }
 
     private func pickExerciseType(

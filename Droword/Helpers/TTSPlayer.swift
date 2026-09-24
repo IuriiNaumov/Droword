@@ -31,11 +31,17 @@ enum TTSPlayer {
             defer {
                 Task { @MainActor in
                     guard generation == holdGeneration else { return }
-                    withAnimation { onPlayingChanged(false) }
+                    onPlayingChanged(false)
                 }
             }
             do {
-                try await AudioManager.shared.playAndWait(text: word)
+                try await withTaskCancellationHandler {
+                    try await AudioManager.shared.playAndWait(text: word)
+                } onCancel: {
+                    Task { @MainActor in
+                        AudioManager.shared.stopPlayback()
+                    }
+                }
             } catch {
                 #if DEBUG
                 print("⚠️ Audio playback failed for '\(word)': \(error.localizedDescription)")
@@ -68,16 +74,24 @@ enum TTSPlayer {
 
         activeTask = Task {
             await MainActor.run { onPlayingChanged(true) }
+            defer {
+                Task { @MainActor in
+                    guard generation == holdGeneration else { return }
+                    onPlayingChanged(false)
+                }
+            }
             do {
-                try await AudioManager.shared.playAndWait(text: word)
+                try await withTaskCancellationHandler {
+                    try await AudioManager.shared.playAndWait(text: word)
+                } onCancel: {
+                    Task { @MainActor in
+                        AudioManager.shared.stopPlayback()
+                    }
+                }
             } catch {
                 #if DEBUG
                 print("⚠️ Hold TTS failed for '\(word)': \(error.localizedDescription)")
                 #endif
-            }
-            await MainActor.run {
-                guard generation == holdGeneration else { return }
-                withAnimation { onPlayingChanged(false) }
             }
         }
     }
@@ -88,7 +102,7 @@ enum TTSPlayer {
         activeTask = nil
         Task { @MainActor in
             AudioManager.shared.stopPlayback()
-            withAnimation { onPlayingChanged(false) }
+            onPlayingChanged(false)
         }
     }
 }

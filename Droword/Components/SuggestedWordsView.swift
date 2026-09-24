@@ -146,6 +146,19 @@ extension Color {
             traits.userInterfaceStyle == .dark ? UIColor(Color(hex: dark)) : UIColor(Color(hex: light))
         })
     }
+
+    func toHexRGB() -> String? {
+        let ui = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        guard ui.getRed(&r, green: &g, blue: &b, alpha: &a) else {
+            var h: CGFloat = 0, s: CGFloat = 0, br: CGFloat = 0
+            guard ui.getHue(&h, saturation: &s, brightness: &br, alpha: &a) else { return nil }
+            let color = UIColor(hue: h, saturation: s, brightness: br, alpha: 1)
+            guard color.getRed(&r, green: &g, blue: &b, alpha: &a) else { return nil }
+            return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+        }
+        return String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+    }
 }
 
 #Preview {

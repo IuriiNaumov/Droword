@@ -108,7 +108,7 @@ struct OnboardingView: View {
                             }) {
                                 Image(systemName: "chevron.left")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(themeStore.mainAccentColor)
+                                    .foregroundStyle(themeStore.secondaryText.opacity(0.55))
                             }
                             .buttonStyle(.plain)
                             .padding(.leading, 20)
@@ -130,8 +130,10 @@ struct OnboardingView: View {
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
                                     .background(
-                                        Capsule().fill(themeStore.cardBg.opacity(0.9))
+                                        Capsule()
+                                            .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg.opacity(0.9))
                                     )
+                                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
                             }
                             .buttonStyle(ScaledPressStyle())
                             .padding(.trailing, 20)

@@ -99,7 +99,7 @@ struct CoachMarkView: View {
                             onComplete()
                         } label: {
                             Text("Skip tour")
-                                .duo3DStyle(themeStore.secondaryText.opacity(0.55))
+                                .duo3DSecondaryStyle()
                         }
                         .buttonStyle(Duo3DButtonStyle())
                     }

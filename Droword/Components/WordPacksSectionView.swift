@@ -28,19 +28,12 @@ struct WordPacksButton: View {
                     }
                 }
 
-                Text(availableCount == 1
-                     ? String(localized: "1 pack ready")
-                     : String(localized: "\(availableCount) packs ready"))
+                Text(RussianPlural.packsReady(availableCount))
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
             }
 
             Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(themeStore.accentBlue)
-                .frame(width: 28, height: 28)
         }
         .padding(DesignSpacing.md)
         .background(
@@ -116,7 +109,7 @@ struct WordPacksDetailView: View {
                         }
 
                         if !completedPacks.isEmpty {
-                            sectionHeader(String(localized: "Completed"))
+                            sectionHeader(String(localized: "Added"))
                             VStack(spacing: 12) {
                                 ForEach(completedPacks) { pack in
                                     packRow(pack, completed: true)
@@ -186,9 +179,7 @@ struct WordPacksDetailView: View {
                 Spacer()
 
                 if !completed {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(themeStore.secondaryText.opacity(0.45))
+                    DisclosureChevron()
                 }
             }
             .padding(16)

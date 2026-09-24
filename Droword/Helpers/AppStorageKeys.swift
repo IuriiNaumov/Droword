@@ -57,6 +57,7 @@ enum AppStorageKeys {
     static let showHomeChat = "showHomeChat"
     static let showHomeNextReview = "showHomeNextReview"
     static let homeQuietedV1 = "homeQuietedV1"
+    static let dailyLessonDoneDismissedDay = "dailyLessonDoneDismissedDay"
     static let wordPacksExpanded = "wordPacksExpanded"
     static let hasSeenWordPacksHint = "hasSeenWordPacksHint"
     static let learningGoal = "learningGoal"
@@ -68,4 +69,5 @@ enum AppStorageKeys {
     static let notifEveningChatEnabled = "notifEveningChatEnabled"
     static let notifEveningChatHour = "notifEveningChatHour"
     static let notifEveningChatMinute = "notifEveningChatMinute"
+    static let customThemeAccentHex = "customThemeAccentHex"
 }

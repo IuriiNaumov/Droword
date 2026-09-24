@@ -10,6 +10,8 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     case sun
     case ocean
     case forest
+    case glass
+    case pride
     case english
     case spanish
     case french
@@ -31,6 +33,8 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .sun: return String(localized: "Sun")
         case .ocean: return String(localized: "Ocean")
         case .forest: return String(localized: "Forest")
+        case .glass: return "Liquid Glass"
+        case .pride: return "Pride"
         case .english: return String(localized: "English")
         case .spanish: return String(localized: "Spanish")
         case .french: return String(localized: "French")
@@ -52,6 +56,8 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .sun: return "AppIconSun"
         case .ocean: return "AppIconOcean"
         case .forest: return "AppIconForest"
+        case .glass: return "AppIconGlass"
+        case .pride: return "AppIconPride"
         case .english: return "AppIconEnglish"
         case .spanish: return "AppIconSpanish"
         case .french: return "AppIconFrench"
@@ -75,6 +81,8 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .sun: return Color(hex: "#E85D2C")
         case .ocean: return Color(hex: "#2EC4B6")
         case .forest: return Color(hex: "#58CC02")
+        case .glass: return Color(hex: "#007AFF")
+        case .pride: return Color(hex: "#E40303")
         case .english: return Color(hex: "#012169")
         case .spanish: return Color(hex: "#C60B1E")
         case .french: return Color(hex: "#002395")
@@ -90,6 +98,8 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
 
     static func resolved(_ raw: String) -> AppIconStyle {
         if raw == "ember" { return .sun }
+        // Retired pride-flag variants → Pride
+        if ["progress", "gay", "bi", "trans", "lesbian"].contains(raw) { return .pride }
         return AppIconStyle(rawValue: raw) ?? .classic
     }
 }
@@ -198,8 +208,8 @@ enum AppIconChanger {
 #Preview {
     HStack(spacing: 16) {
         AppIconArtwork(style: .classic, size: 72)
-        AppIconArtwork(style: .sun, size: 72)
-        AppIconArtwork(style: .night, size: 72)
+        AppIconArtwork(style: .pride, size: 72)
+        AppIconArtwork(style: .ocean, size: 72)
     }
     .padding()
 }

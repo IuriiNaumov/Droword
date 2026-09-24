@@ -209,9 +209,12 @@ struct WordPackDetailView: View {
                 dismiss()
             } label: {
                 Text("Close")
-                    .duo3DStyle(color)
+                    .font(themeStore.medium(16))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
             }
-            .buttonStyle(Duo3DButtonStyle())
+            .buttonStyle(.plain)
             .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)

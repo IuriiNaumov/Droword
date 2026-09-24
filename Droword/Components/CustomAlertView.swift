@@ -72,8 +72,13 @@ struct CustomAlertView: View {
                             Haptics.lightImpact()
                             secondary.action()
                         } label: {
-                            Text(secondary.title)
-                                .duo3DStyle(buttonBgColor(secondary.style))
+                            if secondary.style == .cancel {
+                                Text(secondary.title)
+                                    .duo3DSecondaryStyle()
+                            } else {
+                                Text(secondary.title)
+                                    .duo3DStyle(buttonBgColor(secondary.style))
+                            }
                         }
                         .buttonStyle(Duo3DButtonStyle())
                     }
@@ -139,7 +144,7 @@ enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {
                 icon: "trash.fill",
                 iconColor: Color.accentRed,
                 title: "Clear dictionary?",
-                message: "This deletes all 42 words. This can't be undone.",
+                message: "This action cannot be undone.",
                 primaryButton: .init(title: "Clear all", style: .destructive, action: onDismiss),
                 secondaryButton: .init(title: "Cancel", style: .cancel, action: onDismiss)
             )

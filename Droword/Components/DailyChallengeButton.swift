@@ -48,17 +48,6 @@ struct DailyChallengeButton: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Done"))
                 .accessibilityHint(Text("Hide until tomorrow"))
-            } else {
-                Button {
-                    Haptics.buttonPress()
-                    onOpen()
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(themeStore.accentBlue)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
             }
         }
         .padding(DesignSpacing.md)

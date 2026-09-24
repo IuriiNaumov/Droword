@@ -97,27 +97,24 @@ struct DictionaryView: View {
     }
 
     private var populatedDictionary: some View {
-        Group {
-            if showsDictionaryFilterEmpty {
-                VStack(spacing: 0) {
-                    dictionaryChrome
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                dictionaryChrome
+
+                if showsDictionaryFilterEmpty {
                     dictionaryEmptyFilter
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 48)
+                        .padding(.bottom, 80)
+                } else {
+                    wordGrid
+                        .padding(.top, 10)
                 }
-                .iPadContentWidth(1000)
-            } else {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        dictionaryChrome
-                        wordGrid
-                            .padding(.top, 10)
-                    }
-                    .iPadContentWidth(1000)
-                }
-                .scrollClipDisabled()
-                .scrollDismissesKeyboard(.immediately)
             }
+            .iPadContentWidth(1000)
         }
+        .scrollClipDisabled()
+        .scrollDismissesKeyboard(.immediately)
         .iPadContentWidth(1000)
     }
 

@@ -93,10 +93,16 @@ struct QuizMatchingExercise: View {
         let text = (isWord ? pair.word : pair.translation).displayCapitalized
 
         var bgColor: Color {
-            if isMatched { return themeStore.accentGreen.opacity(0.2) }
-            if isWrong { return themeStore.accentRed.opacity(0.2) }
-            if isSelected { return themeStore.mainAccentColor.opacity(0.15) }
-            return themeStore.cardBg
+            if isMatched {
+                return themeStore.isGlass ? themeStore.accentGreen.opacity(0.28) : themeStore.accentGreen.opacity(0.2)
+            }
+            if isWrong {
+                return themeStore.isGlass ? themeStore.accentRed.opacity(0.28) : themeStore.accentRed.opacity(0.2)
+            }
+            if isSelected {
+                return themeStore.isGlass ? themeStore.mainAccentColor.opacity(0.22) : themeStore.mainAccentColor.opacity(0.15)
+            }
+            return themeStore.isGlass ? Color.clear : themeStore.cardBg
         }
 
         return Button {
@@ -112,9 +118,9 @@ struct QuizMatchingExercise: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(themeStore.isGlass && !isMatched && !isWrong && !isSelected ? Color.clear : bgColor)
+                        .fill(bgColor)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isMatched && !isWrong && !isSelected, cornerRadius: 12))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 12))
         }
         .buttonStyle(.plain)
         .disabled(isMatched)

@@ -5,33 +5,43 @@ import UIKit
 final class ThemeStore: ObservableObject {
     enum Palette: String, CaseIterable, Identifiable {
         case colorful
-        case night
+        case duolingo
+        case glass
         case ocean
         case sunset
         case paper
-        case duolingo
-        case glass
+        case custom
+        case night
+
         var id: String { rawValue }
+
+        static var pickerOrder: [Palette] {
+            [.colorful, .duolingo, .glass, .ocean, .sunset, .paper, .custom]
+        }
+
         var title: String {
             switch self {
             case .colorful: return "Droword"
-            case .night: return String(localized: "Night")
+            case .duolingo: return "Green Owl"
+            case .glass: return "Liquid Glass"
             case .ocean: return String(localized: "Ocean")
             case .sunset: return String(localized: "Sunset")
             case .paper: return String(localized: "Paper")
-            case .duolingo: return "Green Owl"
-            case .glass: return "Liquid Glass"
+            case .custom: return String(localized: "Custom")
+            case .night: return String(localized: "Night")
             }
         }
+
         var subtitle: String {
             switch self {
             case .colorful: return String(localized: "Warm and vibrant")
-            case .night: return String(localized: "Deep black canvas")
+            case .duolingo: return String(localized: "Fresh green accent")
+            case .glass: return String(localized: "Apple glass aesthetic")
             case .ocean: return String(localized: "Calm teal wash")
             case .sunset: return String(localized: "Cozy sunset vibes")
             case .paper: return String(localized: "Warm paper")
-            case .duolingo: return String(localized: "Fresh green accent")
-            case .glass: return String(localized: "Apple glass aesthetic")
+            case .custom: return String(localized: "Pick your accent color")
+            case .night: return String(localized: "Deep black canvas")
             }
         }
 
@@ -40,24 +50,26 @@ final class ThemeStore: ObservableObject {
         var tileColors: [Color] {
             switch self {
             case .colorful: return [Color(hex: "#F6F7FF"), Color(hex: "#DDE4FA")]
-            case .night: return [Color(hex: "#2A2438"), Color(hex: "#0B0B10")]
+            case .duolingo: return [Color(hex: "#E5F8D8"), Color(hex: "#3FA006")]
+            case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
             case .ocean: return [Color(hex: "#7EE0D6"), Color(hex: "#0B3D4A")]
             case .sunset: return [Color(hex: "#FFB07A"), Color(hex: "#C2185B")]
             case .paper: return [Color(hex: "#FFF8EC"), Color(hex: "#E4D2B8")]
-            case .duolingo: return [Color(hex: "#E5F8D8"), Color(hex: "#3FA006")]
-            case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
+            case .custom: return [Color(hex: "#F5F5F7"), Color(hex: "#C7C7CC")]
+            case .night: return [Color(hex: "#2A2438"), Color(hex: "#0B0B10")]
             }
         }
 
         var tileAccent: Color {
             switch self {
             case .colorful: return Color(hex: "#5B9BD5")
-            case .night: return Color(hex: "#A78BFA")
+            case .duolingo: return Color(hex: "#58CC02")
+            case .glass: return Color(hex: "#007AFF")
             case .ocean: return Color(hex: "#2EC4B6")
             case .sunset: return Color(hex: "#E85D2C")
             case .paper: return Color(hex: "#C4784A")
-            case .duolingo: return Color(hex: "#58CC02")
-            case .glass: return Color(hex: "#007AFF")
+            case .custom: return Color(hex: "#5B9BD5")
+            case .night: return Color(hex: "#A78BFA")
             }
         }
     }
@@ -65,7 +77,14 @@ final class ThemeStore: ObservableObject {
     @Published var palette: Palette {
         didSet {
             UserDefaults.standard.set(palette.rawValue, forKey: Self.storageKey)
-            cached = Self.buildColors(for: palette)
+            refreshCached()
+        }
+    }
+
+    @Published var customAccentHex: String {
+        didSet {
+            UserDefaults.standard.set(customAccentHex, forKey: AppStorageKeys.customThemeAccentHex)
+            if palette == .custom { refreshCached() }
         }
     }
 
@@ -74,6 +93,7 @@ final class ThemeStore: ObservableObject {
     }
 
     static private let storageKey = "appThemePalette"
+    static let defaultCustomAccentHex = "#5B9BD5"
 
     private struct Colors {
         let accentBlue: Color
@@ -99,8 +119,16 @@ final class ThemeStore: ObservableObject {
 
     private var cached: Colors
 
+    private func refreshCached() {
+        cached = palette == .custom
+            ? Self.buildCustomColors(hex: customAccentHex)
+            : Self.buildColors(for: palette)
+    }
+
     private static func buildColors(for palette: Palette) -> Colors {
         switch palette {
+        case .custom:
+            return buildCustomColors(hex: defaultCustomAccentHex)
         case .colorful:
             return Colors(
                 accentBlue: Color("AccentBlue"),
@@ -220,8 +248,9 @@ final class ThemeStore: ObservableObject {
                 accentGold: Color(hex: "#2EC4B6"),
                 accentRed: Color(hex: "#FF4B4B"),
                 mainAccentColor: Color(hex: "#58CC02"),
-                appBg: Color(light: "#FFFFFF", dark: "#131F24"),
-                cardBg: Color(light: "#F7F7F7", dark: "#1A2B32"),
+                // Soft gray page + white elevated surfaces so sheets/alerts don't melt into home.
+                appBg: Color(light: "#F7F7F7", dark: "#131F24"),
+                cardBg: Color(light: "#FFFFFF", dark: "#1F333B"),
                 mainText: Color(light: "#4B4B4B", dark: "#FFFFFF"),
                 secondaryText: Color(light: "#AFAFAF", dark: "#9CA3A8"),
                 dividerColor: Color(light: "#E5E5E5", dark: "#37464F"),
@@ -258,16 +287,91 @@ final class ThemeStore: ObservableObject {
         }
     }
 
+    private static func buildCustomColors(hex: String) -> Colors {
+        let ui = UIColor(Color(hex: hex.isEmpty ? defaultCustomAccentHex : hex))
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        if !ui.getHue(&h, saturation: &s, brightness: &b, alpha: &a) {
+            h = 0.58; s = 0.55; b = 0.75
+        }
+        s = min(max(s, 0.45), 0.85)
+        b = min(max(b, 0.55), 0.88)
+
+        func hsba(_ hue: CGFloat, _ sat: CGFloat, _ bri: CGFloat) -> Color {
+            let wrapped = (hue.truncatingRemainder(dividingBy: 1) + 1).truncatingRemainder(dividingBy: 1)
+            return Color(hue: wrapped, saturation: min(max(sat, 0), 1), brightness: min(max(bri, 0), 1))
+        }
+
+        func uiHSB(_ hue: CGFloat, _ sat: CGFloat, _ bri: CGFloat) -> UIColor {
+            let wrapped = (hue.truncatingRemainder(dividingBy: 1) + 1).truncatingRemainder(dividingBy: 1)
+            return UIColor(hue: wrapped, saturation: min(max(sat, 0), 1), brightness: min(max(bri, 0), 1), alpha: 1)
+        }
+
+        let accent = hsba(h, s, b)
+        let accentDark = hsba(h, min(s + 0.08, 1), max(b - 0.18, 0.35))
+        let green = hsba(h + 0.28, max(s - 0.1, 0.35), min(b + 0.05, 0.85))
+        let purple = hsba(h + 0.72, max(s - 0.05, 0.4), min(b, 0.8))
+        let pink = hsba(h + 0.9, max(s - 0.05, 0.4), min(b + 0.05, 0.88))
+        let gold = hsba(h + 0.12, max(s - 0.15, 0.4), min(b + 0.08, 0.9))
+        let red = hsba(0.01, 0.72, 0.82)
+
+        return Colors(
+            accentBlue: accent,
+            accentGreen: green,
+            accentPurple: purple,
+            accentPink: pink,
+            accentGold: gold,
+            accentRed: red,
+            mainAccentColor: accent,
+            appBg: Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? uiHSB(h, min(s * 0.35, 0.28), 0.10)
+                    : uiHSB(h, min(s * 0.18, 0.14), 0.97)
+            }),
+            cardBg: Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? uiHSB(h, min(s * 0.22, 0.2), 0.16)
+                    : uiHSB(h, min(s * 0.08, 0.06), 0.99)
+            }),
+            mainText: Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? uiHSB(h, min(s * 0.12, 0.1), 0.96)
+                    : uiHSB(h, min(s * 0.35, 0.28), 0.18)
+            }),
+            secondaryText: Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? uiHSB(h, min(s * 0.15, 0.12), 0.68)
+                    : uiHSB(h, min(s * 0.2, 0.16), 0.55)
+            }),
+            dividerColor: Color(UIColor { traits in
+                traits.userInterfaceStyle == .dark
+                    ? uiHSB(h, min(s * 0.2, 0.16), 0.24)
+                    : uiHSB(h, min(s * 0.15, 0.12), 0.88)
+            }),
+            tabTint: accent,
+            buttonShadow: accentDark,
+            iconGreen: green,
+            iconGold: gold,
+            iconPurple: purple,
+            iconPink: pink,
+            iconBlue: accent
+        )
+    }
+
     init() {
         var raw = UserDefaults.standard.string(forKey: Self.storageKey) ?? Palette.colorful.rawValue
         if raw == "monochrome" { raw = "sunset" }
-
+        if raw == "night" { raw = "colorful" }
         if raw == "glass" {
             if #available(iOS 26, *) { } else { raw = "colorful" }
         }
+        let storedHex = UserDefaults.standard.string(forKey: AppStorageKeys.customThemeAccentHex)
+            ?? Self.defaultCustomAccentHex
+        self.customAccentHex = storedHex
         let p = Palette(rawValue: raw) ?? .colorful
         self.palette = p
-        self.cached = Self.buildColors(for: p)
+        self.cached = p == .custom
+            ? Self.buildCustomColors(hex: storedHex)
+            : Self.buildColors(for: p)
         let stored = UserDefaults.standard.double(forKey: AppStorageKeys.fontScale)
         self.fontScale = stored > 0 ? CGFloat(stored) : 1.0
     }
@@ -276,6 +380,7 @@ final class ThemeStore: ObservableObject {
     var isMonochrome: Bool { palette == .sunset }
     var isDuolingo: Bool { palette == .duolingo }
     var isGlass: Bool { palette == .glass }
+    var isCustom: Bool { palette == .custom }
     var title: String { palette.title }
 
     var accentBlue: Color { cached.accentBlue }
@@ -288,6 +393,10 @@ final class ThemeStore: ObservableObject {
     var mainAccentColor: Color { cached.mainAccentColor }
     var appBg: Color { cached.appBg }
     var cardBg: Color { cached.cardBg }
+
+    /// Elevated surface for sheets/modals. Duolingo needs this distinct from `appBg`.
+    var sheetBg: Color { isDuolingo ? cardBg : appBg }
+
     var mainText: Color { cached.mainText }
     var secondaryText: Color { cached.secondaryText }
     var dividerColor: Color { cached.dividerColor }
@@ -313,6 +422,7 @@ final class ThemeStore: ObservableObject {
         case .paper: return Color(light: "#F0E6D4", dark: "#2A2520")
         case .duolingo: return Color(light: "#E5F8D8", dark: "#243819")
         case .glass: return Color(light: "#E3F0FF", dark: "#1C2A3D")
+        case .custom: return mainAccentColor.opacity(0.14)
         }
     }
 
@@ -423,8 +533,10 @@ final class ThemeStore: ObservableObject {
         }
     }
 
-    static func previewColors(for palette: Palette) -> PreviewColors {
-        let c = buildColors(for: palette)
+    static func previewColors(for palette: Palette, customHex: String = defaultCustomAccentHex) -> PreviewColors {
+        let c = palette == .custom
+            ? buildCustomColors(hex: customHex)
+            : buildColors(for: palette)
         return PreviewColors(
             accentBlue: c.accentBlue,
             accentGreen: c.accentGreen,
@@ -442,14 +554,41 @@ final class ThemeStore: ObservableObject {
     }
 }
 
+enum GlassShapeStyle {
+    case roundedRect(CGFloat)
+    case capsule
+}
+
 struct GlassCardModifier: ViewModifier {
     let isGlass: Bool
     var cornerRadius: CGFloat = 20
+    var shape: GlassShapeStyle = .roundedRect(20)
+
+    init(isGlass: Bool, cornerRadius: CGFloat = 20) {
+        self.isGlass = isGlass
+        self.cornerRadius = cornerRadius
+        self.shape = .roundedRect(cornerRadius)
+    }
+
+    init(isGlass: Bool, shape: GlassShapeStyle) {
+        self.isGlass = isGlass
+        self.shape = shape
+        if case .roundedRect(let radius) = shape {
+            self.cornerRadius = radius
+        } else {
+            self.cornerRadius = 20
+        }
+    }
 
     func body(content: Content) -> some View {
         if isGlass {
             if #available(iOS 26, *) {
-                content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
+                switch shape {
+                case .roundedRect(let radius):
+                    content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: radius))
+                case .capsule:
+                    content.glassEffect(.regular.interactive(), in: .capsule)
+                }
             } else {
                 content
             }

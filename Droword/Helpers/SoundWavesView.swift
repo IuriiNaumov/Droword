@@ -3,7 +3,7 @@ import SwiftUI
 struct SoundWavesView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @State private var barHeights: [CGFloat] = [8, 12, 8]
-    @State private var animating = false
+    @State private var tickTask: Task<Void, Never>?
     let isPlaying: Bool
 
     private let barWidth: CGFloat = 4
@@ -20,32 +20,42 @@ struct SoundWavesView: View {
             }
         }
         .onChange(of: isPlaying) { _, playing in
-            if playing {
-                animating = true
-                tick()
-            } else {
-                animating = false
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    barHeights = [8, 12, 8]
-                }
-            }
+            syncAnimation(playing: playing)
         }
         .onAppear {
-            if isPlaying {
-                animating = true
-                tick()
+            syncAnimation(playing: isPlaying)
+        }
+        .onDisappear {
+            stopAnimation(reset: false)
+        }
+    }
+
+    private func syncAnimation(playing: Bool) {
+        if playing {
+            startAnimation()
+        } else {
+            stopAnimation(reset: true)
+        }
+    }
+
+    private func startAnimation() {
+        tickTask?.cancel()
+        tickTask = Task { @MainActor in
+            while !Task.isCancelled {
+                withAnimation(.easeInOut(duration: 0.28)) {
+                    barHeights = (0..<3).map { _ in CGFloat.random(in: minHeight...maxHeight) }
+                }
+                try? await Task.sleep(for: .milliseconds(280))
             }
         }
     }
 
-    private func tick() {
-        guard animating else { return }
-        Haptics.soundWave()
-        withAnimation(.easeInOut(duration: 0.3)) {
-            barHeights = barHeights.map { _ in CGFloat.random(in: minHeight...maxHeight) }
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            tick()
+    private func stopAnimation(reset: Bool) {
+        tickTask?.cancel()
+        tickTask = nil
+        guard reset else { return }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            barHeights = [8, 12, 8]
         }
     }
 }

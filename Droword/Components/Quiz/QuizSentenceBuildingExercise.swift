@@ -1,5 +1,19 @@
 import SwiftUI
 
+struct SentenceChip: Identifiable, Equatable {
+    let id: UUID
+    let text: String
+
+    init(id: UUID = UUID(), text: String) {
+        self.id = id
+        self.text = text
+    }
+
+    static func chips(from words: [String]) -> [SentenceChip] {
+        words.map { SentenceChip(text: $0) }
+    }
+}
+
 struct QuizSentenceBuildingExercise: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
@@ -8,8 +22,8 @@ struct QuizSentenceBuildingExercise: View {
     let isCorrect: Bool
     let shakeOffset: CGFloat
 
-    @Binding var sentenceWords: [String]
-    @Binding var selectedSentenceWords: [String]
+    @Binding var sentenceWords: [SentenceChip]
+    @Binding var selectedSentenceWords: [SentenceChip]
     let correctSentenceWords: [String]
 
     var body: some View {
@@ -26,6 +40,12 @@ struct QuizSentenceBuildingExercise: View {
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
+
+                Text(String(localized: "Tap only the words you need · includes «\(item.word)»"))
+                    .font(themeStore.regular(13))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
             }
             .padding(.bottom, 24)
 
@@ -54,24 +74,30 @@ struct QuizSentenceBuildingExercise: View {
                         .foregroundStyle(themeStore.secondaryText.opacity(0.4))
                         .padding(.vertical, 8)
                 } else {
-                    ForEach(Array(selectedSentenceWords.enumerated()), id: \.offset) { index, word in
+                    ForEach(selectedSentenceWords) { chip in
                         Button {
                             guard !hasAnswered else { return }
+                            guard let index = selectedSentenceWords.firstIndex(of: chip) else { return }
                             Haptics.selection()
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                 selectedSentenceWords.remove(at: index)
-                                sentenceWords.append(word)
+                                sentenceWords.append(chip)
                             }
                         } label: {
-                            Text(word)
+                            Text(chip.text)
                                 .font(themeStore.medium(15))
                                 .foregroundStyle(themeStore.mainText)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(themeStore.mainAccentColor.opacity(0.12))
+                                        .fill(
+                                            themeStore.isGlass
+                                                ? themeStore.mainAccentColor.opacity(0.22)
+                                                : themeStore.mainAccentColor.opacity(0.12)
+                                        )
                                 )
+                                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 10))
                         }
                         .buttonStyle(.plain)
                         .disabled(hasAnswered)
@@ -84,14 +110,20 @@ struct QuizSentenceBuildingExercise: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(areaFill)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !hasAnswered, cornerRadius: 14))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
 
             if hasAnswered && !isCorrect {
-                QuizFeedbackBadge(
-                    icon: "xmark.circle.fill",
-                    text: DuoChaosCopy.wrongReveal(correctSentenceWords.joined(separator: " ")),
-                    color: themeStore.accentRed
-                )
+                VStack(spacing: 8) {
+                    QuizFeedbackBadge(
+                        icon: "xmark.circle.fill",
+                        text: DuoChaosCopy.wrongReveal(""),
+                        color: themeStore.accentRed
+                    )
+                    Text(correctSentenceWords.joined(separator: " "))
+                        .font(themeStore.medium(15))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
             }
 
             if hasAnswered && isCorrect {
@@ -107,16 +139,17 @@ struct QuizSentenceBuildingExercise: View {
 
     private var wordBank: some View {
         FlowLayout(spacing: 8) {
-            ForEach(Array(sentenceWords.enumerated()), id: \.offset) { index, word in
+            ForEach(sentenceWords) { chip in
                 Button {
                     guard !hasAnswered else { return }
+                    guard let index = sentenceWords.firstIndex(of: chip) else { return }
                     Haptics.selection()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         sentenceWords.remove(at: index)
-                        selectedSentenceWords.append(word)
+                        selectedSentenceWords.append(chip)
                     }
                 } label: {
-                    Text(word)
+                    Text(chip.text)
                         .font(themeStore.medium(15))
                         .foregroundStyle(themeStore.mainText)
                         .padding(.horizontal, 12)
@@ -177,25 +210,25 @@ struct FlowLayout: Layout {
 }
 
 private struct QuizSentenceBuildingExercisePreview: View {
-    @State private var sentenceWords = ["Hola", "amigo"]
-    @State private var selectedSentenceWords: [String] = []
+    @State private var sentenceWords = SentenceChip.chips(from: ["L'eau", "est", "bonne.", "très", "froid"])
+    @State private var selectedSentenceWords: [SentenceChip] = []
 
     var body: some View {
         QuizSentenceBuildingExercise(
             item: QuizSessionManager.QuizItem(
-        id: UUID(),
-        word: "hola",
-        translation: "hello",
-        transcription: "ˈola",
-        tag: "basics",
-        example: "¡Hola!"
-    ),
+                id: UUID(),
+                word: "eau",
+                translation: "вода",
+                transcription: nil,
+                tag: "basics",
+                example: "L'eau est bonne."
+            ),
             hasAnswered: false,
             isCorrect: false,
             shakeOffset: 0,
             sentenceWords: $sentenceWords,
             selectedSentenceWords: $selectedSentenceWords,
-            correctSentenceWords: ["Hola", "amigo"]
+            correctSentenceWords: ["L'eau", "est", "bonne."]
         )
         .padding()
         .environmentObject(ThemeStore())

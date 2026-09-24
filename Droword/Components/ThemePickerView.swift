@@ -5,6 +5,7 @@ struct ThemePickerView: View {
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @State private var selectedPalette: ThemeStore.Palette = .colorful
     @State private var showPremiumWall = false
+    @State private var customPickerColor: Color = Color(hex: ThemeStore.defaultCustomAccentHex)
     @Environment(\.dismiss) private var dismiss
 
     var initialPalette: ThemeStore.Palette? = nil
@@ -12,7 +13,8 @@ struct ThemePickerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
+            Text("App background")
+                .sheetTitle()
 
             TabView(selection: $selectedPalette) {
                 ForEach(availablePalettes) { palette in
@@ -23,54 +25,82 @@ struct ThemePickerView: View {
             .tabViewStyle(.page(indexDisplayMode: .always))
             .frame(maxHeight: .infinity)
 
+            if selectedPalette == .custom {
+                customColorRow
+                    .padding(.horizontal, 20)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+
             setButton
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
                 .padding(.bottom, 28)
         }
         .background(themeStore.appBg.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if isSheet {
+                    CloseButton()
+                } else {
+                    SettingsBackButton()
+                }
+            }
+        }
+        .navigationBarBackButtonHidden(true)
+        .enableSwipeBack()
         .onAppear {
             selectedPalette = initialPalette ?? themeStore.palette
+            customPickerColor = Color(hex: themeStore.customAccentHex)
             let accent = UIColor(themeStore.mainAccentColor)
             UIPageControl.appearance().currentPageIndicatorTintColor = accent
             UIPageControl.appearance().pageIndicatorTintColor = accent.withAlphaComponent(0.25)
+        }
+        .onChange(of: selectedPalette) { _, new in
+            if new == .custom {
+                customPickerColor = Color(hex: themeStore.customAccentHex)
+            }
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
                 .tint(themeStore.mainAccentColor)
         }
-        .toolbar {
-            if !isSheet {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    SettingsBackButton()
-                }
-            }
-        }
-        .navigationBarBackButtonHidden(!isSheet)
-        .enableSwipeBack()
     }
 
-    private var header: some View {
-        ZStack {
-            Text("Choose background")
-                .font(themeStore.bold(18))
+    private var customColorRow: some View {
+        HStack(spacing: 14) {
+            Text("Accent color")
+                .font(themeStore.medium(15))
                 .foregroundStyle(themeStore.mainText)
 
-            HStack {
-                if isSheet {
-                    CloseButton()
-                }
-                Spacer()
-            }
+            Spacer()
+
+            ColorPicker("", selection: $customPickerColor, supportsOpacity: false)
+                .labelsHidden()
+                .frame(width: 44, height: 32)
         }
         .padding(.horizontal, 16)
-        .padding(.top, isSheet ? 16 : 8)
-        .padding(.bottom, 8)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+        )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .onChange(of: customPickerColor) { _, newColor in
+            if let hex = newColor.toHexRGB() {
+                themeStore.customAccentHex = hex
+            }
+        }
     }
 
     private func previewStage(palette: ThemeStore.Palette) -> some View {
-        let c = ThemeStore.previewColors(for: palette)
+        let c = ThemeStore.previewColors(
+            for: palette,
+            customHex: palette == .custom ? themeStore.customAccentHex : ThemeStore.defaultCustomAccentHex
+        )
 
         return VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
@@ -126,6 +156,7 @@ struct ThemePickerView: View {
             .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
             .padding(.horizontal, 28)
             .padding(.vertical, 12)
+            .id(palette == .custom ? themeStore.customAccentHex : palette.rawValue)
         }
     }
 
@@ -169,13 +200,20 @@ struct ThemePickerView: View {
 
     private var setButton: some View {
         let isCurrent = themeStore.palette == selectedPalette
-        let c = ThemeStore.previewColors(for: selectedPalette)
+            && (selectedPalette != .custom || themeStore.customAccentHex == (customPickerColor.toHexRGB() ?? themeStore.customAccentHex))
+        let c = ThemeStore.previewColors(
+            for: selectedPalette,
+            customHex: selectedPalette == .custom ? themeStore.customAccentHex : ThemeStore.defaultCustomAccentHex
+        )
 
         return Button {
             Haptics.menuTap()
-            guard isPremium else {
+            guard isPremium || selectedPalette == .colorful else {
                 showPremiumWall = true
                 return
+            }
+            if selectedPalette == .custom, let hex = customPickerColor.toHexRGB() {
+                themeStore.customAccentHex = hex
             }
             withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                 themeStore.set(selectedPalette)
@@ -183,20 +221,20 @@ struct ThemePickerView: View {
             dismiss()
         } label: {
             Group {
-                if isCurrent {
+                if isCurrent && themeStore.palette == selectedPalette {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark")
                             .font(.system(size: 15, weight: .bold))
                         Text("Current background")
                     }
-                } else if !isPremium {
+                } else if !isPremium && selectedPalette != .colorful {
                     HStack(spacing: 8) {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 14, weight: .bold))
-                        Text("Set background")
+                        Text("Choose")
                     }
                 } else {
-                    Text("Set background")
+                    Text("Choose")
                 }
             }
             .duo3DStyle(
@@ -205,11 +243,11 @@ struct ThemePickerView: View {
             )
         }
         .buttonStyle(Duo3DButtonStyle())
-        .disabled(isCurrent)
+        .disabled(isCurrent && themeStore.palette == selectedPalette)
     }
 
     private var availablePalettes: [ThemeStore.Palette] {
-        ThemeStore.Palette.allCases.filter { palette in
+        ThemeStore.Palette.pickerOrder.filter { palette in
             if palette.requiresIOS26 {
                 if #available(iOS 26, *) { return true }
                 return false
@@ -220,6 +258,8 @@ struct ThemePickerView: View {
 }
 
 #Preview {
-    ThemePickerView(isSheet: true)
-        .environmentObject(ThemeStore())
+    NavigationStack {
+        ThemePickerView(isSheet: true)
+            .environmentObject(ThemeStore())
+    }
 }

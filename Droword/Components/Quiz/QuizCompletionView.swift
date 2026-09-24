@@ -283,9 +283,12 @@ struct QuizCompletionView: View {
             action()
         } label: {
             Text("Close")
-                .duo3DStyle(themeStore.secondaryText.opacity(0.55))
+                .font(themeStore.medium(16))
+                .foregroundStyle(themeStore.secondaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
         }
-        .buttonStyle(Duo3DButtonStyle())
+        .buttonStyle(.plain)
     }
 
     private func statBubble(icon: String, value: String, label: LocalizedStringKey, color: Color) -> some View {

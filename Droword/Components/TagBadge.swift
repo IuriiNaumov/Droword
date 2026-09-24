@@ -6,14 +6,19 @@ struct TagBadge: View {
 
     var body: some View {
         Text(text)
-            .font(themeStore.bold(12))
-            .foregroundStyle(themeStore.colorForTag(text))
-            .padding(.vertical, 5)
-            .padding(.horizontal, 12)
+            .font(themeStore.medium(11))
+            .foregroundStyle(themeStore.isGlass ? themeStore.mainText : themeStore.colorForTag(text))
+            .padding(.vertical, 4)
+            .padding(.horizontal, 10)
             .background(
                 Capsule(style: .continuous)
-                    .fill(themeStore.colorForTag(text).opacity(0.2))
+                    .fill(
+                        themeStore.isGlass
+                            ? themeStore.colorForTag(text).opacity(0.28)
+                            : themeStore.colorForTag(text).opacity(0.2)
+                    )
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
     }
 }
 

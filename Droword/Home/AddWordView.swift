@@ -114,7 +114,7 @@ struct AddWordView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(
                                 network.isConnected
-                                    ? themeStore.mainAccentColor
+                                    ? themeStore.mainText
                                     : themeStore.secondaryText.opacity(0.35)
                             )
                     }

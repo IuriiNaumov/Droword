@@ -98,20 +98,35 @@ struct SelectionChip: View {
                 }
                 Text(title)
                     .font(themeStore.medium(titleFontSize))
-                    .foregroundStyle(isSelected ? Color.white : themeStore.mainText)
+                    .foregroundStyle(chipTitleColor)
             }
             .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
             .background(
                 Capsule(style: .continuous)
-                    .fill(isSelected ? color : themeStore.cardBg)
+                    .fill(chipFill)
             )
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, shape: .capsule))
             .scaleEffect(isSelected ? 1.0 : 0.98)
             .opacity(isDisabled ? 0.4 : 1.0)
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
         }
         .buttonStyle(PressableButtonStyle(scale: 0.96))
         .disabled(isDisabled)
+    }
+
+    private var chipTitleColor: Color {
+        if isSelected {
+            return themeStore.isGlass ? themeStore.mainText : Color.white
+        }
+        return themeStore.mainText
+    }
+
+    private var chipFill: Color {
+        if isSelected {
+            return themeStore.isGlass ? color.opacity(0.28) : color
+        }
+        return themeStore.isGlass ? Color.clear : themeStore.cardBg
     }
 }
 
