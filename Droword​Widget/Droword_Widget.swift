@@ -188,7 +188,7 @@ private struct StreakPill: View {
 
     var body: some View {
         HStack(spacing: compact ? 3 : 4) {
-            Image(systemName: "flame.fill")
+            Image(systemName: "flame")
                 .font(.system(size: compact ? 10 : 11, weight: .bold))
             Text("\(count)")
                 .font(.system(size: compact ? 11 : 12, weight: .bold, design: .rounded))
@@ -249,7 +249,7 @@ struct DrowordWidgetEntryView: View {
     private var markIcon: String {
         if entry.totalWords == 0 { return "plus" }
         if entry.lessonDone { return "checkmark" }
-        return "bolt.fill"
+        return "bolt"
     }
 
     private var markTint: Color {
@@ -288,7 +288,7 @@ struct DrowordMediumWidgetView: View {
             VStack(alignment: .leading, spacing: 10) {
                 if entry.currentStreak > 0 {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Image(systemName: "flame.fill")
+                        Image(systemName: "flame")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(isAccented ? Color.primary : WidgetChrome.streak)
                             .widgetAccentable()
@@ -302,7 +302,7 @@ struct DrowordMediumWidgetView: View {
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
-                    WidgetMark(systemName: "bolt.fill", size: 40)
+                    WidgetMark(systemName: "bolt", size: 40)
                     Text("Start a streak")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
@@ -374,7 +374,7 @@ struct DrowordMediumWidgetView: View {
         }()
 
         HStack(spacing: 5) {
-            Image(systemName: entry.lessonDone ? "checkmark" : (entry.totalWords == 0 ? "plus" : "bolt.fill"))
+            Image(systemName: entry.lessonDone ? "checkmark" : (entry.totalWords == 0 ? "plus" : "bolt"))
                 .font(.system(size: 10, weight: .bold))
             Text(label)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -407,7 +407,7 @@ struct DrowordCircularWidgetView: View {
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .widgetAccentable()
             } else {
-                Image(systemName: entry.totalWords > 0 ? "bolt.fill" : "plus")
+                Image(systemName: entry.totalWords > 0 ? "bolt" : "plus")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
                     .widgetAccentable()
             }
@@ -431,7 +431,7 @@ struct DrowordRectangularWidgetView: View {
                     Text("\(entry.dueCount)")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                 } else {
-                    Image(systemName: entry.totalWords > 0 ? "bolt.fill" : "plus")
+                    Image(systemName: entry.totalWords > 0 ? "bolt" : "plus")
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
             }

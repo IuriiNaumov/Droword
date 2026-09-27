@@ -8,10 +8,10 @@ enum AppToastType {
 
     var icon: String {
         switch self {
-        case .success: return "checkmark.circle.fill"
-        case .error: return "xmark.circle.fill"
-        case .info: return "info.circle.fill"
-        case .dark: return "checkmark.circle.fill"
+        case .success: return "checkmark.circle"
+        case .error: return "xmark.circle"
+        case .info: return "info.circle"
+        case .dark: return "checkmark.circle"
         }
     }
 

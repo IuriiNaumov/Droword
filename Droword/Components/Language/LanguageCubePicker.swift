@@ -42,6 +42,7 @@ struct LanguageLevelPicker: View {
 
     var title: LocalizedStringKey = "My level"
     var showTitle: Bool = true
+    var color: Color? = nil
 
     var body: some View {
         let levels = LanguageLevels.levels(for: languageStore.learningLanguage)
@@ -59,8 +60,9 @@ struct LanguageLevelPicker: View {
                 ForEach(levels) { level in
                     SelectionChip(
                         title: LanguageLevels.localizedLabel(forCode: level.code),
-                        color: themeStore.mainAccentColor,
-                        isSelected: level.code == current
+                        color: color ?? themeStore.mainAccentColor,
+                        isSelected: level.code == current,
+                        tintSelection: true
                     ) {
                         languageStore.learningLevel = level.code
                     }
@@ -80,6 +82,7 @@ struct SelectionChip: View {
     var color: Color
     let isSelected: Bool
     var isDisabled: Bool = false
+    var tintSelection: Bool = false
     var verticalPadding: CGFloat = 10
     var horizontalPadding: CGFloat = 20
     var titleFontSize: CGFloat = 15
@@ -102,28 +105,60 @@ struct SelectionChip: View {
             }
             .padding(.vertical, verticalPadding)
             .padding(.horizontal, horizontalPadding)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(chipFill)
-            )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, shape: .capsule))
+            .background { chipBackground }
+            .overlay { chipBorder }
+            .padding(.bottom, duo ? 3 : 0)
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, cornerRadius: duo ? 12 : 20))
             .scaleEffect(isSelected ? 1.0 : 0.98)
             .opacity(isDisabled ? 0.4 : 1.0)
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: isSelected)
         }
-        .buttonStyle(PressableButtonStyle(scale: 0.96))
+        .buttonStyle(Duo3DButtonStyle())
         .disabled(isDisabled)
     }
 
+    private var duo: Bool { themeStore.isDuolingo && !themeStore.isGlass }
+
     private var chipTitleColor: Color {
-        if isSelected {
+        if duo {
+            if isSelected { return .white }
+            return themeStore.mainText
+        }
+        if isSelected, !tintSelection {
             return themeStore.isGlass ? themeStore.mainText : Color.white
         }
         return themeStore.mainText
     }
 
+    @ViewBuilder
+    private var chipBackground: some View {
+        if duo {
+            let face: Color = isSelected ? color : themeStore.controlFace
+            let lip = isSelected ? darkerShade(of: color, by: 0.16) : Color(hex: "#AFAFAF").opacity(0.45)
+            ZStack {
+                RoundedRectangle(cornerRadius: duo ? themeStore.chipRadius : 12, style: .continuous)
+                    .fill(lip)
+                    .offset(y: 3)
+                RoundedRectangle(cornerRadius: duo ? themeStore.chipRadius : 12, style: .continuous)
+                    .fill(face)
+            }
+        } else {
+            Capsule(style: .continuous)
+                .fill(chipFill)
+        }
+    }
+
+    @ViewBuilder
+    private var chipBorder: some View {
+        if duo, !isSelected {
+            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+        }
+    }
+
     private var chipFill: Color {
         if isSelected {
+            if tintSelection { return color.opacity(0.14) }
             return themeStore.isGlass ? color.opacity(0.28) : color
         }
         return themeStore.isGlass ? Color.clear : themeStore.cardBg
@@ -162,15 +197,15 @@ struct LanguagePairHero: View {
             .opacity(onSwap == nil ? 0.45 : 1)
             .accessibilityLabel(Text("Swap languages"))
 
-            pairSide(flag: flag(for: learningName), name: learningName, caption: String(localized: "Learning"))
+            pairSide(flag: flag(for: learningName), name: learningName, caption: String(localized: "I'm learning"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .padding(.horizontal, 20)
     }
 

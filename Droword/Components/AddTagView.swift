@@ -10,7 +10,7 @@ struct AddTagView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("New Tag")
                     .sheetTitle()
 

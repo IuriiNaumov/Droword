@@ -10,7 +10,7 @@ struct PrivacyPolicyView: View {
                 Text("Privacy Policy")
                     .sheetTitle()
 
-                Text("Last updated: April 2026")
+                Text("Last updated: 24 September 2026")
                     .font(themeStore.regular(13))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
@@ -18,66 +18,56 @@ struct PrivacyPolicyView: View {
 
                 Group {
                     policySection(
-                        title: "1. Introduction",
-                        body: "This Privacy Policy describes how Droword (\"the App,\" \"we,\" \"us,\" or \"our\") handles information when you use the application.\n\nBy accessing or using the App, you agree to this Privacy Policy."
+                        title: "1. Who this Policy covers",
+                        body: "This Privacy Policy explains how information is handled when you use the Droword application (the \"App\"). The App is operated by its developer. Questions about this Policy: hello@droword.app.\n\nIf a translation of this Policy differs from the English text, the English text prevails."
                     )
 
                     policySection(
-                        title: "2. Data Storage and Processing",
-                        body: "All data created and used within the App — including words, learning progress, settings, and preferences — is stored locally on your device.\n\nWe do not collect, store, or process personal data on our servers."
+                        title: "2. What stays on your device",
+                        body: "Your dictionary, saved translations, examples, tags, study progress, review schedule, settings, theme, profile image, and notification schedule are stored locally on your device, including in the shared store used by the share extension and the widget.\n\nThe App does not ask you to create an account. We do not keep a copy of your dictionary on our servers."
                     )
 
                     policySection(
-                        title: "3. Use of Third-Party Services",
-                        body: "The App uses limited third-party services strictly for providing core functionality.\n\nAI Translation\nWhen you add or translate a word, the text may be sent to a third-party AI service (Anthropic Claude) to generate translations, explanations, and examples. Only the text you provide is transmitted. No personal data is intentionally collected or included. Requests are processed in real time and are not stored by the App.\n\nText-to-Speech\nTo provide pronunciation features, the App uses the OpenAI Text-to-Speech API. Only the word or phrase is transmitted. No personal data is included in the request."
+                        title: "3. What is sent when you use an online feature",
+                        body: "Online features run only when you invoke them. The minimum content needed for that request is sent over HTTPS to our API, hosted on Cloudflare, and then to a processor:\n\n• Translation, explanations, examples, stories, dialogue, and word suggestions: the text you submit, together with the languages and level you selected, is sent to Anthropic to produce a response.\n• Pronunciation: the word or phrase is sent to OpenAI to generate audio.\n• Photo scan: the image you select is sent to our API and to Anthropic so that words can be read from it. We do not keep the image, or the words read from it, on our servers after the response is returned to the App.\n\nWe do not sell this information and we do not use it to build an advertising profile. We do not control how long Anthropic or OpenAI retain a request under their own terms. Do not submit information you are unwilling to send to those processors, including another person's personal data or confidential material."
                     )
 
                     policySection(
-                        title: "4. Photos and Camera Access",
-                        body: "If you set a profile image, it stays on your device. If you scan a page of words, that photo is sent to our API so we can read the vocabulary. We do not keep the image after the scan."
-                    )
-
-                    policySection(
-                        title: "5. Notifications",
-                        body: "The App may send local notifications to remind you to practice. Notifications are scheduled locally. No external servers are involved. No personal data is used for notification logic."
+                        title: "4. Payments, camera, photos, and notifications",
+                        body: "Purchases are processed by Apple. We do not receive your full payment-card number.\n\nCamera and photo-library access is used only when you scan words or choose a profile image. The profile image remains on your device.\n\nPractice reminders are scheduled locally on your device. They are not sent through our servers."
                     )
                 }
                 .padding(.horizontal)
 
                 Group {
                     policySection(
-                        title: "6. Analytics and Tracking",
-                        body: "We respect your privacy. The App does not use analytics tools, tracking technologies, or advertising SDKs. No usage data is collected or shared."
+                        title: "5. Analytics and tracking",
+                        body: "The App does not include third-party analytics, advertising, or cross-app tracking SDKs. We do not collect an advertising identifier for our own use."
                     )
 
                     policySection(
-                        title: "7. Data Retention and Deletion",
-                        body: "All data remains on your device unless you choose to delete it.\n\nYou may delete your data at any time via Settings → Dictionary → Clear All Words. Uninstalling the App will permanently remove all stored data."
+                        title: "6. Retention and deletion",
+                        body: "On-device data remains until you delete it. You may clear the dictionary in Settings → Dictionary → Clear dictionary. Uninstalling the App removes the local store, subject to any backup Apple keeps.\n\nA request to the API is processed to return a response. We do not maintain an account archive of your dictionary or of scan images, because the App has no user account."
                     )
 
                     policySection(
-                        title: "8. Your Privacy Rights",
-                        body: "If you are located in the European Economic Area (EEA) or other regions with data protection laws, you have certain rights.\n\nSince the App does not collect or store personal data, most traditional data rights (such as access, correction, or deletion requests) do not apply. However, you retain full control over your data because all data is stored locally on your device and you can delete it at any time."
+                        title: "7. Legal bases, if GDPR or UK GDPR applies",
+                        body: "Where the EU or UK General Data Protection Regulation applies, sending the text or image you submit in order to produce a translation, story, dialogue, suggestion, pronunciation, or scan is necessary to perform the feature you requested. Limiting the rate of API requests, in order to protect the service from abuse, is based on our legitimate interest and does not require an account.\n\nYou can avoid a transfer by not using that feature. Because we do not hold a server-side profile of you, you exercise access and erasure by deleting data on your device. You may also write to hello@droword.app. You may lodge a complaint with your data-protection authority. These rights do not depend on this Policy waiving them."
                     )
 
                     policySection(
-                        title: "9. Children's Privacy",
-                        body: "The App is not directed to children under the age of 13 (or equivalent minimum age in your jurisdiction). We do not knowingly collect personal data from children."
+                        title: "8. Children",
+                        body: "The App is not directed to children under 13, or under 16 where a higher age of digital consent applies. We do not knowingly collect personal data from children. If you believe a child has sent personal data through an online feature, contact hello@droword.app and stop using that feature on the child's behalf."
                     )
 
                     policySection(
-                        title: "10. Security",
-                        body: "We take reasonable measures to protect your data. Since all data is stored locally on your device, the security of your data depends on your device's security settings."
+                        title: "9. Security and international transfers",
+                        body: "Local data is protected by the controls of your device. Requests to the API are sent over HTTPS. No method of storage or transmission is completely secure.\n\nOur API and the model providers may process a request outside your country, including in the United States. Where the law requires a transfer tool, the transfer relies on the provider's mechanism, such as standard contractual clauses. If you do not want a word or an image to leave your device, do not use the online features. The dictionary itself remains on the device."
                     )
 
                     policySection(
-                        title: "11. Changes to This Privacy Policy",
-                        body: "We may update this Privacy Policy from time to time. Changes will be reflected by updating the \"Last updated\" date. Continued use of the App after changes constitutes acceptance of the updated policy."
-                    )
-
-                    policySection(
-                        title: "12. Contact",
-                        body: "Questions about this Privacy Policy: hello@droword.app"
+                        title: "10. Changes and contact",
+                        body: "We may update this Policy. The date above will change. If a change materially reduces your rights, the updated Policy will be presented in the App. If you continue to use the App after the effective date, you accept the updated Policy, except where the law requires a different form of consent.\n\nPrivacy questions: hello@droword.app"
                     )
                 }
                 .padding(.horizontal)
@@ -106,7 +96,7 @@ struct PrivacyPolicyView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous).fill(themeStore.cardBg))
+        .background(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous).fill(themeStore.cardBg))
     }
 }
 

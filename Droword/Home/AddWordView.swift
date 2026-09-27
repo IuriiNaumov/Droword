@@ -17,7 +17,6 @@ struct AddWordView: View {
     @State private var showDuplicateAlert = false
     @State private var showErrorToast = false
     @State private var showScanWords = false
-    @State private var showPremiumFromLimit = false
     @ObservedObject private var network = NetworkMonitor.shared
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenOfflineAlert) private var hasSeenOfflineAlert: Bool = false
@@ -52,7 +51,7 @@ struct AddWordView: View {
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("New word")
                         .sheetTitle()
 
@@ -83,7 +82,7 @@ struct AddWordView: View {
                             } else {
                                 Text("Add")
                                     .font(themeStore.bold(17))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(themeStore.isGlass ? themeStore.mainText : .white)
                             }
                         }
                         .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -133,10 +132,6 @@ struct AddWordView: View {
                     .environmentObject(languageStore)
                     .tint(themeStore.mainAccentColor)
                     .transaction { $0.disablesAnimations = true }
-            }
-            .fullScreenCover(isPresented: $showPremiumFromLimit) {
-                PremiumView(asWall: true)
-                    .environmentObject(themeStore)
             }
         }
 
@@ -245,7 +240,7 @@ struct AddWordView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.dividerColor.opacity(0.55))
             )
         }
@@ -300,7 +295,9 @@ struct AddWordView: View {
         let canUseAI = isPremium || DailyLimitsManager.canTranslate
 
         guard canUseAI else {
-            showPremiumFromLimit = true
+            addWordOffline(trimmedWord, showToast: false)
+            showErrorToast = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
             return
         }
 
@@ -337,7 +334,10 @@ struct AddWordView: View {
                     fromLanguage: languageStore.learningLanguage,
                     toLanguage: languageStore.nativeLanguage,
                     examples: examplesArray,
-                    collocations: result.collocations ?? []
+                    collocations: result.collocations ?? [],
+                    synonyms: result.synonyms ?? [],
+                    antonyms: result.antonyms ?? [],
+                    mnemonic: result.mnemonic
                 )
                 store.add(newWord)
                 if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
@@ -360,16 +360,17 @@ struct AddWordView: View {
     }
 
     private func addWordOffline(_ trimmedWord: String, showToast: Bool = false) {
+        let trimmedTranslation = translation.trimmingCharacters(in: .whitespacesAndNewlines)
         let newWord = StoredWord(
             word: trimmedWord,
             type: "",
-            translation: translation.isEmpty ? nil : translation,
+            translation: trimmedTranslation.isEmpty ? nil : trimmedTranslation,
             example: nil,
             comment: comment.isEmpty ? nil : comment,
             tag: selectedTag,
             fromLanguage: languageStore.learningLanguage,
             toLanguage: languageStore.nativeLanguage,
-            needsEnrichment: true
+            needsEnrichment: trimmedTranslation.isEmpty
         )
         store.add(newWord)
         if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }

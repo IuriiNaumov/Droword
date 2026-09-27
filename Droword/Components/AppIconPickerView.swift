@@ -13,8 +13,7 @@ struct AppIconPickerView: View {
         VStack(spacing: 0) {
             Text("App icon")
                 .sheetTitle()
-
-            Spacer(minLength: 12)
+                .padding(.bottom, 20)
 
             ZStack {
                 Circle()
@@ -65,13 +64,13 @@ struct AppIconPickerView: View {
                                         }
 
                                     if selected == style {
-                                        Image(systemName: "checkmark.circle.fill")
+                                        Image(systemName: "checkmark.circle")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundStyle(themeStore.mainAccentColor)
                                             .background(Circle().fill(themeStore.cardBg).padding(1))
                                             .padding(3)
                                     } else if style.requiresPremium && !isPremium {
-                                        Image(systemName: "lock.fill")
+                                        Image(systemName: "lock")
                                             .font(.system(size: 9, weight: .bold))
                                             .foregroundStyle(.white)
                                             .padding(5)
@@ -102,7 +101,7 @@ struct AppIconPickerView: View {
                             .font(.system(size: 14, weight: .bold))
                         Text("Current icon")
                     } else if selected.requiresPremium && !isPremium {
-                        Image(systemName: "lock.fill")
+                        Image(systemName: "lock")
                             .font(.system(size: 13, weight: .bold))
                         Text("PRO")
                     } else {

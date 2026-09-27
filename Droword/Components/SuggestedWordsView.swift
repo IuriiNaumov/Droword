@@ -22,7 +22,7 @@ struct SuggestedWordsView: View {
 
                 if let lastError = suggested.lastError {
                     StatusBannerView(
-                        icon: "exclamationmark.triangle.fill",
+                        icon: "exclamationmark.triangle",
                         iconColor: themeStore.accentRed,
                         title: "Couldn't load suggestions",
                         subtitle: LocalizedStringKey(lastError),
@@ -62,16 +62,29 @@ struct SuggestedWordsView: View {
                                         }
                                     } label: {
                                         HStack(spacing: 6) {
-                                            Image(systemName: "plus.circle.fill")
+                                            Image(systemName: "plus.circle")
                                             Text("Add")
                                         }
                                         .font(themeStore.medium(13))
                                         .foregroundStyle(.white)
                                         .padding(.vertical, 7)
                                         .padding(.horizontal, 14)
-                                        .background(Capsule().fill(accent))
+                                        .background {
+                                            if themeStore.isDuolingo && !themeStore.isGlass {
+                                                ZStack {
+                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                        .fill(darkerShade(of: accent, by: 0.16))
+                                                        .offset(y: 3)
+                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                        .fill(accent)
+                                                }
+                                            } else {
+                                                Capsule().fill(accent)
+                                            }
+                                        }
+                                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 3 : 0)
                                     }
-                                    .buttonStyle(PressableButtonStyle())
+                                    .buttonStyle(Duo3DButtonStyle())
 
                                     Spacer()
 
@@ -86,18 +99,38 @@ struct SuggestedWordsView: View {
                                         }
                                         .font(themeStore.regular(13))
                                         .foregroundStyle(accent)
+                                        .padding(.vertical, themeStore.isDuolingo && !themeStore.isGlass ? 7 : 0)
+                                        .padding(.horizontal, themeStore.isDuolingo && !themeStore.isGlass ? 14 : 0)
+                                        .background {
+                                            if themeStore.isDuolingo && !themeStore.isGlass {
+                                                ZStack {
+                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                        .fill(Color(hex: "#AFAFAF").opacity(0.45))
+                                                        .offset(y: 3)
+                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                        .fill(themeStore.controlFace)
+                                                }
+                                            }
+                                        }
+                                        .overlay {
+                                            if themeStore.isDuolingo && !themeStore.isGlass {
+                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                    .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+                                            }
+                                        }
+                                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 3 : 0)
                                     }
-                                    .buttonStyle(PressableButtonStyle())
+                                    .buttonStyle(Duo3DButtonStyle())
                                 }
                                 .padding(.top, 10)
                             }
                             .padding(20)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(
-                                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                                     .fill(accent.opacity(0.15))
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                             .transition(.scale.combined(with: .opacity))
                         }
                     }

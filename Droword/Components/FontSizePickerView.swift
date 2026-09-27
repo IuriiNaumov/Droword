@@ -11,7 +11,7 @@ struct FontSizePickerView: View {
     @State private var sliderIndex: Double = 1
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Text("Font Size")
                 .sheetTitle()
 
@@ -91,10 +91,10 @@ struct FontSizePickerView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             }
             .padding(.horizontal, 20)
 
@@ -146,10 +146,10 @@ struct FontSizePickerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var currentStepIndex: Int {

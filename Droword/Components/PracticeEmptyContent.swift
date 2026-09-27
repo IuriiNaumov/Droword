@@ -59,7 +59,7 @@ struct PracticeEmptyContent: View {
                     onCTA()
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
+                        Image(systemName: "plus.circle")
                         Text(ctaTitle)
                     }
                     .duo3DStyle(themeStore.mainAccentColor)
@@ -86,7 +86,7 @@ struct PracticeEmptyContent: View {
 
 #Preview {
     PracticeEmptyContent(
-        icon: "bolt.fill",
+        icon: "bolt",
         title: "Nothing due",
         subtitle: "Add a few words and come back.",
         tip: "Four words unlock practice"

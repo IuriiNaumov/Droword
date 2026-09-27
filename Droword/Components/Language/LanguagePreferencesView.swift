@@ -12,8 +12,8 @@ struct LanguagePreferencesView: View {
     var body: some View {
         ZStack(alignment: .top) {
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 28) {
-                    Text("Language Preferences")
+                VStack(spacing: 20) {
+                    Text("Language Pair")
                         .sheetTitle()
 
                     LanguagePairHero(

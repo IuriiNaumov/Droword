@@ -6,33 +6,6 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>AppIconNight</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconNight</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconGrain</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconGrain</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconNeon</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconNeon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
 			<key>AppIconAurora</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
@@ -42,47 +15,11 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>AppIconSun</key>
+			<key>AppIconChinese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>AppIconSun</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconOcean</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconOcean</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconForest</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconForest</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconGlass</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconGlass</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconPride</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconPride</string>
+					<string>AppIconChinese</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -96,11 +33,11 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>AppIconSpanish</key>
+			<key>AppIconForest</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>AppIconSpanish</string>
+					<string>AppIconForest</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -123,20 +60,29 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>AppIconGlass</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconGlass</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconGrain</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconGrain</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 			<key>AppIconJapanese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
 					<string>AppIconJapanese</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconChinese</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconChinese</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -150,11 +96,65 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>AppIconNeon</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconNeon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconNight</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconNight</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconOcean</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconOcean</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 			<key>AppIconPortuguese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
 					<string>AppIconPortuguese</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconPride</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconPride</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconSpanish</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconSpanish</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconSun</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconSun</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -165,33 +165,6 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>AppIconNight</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconNight</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconGrain</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconGrain</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconNeon</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconNeon</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
 			<key>AppIconAurora</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
@@ -201,47 +174,11 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>AppIconSun</key>
+			<key>AppIconChinese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>AppIconSun</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconOcean</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconOcean</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconForest</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconForest</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconGlass</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconGlass</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconPride</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconPride</string>
+					<string>AppIconChinese</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -255,11 +192,11 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>AppIconSpanish</key>
+			<key>AppIconForest</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>AppIconSpanish</string>
+					<string>AppIconForest</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -282,20 +219,29 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>AppIconGlass</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconGlass</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconGrain</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconGrain</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 			<key>AppIconJapanese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
 					<string>AppIconJapanese</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>AppIconChinese</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIconChinese</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
@@ -309,11 +255,65 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>AppIconNeon</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconNeon</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconNight</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconNight</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconOcean</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconOcean</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 			<key>AppIconPortuguese</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
 					<string>AppIconPortuguese</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconPride</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconPride</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconSpanish</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconSpanish</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>AppIconSun</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIconSun</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>

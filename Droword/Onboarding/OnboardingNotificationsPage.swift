@@ -89,7 +89,7 @@ struct NotificationPreferencesForm: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: onboardingStyle ? 16 : 24) {
+        VStack(alignment: .leading, spacing: onboardingStyle ? 16 : 20) {
             if showsTitle {
                 if onboardingStyle {
                     Text("Stay in the loop")
@@ -106,54 +106,52 @@ struct NotificationPreferencesForm: View {
 
             VStack(spacing: 0) {
                 toggleRow(
-                    icon: "bell.fill",
+                    icon: "bell",
                     title: "Enable notifications",
                     isOn: $globalEnabled
                 )
             }
-            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
             if globalEnabled {
                 sectionHeader("Daily reminder")
 
                 VStack(spacing: 0) {
                     toggleRow(
-                        icon: "sun.max.fill",
+                        icon: "sun.max",
                         title: "Daily motivation",
                         isOn: $dailyReminderEnabled
                     )
 
                     if dailyReminderEnabled {
-                        Divider().padding(.leading, 68)
                         timePickerRow(
-                            icon: "clock.fill",
+                            icon: "clock",
                             title: "Reminder time",
                             date: dailyReminderDate
                         )
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: dailyReminderEnabled)
 
                 sectionHeader("Evening chat")
 
                 VStack(spacing: 0) {
                     toggleRow(
-                        icon: "moon.stars.fill",
+                        icon: "moon.stars",
                         title: "One word at night",
                         isOn: $eveningChatEnabled
                     )
 
                     if eveningChatEnabled {
-                        Divider().padding(.leading, 68)
                         timePickerRow(
-                            icon: "clock.fill",
+                            icon: "clock",
                             title: "Chat time",
                             date: eveningChatDate
                         )
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: eveningChatEnabled)
 
                 Text("Tap it. Three lines with that word. Then stop.")
@@ -169,48 +167,42 @@ struct NotificationPreferencesForm: View {
 
                 VStack(spacing: 0) {
                     toggleRow(
-                        icon: "character.book.closed.fill",
+                        icon: "character.book.closed",
                         title: "Word notifications",
                         isOn: $vocabEnabled
                     )
 
                     if vocabEnabled {
-                        Divider().padding(.leading, 68)
                         toggleRow(
                             icon: "textformat.abc",
                             title: "Show transcription",
                             isOn: $vocabShowTranscription
                         )
-                        Divider().padding(.leading, 68)
                         toggleRow(
-                            icon: "text.bubble.fill",
+                            icon: "text.bubble",
                             title: "Show translation",
                             isOn: $vocabShowTranslation
                         )
-                        Divider().padding(.leading, 68)
                         toggleRow(
-                            icon: "checkmark.seal.fill",
+                            icon: "checkmark.seal",
                             title: "Include mastered",
                             isOn: $vocabIncludeMastered
                         )
-                        Divider().padding(.leading, 68)
                         frequencyRow(value: $vocabFrequency)
-                        Divider().padding(.leading, 68)
                         timePickerRow(
-                            icon: "sunrise.fill",
+                            icon: "sunrise",
                             title: "From",
                             date: vocabStartDate
                         )
-                        Divider().padding(.leading, 68)
                         timePickerRow(
-                            icon: "sunset.fill",
+                            icon: "sunset",
                             title: "Until",
                             date: vocabEndDate
                         )
 
                         if endBeforeStart {
                             HStack(spacing: 6) {
-                                Image(systemName: "exclamationmark.triangle.fill")
+                                Image(systemName: "exclamationmark.triangle")
                                     .font(.system(size: 12))
                                 Text("End time must be after start time")
                                     .font(themeStore.regular(12))
@@ -229,19 +221,19 @@ struct NotificationPreferencesForm: View {
                         }
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: vocabEnabled)
 
                 sectionHeader("Other")
 
                 VStack(spacing: 0) {
                     toggleRow(
-                        icon: "flame.fill",
+                        icon: "flame",
                         title: "Streak milestones",
                         isOn: $streakMilestones
                     )
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                 Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
                     .font(themeStore.regular(12))
@@ -374,7 +366,7 @@ struct NotificationPreferencesForm: View {
         }
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
         .animation(.easeInOut(duration: 0.2), value: vocabShowTranscription)

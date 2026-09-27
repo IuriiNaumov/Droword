@@ -8,6 +8,8 @@ struct EmptyListView: View {
     var title: String = String(localized: "Your word garden is waiting")
     var subtitle: String = String(localized: "Add a couple of words — and we'll begin the journey.")
     var tip: String? = nil
+    var ctaTitle: LocalizedStringKey? = nil
+    var onCTA: (() -> Void)? = nil
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0
@@ -56,6 +58,22 @@ struct EmptyListView: View {
                     )
                     .padding(.horizontal, 28)
                     .opacity(subtitleOpacity)
+            }
+
+            if let ctaTitle, let onCTA {
+                Button {
+                    Haptics.softTap()
+                    onCTA()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle")
+                        Text(ctaTitle)
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+                .padding(.horizontal, 40)
+                .opacity(subtitleOpacity)
             }
 
             Spacer(minLength: 0)

@@ -49,7 +49,7 @@ class ShareViewController: UIViewController {
                 }
 
                 if let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty {
-                    self?.openApp(with: Self.firstUsableToken(from: trimmed))
+                    self?.openApp(withSharedText: trimmed)
                 } else {
                     self?.done()
                 }
@@ -61,15 +61,23 @@ class ShareViewController: UIViewController {
         provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] data, _ in
             DispatchQueue.main.async {
                 let url = (data as? URL) ?? (data as? NSURL) as URL?
-                if let host = url?.host, !host.isEmpty {
-                    self?.openApp(with: host)
-                } else if let absolute = url?.absoluteString, !absolute.isEmpty {
-                    self?.openApp(with: absolute)
+                if let absolute = url?.absoluteString, !absolute.isEmpty {
+                    self?.openApp(withSharedText: absolute)
                 } else {
                     self?.done()
                 }
             }
         }
+    }
+
+    private static func shouldExtractPassage(_ text: String) -> Bool {
+        if text.count > 80 { return true }
+        let lines = text.components(separatedBy: .newlines).filter {
+            !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        if lines.count >= 2 { return true }
+        let words = text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+        return words.count >= 6
     }
 
     private static func firstUsableToken(from text: String) -> String {
@@ -88,16 +96,29 @@ class ShareViewController: UIViewController {
         return token
     }
 
-    private func openApp(with word: String) {
-        guard !word.isEmpty,
-              let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "droword://add?word=\(encoded)") else {
-            done()
-            return
+    private func openApp(withSharedText text: String) {
+        let defaults = UserDefaults(suiteName: "group.com.droword.shared")
+        let extractPassage = Self.shouldExtractPassage(text)
+        let deepLink: URL?
+
+        if extractPassage {
+            defaults?.set(text, forKey: "pendingSharedText")
+            defaults?.removeObject(forKey: "pendingSharedWord")
+            deepLink = URL(string: "droword://extract")
+        } else {
+            let word = Self.firstUsableToken(from: text)
+            defaults?.set(word, forKey: "pendingSharedWord")
+            defaults?.removeObject(forKey: "pendingSharedText")
+            guard let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+                done()
+                return
+            }
+            deepLink = URL(string: "droword://add?word=\(encoded)")
         }
 
-        if let defaults = UserDefaults(suiteName: "group.com.droword.shared") {
-            defaults.set(word, forKey: "pendingSharedWord")
+        guard let url = deepLink else {
+            done()
+            return
         }
 
         var responder: UIResponder? = self as UIResponder

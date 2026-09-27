@@ -63,7 +63,7 @@ struct QuizSentenceBuildingExercise: View {
     private var builtArea: some View {
         let areaFill: Color = {
             if !hasAnswered { return themeStore.isGlass ? Color.clear : themeStore.cardBg }
-            return isCorrect ? themeStore.accentGreen.opacity(0.12) : themeStore.accentRed.opacity(0.12)
+            return isCorrect ? themeStore.successStrong.opacity(0.12) : themeStore.errorStrong.opacity(0.12)
         }()
 
         return VStack(spacing: 8) {
@@ -86,20 +86,36 @@ struct QuizSentenceBuildingExercise: View {
                         } label: {
                             Text(chip.text)
                                 .font(themeStore.medium(15))
-                                .foregroundStyle(themeStore.mainText)
+                                .foregroundStyle(
+                                    themeStore.isDuolingo && !themeStore.isGlass
+                                        ? Color.white
+                                        : themeStore.mainText
+                                )
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(
-                                            themeStore.isGlass
-                                                ? themeStore.mainAccentColor.opacity(0.22)
-                                                : themeStore.mainAccentColor.opacity(0.12)
-                                        )
-                                )
-                                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 10))
+                                .background {
+                                    if themeStore.isDuolingo && !themeStore.isGlass {
+                                        let face = themeStore.mainAccentColor
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                                .fill(darkerShade(of: face, by: 0.16))
+                                                .offset(y: 2)
+                                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                                .fill(face)
+                                        }
+                                    } else {
+                                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                            .fill(
+                                                themeStore.isGlass
+                                                    ? themeStore.mainAccentColor.opacity(0.22)
+                                                    : themeStore.mainAccentColor.opacity(0.12)
+                                            )
+                                    }
+                                }
+                                .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
+                                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(Duo3DButtonStyle())
                         .disabled(hasAnswered)
                     }
                 }
@@ -107,17 +123,17 @@ struct QuizSentenceBuildingExercise: View {
             .frame(maxWidth: .infinity, minHeight: 50, alignment: .leading)
             .padding(12)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(areaFill)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
 
             if hasAnswered && !isCorrect {
                 VStack(spacing: 8) {
                     QuizFeedbackBadge(
-                        icon: "xmark.circle.fill",
+                        icon: "xmark.circle",
                         text: DuoChaosCopy.wrongReveal(""),
-                        color: themeStore.accentRed
+                        color: themeStore.errorStrong
                     )
                     Text(correctSentenceWords.joined(separator: " "))
                         .font(themeStore.medium(15))
@@ -128,9 +144,9 @@ struct QuizSentenceBuildingExercise: View {
 
             if hasAnswered && isCorrect {
                 QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     text: DuoChaosCopy.correct(),
-                    color: themeStore.accentGreen
+                    color: themeStore.successStrong
                 )
             }
         }
@@ -154,13 +170,30 @@ struct QuizSentenceBuildingExercise: View {
                         .foregroundStyle(themeStore.mainText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                        )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 10))
+                        .background {
+                            if themeStore.isDuolingo && !themeStore.isGlass {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                        .fill(Color(hex: "#AFAFAF").opacity(0.45))
+                                        .offset(y: 2)
+                                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                        .fill(themeStore.controlFace)
+                                }
+                            } else {
+                                RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
+                            }
+                        }
+                        .overlay {
+                            if themeStore.isDuolingo && !themeStore.isGlass {
+                                RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                    .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+                            }
+                        }
+                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
+                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
                 .disabled(hasAnswered)
             }
         }

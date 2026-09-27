@@ -18,8 +18,8 @@ enum OnboardingModalPreview: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .firstWords: return "textformat"
-        case .homeTour: return "house.fill"
-        case .suggestedWords: return "lightbulb.fill"
+        case .homeTour: return "house"
+        case .suggestedWords: return "lightbulb"
         }
     }
 }
@@ -66,7 +66,7 @@ struct FeatureFlagsView: View {
                         .padding(.horizontal, 18)
                         .background(themeStore.cardBg)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                     VStack(spacing: 0) {
                         Button {
@@ -96,7 +96,7 @@ struct FeatureFlagsView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                     Text("Onboarding modals")
                         .font(themeStore.bold(18))
@@ -109,9 +109,6 @@ struct FeatureFlagsView: View {
 
                     VStack(spacing: 0) {
                         ForEach(Array(OnboardingModalPreview.allCases.enumerated()), id: \.element.id) { index, item in
-                            if index > 0 {
-                                Divider().padding(.leading, 56)
-                            }
                             Button {
                                 Haptics.menuTap()
                                 onboardingPreview = item
@@ -132,7 +129,7 @@ struct FeatureFlagsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                     Text("Modals")
                         .font(themeStore.bold(18))
@@ -145,9 +142,6 @@ struct FeatureFlagsView: View {
 
                     VStack(spacing: 0) {
                         ForEach(Array(CustomAlertPreviewCase.allCases.enumerated()), id: \.element.id) { index, item in
-                            if index > 0 {
-                                Divider().padding(.leading, 56)
-                            }
                             Button {
                                 Haptics.menuTap()
                                 previewCase = item
@@ -168,7 +162,7 @@ struct FeatureFlagsView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 }
                 .padding(.bottom, 20)
                 .padding(.horizontal, 20)

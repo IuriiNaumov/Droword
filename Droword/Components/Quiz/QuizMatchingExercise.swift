@@ -39,7 +39,7 @@ struct QuizMatchingExercise: View {
                     ForEach(0..<maxAttempts, id: \.self) { i in
                         Image(systemName: i < remaining ? "heart.fill" : "heart")
                             .font(.system(size: 14))
-                            .foregroundStyle(i < remaining ? themeStore.accentRed : themeStore.secondaryText.opacity(0.3))
+                            .foregroundStyle(i < remaining ? themeStore.errorStrong : themeStore.secondaryText.opacity(0.3))
                     }
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: wrongAttempts)
@@ -64,16 +64,16 @@ struct QuizMatchingExercise: View {
             if hasAnswered {
                 if isCorrect {
                     QuizFeedbackBadge(
-                        icon: "checkmark.circle.fill",
+                        icon: "checkmark.circle",
                         text: DuoChaosCopy.correct(),
-                        color: themeStore.accentGreen
+                        color: themeStore.successStrong
                     )
                     .padding(.top, 16)
                 } else {
                     QuizFeedbackBadge(
-                        icon: "xmark.circle.fill",
+                        icon: "xmark.circle",
                         text: String(localized: "No lives left"),
-                        color: themeStore.accentRed
+                        color: themeStore.errorStrong
                     )
                     .padding(.top, 16)
                 }
@@ -94,16 +94,18 @@ struct QuizMatchingExercise: View {
 
         var bgColor: Color {
             if isMatched {
-                return themeStore.isGlass ? themeStore.accentGreen.opacity(0.28) : themeStore.accentGreen.opacity(0.2)
+                return themeStore.isGlass ? themeStore.successStrong.opacity(0.28) : themeStore.successStrong.opacity(0.2)
             }
             if isWrong {
-                return themeStore.isGlass ? themeStore.accentRed.opacity(0.28) : themeStore.accentRed.opacity(0.2)
+                return themeStore.isGlass ? themeStore.errorStrong.opacity(0.28) : themeStore.errorStrong.opacity(0.2)
             }
             if isSelected {
                 return themeStore.isGlass ? themeStore.mainAccentColor.opacity(0.22) : themeStore.mainAccentColor.opacity(0.15)
             }
-            return themeStore.isGlass ? Color.clear : themeStore.cardBg
+            return themeStore.isGlass ? Color.clear : (themeStore.isDuolingo ? themeStore.controlFace : themeStore.cardBg)
         }
+
+        let duo = themeStore.isDuolingo && !themeStore.isGlass
 
         return Button {
             handleTap(pairID: pair.id, isWord: isWord)
@@ -116,13 +118,30 @@ struct QuizMatchingExercise: View {
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(bgColor)
-                )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 12))
+                .background {
+                    if duo {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                .fill(Color(hex: "#AFAFAF").opacity(0.45))
+                                .offset(y: 3)
+                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                .fill(bgColor)
+                        }
+                    } else {
+                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                            .fill(bgColor)
+                    }
+                }
+                .overlay {
+                    if duo, !isMatched, !isSelected, !isWrong {
+                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                            .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+                    }
+                }
+                .padding(.bottom, duo ? 3 : 0)
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
         .disabled(isMatched)
         .opacity(isMatched ? 0.5 : 1)
         .animation(.easeInOut(duration: 0.2), value: isMatched)

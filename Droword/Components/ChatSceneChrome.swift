@@ -52,7 +52,7 @@ struct ChatTypingRow: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(themeStore.cardBg)
                 )
             Spacer(minLength: 48)
@@ -79,7 +79,7 @@ struct ChatComposerBar: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(themeStore.dividerColor.opacity(0.55))
                 )
                 .onSubmit(onSend)

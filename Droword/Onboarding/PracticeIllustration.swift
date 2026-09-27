@@ -8,7 +8,7 @@ struct PracticeIllustration: View {
 
     var body: some View {
         ZStack {
-            HaloIcon(symbol: "bolt.fill", color: accent, size: size * 0.88)
+            HaloIcon(symbol: "bolt", color: accent, size: size * 0.88)
                 .offset(x: px * 0.08, y: py * 0.06)
 
             Image(systemName: "brain.head.profile")

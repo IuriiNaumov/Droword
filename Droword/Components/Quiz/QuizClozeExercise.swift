@@ -146,7 +146,7 @@ struct QuizClozeExercise: View {
         Group {
             if !hasAnswered && hintShown {
                 QuizFeedbackBadge(
-                    icon: "lightbulb.fill",
+                    icon: "lightbulb",
                     text: String(localized: "Hint: \(hintText)"),
                     color: themeStore.accentGold
                 )
@@ -154,7 +154,7 @@ struct QuizClozeExercise: View {
 
             if hasAnswered && isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     text: DuoChaosCopy.almost(),
                     color: themeStore.accentGold
                 )
@@ -162,17 +162,17 @@ struct QuizClozeExercise: View {
 
             if hasAnswered && !isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "xmark.circle.fill",
+                    icon: "xmark.circle",
                     text: DuoChaosCopy.wrongReveal(item.word),
-                    color: themeStore.accentRed
+                    color: themeStore.errorStrong
                 )
             }
 
             if hasAnswered && isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     text: DuoChaosCopy.correct(),
-                    color: themeStore.accentGreen
+                    color: themeStore.successStrong
                 )
             }
         }

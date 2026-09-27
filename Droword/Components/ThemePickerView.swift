@@ -15,6 +15,7 @@ struct ThemePickerView: View {
         VStack(spacing: 0) {
             Text("App background")
                 .sheetTitle()
+                .padding(.bottom, 20)
 
             TabView(selection: $selectedPalette) {
                 ForEach(availablePalettes) { palette in
@@ -85,10 +86,10 @@ struct ThemePickerView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .onChange(of: customPickerColor) { _, newColor in
             if let hex = newColor.toHexRGB() {
                 themeStore.customAccentHex = hex
@@ -109,7 +110,7 @@ struct ThemePickerView: View {
                         .fill(c.mainAccentColor.opacity(0.22))
                         .frame(width: 44, height: 44)
                         .overlay(
-                            Image(systemName: "person.fill")
+                            Image(systemName: "person")
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundStyle(c.mainAccentColor)
                         )
@@ -161,8 +162,9 @@ struct ThemePickerView: View {
     }
 
     private func glassMiniCard(_ c: ThemeStore.PreviewColors) -> some View {
-        RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .fill(c.cardBg.opacity(c.isGlass ? 0.35 : 0.72))
+        let radius: CGFloat = c.isDuolingo ? 16 : DesignRadius.large
+        return RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(c.cardBg.opacity(c.isGlass ? 0.35 : (c.isDuolingo ? 1 : 0.72)))
             .frame(height: 64)
             .overlay(alignment: .leading) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -174,12 +176,14 @@ struct ThemePickerView: View {
     }
 
     private func glassPlate(_ c: ThemeStore.PreviewColors) -> some View {
-        RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
-            .fill(c.cardBg.opacity(c.isGlass ? 0.3 : 0.55))
+        let radius: CGFloat = c.isDuolingo ? 16 : DesignRadius.large
+        return RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(c.cardBg.opacity(c.isGlass ? 0.3 : (c.isDuolingo ? 1 : 0.55)))
     }
 
     private func wordPreviewCard(_ c: ThemeStore.PreviewColors, muted: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let radius: CGFloat = c.isDuolingo ? 16 : 22
+        return VStack(alignment: .leading, spacing: 8) {
             Capsule()
                 .fill(c.mainAccentColor.opacity(muted ? 0.25 : 0.45))
                 .frame(width: muted ? 48 : 56, height: 7)
@@ -193,7 +197,7 @@ struct ThemePickerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
                 .fill(c.cardBg.opacity(muted ? 0.85 : 1))
         )
     }
@@ -205,6 +209,10 @@ struct ThemePickerView: View {
             for: selectedPalette,
             customHex: selectedPalette == .custom ? themeStore.customAccentHex : ThemeStore.defaultCustomAccentHex
         )
+        let useDuoChrome = selectedPalette == .duolingo || themeStore.isDuolingo
+        let accent = isCurrent
+            ? (useDuoChrome ? Color(hex: "#E5E5E5") : themeStore.secondaryText.opacity(0.55))
+            : c.mainAccentColor
 
         return Button {
             Haptics.menuTap()
@@ -220,27 +228,20 @@ struct ThemePickerView: View {
             }
             dismiss()
         } label: {
-            Group {
+            HStack(spacing: 8) {
                 if isCurrent && themeStore.palette == selectedPalette {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 15, weight: .bold))
-                        Text("Current background")
-                    }
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 15, weight: .bold))
+                    Text("Current background")
                 } else if !isPremium && selectedPalette != .colorful {
-                    HStack(spacing: 8) {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Choose")
-                    }
+                    Image(systemName: "lock")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Choose")
                 } else {
                     Text("Choose")
                 }
             }
-            .duo3DStyle(
-                isCurrent ? themeStore.secondaryText.opacity(0.55) : c.mainAccentColor,
-                isDisabled: isCurrent
-            )
+            .duo3DStyle(accent, isDisabled: isCurrent, force3D: useDuoChrome)
         }
         .buttonStyle(Duo3DButtonStyle())
         .disabled(isCurrent && themeStore.palette == selectedPalette)

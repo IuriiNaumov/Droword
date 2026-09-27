@@ -10,7 +10,7 @@ struct SeasonalEffectsSettingsView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Seasonal effects")
                     .sheetTitle()
 
@@ -32,8 +32,6 @@ struct SeasonalEffectsSettingsView: View {
                     }
 
                     if seasonalEffectsEnabled && isPremium {
-                        Divider().padding(.leading, 68)
-
                         toggleRow(
                             icon: "wind",
                             color: themeStore.iconBlue,
@@ -42,7 +40,7 @@ struct SeasonalEffectsSettingsView: View {
                         )
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: seasonalEffectsEnabled)
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -64,15 +62,15 @@ struct SeasonalEffectsSettingsView: View {
 
                 if seasonalEffectsEnabled {
                     ZStack {
-                        RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                        RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                             .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                             .frame(height: 180)
                         SeasonalOverlayView(animated: seasonalAnimationEnabled)
                             .frame(height: 180)
-                            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                             .allowsHitTesting(false)
                     }
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
                     .transition(.opacity)
                 }
             }

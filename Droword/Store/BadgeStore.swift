@@ -98,7 +98,6 @@ final class BadgeStore: ObservableObject {
         seedCelebratedIfNeeded(totalWords: totalWords, currentStreak: currentStreak)
 
         for badge in Self.allBadges {
-            guard badge.category == .quizMastery || badge.category == .suggestedWords else { continue }
             guard isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) else { continue }
             guard !celebratedIDs.contains(badge.id) else { continue }
             celebratedIDs.insert(badge.id)
@@ -106,6 +105,15 @@ final class BadgeStore: ObservableObject {
             pendingCelebration = badge
             return
         }
+    }
+
+    func markCelebrated(ids: [String]) {
+        var changed = false
+        for id in ids where !celebratedIDs.contains(id) {
+            celebratedIDs.insert(id)
+            changed = true
+        }
+        if changed { persistCelebrated() }
     }
 
     func dismissPendingCelebration() {

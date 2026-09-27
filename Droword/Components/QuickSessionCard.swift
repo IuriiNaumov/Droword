@@ -61,7 +61,7 @@ struct QuickSessionCard: View {
                 }
 
                 HStack(spacing: 8) {
-                    Image(systemName: "play.fill")
+                    Image(systemName: "play")
                         .font(.system(size: 14, weight: .bold))
                     Text(DuoChaosCopy.quickSessionCTA())
                         .font(themeStore.bold(16))
@@ -76,7 +76,7 @@ struct QuickSessionCard: View {
             }
             .padding(20)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(heroBg)
             )
         }

@@ -15,6 +15,7 @@ struct TagsView: View {
     @State private var scrollPosition: String?
 
     private let builtInNames: Set<String> = BuiltInTag.allStoredNames
+    private var duo: Bool { themeStore.isDuolingo && !themeStore.isGlass }
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
@@ -108,15 +109,49 @@ struct TagsView: View {
             }
             .padding(.vertical, compact ? 8 : 10)
             .padding(.horizontal, compact ? 24 : 28)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(tagFill(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed))
-            )
+            .background { tagBackground(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed) }
+            .overlay { tagBorder(isSelected: isSelected) }
+            .padding(.bottom, duo ? 3 : 0)
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
             .opacity(dimmed ? 0.45 : 1.0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
         .disabled(isDeleteMode && !tag.isCustom)
+    }
+
+    @ViewBuilder
+    private func tagBackground(isSelected: Bool, baseColor: Color, dimmed: Bool) -> some View {
+        let radius = themeStore.chipRadius
+        if duo {
+            let face: Color = {
+                if dimmed { return baseColor.opacity(0.12) }
+                if isSelected {
+                    return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
+                }
+                return themeStore.controlFace
+            }()
+            let lip = isSelected && !dimmed
+                ? darkerShade(of: face, by: 0.16)
+                : Color(hex: "#AFAFAF").opacity(0.45)
+            ZStack {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(lip)
+                    .offset(y: 3)
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(face)
+            }
+        } else {
+            Capsule(style: .continuous)
+                .fill(tagFill(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed))
+        }
+    }
+
+    @ViewBuilder
+    private func tagBorder(isSelected: Bool) -> some View {
+        if duo, !isSelected {
+            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+        }
     }
 
     @ViewBuilder
@@ -137,14 +172,7 @@ struct TagsView: View {
                     }
                 }
             } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Capsule().fill(themeStore.isGlass ? Color.clear : themeStore.secondaryText.opacity(0.12))
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                managementIcon("arrow.up.arrow.down", filled: false)
             }
             .opacity(isDeleteMode ? 0 : 1)
         }
@@ -154,37 +182,52 @@ struct TagsView: View {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() }
                 Haptics.menuTap()
             }) {
-                Image(systemName: isDeleteMode ? "checkmark" : "pencil")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(isDeleteMode && !themeStore.isGlass ? .white : themeStore.secondaryText)
-                    .frame(width: 34, height: 34)
-                    .background(
-                        Capsule().fill(
-                            themeStore.isGlass
-                                ? (isDeleteMode ? themeStore.mainAccentColor.opacity(0.28) : Color.clear)
-                                : (isDeleteMode ? themeStore.mainAccentColor : themeStore.secondaryText.opacity(0.12))
-                        )
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                managementIcon(
+                    isDeleteMode ? "checkmark" : "pencil",
+                    filled: isDeleteMode,
+                    fillColor: themeStore.mainAccentColor
+                )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(Duo3DButtonStyle())
         }
 
         Button(action: {
             Haptics.menuTap()
             onAddTag?()
         }) {
-            Image(systemName: "plus")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(themeStore.secondaryText)
-                .frame(width: 34, height: 34)
-                .background(
-                    Capsule().fill(themeStore.isGlass ? Color.clear : themeStore.secondaryText.opacity(0.12))
-                )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+            managementIcon("plus", filled: false)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
         .opacity(isDeleteMode ? 0 : 1)
+    }
+
+    private func managementIcon(_ name: String, filled: Bool, fillColor: Color? = nil) -> some View {
+        let face = filled ? (fillColor ?? themeStore.mainAccentColor) : (duo ? themeStore.controlFace : themeStore.secondaryText.opacity(0.12))
+        return Image(systemName: name)
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(filled && !themeStore.isGlass ? Color.white : themeStore.secondaryText)
+            .frame(width: 34, height: 34)
+            .background {
+                if duo {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                            .fill(filled ? darkerShade(of: face, by: 0.16) : Color(hex: "#AFAFAF").opacity(0.45))
+                            .offset(y: 2)
+                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                            .fill(face)
+                    }
+                } else {
+                    Capsule().fill(themeStore.isGlass && !filled ? Color.clear : face)
+                }
+            }
+            .overlay {
+                if duo, !filled {
+                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                        .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+                }
+            }
+            .padding(.bottom, duo ? 2 : 0)
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
     }
 
     private func tagFill(isSelected: Bool, baseColor: Color, dimmed: Bool) -> Color {
@@ -203,6 +246,10 @@ struct TagsView: View {
         if dimmed { return themeStore.secondaryText }
         if themeStore.isGlass {
             return isSelected ? themeStore.mainText : baseColor
+        }
+        if duo {
+            if isSelected { return .white }
+            return themeStore.mainText
         }
         if isSelected { return .white }
         if themeStore.isMonochrome { return themeStore.mainText }

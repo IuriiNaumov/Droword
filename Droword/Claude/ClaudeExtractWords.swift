@@ -53,6 +53,28 @@ func extractWordsFromImage(
         "nativeLanguage": languageStore.nativeLanguage
     ]
 
+    return try await performExtractWords(body: body)
+}
+
+@MainActor
+func extractWordsFromText(
+    text: String,
+    languageStore: LanguageStore
+) async throws -> [ExtractedWord] {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return [] }
+
+    let body: [String: Any] = [
+        "text": String(trimmed.prefix(12000)),
+        "learningLanguage": languageStore.learningLanguage,
+        "nativeLanguage": languageStore.nativeLanguage
+    ]
+
+    return try await performExtractWords(body: body)
+}
+
+@MainActor
+private func performExtractWords(body: [String: Any]) async throws -> [ExtractedWord] {
     var request = try APIClient.makeRequest(endpoint: "extract-words", body: body)
     request.timeoutInterval = 60
     let (data, response) = try await APIClient.perform(request)

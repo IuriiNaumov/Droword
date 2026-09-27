@@ -23,7 +23,7 @@ struct AvatarPickerView: View {
 
                 VStack(spacing: 12) {
                     sourceButton(
-                        icon: "camera.fill",
+                        icon: "camera",
                         title: "Take a photo",
                         color: Color.accentBlue
                     ) {
@@ -40,7 +40,7 @@ struct AvatarPickerView: View {
 
                     if currentImage != nil {
                         sourceButton(
-                            icon: "trash.fill",
+                            icon: "trash",
                             title: "Remove photo",
                             color: Color.accentRed
                         ) {
@@ -115,10 +115,10 @@ struct AvatarPickerView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? color.opacity(0.18) : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }
         .buttonStyle(PressableButtonStyle(scale: 0.97))
     }

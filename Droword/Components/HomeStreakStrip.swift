@@ -44,10 +44,10 @@ struct HomeStreakStrip: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .onTapGesture { onOpenCalendar() }
         .onAppear {
             activity.ensureMigrated(from: store.words)

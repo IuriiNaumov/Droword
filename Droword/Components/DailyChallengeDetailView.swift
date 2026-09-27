@@ -67,11 +67,11 @@ struct DailyChallengeDetailView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
-        .cardDepth(cornerRadius: 20)
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .cardDepth(cornerRadius: themeStore.cardRadius)
     }
 
     private var overallProgress: Double {
@@ -128,10 +128,10 @@ struct DailyChallengeDetailView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 }
 

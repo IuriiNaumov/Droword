@@ -34,7 +34,7 @@ struct SuggestedWordSkeletonCard: View {
 
                 Spacer()
 
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius)
                     .fill(Color.white.opacity(0.35))
                     .frame(width: 92, height: 24)
                     .suggestedShimmer(phase: shimmerPhase)
@@ -44,7 +44,7 @@ struct SuggestedWordSkeletonCard: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [softAccent, accent.opacity(0.15), warmAccent]),

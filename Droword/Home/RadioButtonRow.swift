@@ -32,10 +32,10 @@ struct RadioButtonRow: View {
             .padding(.horizontal)
             .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 14))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }
         .buttonStyle(.plain)
     }

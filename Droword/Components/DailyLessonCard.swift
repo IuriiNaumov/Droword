@@ -5,6 +5,7 @@ struct DailyLessonCard: View {
 
     let plan: DailyLessonPlan
     var onStart: () -> Void
+    var onAddWords: (() -> Void)? = nil
     var onDismissDone: (() -> Void)? = nil
 
     var body: some View {
@@ -24,25 +25,40 @@ struct DailyLessonCard: View {
                         }
                     }
 
-                    Text(plan.subtitle)
-                        .font(themeStore.regular(14))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if !plan.subtitle.isEmpty {
+                        Text(plan.subtitle)
+                            .font(themeStore.regular(14))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 Spacer(minLength: 8)
 
                 HStack(spacing: 8) {
-                    if !plan.isDone {
+                    if !plan.isDone, plan.canStart {
                         Text("~\(plan.minutes) min")
                             .font(themeStore.bold(13))
-                            .foregroundStyle(themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.isDuolingo && !themeStore.isGlass ? Color.white : themeStore.mainAccentColor)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(themeStore.mainAccentColor.opacity(0.14))
-                            )
+                            .background {
+                                if themeStore.isDuolingo && !themeStore.isGlass {
+                                    let face = themeStore.mainAccentColor
+                                    let radius = themeStore.chipRadius
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(darkerShade(of: face, by: 0.16))
+                                            .offset(y: 2)
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(face)
+                                    }
+                                } else {
+                                    Capsule(style: .continuous)
+                                        .fill(themeStore.mainAccentColor.opacity(0.14))
+                                }
+                            }
+                            .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
                     }
 
                     if plan.isDone {
@@ -66,22 +82,33 @@ struct DailyLessonCard: View {
                 }
             }
 
-            if plan.isDone, !plan.tomorrowWords.isEmpty {
-                Text(plan.tomorrowWords.prefix(4).map(\.displayCapitalized).joined(separator: "  ·  "))
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(themeStore.mainText)
-            } else if !plan.topicLabels.isEmpty, !plan.isDone {
+            if plan.isDone {
+                doneExtras
+            } else if !plan.topicLabels.isEmpty, plan.canStart {
                 HStack(spacing: 6) {
                     ForEach(plan.topicLabels, id: \.self) { label in
                         Text(label)
                             .font(themeStore.medium(12))
-                            .foregroundStyle(themeStore.mainText)
+                            .foregroundStyle(themeStore.isDuolingo ? Color.white : themeStore.mainText)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(themeStore.dividerColor.opacity(0.55))
-                            )
+                            .background {
+                                if themeStore.isDuolingo && !themeStore.isGlass {
+                                    let face = themeStore.mainAccentColor
+                                    let radius = themeStore.chipRadius
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(darkerShade(of: face, by: 0.16))
+                                            .offset(y: 2)
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(face)
+                                    }
+                                } else {
+                                    Capsule(style: .continuous)
+                                        .fill(themeStore.dividerColor.opacity(0.55))
+                                }
+                            }
+                            .padding(.bottom, themeStore.isDuolingo ? 2 : 0)
                     }
                 }
             }
@@ -89,36 +116,76 @@ struct DailyLessonCard: View {
             if !plan.isDone {
                 Button {
                     Haptics.buttonPress()
-                    onStart()
+                    if plan.canStart {
+                        onStart()
+                    } else {
+                        onAddWords?()
+                    }
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "bolt.fill")
+                        Image(systemName: plan.canStart ? "bolt.fill" : "plus")
                             .font(.system(size: 14, weight: .bold))
-                        Text(plan.canStart ? "Start today's lesson" : "Add 4 words to unlock")
+                        Text(ctaTitle)
                             .font(themeStore.bold(16))
                     }
-                    .duo3DStyle(themeStore.mainAccentColor, isDisabled: !plan.canStart)
+                    .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
-                .disabled(!plan.canStart)
             }
         }
         .padding(DesignSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("\(plan.title). \(plan.subtitle)"))
+        .accessibilityLabel(Text(plan.subtitle.isEmpty ? plan.title : "\(plan.title). \(plan.subtitle)"))
+    }
+
+    private var ctaTitle: LocalizedStringKey {
+        if plan.canStart { return "Start today's lesson" }
+        return "Add words to start"
+    }
+
+    @ViewBuilder
+    private var doneExtras: some View {
+        if plan.nextReviewCount > 0, let date = plan.nextReviewDate {
+            HStack(spacing: 8) {
+                Image(systemName: "timer")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(themeStore.mainAccentColor)
+                Text("\(plan.nextReviewCount) words ready in \(timeUntil(date))")
+                    .font(themeStore.medium(13))
+                    .foregroundStyle(themeStore.mainText)
+            }
+        } else if !plan.tomorrowWords.isEmpty {
+            Text(plan.tomorrowWords.prefix(4).map(\.displayCapitalized).joined(separator: "  ·  "))
+                .font(themeStore.medium(13))
+                .foregroundStyle(themeStore.mainText)
+        }
+    }
+
+    private func timeUntil(_ date: Date) -> String {
+        let seconds = max(0, date.timeIntervalSince(Date()))
+        let minutes = Int(seconds / 60)
+        if minutes < 60 {
+            return String(localized: "\(max(1, minutes)) min")
+        }
+        let hours = minutes / 60
+        if hours < 24 {
+            return String(localized: "\(hours) h")
+        }
+        let days = hours / 24
+        return String(localized: "\(days) d")
     }
 }
 
 #Preview {
     DailyLessonCard(plan: DailyLessonPlan(
         title: "Today's lesson",
-        subtitle: "A short set for today",
+        subtitle: "8 words · 3 due · Mixed",
         words: [],
         minutes: 4,
         styleLabel: "Mixed",
@@ -127,7 +194,9 @@ struct DailyLessonCard: View {
         isDone: false,
         correct: 0,
         total: 0,
-        tomorrowWords: []
+        tomorrowWords: [],
+        nextReviewCount: 0,
+        nextReviewDate: nil
     ), onStart: {})
         .padding()
         .environmentObject(ThemeStore())

@@ -128,9 +128,9 @@ struct WordCardView: View {
         .padding(.bottom, 0)
         .zIndex(reaction != nil ? 5 : 0)
         .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.45, maximumDistance: 12)
+            LongPressGesture(minimumDuration: 0.22, maximumDistance: 12)
                 .onEnded { _ in
-                    openReactionPicker()
+                    openReactionPicker(strongHaptic: true)
                 }
         )
         .onTapGesture(count: 2) {
@@ -291,9 +291,13 @@ struct WordCardView: View {
         }
     }
 
-    private func openReactionPicker() {
+    private func openReactionPicker(strongHaptic: Bool = false) {
         ignoreCardTapUntil = Date().addingTimeInterval(0.55)
-        Haptics.open()
+        if strongHaptic {
+            Haptics.heavyImpact()
+        } else {
+            Haptics.open()
+        }
         NotificationCenter.default.post(name: .dismissReactionPicker, object: cardID)
         var transaction = Transaction()
         transaction.disablesAnimations = true
@@ -323,24 +327,7 @@ struct WordCardView: View {
         VStack(alignment: .leading, spacing: 8) {
 
             if let tag = tag, !tag.isEmpty {
-                Text(BuiltInTag.displayName(tag))
-                    .font(themeStore.medium(11))
-                    .foregroundStyle(
-                        themeStore.isGlass
-                            ? themeStore.mainText
-                            : (themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
-                    )
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 10)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(
-                                themeStore.isGlass
-                                    ? themeStore.colorForTag(tag).opacity(0.28)
-                                    : themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2)
-                            )
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                TagBadge(text: tag)
                     .padding(.bottom, 2)
             }
 
@@ -465,7 +452,7 @@ struct WordCardView: View {
 
                 if let mnemonic = mnemonic, !mnemonic.isEmpty {
                     HStack(alignment: .top, spacing: 6) {
-                        Image(systemName: "lightbulb.fill")
+                        Image(systemName: "lightbulb")
                             .font(.system(size: 14))
                             .foregroundStyle(themeStore.accentGold)
                             .padding(.top, 1)
@@ -497,11 +484,11 @@ struct WordCardView: View {
         .padding(DesignSpacing.md)
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : backgroundColor)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var headerRow: some View {
@@ -653,7 +640,7 @@ private struct WordCardFocusOverlay: View {
         }
         .ignoresSafeArea()
         .onAppear {
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.78)) {
+            withAnimation(.spring(response: 0.17, dampingFraction: 0.78)) {
                 appeared = true
             }
         }
@@ -662,24 +649,7 @@ private struct WordCardFocusOverlay: View {
     private var collapsedCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             if let tag, !tag.isEmpty {
-                Text(BuiltInTag.displayName(tag))
-                    .font(themeStore.medium(11))
-                    .foregroundStyle(
-                        themeStore.isGlass
-                            ? themeStore.mainText
-                            : (themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
-                    )
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 10)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(
-                                themeStore.isGlass
-                                    ? themeStore.colorForTag(tag).opacity(0.28)
-                                    : themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2)
-                            )
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                TagBadge(text: tag)
             }
 
             Text(word)
@@ -704,11 +674,11 @@ private struct WordCardFocusOverlay: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .shadow(color: .black.opacity(0.16), radius: 20, y: 10)
     }
 
@@ -837,8 +807,8 @@ private struct ReactionPickerBar: View {
     }
 
     private func cascade(_ index: Int) -> Animation {
-        .spring(response: 0.34, dampingFraction: 0.6)
-        .delay(Double(index) * 0.035)
+        .spring(response: 0.17, dampingFraction: 0.6)
+        .delay(Double(index) * 0.018)
     }
 }
 

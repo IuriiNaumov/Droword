@@ -250,8 +250,8 @@ struct PremiumView: View {
                 titleAccent: "AI",
                 rows: [
                     ("wand.and.stars", "AI translations", "No daily cap — translate whenever"),
-                    ("speaker.wave.2.fill", "Voice pronunciation", "Unlimited TTS playback"),
-                    ("lightbulb.fill", "Word suggestions", "Fresh ideas without limits")
+                    ("speaker.wave.2", "Voice pronunciation", "Unlimited TTS playback"),
+                    ("lightbulb", "Word suggestions", "Fresh ideas without limits")
                 ]
             )
 
@@ -259,9 +259,9 @@ struct PremiumView: View {
                 titlePrefix: "More",
                 titleAccent: "style",
                 rows: [
-                    ("paintpalette.fill", "All themes", "Sunset, Green Owl, Liquid Glass"),
+                    ("paintpalette", "All themes", "Sunset, Green Owl, Liquid Glass"),
                     ("sparkles", "Seasonal effects", "Atmosphere that matches the season"),
-                    ("flame.fill", "Streak freeze", "One missed day a week, no drama")
+                    ("flame", "Streak freeze", "One missed day a week, no drama")
                 ]
             )
         }
@@ -308,21 +308,14 @@ struct PremiumView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
-
-                if index < rows.count - 1 {
-                    Rectangle()
-                        .fill(themeStore.dividerColor.opacity(0.4))
-                        .frame(height: 1)
-                        .padding(.leading, 60)
-                }
             }
             .padding(.bottom, 8)
         }
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var plansSection: some View {
@@ -506,10 +499,10 @@ struct PremiumView: View {
             }
             .padding(18)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             .padding(.horizontal, 16)
 
             Button {
@@ -525,10 +518,10 @@ struct PremiumView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             }
             .buttonStyle(PressableButtonStyle(scale: 0.98))
             .padding(.horizontal, 16)

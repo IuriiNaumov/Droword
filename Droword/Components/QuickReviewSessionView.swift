@@ -111,24 +111,7 @@ struct QuickReviewSessionView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 if let tag = word.tag, !tag.isEmpty {
-                    Text(LocalizedStringKey(tag))
-                        .font(themeStore.medium(11))
-                        .foregroundStyle(
-                            themeStore.isGlass
-                                ? themeStore.mainText
-                                : (themeStore.isMonochrome ? themeStore.mainText : themeStore.colorForTag(tag))
-                        )
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 10)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(
-                                    themeStore.isGlass
-                                        ? themeStore.colorForTag(tag).opacity(0.28)
-                                        : themeStore.colorForTag(tag).opacity(themeStore.isMonochrome ? 0.18 : 0.2)
-                                )
-                        )
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                    TagBadge(text: tag)
                         .padding(.bottom, 2)
                 }
 
@@ -221,7 +204,7 @@ struct QuickReviewSessionView: View {
 
                     if let mnemonic = word.mnemonic, !mnemonic.isEmpty {
                         HStack(alignment: .top, spacing: 6) {
-                            Image(systemName: "lightbulb.fill")
+                            Image(systemName: "lightbulb")
                                 .font(.system(size: 14))
                                 .foregroundStyle(themeStore.accentGold)
                                 .padding(.top, 1)
@@ -268,11 +251,11 @@ struct QuickReviewSessionView: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             .padding(.horizontal, 20)
 
             Spacer()
@@ -451,6 +434,8 @@ struct QuickReviewSessionView: View {
             lapses: result.state.lapses,
             dueDate: result.dueDate
         )
+
+        DailyChallengeManager.shared.recordWordsReviewed(count: 1)
 
         if quality == .hard, let after = result.reinsertAfterCards {
             var copy = queue

@@ -14,7 +14,7 @@ struct DailyChallengeButton: View {
                 onOpen()
             } label: {
                 HStack(spacing: 14) {
-                    MenuSymbol(systemName: "dumbbell.fill")
+                    MenuSymbol(systemName: "dumbbell")
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(DuoChaosCopy.dailyChallengesTitle())
@@ -52,10 +52,10 @@ struct DailyChallengeButton: View {
         }
         .padding(DesignSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 }
 

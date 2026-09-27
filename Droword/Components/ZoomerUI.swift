@@ -53,7 +53,7 @@ struct ZoomerCountBadge: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
                     .fill(themeStore.mainAccentColor.opacity(0.12))
             )
             .scaleEffect(appeared ? 1 : 0.92)

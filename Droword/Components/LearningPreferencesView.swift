@@ -104,7 +104,7 @@ struct LearningPreferencesForm: View {
             .padding(12)
             .frame(maxWidth: .infinity, minHeight: 108, alignment: .topLeading)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(selected ? themeStore.mainAccentColor : themeStore.dividerColor.opacity(0.55))
             )
             .scaleEffect(selected ? 1.0 : 0.98)
@@ -146,7 +146,7 @@ struct LearningPreferencesForm: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(selected ? themeStore.mainAccentColor : themeStore.dividerColor.opacity(0.55))
             )
         }
@@ -163,7 +163,7 @@ struct LearningPreferencesView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Learning vibe")
                     .sheetTitle()
 

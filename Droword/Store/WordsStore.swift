@@ -115,6 +115,9 @@ struct StoredWord: Identifiable, Codable, Equatable {
             examples = decoded
         }
         collocations = try container.decodeIfPresent([String].self, forKey: .collocations) ?? []
+        synonyms = try container.decodeIfPresent([String].self, forKey: .synonyms) ?? []
+        antonyms = try container.decodeIfPresent([String].self, forKey: .antonyms) ?? []
+        mnemonic = try container.decodeIfPresent(String.self, forKey: .mnemonic)
         reaction = try container.decodeIfPresent(String.self, forKey: .reaction)
 
         introduced = try container.decodeIfPresent(Bool.self, forKey: .introduced) ?? (repetitions > 0 || intervalDays > 0)
@@ -169,9 +172,8 @@ final class WordsStore: ObservableObject {
 
     func add(_ word: StoredWord) {
         var w = word
-        w.introduced = true
-        if w.dueDate == nil {
-            w.dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Date())
+        if w.introduced, w.dueDate == nil {
+            w.dueDate = Date()
         }
         words.append(w)
         totalWordsAdded += 1
@@ -291,6 +293,14 @@ final class WordsStore: ObservableObject {
     }
 
     func reloadFromDisk(force: Bool = false) {
+        if WordsICloudSync.isEnabled,
+           let remote = WordsICloudSync.pullIfNewer(than: Self.wordsFileURL) {
+            words = remote
+            lastLoadedFileModification = Self.fileModificationDate()
+            hasLoaded = true
+            persistNow(forceBackup: true, forceWidgetReload: true)
+            return
+        }
 
         if !force,
            let mod = Self.fileModificationDate(),
@@ -361,6 +371,7 @@ final class WordsStore: ObservableObject {
                     let backupURL = fileURL.deletingLastPathComponent().appendingPathComponent("words_backup.json")
                     try? data.write(to: backupURL, options: .atomic)
                 }
+                WordsICloudSync.push(localFileURL: fileURL)
             }
 
             if let snapshotData = try? JSONEncoder().encode(widgetPayload) {
@@ -461,14 +472,18 @@ final class WordsStore: ObservableObject {
         let now = Date()
         var copy = words
         var changed = false
+        var newlyIntroduced = 0
         for id in ids {
             guard let idx = copy.firstIndex(where: { $0.id == id }) else { continue }
+            guard !copy[idx].introduced else { continue }
             copy[idx].introduced = true
             copy[idx].dueDate = now
+            newlyIntroduced += 1
             changed = true
         }
         if changed {
             words = copy
+            DailyLimitsManager.recordNewWordsIntroduced(newlyIntroduced)
         }
     }
 

@@ -70,4 +70,5 @@ enum AppStorageKeys {
     static let notifEveningChatHour = "notifEveningChatHour"
     static let notifEveningChatMinute = "notifEveningChatMinute"
     static let customThemeAccentHex = "customThemeAccentHex"
+    static let iCloudSyncEnabled = "iCloudSyncEnabled"
 }

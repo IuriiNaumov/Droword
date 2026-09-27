@@ -11,7 +11,7 @@ struct DictionaryIllustration: View {
             HaloIcon(symbol: "textformat", color: accent, size: size * 0.88)
                 .offset(x: px * 0.08, y: py * 0.06)
 
-            Image(systemName: "tag.fill")
+            Image(systemName: "tag")
                 .font(.system(size: size * 0.09, weight: .semibold))
                 .foregroundStyle(accent)
                 .offset(x: -size * 0.32 + px * 0.1, y: -size * 0.22 + py * 0.05)

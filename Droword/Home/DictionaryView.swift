@@ -2,8 +2,10 @@ import SwiftUI
 
 struct DictionaryView: View {
     @Environment(\.horizontalSizeClass) private var hSize
+    @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
     @State private var selectedTag: String? = nil
     @State private var searchText = ""
     @State private var debouncedSearch = ""
@@ -72,26 +74,17 @@ struct DictionaryView: View {
             dictionaryHeader(showsSelect: false)
                 .padding(.bottom, 8)
 
-            ZStack(alignment: .bottom) {
-                EmptyListView(
-                    illustration: AnyView(CryingEmptyIllustration()),
-                    title: DuoChaosCopy.dictionaryGarden().title,
-                    subtitle: DuoChaosCopy.dictionaryGarden().subtitle
-                )
-
-                Button {
+            EmptyListView(
+                illustration: AnyView(CryingEmptyIllustration()),
+                title: DuoChaosCopy.dictionaryGarden().title,
+                subtitle: DuoChaosCopy.dictionaryGarden().subtitle,
+                tip: String(localized: "One word unlocks lessons and practice"),
+                ctaTitle: "Add a word",
+                onCTA: {
                     NotificationCenter.default.post(name: .openAddWord, object: nil)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Add a word")
-                    }
-                    .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .buttonStyle(Duo3DButtonStyle())
-                .padding(.horizontal, 40)
-                .padding(.bottom, 32)
-            }
+            )
+            .padding(.bottom, 24)
         }
         .iPadContentWidth(1000)
     }
@@ -115,6 +108,7 @@ struct DictionaryView: View {
         }
         .scrollClipDisabled()
         .scrollDismissesKeyboard(.immediately)
+        .hidesMenuOnScrollDown(tabBarVisibility)
         .iPadContentWidth(1000)
     }
 
@@ -152,12 +146,22 @@ struct DictionaryView: View {
         let disabled = store.words.isEmpty
         let label = isSelectMode ? String(localized: "Done") : String(localized: "Select")
         let fill: Color = {
-            if isSelectMode { return themeStore.mainAccentColor }
+            if isSelectMode {
+                return themeStore.isGlass
+                    ? themeStore.mainAccentColor.opacity(0.32)
+                    : themeStore.mainAccentColor
+            }
             return themeStore.isGlass ? Color.clear : themeStore.cardBg
         }()
         let textColor: Color = {
             if disabled { return themeStore.secondaryText }
-            return isSelectMode ? .white : themeStore.mainText
+            if isSelectMode {
+                if themeStore.isGlass {
+                    return colorScheme == .dark ? .white : .black
+                }
+                return .white
+            }
+            return themeStore.mainText
         }()
 
         return Button {
@@ -174,10 +178,10 @@ struct DictionaryView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(fill)
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelectMode, cornerRadius: DesignRadius.large))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }
         .buttonStyle(.plain)
         .disabled(disabled)
@@ -236,22 +240,32 @@ struct DictionaryView: View {
     private var dictionaryEmptyFilter: some View {
         if let tag = selectedTag, !tag.isEmpty {
             EmptyListView(
-                icon: nil,
+                icon: "tag",
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
-                subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle,
+                tip: String(localized: "Add a word with this tag — or clear the filter"),
+                ctaTitle: "Add a word",
+                onCTA: {
+                    NotificationCenter.default.post(name: .openAddWord, object: nil)
+                }
             )
         } else if !searchText.isEmpty {
             EmptyListView(
                 icon: "magnifyingglass",
                 title: DuoChaosCopy.dictionaryEmpty(tag: nil).title,
-                subtitle: DuoChaosCopy.dictionaryEmpty(tag: nil).subtitle
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: nil).subtitle,
+                tip: String(localized: "Try another spelling — or add it now"),
+                ctaTitle: "Add a word",
+                onCTA: {
+                    NotificationCenter.default.post(name: .openAddWord, object: nil)
+                }
             )
         }
     }
 
     private var selectAllRow: some View {
         let allSelected = selectedWordIDs.count == filteredWords.count
-        let icon = allSelected ? "checkmark.circle.fill" : "circle"
+        let icon = allSelected ? "checkmark.circle" : "circle"
         let iconColor = allSelected ? themeStore.mainAccentColor : themeStore.secondaryText
         let title = String(localized: "Select all (\(filteredWords.count))")
 
@@ -285,7 +299,7 @@ struct DictionaryView: View {
                 showBulkDeleteConfirmation = true
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: "trash.fill")
+                    Image(systemName: "trash")
                         .font(.system(size: 15, weight: .semibold))
                     Text("Delete \(selectedWordIDs.count) words")
                 }
@@ -302,7 +316,7 @@ struct DictionaryView: View {
     private var bulkDeleteAlert: some View {
         if showBulkDeleteConfirmation {
             CustomAlertView(
-                icon: "trash.fill",
+                icon: "trash",
                 iconColor: themeStore.accentRed,
                 title: "Delete \(selectedWordIDs.count) words?",
                 message: "This action cannot be undone.",
@@ -442,7 +456,7 @@ private struct DictionarySearchBar: View {
                         searchText = ""
                     }
                 } label: {
-                    Image(systemName: "xmark.circle.fill")
+                    Image(systemName: "xmark.circle")
                         .foregroundStyle(themeStore.secondaryText)
                 }
                 .buttonStyle(.plain)
@@ -453,7 +467,7 @@ private struct DictionarySearchBar: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 19)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.dividerColor.opacity(0.55))
         )
         .padding(.horizontal, 20)
@@ -479,7 +493,7 @@ private struct DictionaryWordRow: View {
             HStack(spacing: 12) {
                 if isSelectMode {
                     Button(action: onToggleSelect) {
-                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        Image(systemName: isSelected ? "checkmark.circle" : "circle")
                             .font(.system(size: 22))
                             .foregroundStyle(isSelected ? themeStore.mainAccentColor : themeStore.secondaryText)
                     }
@@ -533,4 +547,5 @@ private struct DictionaryWordRow: View {
 #Preview {
     DictionaryView()
         .environmentObject(WordsStore())
+        .environmentObject(TabBarVisibility())
 }

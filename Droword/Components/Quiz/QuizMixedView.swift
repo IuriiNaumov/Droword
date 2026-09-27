@@ -365,13 +365,13 @@ struct QuizMixedView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             } else if exerciseType == .listening && !hasAnswered {
-                Button {
-                    skipListeningAsCorrect()
-                } label: {
-                    Text("Can't listen")
-                        .font(themeStore.medium(14))
-                        .foregroundStyle(themeStore.secondaryText)
-                }
+                    Button {
+                        skipListeningWithoutScheduling()
+                    } label: {
+                        Text("Can't listen")
+                            .font(themeStore.medium(14))
+                            .foregroundStyle(themeStore.secondaryText)
+                    }
                 .buttonStyle(.plain)
                 .padding(.bottom, 24)
             } else if hasAnswered {
@@ -400,7 +400,7 @@ struct QuizMixedView: View {
         }()
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "lightbulb.fill")
+                Image(systemName: "lightbulb")
                     .font(.system(size: 13))
                     .foregroundStyle(themeStore.accentGold)
                 Text("Correct answer")
@@ -671,19 +671,13 @@ struct QuizMixedView: View {
         }
     }
 
-    private func skipListeningAsCorrect() {
+    private func skipListeningWithoutScheduling() {
         guard !hasAnswered, let item = session.currentItem else { return }
         selectedOption = item.word
         hasAnswered = true
-        isCorrect = true
-        session.recordAnswer(correct: true)
-        celebrateCorrectAnswer()
-        QuizSessionManager.applyScheduling(
-            for: item.id,
-            correct: true,
-            store: store,
-            languageStore: languageStore
-        )
+        isCorrect = false
+        Haptics.softTap()
+        session.recordAnswer(correct: false)
     }
 
     private func selectOption(_ option: String, item: QuizSessionManager.QuizItem) {

@@ -79,10 +79,10 @@ struct HapticSettingsView: View {
         .padding(.horizontal)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .contentShape(Rectangle())
         .onTapGesture {
             select(feel)

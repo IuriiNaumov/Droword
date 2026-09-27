@@ -177,10 +177,10 @@ struct WordPackDetailView: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(color.opacity(0.15))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
     }
 
     private var completionView: some View {

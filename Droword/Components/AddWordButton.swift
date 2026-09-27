@@ -28,7 +28,7 @@ struct AddWordButton: View {
                     } else {
                         Text(title)
                             .font(themeStore.bold(17))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(themeStore.isGlass ? themeStore.mainText : .white)
                     }
                 }
 

@@ -69,7 +69,7 @@ struct DrowordWidgetEntryView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(accent.opacity(0.16))
                     .frame(width: 40, height: 40)
-                Image(systemName: entry.dueCount > 0 ? "flame.fill" : "text.book.closed.fill")
+                Image(systemName: entry.dueCount > 0 ? "flame" : "text.book.closed")
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(accent)
                     .widgetAccentable()

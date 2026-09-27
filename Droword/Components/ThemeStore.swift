@@ -35,7 +35,7 @@ final class ThemeStore: ObservableObject {
         var subtitle: String {
             switch self {
             case .colorful: return String(localized: "Warm and vibrant")
-            case .duolingo: return String(localized: "Fresh green accent")
+            case .duolingo: return String(localized: "White pages, gray cards, 3D buttons")
             case .glass: return String(localized: "Apple glass aesthetic")
             case .ocean: return String(localized: "Calm teal wash")
             case .sunset: return String(localized: "Cozy sunset vibes")
@@ -50,7 +50,7 @@ final class ThemeStore: ObservableObject {
         var tileColors: [Color] {
             switch self {
             case .colorful: return [Color(hex: "#F6F7FF"), Color(hex: "#DDE4FA")]
-            case .duolingo: return [Color(hex: "#E5F8D8"), Color(hex: "#3FA006")]
+            case .duolingo: return [Color(hex: "#FFFFFF"), Color(hex: "#F7F7F7"), Color(hex: "#58CC02")]
             case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
             case .ocean: return [Color(hex: "#7EE0D6"), Color(hex: "#0B3D4A")]
             case .sunset: return [Color(hex: "#FFB07A"), Color(hex: "#C2185B")]
@@ -241,26 +241,25 @@ final class ThemeStore: ObservableObject {
             )
         case .duolingo:
             return Colors(
-                accentBlue: Color(hex: "#89E219"),
-                accentGreen: Color(hex: "#7ED957"),
-                accentPurple: Color(hex: "#D9A3FF"),
-                accentPink: Color(hex: "#FF7E7E"),
-                accentGold: Color(hex: "#2EC4B6"),
+                accentBlue: Color(hex: "#1CB0F6"),
+                accentGreen: Color(hex: "#58CC02"),
+                accentPurple: Color(hex: "#CE82FF"),
+                accentPink: Color(hex: "#FF4B4B"),
+                accentGold: Color(hex: "#FFC800"),
                 accentRed: Color(hex: "#FF4B4B"),
                 mainAccentColor: Color(hex: "#58CC02"),
-                // Soft gray page + white elevated surfaces so sheets/alerts don't melt into home.
-                appBg: Color(light: "#F7F7F7", dark: "#131F24"),
-                cardBg: Color(light: "#FFFFFF", dark: "#1F333B"),
+                appBg: Color(light: "#FFFFFF", dark: "#131F24"),
+                cardBg: Color(light: "#F7F7F7", dark: "#202F36"),
                 mainText: Color(light: "#4B4B4B", dark: "#FFFFFF"),
-                secondaryText: Color(light: "#AFAFAF", dark: "#9CA3A8"),
+                secondaryText: Color(light: "#777777", dark: "#AFB3B6"),
                 dividerColor: Color(light: "#E5E5E5", dark: "#37464F"),
                 tabTint: Color(hex: "#58CC02"),
-                buttonShadow: Color(hex: "#46A302"),
+                buttonShadow: Color(hex: "#58A700"),
                 iconGreen: Color(hex: "#58CC02"),
-                iconGold: Color(hex: "#2EC4B6"),
+                iconGold: Color(hex: "#FFC800"),
                 iconPurple: Color(hex: "#CE82FF"),
-                iconPink: Color(hex: "#FF7E7E"),
-                iconBlue: Color(hex: "#89E219")
+                iconPink: Color(hex: "#FF4B4B"),
+                iconBlue: Color(hex: "#1CB0F6")
             )
         case .glass:
             return Colors(
@@ -394,8 +393,9 @@ final class ThemeStore: ObservableObject {
     var appBg: Color { cached.appBg }
     var cardBg: Color { cached.cardBg }
 
-    /// Elevated surface for sheets/modals. Duolingo needs this distinct from `appBg`.
-    var sheetBg: Color { isDuolingo ? cardBg : appBg }
+    var sheetBg: Color { appBg }
+
+    var controlFace: Color { isDuolingo ? appBg : cardBg }
 
     var mainText: Color { cached.mainText }
     var secondaryText: Color { cached.secondaryText }
@@ -420,13 +420,37 @@ final class ThemeStore: ObservableObject {
         case .ocean: return Color(light: "#D4F4F0", dark: "#163038")
         case .sunset: return Color(light: "#FFE8DD", dark: "#2E2226")
         case .paper: return Color(light: "#F0E6D4", dark: "#2A2520")
-        case .duolingo: return Color(light: "#E5F8D8", dark: "#243819")
+        case .duolingo: return Color(light: "#D7FFB8", dark: "#243819")
         case .glass: return Color(light: "#E3F0FF", dark: "#1C2A3D")
         case .custom: return mainAccentColor.opacity(0.14)
         }
     }
 
     var toastText: Color { accentGreen }
+
+    var controlRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+
+    var cardRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+
+    var chipRadius: CGFloat { isDuolingo ? 12 : DesignRadius.small }
+
+    var successSoft: Color {
+        isDuolingo ? Color(light: "#D7FFB8", dark: "#243819") : accentGreen.opacity(0.18)
+    }
+    var successStrong: Color { accentGreen }
+    var errorSoft: Color {
+        isDuolingo ? Color(light: "#FFDFE0", dark: "#3A1F22") : accentRed.opacity(0.18)
+    }
+    var errorStrong: Color { accentRed }
+    var selectSoft: Color {
+        isDuolingo ? Color(light: "#DDF4FF", dark: "#1A3340") : accentBlue.opacity(0.12)
+    }
+    var mutedControl: Color {
+        isDuolingo ? Color(hex: "#E5E5E5") : secondaryText.opacity(0.4)
+    }
+    var mutedControlText: Color {
+        isDuolingo ? Color(hex: "#AFAFAF") : .white
+    }
 
     var monoDark: Color {
         if isSunset { return Color(hex: "#E8825C") }

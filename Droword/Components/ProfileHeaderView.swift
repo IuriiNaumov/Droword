@@ -64,7 +64,7 @@ struct ProfileHeaderView: View {
                                 .fill(themeStore.secondaryText.opacity(0.15))
                                 .frame(width: 58, height: 58)
                                 .overlay(
-                                    Image(systemName: "person.fill")
+                                    Image(systemName: "person")
                                         .font(.system(size: 26, weight: .medium))
                                         .foregroundStyle(themeStore.mainText.opacity(0.7))
                                 )

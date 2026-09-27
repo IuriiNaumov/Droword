@@ -52,10 +52,10 @@ struct BadgeCardView: View {
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .onAppear {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7).delay(Double.random(in: 0...0.3))) {
                 appeared = true

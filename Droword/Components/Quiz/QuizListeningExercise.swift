@@ -60,13 +60,13 @@ struct QuizListeningExercise: View {
                         QuizFeedbackBadge(
                             icon: "checkmark.circle.fill",
                             text: DuoChaosCopy.correct(),
-                            color: themeStore.accentGreen
+                            color: themeStore.successStrong
                         )
                     } else {
                         QuizFeedbackBadge(
                             icon: "xmark.circle.fill",
                             text: DuoChaosCopy.wrongReveal(correctAnswer),
-                            color: themeStore.accentRed
+                            color: themeStore.errorStrong
                         )
                     }
                 }
@@ -93,18 +93,32 @@ struct QuizListeningExercise: View {
         let isThisCorrect = option.lowercased() == correctAnswer.lowercased()
         let isSelected = selectedOption == option
         let isIrrelevant = hasAnswered && !isThisCorrect && !isSelected
+        let duo = themeStore.isDuolingo && !themeStore.isGlass
+        let radius = themeStore.controlRadius
 
         let bgColor: Color = {
             if !hasAnswered {
-                return themeStore.isGlass ? Color.clear : themeStore.cardBg
+                return themeStore.isGlass ? Color.clear : (duo ? themeStore.controlFace : themeStore.cardBg)
             }
             if isThisCorrect {
-                return themeStore.isGlass ? themeStore.accentGreen.opacity(0.35) : themeStore.accentGreen
+                return themeStore.isGlass ? themeStore.successStrong.opacity(0.28) : themeStore.successSoft
             }
             if isSelected && !isThisCorrect {
-                return themeStore.isGlass ? themeStore.accentRed.opacity(0.35) : themeStore.accentRed
+                return themeStore.isGlass ? themeStore.errorStrong.opacity(0.28) : themeStore.errorSoft
             }
-            return themeStore.isGlass ? Color.clear : themeStore.cardBg
+            return themeStore.isGlass ? Color.clear : (duo ? themeStore.controlFace : themeStore.cardBg)
+        }()
+
+        let textColor: Color = {
+            if hasAnswered && isIrrelevant { return themeStore.mainText.opacity(0.4) }
+            return themeStore.mainText
+        }()
+
+        let borderColor: Color? = {
+            guard duo else { return nil }
+            if hasAnswered, isThisCorrect { return themeStore.successStrong }
+            if hasAnswered, isSelected && !isThisCorrect { return themeStore.errorStrong }
+            return themeStore.dividerColor
         }()
 
         return Button {
@@ -113,30 +127,44 @@ struct QuizListeningExercise: View {
             HStack {
                 Text(option.displayCapitalized)
                     .font(themeStore.medium(16))
-                    .foregroundStyle(hasAnswered && isIrrelevant ? themeStore.mainText.opacity(0.4) : themeStore.mainText)
+                    .foregroundStyle(textColor)
 
                 Spacer()
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(themeStore.accentGreen)
+                        .foregroundStyle(themeStore.successStrong)
                         .transition(.scale.combined(with: .opacity))
                 }
                 if hasAnswered && isSelected && !isThisCorrect {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(themeStore.accentRed)
+                        .foregroundStyle(themeStore.errorStrong)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(.vertical, 16)
             .padding(.horizontal, 20)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
-                    .fill(bgColor)
+                ZStack {
+                    if duo {
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(Color(hex: "#AFAFAF").opacity(0.45))
+                            .offset(y: 3)
+                    }
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .fill(bgColor)
+                }
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .overlay {
+                if let borderColor {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(borderColor, lineWidth: 2)
+                }
+            }
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: radius))
+            .padding(.bottom, duo ? 3 : 0)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
         .disabled(hasAnswered)
         .opacity(isIrrelevant ? 0.4 : 1.0)
         .animation(.spring(response: 0.35, dampingFraction: 0.5), value: hasAnswered)

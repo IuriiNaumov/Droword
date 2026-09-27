@@ -47,6 +47,12 @@ struct DailyLessonSessionView: View {
                 }
             }
         }
+        .onAppear {
+            let pendingIDs = plan.words.filter { !$0.introduced }.map(\.id)
+            if !pendingIDs.isEmpty {
+                store.markIntroduced(ids: pendingIDs)
+            }
+        }
     }
 }
 
@@ -62,7 +68,9 @@ struct DailyLessonSessionView: View {
         isDone: false,
         correct: 0,
         total: 0,
-        tomorrowWords: []
+        tomorrowWords: [],
+        nextReviewCount: 0,
+        nextReviewDate: nil
     ))
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())

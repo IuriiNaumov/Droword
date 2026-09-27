@@ -30,11 +30,11 @@ struct FormTextField: View {
         case .normal:
             return themeStore.dividerColor.opacity(0.55)
         case .correct:
-            return themeStore.accentGreen.opacity(0.12)
+            return themeStore.successStrong.opacity(0.12)
         case .almost:
             return themeStore.accentGold.opacity(0.12)
         case .wrong:
-            return themeStore.accentRed.opacity(0.12)
+            return themeStore.errorStrong.opacity(0.12)
         }
     }
 
@@ -46,7 +46,7 @@ struct FormTextField: View {
             .foregroundStyle(themeStore.mainText)
             .tint(themeStore.mainAccentColor)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(fillColor)
             )
             .disabled(isDisabled)

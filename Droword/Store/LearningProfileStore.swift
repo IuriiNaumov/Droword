@@ -47,11 +47,11 @@ enum LearningGoal: String, CaseIterable, Identifiable, Codable {
 
     var icon: String {
         switch self {
-        case .dailyChat: return "bubble.left.and.bubble.right.fill"
+        case .dailyChat: return "bubble.left.and.bubble.right"
         case .travel: return "airplane"
-        case .work: return "briefcase.fill"
-        case .exam: return "graduationcap.fill"
-        case .school: return "book.fill"
+        case .work: return "briefcase"
+        case .exam: return "graduationcap"
+        case .school: return "book"
         case .fun: return "sparkles"
         }
     }
@@ -158,9 +158,9 @@ enum LearningStyle: String, CaseIterable, Identifiable, Codable {
 
     var icon: String {
         switch self {
-        case .mixed: return "square.grid.2x2.fill"
-        case .listening: return "ear.fill"
-        case .reading: return "eye.fill"
+        case .mixed: return "square.grid.2x2"
+        case .listening: return "ear"
+        case .reading: return "eye"
         case .writing: return "pencil.line"
         case .speaking: return "waveform"
         }

@@ -62,7 +62,7 @@ struct SettingsView: View {
                                     .fill(themeStore.secondaryText.opacity(0.15))
                                     .frame(width: 92, height: 92)
                                     .overlay(
-                                        Image(systemName: "person.fill")
+                                        Image(systemName: "person")
                                             .font(.system(size: 40, weight: .medium))
                                             .foregroundStyle(themeStore.mainText.opacity(0.7))
                                     )
@@ -331,10 +331,10 @@ struct SettingsView: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.accentBlueSoft)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }
         .buttonStyle(Duo3DButtonStyle())
     }
@@ -378,21 +378,14 @@ struct SettingsView: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(PressableButtonStyle(scale: 0.99))
-
-                if index < items.count - 1 {
-                    Rectangle()
-                        .fill(themeStore.dividerColor.opacity(0.4))
-                        .frame(height: 1)
-                        .padding(.leading, 60)
-                }
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: 28))
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .padding(.horizontal, 16)
     }
 

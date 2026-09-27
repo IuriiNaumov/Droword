@@ -44,17 +44,14 @@ struct WhatsNewView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text("What's New")
-                        .font(themeStore.bold(28))
-                        .foregroundStyle(themeStore.mainText)
+            VStack(spacing: 20) {
+                Text("What's New")
+                    .sheetTitle()
 
-                    Text("Version \(appVersion)")
-                        .font(themeStore.regular(14))
-                        .foregroundStyle(themeStore.secondaryText)
-                }
-                .padding(.top, 24)
+                Text("Version \(appVersion)")
+                    .font(themeStore.regular(14))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .frame(maxWidth: .infinity)
 
                 VStack(spacing: 12) {
                     ForEach(features) { feature in
@@ -97,10 +94,10 @@ struct WhatsNewView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var appVersion: String {

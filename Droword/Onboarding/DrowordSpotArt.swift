@@ -113,7 +113,7 @@ struct EmptyPracticeArt: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        HaloIcon(symbol: "bolt.fill", color: themeStore.accentGreen, size: 168)
+        HaloIcon(symbol: "bolt", color: themeStore.accentGreen, size: 168)
     }
 }
 

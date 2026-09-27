@@ -50,8 +50,8 @@ struct QuizTypingExercise: View {
 
             VStack(spacing: 12) {
                 FormTextField(
-                    title: String(localized: "Your answer"),
-                    text: $typingInput,
+                    title: fieldTitle,
+                    text: displayedInput,
                     status: fieldStatus,
                     isDisabled: hasAnswered,
                     autocapitalization: .never,
@@ -73,6 +73,25 @@ struct QuizTypingExercise: View {
         }
     }
 
+    private var fieldTitle: String {
+        if hasAnswered && !isCorrect && !isAlmostCorrect {
+            return expected.displayCapitalized
+        }
+        return String(localized: "Your answer")
+    }
+
+    private var displayedInput: Binding<String> {
+        Binding(
+            get: {
+                if hasAnswered && !isCorrect && !isAlmostCorrect {
+                    return expected.displayCapitalized
+                }
+                return typingInput
+            },
+            set: { typingInput = $0 }
+        )
+    }
+
     private var fieldStatus: FormTextFieldStatus {
         guard hasAnswered else { return .normal }
         if isAlmostCorrect { return .almost }
@@ -83,7 +102,7 @@ struct QuizTypingExercise: View {
         Group {
             if !hasAnswered && hintShown {
                 QuizFeedbackBadge(
-                    icon: "lightbulb.fill",
+                    icon: "lightbulb",
                     text: String(localized: "Hint: \(hintText)"),
                     color: themeStore.accentGold
                 )
@@ -91,7 +110,7 @@ struct QuizTypingExercise: View {
 
             if hasAnswered && isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     text: DuoChaosCopy.almost(),
                     color: themeStore.accentGold
                 )
@@ -99,17 +118,17 @@ struct QuizTypingExercise: View {
 
             if hasAnswered && !isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "xmark.circle.fill",
+                    icon: "xmark.circle",
                     text: DuoChaosCopy.wrongReveal(expected),
-                    color: themeStore.accentRed
+                    color: themeStore.errorStrong
                 )
             }
 
             if hasAnswered && isCorrect && !isAlmostCorrect {
                 QuizFeedbackBadge(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     text: DuoChaosCopy.correct(),
-                    color: themeStore.accentGreen
+                    color: themeStore.successStrong
                 )
             }
         }

@@ -7,13 +7,20 @@ struct ShareWordCardView: View {
 
     private var primaryText: Color { .mainBlack }
     private var secondaryText: Color { .mainBlack.opacity(0.8) }
-    private var subtleText: Color { Color.mainGrey }
 
     private var isSuggested: Bool { word.tag == "Suggested" }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let tag = word.tag, !tag.isEmpty {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Droword")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(primaryText)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(primaryText.opacity(0.06))
+
+            VStack(alignment: .leading, spacing: 8) {
+                if let tag = word.tag, !tag.isEmpty {
                 Text(LocalizedStringKey(tag))
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundStyle(Self.tagColor(for: tag))
@@ -76,18 +83,12 @@ struct ShareWordCardView: View {
                     .padding(.top, 4)
             }
 
-            HStack {
-                Spacer()
-                Text("Droword")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(subtleText)
             }
-            .padding(.top, 8)
+            .padding(20)
         }
-        .padding(20)
         .frame(width: cardWidth, alignment: .leading)
         .background(backgroundColor)
-        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
     }
 
     private func highlightedExample(example: String, target: String) -> AttributedString {

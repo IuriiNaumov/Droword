@@ -251,14 +251,35 @@ struct DrowordApp: App {
     private func handleIncomingURL(_ url: URL) {
         guard url.scheme == "droword" else { return }
         let host = url.host ?? ""
+        if host == "extract" {
+            let defaults = UserDefaults(suiteName: "group.com.droword.shared")
+            let text = defaults?.string(forKey: "pendingSharedText") ?? ""
+            defaults?.removeObject(forKey: "pendingSharedText")
+            NotificationCenter.default.post(
+                name: .sharedTextReceived,
+                object: nil,
+                userInfo: ["text": text]
+            )
+            return
+        }
         if host == "add" {
             let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
-            NotificationCenter.default.post(
-                name: .sharedWordReceived,
-                object: nil,
-                userInfo: ["word": word]
-            )
+            let defaults = UserDefaults(suiteName: "group.com.droword.shared")
+            if word.isEmpty, let pending = defaults?.string(forKey: "pendingSharedWord"), !pending.isEmpty {
+                defaults?.removeObject(forKey: "pendingSharedWord")
+                NotificationCenter.default.post(
+                    name: .sharedWordReceived,
+                    object: nil,
+                    userInfo: ["word": pending]
+                )
+            } else {
+                NotificationCenter.default.post(
+                    name: .sharedWordReceived,
+                    object: nil,
+                    userInfo: ["word": word]
+                )
+            }
             return
         }
         if host == "chat" {
@@ -283,6 +304,7 @@ struct DrowordApp: App {
 
 extension Notification.Name {
     static let sharedWordReceived = Notification.Name("sharedWordReceived")
+    static let sharedTextReceived = Notification.Name("sharedTextReceived")
     static let copiedToClipboard = Notification.Name("copiedToClipboard")
     static let perfectQuizCompleted = Notification.Name("perfectQuizCompleted")
     static let openFromWidget = Notification.Name("openFromWidget")

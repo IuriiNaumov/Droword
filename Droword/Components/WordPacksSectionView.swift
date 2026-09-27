@@ -37,10 +37,10 @@ struct WordPacksButton: View {
         }
         .padding(DesignSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 }
 
@@ -184,10 +184,10 @@ struct WordPacksDetailView: View {
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             .opacity(completed ? 0.75 : 1)
         }
         .buttonStyle(.plain)

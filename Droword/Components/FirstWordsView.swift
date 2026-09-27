@@ -133,7 +133,7 @@ struct FirstWordsView: View {
                 )
                 store.add(storedWord)
             } label: {
-                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                Image(systemName: isAdded ? "checkmark.circle" : "plus.circle")
                     .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
             }
@@ -143,7 +143,7 @@ struct FirstWordsView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.secondaryText.opacity(0.08))
         )
     }

@@ -39,8 +39,8 @@ struct LanguageSelectionView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 28) {
-                Text("Language Preferences")
+            VStack(spacing: 20) {
+                Text("Language Pair")
                     .sheetTitle()
 
                 LanguagePairHero(
@@ -51,10 +51,10 @@ struct LanguageSelectionView: View {
 
                 Text(LanguageLevels.localizedLabel(forCode: languageStore.learningLevel))
                     .font(themeStore.bold(13))
-                    .foregroundStyle(themeStore.mainAccentColor)
+                    .foregroundStyle(themeStore.mainText)
                     .padding(.vertical, 5)
                     .padding(.horizontal, 14)
-                    .background(Capsule().fill(themeStore.mainAccentColor.opacity(0.15)))
+                    .background(Capsule().fill(selectedLanguageColor.opacity(0.14)))
 
                 LanguageCubePicker(
                     selectedLanguage: $languageStore.nativeLanguage,
@@ -70,7 +70,7 @@ struct LanguageSelectionView: View {
                     blockedLanguage: languageStore.nativeLanguage
                 )
 
-                LanguageLevelPicker()
+                LanguageLevelPicker(color: selectedLanguageColor)
             }
             .padding(.bottom, 50)
         }
@@ -85,7 +85,7 @@ struct LanguageSelectionView: View {
         .overlay {
             if pending != nil {
                 CustomAlertView(
-                    icon: "exclamationmark.triangle.fill",
+                    icon: "exclamationmark.triangle",
                     iconColor: themeStore.accentGold,
                     title: LocalizedStringKey(pendingAlertTitle),
                     message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
@@ -102,6 +102,8 @@ struct LanguageSelectionView: View {
         }
         .animation(.easeOut(duration: 0.2), value: pending)
     }
+
+    private var selectedLanguageColor: Color { themeStore.mainAccentColor }
 
     private func swapLanguages() {
         let newNative = languageStore.learningLanguage

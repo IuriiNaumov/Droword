@@ -43,7 +43,7 @@ private struct OptionalCardChrome: ViewModifier {
         if enabled {
             content
                 .padding(16)
-                .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
+                .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
         } else {
             content
         }

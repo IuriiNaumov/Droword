@@ -92,7 +92,10 @@ final class WordEnrichmentService {
                     breakdown: result.breakdown,
                     transcription: result.transcription,
                     examples: result.examples ?? [result.example],
-                    collocations: result.collocations ?? []
+                    collocations: result.collocations ?? [],
+                    synonyms: result.synonyms ?? [],
+                    antonyms: result.antonyms ?? [],
+                    mnemonic: result.mnemonic
                 )
                 enrichedNames.append(word.word)
             } catch {

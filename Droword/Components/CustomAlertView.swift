@@ -141,16 +141,16 @@ enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {
         switch self {
         case .clearDictionary:
             CustomAlertView(
-                icon: "trash.fill",
+                icon: "trash",
                 iconColor: Color.accentRed,
                 title: "Clear dictionary?",
-                message: "This action cannot be undone.",
+                message: "All words will be deleted and cannot be recovered.",
                 primaryButton: .init(title: "Clear all", style: .destructive, action: onDismiss),
                 secondaryButton: .init(title: "Cancel", style: .cancel, action: onDismiss)
             )
         case .deleteWords:
             CustomAlertView(
-                icon: "trash.fill",
+                icon: "trash",
                 iconColor: Color.accentRed,
                 title: "Delete 3 words?",
                 message: "This action cannot be undone.",
@@ -176,7 +176,7 @@ enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {
             )
         case .importComplete:
             CustomAlertView(
-                icon: "checkmark.circle.fill",
+                icon: "checkmark.circle",
                 iconColor: Color.accentBlue,
                 title: "Import Complete",
                 message: "12 words imported successfully.",
@@ -184,7 +184,7 @@ enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {
             )
         case .importFailed:
             CustomAlertView(
-                icon: "exclamationmark.triangle.fill",
+                icon: "exclamationmark.triangle",
                 iconColor: Color.accentGold,
                 title: "Import failed",
                 message: "Need a column named \"Word\".",
@@ -192,7 +192,7 @@ enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {
             )
         case .languageSwitch:
             CustomAlertView(
-                icon: "exclamationmark.triangle.fill",
+                icon: "exclamationmark.triangle",
                 iconColor: Color.accentGold,
                 title: "Switch learning language?",
                 message: "You have 18 words in French. They will stay in your dictionary.",

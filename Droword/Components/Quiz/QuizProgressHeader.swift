@@ -49,14 +49,32 @@ struct QuizProgressHeader: View {
     }
 
     private var segmentedProgressBar: some View {
-        HStack(spacing: 2) {
-            ForEach(0..<session.total, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(segmentColor(for: index))
-                    .frame(height: 6)
+        Group {
+            if themeStore.isDuolingo {
+                GeometryReader { geo in
+                    let progress = session.total == 0
+                        ? 0
+                        : CGFloat(min(session.answeredCount, session.total)) / CGFloat(session.total)
+                    ZStack(alignment: .leading) {
+                        Capsule(style: .continuous)
+                            .fill(themeStore.dividerColor)
+                        Capsule(style: .continuous)
+                            .fill(themeStore.accentBlue)
+                            .frame(width: max(8, geo.size.width * progress))
+                    }
+                }
+                .frame(height: 12)
+            } else {
+                HStack(spacing: 2) {
+                    ForEach(0..<session.total, id: \.self) { index in
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .fill(segmentColor(for: index))
+                            .frame(height: 6)
+                    }
+                }
+                .frame(height: 6)
             }
         }
-        .frame(height: 6)
         .padding(.horizontal, 24)
         .animation(.easeInOut(duration: 0.3), value: session.answeredCount)
         .animation(.easeInOut(duration: 0.3), value: hasAnswered)
@@ -65,13 +83,13 @@ struct QuizProgressHeader: View {
     private func segmentColor(for index: Int) -> Color {
         if index < session.answeredCount {
             if index < session.orderedResults.count {
-                return session.orderedResults[index] ? themeStore.accentGreen : themeStore.accentRed
+                return session.orderedResults[index] ? themeStore.successStrong : themeStore.errorStrong
             }
-            return themeStore.accentGreen
+            return themeStore.successStrong
         }
         if index == session.answeredCount {
             if hasAnswered {
-                return isCorrect ? themeStore.accentGreen : themeStore.accentRed
+                return isCorrect ? themeStore.successStrong : themeStore.errorStrong
             }
             return themeStore.secondaryText.opacity(0.35)
         }

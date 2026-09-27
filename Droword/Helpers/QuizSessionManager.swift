@@ -82,14 +82,14 @@ final class QuizSessionManager: ObservableObject {
             return preferred.contains(tag)
         }
 
-        let today = Calendar.current.startOfDay(for: Date())
+        let today = Date()
         let dueAll = filtered.filter { w in
-            if let d = w.dueDate { return d <= today } else { return true }
+            WordDue.isDue(introduced: w.introduced, dueDate: w.dueDate, now: today)
         }
         var due = dueAll.filter(topicBoost).shuffled() + dueAll.filter { !topicBoost($0) }.shuffled()
 
         let notDueAll = filtered.filter { w in
-            if let d = w.dueDate { return d > today } else { return false }
+            w.introduced && WordDue.isUpcoming(introduced: w.introduced, dueDate: w.dueDate, now: today)
         }
         let notDue = notDueAll.filter(topicBoost).shuffled() + notDueAll.filter { !topicBoost($0) }.shuffled()
 

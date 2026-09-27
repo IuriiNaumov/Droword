@@ -12,6 +12,8 @@ struct DictionarySettingsView: View {
     @State private var importedCount: Int?
     @State private var importError: String?
     @State private var showClearConfirm = false
+    @AppStorage(AppStorageKeys.iCloudSyncEnabled) private var iCloudSyncEnabled = false
+    @State private var iCloudStatusNote: String?
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -38,22 +40,32 @@ struct DictionarySettingsView: View {
                     settingsRow(icon: "square.and.arrow.down", color: themeStore.iconGreen, title: "Import Words") {
                         showImportPicker = true
                     }
+                    iCloudSyncRow
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+                .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
 
-                Text("Works with exports from Anki, Quizlet, and any CSV or TXT file. Minimum: a column named \"Word\". Translations will be added automatically if missing.")
+                Text("Works with exports from Anki, Quizlet, and any CSV or TXT file. Minimum: a column named \"Word\". Translations will be added automatically if missing. iCloud keeps the dictionary in sync across your devices when enabled.")
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
                     .padding(.horizontal, 4)
                     .padding(.top, -8)
 
-                VStack(spacing: 0) {
-                    settingsRow(icon: "trash.fill", color: Color.accentRed, title: "Clear dictionary") {
-                        guard !store.words.isEmpty else { return }
-                        showClearConfirm = true
+                Button {
+                    guard !store.words.isEmpty else { return }
+                    Haptics.warning()
+                    showClearConfirm = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("Clear dictionary")
                     }
+                    .duo3DStyle(themeStore.accentRed)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous))
+                .buttonStyle(Duo3DButtonStyle())
+                .disabled(store.words.isEmpty)
+                .opacity(store.words.isEmpty ? 0.45 : 1)
             }
             .padding(.bottom, 20)
             .padding(.horizontal, 20)
@@ -101,10 +113,10 @@ struct DictionarySettingsView: View {
         .overlay {
             if showClearConfirm {
                 CustomAlertView(
-                    icon: "trash.fill",
+                    icon: "trash",
                     iconColor: Color.accentRed,
                     title: "Clear dictionary?",
-                    message: "This action cannot be undone.",
+                    message: "All words will be deleted and cannot be recovered.",
                     primaryButton: .init(title: "Clear all", style: .destructive) {
                         store.clear()
                         showClearConfirm = false
@@ -118,7 +130,7 @@ struct DictionarySettingsView: View {
                 .zIndex(999)
             } else if let count = importedCount {
                 CustomAlertView(
-                    icon: "checkmark.circle.fill",
+                    icon: "checkmark.circle",
                     iconColor: themeStore.mainAccentColor,
                     title: "Import Complete",
                     message: LocalizedStringKey(
@@ -134,7 +146,7 @@ struct DictionarySettingsView: View {
                 .zIndex(999)
             } else if let importError {
                 CustomAlertView(
-                    icon: "exclamationmark.triangle.fill",
+                    icon: "exclamationmark.triangle",
                     iconColor: themeStore.accentGold,
                     title: "Import failed",
                     message: LocalizedStringKey(importError),
@@ -175,9 +187,59 @@ struct DictionarySettingsView: View {
             }
             .padding(.vertical, 14)
             .padding(.horizontal, 18)
-            .background(themeStore.cardBg)
         }
         .buttonStyle(.plain)
+    }
+
+    private var iCloudSyncRow: some View {
+        HStack(spacing: 14) {
+            MenuSymbol(systemName: "icloud")
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("iCloud Sync")
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
+                if let iCloudStatusNote {
+                    Text(iCloudStatusNote)
+                        .font(themeStore.regular(12))
+                        .foregroundStyle(themeStore.secondaryText)
+                } else if !WordsICloudSync.isAvailable {
+                    Text("Sign in to iCloud on this device to enable sync.")
+                        .font(themeStore.regular(12))
+                        .foregroundStyle(themeStore.secondaryText)
+                }
+            }
+
+            Spacer()
+
+            Toggle("", isOn: Binding(
+                get: { iCloudSyncEnabled },
+                set: { newValue in
+                    Haptics.menuTap()
+                    guard WordsICloudSync.isAvailable || !newValue else {
+                        iCloudStatusNote = String(localized: "iCloud is unavailable on this device.")
+                        return
+                    }
+                    iCloudSyncEnabled = newValue
+                    WordsICloudSync.isEnabled = newValue
+                    if newValue {
+                        store.flushPendingSave()
+                        store.reloadFromDisk(force: true)
+                        iCloudStatusNote = String(localized: "Syncing with iCloud…")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            iCloudStatusNote = nil
+                        }
+                    } else {
+                        iCloudStatusNote = nil
+                    }
+                }
+            ))
+            .labelsHidden()
+            .tint(themeStore.mainAccentColor)
+            .disabled(!WordsICloudSync.isAvailable && !iCloudSyncEnabled)
+        }
+        .padding(.vertical, 14)
+        .padding(.horizontal, 18)
     }
 
     private func exportCSV() {

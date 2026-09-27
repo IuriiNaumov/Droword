@@ -11,12 +11,12 @@ enum ChallengeType: String, Codable, CaseIterable {
 
     var icon: String {
         switch self {
-        case .addWords:       return "plus.circle.fill"
-        case .perfectQuiz:    return "star.fill"
+        case .addWords:       return "plus.circle"
+        case .perfectQuiz:    return "star"
         case .practiceQuiz:   return "brain.head.profile"
         case .reviewWords:    return "arrow.clockwise"
-        case .studyTime:      return "clock.fill"
-        case .addTaggedWords: return "tag.fill"
+        case .studyTime:      return "clock"
+        case .addTaggedWords: return "tag"
         }
     }
 }

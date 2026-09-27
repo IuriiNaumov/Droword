@@ -25,10 +25,10 @@ struct ReadingStoryCard: View {
             }
             .padding(DesignSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(Text("Reading practice"))
@@ -154,14 +154,7 @@ struct StoryView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                     Text("New story")
                 }
-                .font(themeStore.bold(17))
-                .foregroundStyle(themeStore.mainAccentColor)
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
-                        .fill(themeStore.mainAccentColor.opacity(0.12))
-                )
+                .duo3DStyle(themeStore.mainAccentColor)
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.top, 8)

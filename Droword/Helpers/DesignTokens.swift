@@ -46,6 +46,7 @@ struct CleanCardModifier: ViewModifier {
     let isGlass: Bool
     let cardBg: Color
     var cornerRadius: CGFloat = DesignRadius.large
+    var borderColor: Color? = nil
 
     func body(content: Content) -> some View {
         content
@@ -53,6 +54,12 @@ struct CleanCardModifier: ViewModifier {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .fill(isGlass ? Color.clear : cardBg)
             )
+            .overlay {
+                if let borderColor {
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .strokeBorder(borderColor, lineWidth: 2)
+                }
+            }
             .modifier(GlassCardModifier(isGlass: isGlass, cornerRadius: cornerRadius))
     }
 }
@@ -65,13 +72,25 @@ extension View {
     func cleanCard(
         isGlass: Bool,
         cardBg: Color,
-        cornerRadius: CGFloat = DesignRadius.large
+        cornerRadius: CGFloat = DesignRadius.large,
+        borderColor: Color? = nil
     ) -> some View {
-        modifier(CleanCardModifier(isGlass: isGlass, cardBg: cardBg, cornerRadius: cornerRadius))
+        modifier(CleanCardModifier(
+            isGlass: isGlass,
+            cardBg: cardBg,
+            cornerRadius: cornerRadius,
+            borderColor: borderColor
+        ))
     }
 
-    func cleanCard(themeStore: ThemeStore, cornerRadius: CGFloat = DesignRadius.large) -> some View {
-        cleanCard(isGlass: themeStore.isGlass, cardBg: themeStore.cardBg, cornerRadius: cornerRadius)
+    func cleanCard(themeStore: ThemeStore, cornerRadius: CGFloat? = nil) -> some View {
+        let radius = cornerRadius ?? themeStore.cardRadius
+        return cleanCard(
+            isGlass: themeStore.isGlass,
+            cardBg: themeStore.cardBg,
+            cornerRadius: radius,
+            borderColor: nil
+        )
     }
 
     func modernSheet() -> some View {

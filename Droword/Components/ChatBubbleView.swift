@@ -57,7 +57,7 @@ struct ChatBubbleView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
                 .background(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(bubbleFill)
                 )
             if !isUser { Spacer(minLength: 48) }

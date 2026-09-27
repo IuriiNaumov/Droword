@@ -11,12 +11,12 @@ enum CoachMarkCatalog {
         CoachMarkStep(
             title: "Add words",
             message: "Tap + to add a word. I translate it, find examples, and make a card.",
-            icon: "plus.circle.fill"
+            icon: "plus.circle"
         ),
         CoachMarkStep(
             title: "Today's lesson",
             message: "One short session on Home. Due words and your vibe go in there.",
-            icon: "bolt.fill"
+            icon: "bolt"
         ),
         CoachMarkStep(
             title: "Practice",
@@ -26,7 +26,7 @@ enum CoachMarkCatalog {
         CoachMarkStep(
             title: "Your week",
             message: "The fire and the week dots are the same streak. Study keeps it alive.",
-            icon: "flame.fill"
+            icon: "flame"
         ),
     ]
 }

@@ -1,4 +1,7 @@
 import SwiftUI
+import UIKit
+import ObjectiveC
+import Combine
 import AVFoundation
 
 struct HomeView: View {
@@ -15,7 +18,10 @@ struct HomeView: View {
 
     @State private var showAddWordView = false
     @State private var sharedWord: String = ""
+    @State private var showScanFromShare = false
+    @State private var sharedExtractText: String = ""
     @State private var selectedTab: Tab = .home
+    @StateObject private var tabBarVisibility = TabBarVisibility()
     @State private var activeMilestone: MilestoneType?
     @AppStorage(AppStorageKeys.lastCelebratedWordCount) private var lastCelebratedWordCount: Int = 0
     @AppStorage(AppStorageKeys.lastCelebratedDailyGoal) private var lastCelebratedDailyGoalDate: String = ""
@@ -48,15 +54,12 @@ struct HomeView: View {
     @State private var copiedToast = false
     @State private var copiedToastToken = 0
     @State private var cachedRecentWords: [StoredWord] = []
-    @State private var cachedDueWordsCount: Int = 0
-    @State private var cachedNextReviewInfo: (count: Int, date: Date)? = nil
     @State private var showDailyLesson = false
     @State private var showStory = false
     @State private var showStreakCalendar = false
     @State private var chatSceneTarget: ChatSceneTarget?
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
-    @State private var reviewTimerDismissed = false
 
     enum Tab: String, CaseIterable, Identifiable {
         case home
@@ -79,17 +82,13 @@ struct HomeView: View {
             switch self {
             case .home: return "house"
             case .list: return "rectangle.portrait.on.rectangle.portrait"
-            case .practice: return "lightbulb"
+            case .practice: return "bolt"
             case .add: return "plus.circle"
             }
         }
     }
 
     private let coachMarkSteps: [CoachMarkStep] = CoachMarkCatalog.homeSteps
-
-    private var dueWordsCount: Int { cachedDueWordsCount }
-
-    private var nextReviewInfo: (count: Int, date: Date)? { cachedNextReviewInfo }
 
     private var dailyLessonPlan: DailyLessonPlan {
         DailyLessonBuilder.plan(
@@ -118,25 +117,28 @@ struct HomeView: View {
     private var tabRoot: some View {
         TabView(selection: $selectedTab) {
             mainContent
-                .tabItem { Label(Tab.home.title, systemImage: Tab.home.systemImage) }
+                .background(TabBarSlideInstaller(hidden: tabBarVisibility.hidden))
+                .tabItem { tabLabel(for: .home) }
                 .tag(Tab.home)
 
             DictionaryView()
-                .tabItem { Label(Tab.list.title, systemImage: Tab.list.systemImage) }
+                .tabItem { tabLabel(for: .list) }
                 .tag(Tab.list)
 
             PracticeView(onCloseResults: { selectedTab = .home })
-                .tabItem { Label(Tab.practice.title, systemImage: Tab.practice.systemImage) }
+                .tabItem { tabLabel(for: .practice) }
                 .tag(Tab.practice)
 
             Color.clear
-                .tabItem { Label(Tab.add.title, systemImage: Tab.add.systemImage) }
+                .tabItem { tabLabel(for: .add) }
                 .tag(Tab.add)
         }
         .tint(themeStore.tabTint)
         .background(themeStore.appBg.ignoresSafeArea())
         .environmentObject(suggested)
+        .environmentObject(tabBarVisibility)
         .onChange(of: selectedTab) { _, newValue in
+            tabBarVisibility.show()
             NotificationCenter.default.post(name: .dismissReactionPicker, object: nil)
             if newValue == .add {
                 Haptics.addWordTap()
@@ -148,6 +150,11 @@ struct HomeView: View {
         }
     }
 
+    private func tabLabel(for tab: Tab) -> some View {
+        Image(systemName: tab.systemImage)
+            .accessibilityLabel(Text(tab.title))
+    }
+
     private func homeCovers<Content: View>(_ content: Content) -> some View {
         content
         .fullScreenCover(isPresented: $showAddWordView, onDismiss: {
@@ -156,6 +163,15 @@ struct HomeView: View {
         }) {
             AddWordView(initialWord: sharedWord, store: store)
                 .environmentObject(store)
+                .environmentObject(themeStore)
+                .environmentObject(languageStore)
+                .tint(themeStore.mainAccentColor)
+                .transaction { $0.disablesAnimations = true }
+        }
+        .fullScreenCover(isPresented: $showScanFromShare, onDismiss: {
+            sharedExtractText = ""
+        }) {
+            ScanWordsView(store: store, initialText: sharedExtractText)
                 .environmentObject(themeStore)
                 .environmentObject(languageStore)
                 .tint(themeStore.mainAccentColor)
@@ -250,6 +266,12 @@ struct HomeView: View {
                 sharedWord = word
                 showAddWordView = true
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sharedTextReceived)) { notification in
+            let text = (notification.userInfo?["text"] as? String) ?? ""
+            sharedExtractText = text
+            selectedTab = .home
+            showScanFromShare = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .openChatScene)) { notification in
             _ = ChatSceneLaunch.takePending()
@@ -355,10 +377,13 @@ struct HomeView: View {
             for m in wordMilestones {
                 if newValue >= m, lastCelebratedWordCount < m {
                     lastCelebratedWordCount = m
+                    badgeStore.markCelebrated(ids: ["words.\(m)"])
                     activeMilestone = .wordCount(m)
                     break
                 }
             }
+
+            presentPendingBadgeCelebrationIfNeeded()
         }
     }
 
@@ -428,7 +453,7 @@ struct HomeView: View {
                 BannerToastView(
                     type: .dark,
                     message: String(localized: "Copied"),
-                    icon: "doc.on.doc.fill",
+                    icon: "doc.on.doc",
                     duration: 1.5,
                     fromEdge: .top,
                     compact: true
@@ -471,6 +496,10 @@ struct HomeView: View {
                         plan: dailyLessonPlan,
                         onStart: {
                             showDailyLesson = true
+                        },
+                        onAddWords: {
+                            Haptics.buttonPress()
+                            showAddWordView = true
                         },
                         onDismissDone: {
                             dailyLessonDoneDismissedDay = todayDayString
@@ -525,14 +554,6 @@ struct HomeView: View {
                     .accessibilityHint(Text("\(challengeManager.completedCount) of \(challengeManager.challenges.count) completed"))
                     .padding(.horizontal, 20)
                     .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-
-                if dueWordsCount == 0,
-                   !reviewTimerDismissed,
-                   let info = nextReviewInfo {
-                    HomeNextReviewCard(count: info.count, date: info.date) {
-                        reviewTimerDismissed = true
-                    }
                 }
 
                 if network.isConnected,
@@ -634,6 +655,7 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
         }
+        .hidesMenuOnScrollDown(tabBarVisibility)
         .onAppear {
             if !homeQuietedV1 {
                 showDailyChallengesSection = false
@@ -667,6 +689,9 @@ struct HomeView: View {
             for m in streakMilestones {
                 if currentStreak >= m, lastCelebratedStreak < m {
                     lastCelebratedStreak = m
+                    if [7, 30, 100].contains(m) {
+                        badgeStore.markCelebrated(ids: ["streak.\(m)"])
+                    }
                     activeMilestone = .streak(m)
                     break
                 }
@@ -677,6 +702,7 @@ struct HomeView: View {
         .onChange(of: store.revision) { _, _ in refreshCachedWordData() }
         .onChange(of: badgeStore.quizCompletions) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
         .onChange(of: badgeStore.suggestedWordsAccepted) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
+        .onChange(of: badgeStore.dailyGoalCompletions) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
         .onChange(of: activeMilestone) { _, newValue in
             if newValue == nil {
                 presentPendingBadgeCelebrationIfNeeded()
@@ -707,7 +733,7 @@ struct HomeView: View {
             subtitle: "New words won't get translations until tomorrow. Upgrade to Pro for unlimited."
         )
         .padding(16)
-        .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
+        .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
         .onTapGesture {
             Haptics.softTap()
             showPremiumFromLimit = true
@@ -737,23 +763,6 @@ struct HomeView: View {
 
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
-
-        let now = Date()
-        cachedDueWordsCount = store.words.filter { w in
-            WordDue.isDue(introduced: w.introduced, dueDate: w.dueDate, now: now)
-        }.count
-
-        let upcoming = store.words.compactMap { w -> Date? in
-            guard WordDue.isUpcoming(introduced: w.introduced, dueDate: w.dueDate, now: now) else { return nil }
-            return w.dueDate
-        }.sorted()
-        if let earliest = upcoming.first {
-            let windowEnd = earliest.addingTimeInterval(3600)
-            let count = upcoming.filter { $0 <= windowEnd }.count
-            cachedNextReviewInfo = (count, earliest)
-        } else {
-            cachedNextReviewInfo = nil
-        }
     }
 
     private func checkSuggestionTrigger() {
@@ -770,6 +779,131 @@ struct HomeView: View {
                 await suggested.fetchSuggestions(basedOn: store.words, languageStore: languageStore)
             }
         }
+    }
+}
+
+/// Slides the system tab bar down off screen, without changing its height.
+private struct TabBarSlideInstaller: UIViewControllerRepresentable {
+    var hidden: Bool
+
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+
+    func updateUIViewController(_ uiViewController: Controller, context: Context) {
+        uiViewController.setHidden(hidden)
+    }
+
+    final class Controller: UIViewController {
+        private var hidden = false
+
+        func setHidden(_ hidden: Bool) {
+            let changed = hidden != self.hidden
+            self.hidden = hidden
+            TabBarSlideFlag.hidden = hidden
+            DispatchQueue.main.async { [weak self] in
+                self?.slide(animated: changed)
+            }
+        }
+
+        private func slide(animated: Bool) {
+            guard let bar = tabBarController?.tabBar else { return }
+            if object_getClass(bar) != SlidingTabBar.self {
+                object_setClass(bar, SlidingTabBar.self)
+            }
+            bar.clipsToBounds = false
+            let shift = bar.bounds.height + 20
+            let target: CGAffineTransform = hidden
+                ? CGAffineTransform(translationX: 0, y: shift)
+                : .identity
+            let updates = { bar.transform = target }
+            if animated {
+                UIView.animate(
+                    withDuration: 0.45,
+                    delay: 0,
+                    options: [.curveEaseInOut, .beginFromCurrentState, .allowUserInteraction],
+                    animations: updates
+                )
+            } else {
+                updates()
+            }
+        }
+    }
+}
+
+private enum TabBarSlideFlag {
+    static var hidden = false
+}
+
+private final class SlidingTabBar: UITabBar {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard layer.animation(forKey: "transform") == nil else { return }
+        let shift = bounds.height + 20
+        transform = TabBarSlideFlag.hidden
+            ? CGAffineTransform(translationX: 0, y: shift)
+            : .identity
+    }
+}
+
+/// Slides the tab bar half a second after scrolling in that direction begins.
+final class TabBarVisibility: ObservableObject {
+    @Published private(set) var hidden = false
+    private var settle: Task<Void, Never>?
+    private var pendingHidden: Bool?
+
+    func report(offset: CGFloat, delta: CGFloat) {
+        let wantsHidden: Bool
+        if offset <= 4 || delta < -0.5 {
+            wantsHidden = false
+        } else if delta > 1 {
+            wantsHidden = true
+        } else {
+            return
+        }
+        if wantsHidden == hidden, pendingHidden == nil { return }
+        if pendingHidden == wantsHidden { return }
+
+        pendingHidden = wantsHidden
+        settle?.cancel()
+        settle = Task { @MainActor in
+            do {
+                try await Task.sleep(for: .seconds(0.5))
+            } catch {
+                return
+            }
+            pendingHidden = nil
+            settle = nil
+            setHidden(wantsHidden)
+        }
+    }
+
+    func show() {
+        settle?.cancel()
+        settle = nil
+        pendingHidden = nil
+        setHidden(false)
+    }
+
+    private func setHidden(_ value: Bool) {
+        guard hidden != value else { return }
+        hidden = value
+    }
+}
+
+private struct HideMenuOnScrollDown: ViewModifier {
+    let visibility: TabBarVisibility
+
+    func body(content: Content) -> some View {
+        content.onScrollGeometryChange(for: CGFloat.self) { geo in
+            geo.contentOffset.y + geo.contentInsets.top
+        } action: { previous, next in
+            visibility.report(offset: next, delta: next - previous)
+        }
+    }
+}
+
+extension View {
+    func hidesMenuOnScrollDown(_ visibility: TabBarVisibility) -> some View {
+        modifier(HideMenuOnScrollDown(visibility: visibility))
     }
 }
 

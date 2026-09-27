@@ -13,21 +13,21 @@ enum ModalIconKind: String, CaseIterable, Identifiable {
 
     var systemName: String {
         switch self {
-        case .trash: return "trash.fill"
-        case .warning: return "exclamationmark.triangle.fill"
-        case .success: return "checkmark.circle.fill"
+        case .trash: return "trash"
+        case .warning: return "exclamationmark.triangle"
+        case .success: return "checkmark.circle"
         case .offline: return "wifi.slash"
-        case .duplicate: return "doc.on.doc.fill"
-        case .idea: return "lightbulb.fill"
-        case .celebrate: return "star.fill"
+        case .duplicate: return "doc.on.doc"
+        case .idea: return "lightbulb"
+        case .celebrate: return "star"
         }
     }
 
     static func from(systemName: String) -> ModalIconKind {
         switch systemName {
         case "trash", "trash.fill": return .trash
-        case "exclamationmark.triangle.fill", "exclamationmark.triangle": return .warning
-        case "checkmark.circle.fill", "checkmark.circle", "checkmark": return .success
+        case "exclamationmark.triangle", "exclamationmark.triangle.fill": return .warning
+        case "checkmark.circle", "checkmark.circle.fill", "checkmark": return .success
         case "wifi.slash": return .offline
         case "doc.on.doc", "doc.on.doc.fill": return .duplicate
         case "lightbulb", "lightbulb.fill": return .idea

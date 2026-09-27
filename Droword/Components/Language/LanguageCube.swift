@@ -32,22 +32,14 @@ struct LanguageCube: View {
                 .frame(height: 88)
                 .padding(.horizontal, 4)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(
                             isSelected
                                 ? accent.opacity(0.14)
                                 : (themeStore.isGlass ? Color.clear : themeStore.cardBg)
                         )
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, cornerRadius: DesignRadius.card))
-
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(accent)
-                        .background(Circle().fill(themeStore.cardBg).padding(1))
-                        .offset(x: 2, y: -2)
-                }
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, cornerRadius: themeStore.cardRadius))
             }
             .scaleEffect(internalPressedState ? 0.97 : 1.0)
             .opacity(isBlocked ? 0.4 : 1.0)

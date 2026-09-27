@@ -21,7 +21,7 @@ struct SuggestedWordsIntroView: View {
                 .onTapGesture { onDismiss() }
 
             VStack(spacing: 18) {
-                Image(systemName: "lightbulb.fill")
+                Image(systemName: "lightbulb")
                     .font(.system(size: 36, weight: .semibold))
                     .foregroundStyle(themeStore.accentGold)
                     .scaleEffect(iconScale)
@@ -50,7 +50,7 @@ struct SuggestedWordsIntroView: View {
                         text: "Helps expand your vocabulary naturally"
                     )
                     bulletRow(
-                        icon: "plus.circle.fill",
+                        icon: "plus.circle",
                         text: "Add them to your dictionary with one tap"
                     )
                 }

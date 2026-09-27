@@ -1004,7 +1004,7 @@ enum DuoChaosCopy {
     static func dailyChallengesTitle() -> String {
         t([
         "en": "Daily challenges",
-        "ru": "Дневные челленджи",
+        "ru": "Испытания",
         "de": "Tägliche Challenges",
         "es": "Retos diarios",
         "fr": "Défis du jour",

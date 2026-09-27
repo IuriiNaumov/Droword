@@ -21,9 +21,9 @@ struct QuizCompletionView: View {
 
     private var scoreColor: Color {
         switch percentage {
-        case 70...100: return themeStore.accentGreen
+        case 70...100: return themeStore.successStrong
         case 40..<70: return themeStore.isSunset ? themeStore.accentGold : Color(red: 1.0, green: 0.902, blue: 0.655)
-        default: return themeStore.accentRed
+        default: return themeStore.errorStrong
         }
     }
 
@@ -154,16 +154,16 @@ struct QuizCompletionView: View {
             .frame(minWidth: 70)
 
             statBubble(
-                icon: "checkmark.circle.fill",
+                icon: "checkmark.circle",
                 value: "\(correct)",
                 label: "Correct",
-                color: themeStore.accentGreen
+                color: themeStore.successStrong
             )
             statBubble(
-                icon: "xmark.circle.fill",
+                icon: "xmark.circle",
                 value: "\(total - correct)",
                 label: "Missed",
-                color: themeStore.accentRed
+                color: themeStore.errorStrong
             )
         }
         .padding(.top, 4)
@@ -193,8 +193,8 @@ struct QuizCompletionView: View {
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill((moment.landed ? themeStore.accentGreen : themeStore.accentRed).opacity(0.1))
+                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                        .fill((moment.landed ? themeStore.successStrong : themeStore.errorStrong).opacity(0.1))
                 )
             }
         }
@@ -222,8 +222,8 @@ struct QuizCompletionView: View {
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(themeStore.accentRed.opacity(0.08))
+                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                        .fill(themeStore.errorStrong.opacity(0.08))
                 )
             }
         }

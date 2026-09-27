@@ -470,35 +470,44 @@ Return ONLY valid JSON:
 
 async function handleExtractWords(request: Request, env: Env): Promise<Response> {
   const raw = await request.json<{
-    image: string;
+    image?: string;
+    text?: string;
     learningLanguage: string;
     nativeLanguage: string;
   }>();
 
   const learningLanguage = clipText(raw.learningLanguage, 48);
   const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const pastedText = clipText(raw.text ?? "", 12000);
+  const hasImage = typeof raw.image === "string" && raw.image.length > 0 && !imageTooLarge(raw.image);
 
-  if (imageTooLarge(raw.image) || !learningLanguage || !nativeLanguage) {
-    return errorResponse("Missing required fields: image, learningLanguage, nativeLanguage", 400);
+  if ((!hasImage && !pastedText) || !learningLanguage || !nativeLanguage) {
+    return errorResponse(
+      "Missing required fields: learningLanguage, nativeLanguage, and either image or text",
+      400
+    );
   }
 
-  const image = raw.image;
+  const sourceHint = hasImage
+    ? "Look at the image carefully. It may be a vocabulary list, a textbook or workbook page, a screenshot, or handwritten notes."
+    : "Read the pasted text carefully. It may be an article excerpt, chat message, subtitle block, textbook paragraph, or a list of words.";
 
   const prompt = `You are a vocabulary extraction assistant for a language-learning app.
 
-Look at the image carefully. It may be a vocabulary list, a textbook or workbook page, a screenshot, or handwritten notes.
+${sourceHint}
 
 TASK: Extract vocabulary items in ${learningLanguage} together with a ${nativeLanguage} translation.
 
-For every distinct ${learningLanguage} word or short phrase you can read, provide:
+For every distinct ${learningLanguage} word or short phrase worth learning, provide:
 - word: the ${learningLanguage} word or phrase exactly as written (keep the original script; if it is shown in romaji/pinyin, keep that form). Fix only obvious OCR artifacts (broken or merged characters) using your knowledge of ${learningLanguage}.
-- translation: a natural translation in ${nativeLanguage}. If the image already shows a translation but in another language, translate it into ${nativeLanguage} yourself.
+- translation: a natural translation in ${nativeLanguage}. If a translation is already shown but in another language, translate it into ${nativeLanguage} yourself.
 - type: part of speech in ${nativeLanguage} (noun, verb, adjective, …), or null if unclear.
 - transcription: a pronunciation guide suited to the language — IPA in /…/ for Latin-script languages, or romaji / pinyin / romanization for Japanese, Chinese, Korean, etc. Use null if it adds nothing.
 
 RULES:
 - Read in natural reading order and keep multi-word expressions together as a single item.
-- Extract ONLY genuine ${learningLanguage} vocabulary. Skip page numbers, exercise numbers, headers, instructions, and any text that is actually in ${nativeLanguage}.
+- Extract ONLY genuine ${learningLanguage} vocabulary. Skip page numbers, exercise numbers, headers, instructions, URLs, and any text that is actually in ${nativeLanguage}.
+- Prefer concrete, useful words and short phrases over function words alone.
 - Never repeat the same word twice.
 - Return at most 60 items, prioritising the clearest, most useful vocabulary.
 - Return ONLY valid JSON in exactly this shape, with no commentary:
@@ -510,6 +519,26 @@ RULES:
 }
 
 If you find no vocabulary, return { "words": [] }.`;
+
+  const userContent: unknown[] = [];
+  if (hasImage && raw.image) {
+    userContent.push({
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: "image/jpeg",
+        data: raw.image,
+      },
+    });
+  }
+  if (pastedText) {
+    userContent.push({
+      type: "text",
+      text: hasImage ? `${prompt}\n\nAdditional text context:\n${pastedText}` : `${prompt}\n\nTEXT:\n${pastedText}`,
+    });
+  } else {
+    userContent.push({ type: "text", text: prompt });
+  }
 
   const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -525,20 +554,7 @@ If you find no vocabulary, return { "words": [] }.`;
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/jpeg",
-                data: image,
-              },
-            },
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
+          content: userContent,
         },
       ],
     }),

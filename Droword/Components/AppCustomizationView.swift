@@ -23,8 +23,9 @@ struct AppCustomizationView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: 10) {
-                Color.clear.frame(height: 4)
+            VStack(alignment: .leading, spacing: 20) {
+                Text("App customization")
+                    .sheetTitle()
 
                 backgroundCard
                 appIconCard
@@ -47,12 +48,10 @@ struct AppCustomizationView: View {
 
                 Spacer(minLength: 32)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())
-        .navigationTitle("App customization")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 SettingsBackButton()
@@ -128,7 +127,7 @@ struct AppCustomizationView: View {
             themeSheetPalette = palette
             showThemeSheet = true
         } label: {
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: colors,
@@ -137,7 +136,7 @@ struct AppCustomizationView: View {
                     )
                 )
                 .overlay {
-                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
@@ -151,20 +150,13 @@ struct AppCustomizationView: View {
                 }
                 .frame(width: 92, height: 122)
                 .overlay {
-                    RoundedRectangle(cornerRadius: DesignRadius.large - 1.5, style: .continuous)
+                    RoundedRectangle(cornerRadius: themeStore.cardRadius - 1.5, style: .continuous)
                         .strokeBorder(selected ? accent : Color.clear, lineWidth: 1.5)
                         .padding(1.5)
                 }
                 .overlay {
-                    if selected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(accent)
-                            .background(Circle().fill(themeStore.cardBg).padding(1))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                            .padding(7)
-                    } else if !isPremium && palette != .colorful {
-                        Image(systemName: "lock.fill")
+                    if !isPremium && palette != .colorful {
+                        Image(systemName: "lock")
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(7)
@@ -229,7 +221,7 @@ struct AppCustomizationView: View {
                 ZStack(alignment: .topTrailing) {
                     AppIconArtwork(style: style, size: 60)
                         .overlay {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
                                 .strokeBorder(
                                     selected ? themeStore.mainAccentColor : Color.clear,
                                     lineWidth: 1.5
@@ -237,14 +229,8 @@ struct AppCustomizationView: View {
                         }
                         .opacity(selected ? 1 : 0.85)
 
-                    if selected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(themeStore.mainAccentColor)
-                            .background(Circle().fill(themeStore.cardBg).padding(1))
-                            .padding(3)
-                    } else if locked {
-                        Image(systemName: "lock.fill")
+                    if locked {
+                        Image(systemName: "lock")
                             .font(.system(size: 8, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(5)
@@ -345,7 +331,7 @@ struct AppCustomizationView: View {
 
 private extension View {
     func plataSurface(_ themeStore: ThemeStore) -> some View {
-        cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.large)
+        cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
     }
 }
 

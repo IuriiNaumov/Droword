@@ -12,7 +12,7 @@ struct AppearancePickerView: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Text("Appearance")
                 .sheetTitle()
 
@@ -51,7 +51,7 @@ struct AppearancePickerView: View {
             VStack(spacing: 10) {
                 previewBlock(for: option)
                     .aspectRatio(200.0 / 340.0, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                 Text(option.title)
                     .font(themeStore.medium(14))

@@ -107,20 +107,7 @@ struct ReviewSectionView: View {
     private var reviewCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let tag = card.tag, !tag.isEmpty {
-                Text(LocalizedStringKey(tag))
-                    .font(themeStore.medium(11))
-                    .foregroundStyle(themeStore.isGlass ? themeStore.mainText : themeStore.colorForTag(tag))
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 10)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(
-                                themeStore.isGlass
-                                    ? themeStore.colorForTag(tag).opacity(0.28)
-                                    : themeStore.colorForTag(tag).opacity(0.2)
-                            )
-                    )
-                    .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+                TagBadge(text: tag)
             }
 
             if currentDirection == .recognition {
@@ -226,17 +213,10 @@ struct ReviewSectionView: View {
                         Image(systemName: "eye")
                             .font(.system(size: 14))
                         Text(currentDirection == .production ? "Show word" : "Show translation")
-                            .font(themeStore.medium(15))
                     }
-                    .foregroundStyle(primaryText.opacity(0.7))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(primaryText.opacity(0.08))
-                    )
+                    .duo3DSecondaryStyle()
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
             }
 
             if let text = nextReviewText {
@@ -258,16 +238,9 @@ struct ReviewSectionView: View {
                     advanceToNext(didReinsert: true)
                 } label: {
                     Text("Hard")
-                        .font(themeStore.bold(15))
-                        .foregroundStyle(.white)
-                        .padding(.vertical, 13)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.accentRed)
-                        )
+                        .duo3DStyle(themeStore.accentRed)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
 
                 Button {
                     Haptics.buttonPress()
@@ -276,16 +249,9 @@ struct ReviewSectionView: View {
                     showNextReviewHint(days: ivl)
                 } label: {
                     Text("Good")
-                        .font(themeStore.bold(15))
-                        .foregroundStyle(.white)
-                        .padding(.vertical, 13)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.accentBlue)
-                        )
+                        .duo3DStyle(themeStore.accentBlue)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
 
                 Button {
                     Haptics.success()
@@ -294,26 +260,19 @@ struct ReviewSectionView: View {
                     showNextReviewHint(days: ivl)
                 } label: {
                     Text("Easy")
-                        .font(themeStore.bold(15))
-                        .foregroundStyle(.white)
-                        .padding(.vertical, 13)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(themeStore.accentGreen)
-                        )
+                        .duo3DStyle(themeStore.accentGreen)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
             }
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : backgroundColor)
         )
-        .clipShape(RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.large))
-        .cardDepth(cornerRadius: 20)
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .cardDepth(cornerRadius: themeStore.cardRadius)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("Review card: \(card.word)"))
         .fullScreenCover(isPresented: $showPremiumWall) {
@@ -358,7 +317,7 @@ struct ReviewSectionView: View {
                     showPaywallFromReview = true
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "star.fill")
+                        Image(systemName: "star")
                             .font(.system(size: 14))
                         VStack(alignment: .leading, spacing: 1) {
                             Text(DuoChaosCopy.paywallSoft())
@@ -384,10 +343,10 @@ struct ReviewSectionView: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: DesignRadius.card, style: .continuous)
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: DesignRadius.card))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .fullScreenCover(isPresented: $showPaywallFromReview) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
