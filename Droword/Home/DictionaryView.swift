@@ -145,14 +145,6 @@ struct DictionaryView: View {
     private var selectModeButton: some View {
         let disabled = store.words.isEmpty
         let label = isSelectMode ? String(localized: "Done") : String(localized: "Select")
-        let fill: Color = {
-            if isSelectMode {
-                return themeStore.isGlass
-                    ? themeStore.mainAccentColor.opacity(0.32)
-                    : themeStore.mainAccentColor
-            }
-            return themeStore.isGlass ? Color.clear : themeStore.cardBg
-        }()
         let textColor: Color = {
             if disabled { return themeStore.secondaryText }
             if isSelectMode {
@@ -172,18 +164,25 @@ struct DictionaryView: View {
                 if !isSelectMode { selectedWordIDs.removeAll() }
             }
         } label: {
-            Text(label)
-                .font(themeStore.bold(15))
-                .foregroundStyle(textColor)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                        .fill(fill)
-                )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+            Group {
+                if isSelectMode && !disabled {
+                    Text(label)
+                        .font(themeStore.bold(15))
+                        .foregroundStyle(textColor)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.chipRadius)
+                } else {
+                    Text(label)
+                        .font(themeStore.bold(15))
+                        .foregroundStyle(textColor)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .duo3DChipOutlined(cornerRadius: themeStore.chipRadius)
+                }
+            }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
         .disabled(disabled)
         .opacity(disabled ? 0.5 : 1)
         .accessibilityLabel(Text(isSelectMode ? "Done selecting" : "Select words"))
@@ -303,7 +302,7 @@ struct DictionaryView: View {
                         .font(.system(size: 15, weight: .semibold))
                     Text("Delete \(selectedWordIDs.count) words")
                 }
-                .duo3DStyle(Color.accentRed)
+                .duo3DStyle(themeStore.accentRed)
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, horizontalPadding)

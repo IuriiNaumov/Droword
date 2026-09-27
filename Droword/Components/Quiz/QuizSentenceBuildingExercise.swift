@@ -143,11 +143,7 @@ struct QuizSentenceBuildingExercise: View {
             }
 
             if hasAnswered && isCorrect {
-                QuizFeedbackBadge(
-                    icon: "checkmark.circle",
-                    text: DuoChaosCopy.correct(),
-                    color: themeStore.successStrong
-                )
+                QuizCorrectFeedbackBadge(icon: "checkmark.circle")
             }
         }
         .offset(x: hasAnswered && !isCorrect ? shakeOffset : 0)

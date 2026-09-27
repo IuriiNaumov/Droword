@@ -90,24 +90,8 @@ struct HomeView: View {
 
     private let coachMarkSteps: [CoachMarkStep] = CoachMarkCatalog.homeSteps
 
-    private var dailyLessonPlan: DailyLessonPlan {
-        DailyLessonBuilder.plan(
-            words: store.words,
-            profile: learningProfile,
-            learningLanguage: languageStore.learningLanguage
-        )
-    }
-
     private var todayDayString: String {
         DateFormatting.dayFormatter.string(from: Date())
-    }
-
-    private var showDailyLessonCard: Bool {
-        let plan = dailyLessonPlan
-        if plan.isDone, dailyLessonDoneDismissedDay == todayDayString {
-            return false
-        }
-        return true
     }
 
     var body: some View {
@@ -491,22 +475,31 @@ struct HomeView: View {
                 )
                     .padding(.bottom, 16)
 
-                if showDailyLessonCard {
-                    DailyLessonCard(
-                        plan: dailyLessonPlan,
-                        onStart: {
-                            showDailyLesson = true
-                        },
-                        onAddWords: {
-                            Haptics.buttonPress()
-                            showAddWordView = true
-                        },
-                        onDismissDone: {
-                            dailyLessonDoneDismissedDay = todayDayString
-                        }
+                TimelineView(.periodic(from: .now, by: 15)) { context in
+                    let plan = DailyLessonBuilder.plan(
+                        words: store.words,
+                        profile: learningProfile,
+                        learningLanguage: languageStore.learningLanguage,
+                        now: context.date
                     )
-                    .padding(.horizontal, 20)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    let dismissedDone = plan.isDone && dailyLessonDoneDismissedDay == todayDayString
+                    if !dismissedDone {
+                        DailyLessonCard(
+                            plan: plan,
+                            onStart: {
+                                showDailyLesson = true
+                            },
+                            onAddWords: {
+                                Haptics.buttonPress()
+                                showAddWordView = true
+                            },
+                            onDismissDone: {
+                                dailyLessonDoneDismissedDay = todayDayString
+                            }
+                        )
+                        .padding(.horizontal, 20)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
 
                 HomeStreakStrip(
@@ -655,7 +648,6 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
         }
-        .hidesMenuOnScrollDown(tabBarVisibility)
         .onAppear {
             if !homeQuietedV1 {
                 showDailyChallengesSection = false
@@ -881,6 +873,13 @@ final class TabBarVisibility: ObservableObject {
         settle = nil
         pendingHidden = nil
         setHidden(false)
+    }
+
+    func hide() {
+        settle?.cancel()
+        settle = nil
+        pendingHidden = nil
+        setHidden(true)
     }
 
     private func setHidden(_ value: Bool) {

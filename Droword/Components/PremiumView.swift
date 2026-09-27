@@ -510,20 +510,12 @@ struct PremiumView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Manage Subscription")
-                        .font(themeStore.medium(15))
                     Image(systemName: "arrow.up.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 13, weight: .bold))
                 }
-                .foregroundStyle(themeStore.mainText)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                        .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-                )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+                .duo3DSecondaryStyle()
             }
-            .buttonStyle(PressableButtonStyle(scale: 0.98))
+            .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, 16)
 
             Text("Subscription renews automatically. You can cancel anytime in Settings → Apple ID → Subscriptions.")
@@ -562,11 +554,11 @@ struct PremiumView: View {
         HStack {
             Text(label)
                 .font(themeStore.regular(14))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(themeStore.secondaryText)
             Spacer()
             Text(value)
                 .font(themeStore.medium(14))
-                .foregroundStyle(.primary)
+                .foregroundStyle(themeStore.mainText)
         }
     }
 

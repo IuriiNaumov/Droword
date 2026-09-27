@@ -63,12 +63,8 @@ struct QuizMatchingExercise: View {
 
             if hasAnswered {
                 if isCorrect {
-                    QuizFeedbackBadge(
-                        icon: "checkmark.circle",
-                        text: DuoChaosCopy.correct(),
-                        color: themeStore.successStrong
-                    )
-                    .padding(.top, 16)
+                    QuizCorrectFeedbackBadge(icon: "checkmark.circle")
+                        .padding(.top, 16)
                 } else {
                     QuizFeedbackBadge(
                         icon: "xmark.circle",

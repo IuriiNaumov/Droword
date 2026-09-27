@@ -34,6 +34,8 @@ struct WordPacksButton: View {
             }
 
             Spacer()
+
+            DisclosureChevron()
         }
         .padding(DesignSpacing.md)
         .background(

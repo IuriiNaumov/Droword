@@ -22,6 +22,7 @@ struct ReadingStoryCard: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
                 Spacer()
+                DisclosureChevron()
             }
             .padding(DesignSpacing.md)
             .background(

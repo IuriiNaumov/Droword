@@ -125,11 +125,7 @@ struct QuizTypingExercise: View {
             }
 
             if hasAnswered && isCorrect && !isAlmostCorrect {
-                QuizFeedbackBadge(
-                    icon: "checkmark.circle",
-                    text: DuoChaosCopy.correct(),
-                    color: themeStore.successStrong
-                )
+                QuizCorrectFeedbackBadge(icon: "checkmark.circle")
             }
         }
     }

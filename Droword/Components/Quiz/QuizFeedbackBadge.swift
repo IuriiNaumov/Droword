@@ -1,5 +1,16 @@
 import SwiftUI
 
+private struct QuizCorrectFeedbackKey: EnvironmentKey {
+    static let defaultValue: String? = nil
+}
+
+extension EnvironmentValues {
+    var quizCorrectFeedback: String? {
+        get { self[QuizCorrectFeedbackKey.self] }
+        set { self[QuizCorrectFeedbackKey.self] = newValue }
+    }
+}
+
 struct QuizFeedbackBadge: View {
     @State private var bounce: CGFloat = 0.85
     @State private var lockedText: String
@@ -22,6 +33,23 @@ struct QuizFeedbackBadge: View {
                     bounce = 1.0
                 }
             }
+    }
+}
+
+struct QuizCorrectFeedbackBadge: View {
+    @Environment(\.quizCorrectFeedback) private var correctFeedback
+    @EnvironmentObject private var themeStore: ThemeStore
+
+    var icon: String = "checkmark.circle.fill"
+
+    var body: some View {
+        let text = correctFeedback ?? DuoChaosCopy.correct()
+        QuizFeedbackBadge(
+            icon: icon,
+            text: text,
+            color: themeStore.successStrong
+        )
+        .id(text)
     }
 }
 

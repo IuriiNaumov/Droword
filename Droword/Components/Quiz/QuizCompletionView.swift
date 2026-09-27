@@ -31,17 +31,29 @@ struct QuizCompletionView: View {
         DuoChaosCopy.quizDone(percentage: percentage).title
     }
 
-    private var encouragementSubtitle: String {
-        DuoChaosCopy.quizDone(percentage: percentage).subtitle
+    var body: some View {
+        if isLesson {
+            completionStack
+        } else {
+            NavigationStack {
+                completionStack
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            if let onClose {
+                                CloseButton(action: onClose)
+                            }
+                        }
+                    }
+            }
+        }
     }
 
-    var body: some View {
+    private var completionStack: some View {
         ZStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
-                    Spacer(minLength: 40)
                     titleBlock
-                    subtitleBlock
                     if percentage == 100 {
                         PerfectLessonBadge()
                     }
@@ -86,36 +98,9 @@ struct QuizCompletionView: View {
 
     private var titleBlock: some View {
         Text(isLesson ? String(localized: "Lesson done") : encouragementText)
-            .zoomerTitle(28)
-            .environmentObject(themeStore)
+            .sheetTitle()
             .multilineTextAlignment(.center)
-            .padding(.horizontal, 20)
-    }
-
-    private var subtitleBlock: some View {
-        HStack(spacing: 4) {
-            Text(subtitleCopy)
-                .font(themeStore.regular(15))
-                .foregroundStyle(themeStore.secondaryText)
-
-            if isLesson, missedWords.isEmpty {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(themeStore.accentPink)
-                    .accessibilityHidden(true)
-            }
-        }
-        .multilineTextAlignment(.center)
-        .padding(.horizontal, 28)
-    }
-
-    private var subtitleCopy: String {
-        if isLesson {
-            return missedWords.isEmpty
-                ? String(localized: "See you tomorrow.")
-                : String(localized: "These come back tomorrow.")
-        }
-        return encouragementSubtitle
+            .padding(.horizontal, 24)
     }
 
     private var scoreRing: some View {
@@ -154,13 +139,13 @@ struct QuizCompletionView: View {
             .frame(minWidth: 70)
 
             statBubble(
-                icon: "checkmark.circle",
+                icon: "checkmark.circle.fill",
                 value: "\(correct)",
                 label: "Correct",
                 color: themeStore.successStrong
             )
             statBubble(
-                icon: "xmark.circle",
+                icon: "xmark.circle.fill",
                 value: "\(total - correct)",
                 label: "Missed",
                 color: themeStore.errorStrong

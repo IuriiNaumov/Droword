@@ -47,7 +47,12 @@ enum DailyLessonBuilder {
             : Array(profile.topics.prefix(3).map(\.localizedTitle))
 
         let snapshot = StudyActivityStore.shared.lastLesson
-        let done = StudyActivityStore.shared.isLessonDone(on: now)
+        let markedDone = StudyActivityStore.shared.isLessonDone(on: now)
+        let hasDueReady = words.contains {
+            $0.fromLanguage == learningLanguage
+                && WordDue.isDue(introduced: $0.introduced, dueDate: $0.dueDate, now: now)
+        }
+        let done = markedDone && !hasDueReady
         let next = nextReviewInfo(in: words, now: now)
 
         let eligibleCount = words.filter {
@@ -73,8 +78,7 @@ enum DailyLessonBuilder {
                 topics: topicLabels,
                 wordCount: selected.count,
                 dueCount: dueCount,
-                nextReviewCount: next.count,
-                nextReviewDate: next.date
+                nextReviewCount: next.count
             ),
             words: selected,
             minutes: minutes,
@@ -195,14 +199,12 @@ enum DailyLessonBuilder {
         topics: [String],
         wordCount: Int,
         dueCount: Int,
-        nextReviewCount: Int,
-        nextReviewDate: Date?
+        nextReviewCount: Int
     ) -> String {
         if done {
             return doneSubtitle(
                 snapshot: snapshot,
-                nextReviewCount: nextReviewCount,
-                nextReviewDate: nextReviewDate
+                nextReviewCount: nextReviewCount
             )
         }
         if !canStart {
@@ -253,16 +255,13 @@ enum DailyLessonBuilder {
 
     private static func doneSubtitle(
         snapshot: LessonSnapshot?,
-        nextReviewCount: Int,
-        nextReviewDate: Date?
+        nextReviewCount: Int
     ) -> String {
         var parts: [String] = []
         if let snapshot, snapshot.total > 0 {
             parts.append(String(localized: "\(snapshot.correct)/\(snapshot.total) today"))
         }
-        if let date = nextReviewDate, nextReviewCount > 0 {
-            parts.append(String(localized: "Next review in \(timeUntil(date))"))
-        } else if let snapshot, !snapshot.tomorrowWords.isEmpty {
+        if nextReviewCount <= 0, let snapshot, !snapshot.tomorrowWords.isEmpty {
             let preview = snapshot.tomorrowWords.prefix(3).map(\.displayCapitalized).joined(separator: ", ")
             parts.append(String(localized: "Tomorrow: \(preview)"))
         }
@@ -270,27 +269,12 @@ enum DailyLessonBuilder {
     }
 
     static func nextReviewInfo(in words: [StoredWord], now: Date = Date()) -> (count: Int, date: Date?) {
-        let upcoming = words.compactMap { w -> Date? in
-            guard WordDue.isUpcoming(introduced: w.introduced, dueDate: w.dueDate, now: now) else { return nil }
-            return w.dueDate
-        }.sorted()
-        guard let earliest = upcoming.first else { return (0, nil) }
+        let upcoming = words
+            .filter { WordDue.isUpcoming(introduced: $0.introduced, dueDate: $0.dueDate, now: now) }
+            .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
+        guard let earliest = upcoming.first?.dueDate else { return (0, nil) }
         let windowEnd = earliest.addingTimeInterval(3600)
-        let count = upcoming.filter { $0 <= windowEnd }.count
+        let count = upcoming.filter { ($0.dueDate ?? .distantFuture) <= windowEnd }.count
         return (count, earliest)
-    }
-
-    private static func timeUntil(_ date: Date) -> String {
-        let seconds = max(0, date.timeIntervalSince(Date()))
-        let minutes = Int(seconds / 60)
-        if minutes < 60 {
-            return String(localized: "\(max(1, minutes)) min")
-        }
-        let hours = minutes / 60
-        if hours < 24 {
-            return String(localized: "\(hours) h")
-        }
-        let days = hours / 24
-        return String(localized: "\(days) d")
     }
 }

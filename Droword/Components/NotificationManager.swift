@@ -105,7 +105,7 @@ final class NotificationManager {
 
         guard prefs.globalEnabled else { return }
 
-        scheduleDailyReminder(prefs: prefs)
+        scheduleDailyReminder(prefs: prefs, allWords: allWords)
         scheduleEveningChat(prefs: prefs, allWords: allWords)
         scheduleVocabNotifications(prefs: prefs, allWords: allWords)
         scheduleReviewDueNotifications(allWords: allWords)
@@ -115,10 +115,13 @@ final class NotificationManager {
         }
     }
 
-    private func scheduleDailyReminder(prefs: NotificationPreferences) {
+    private func scheduleDailyReminder(prefs: NotificationPreferences, allWords: [StoredWord]) {
         guard prefs.dailyReminderEnabled else { return }
 
-        let copy = NotificationCopy.pickDaily()
+        let dueCount = allWords.filter {
+            WordDue.isDue(introduced: $0.introduced, dueDate: $0.dueDate)
+        }.count
+        let copy = NotificationCopy.pickDaily(dueCount: dueCount)
         let content = UNMutableNotificationContent()
         content.title = copy.title
         content.body = copy.body

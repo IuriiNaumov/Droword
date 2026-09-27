@@ -156,7 +156,7 @@ struct DailyLessonCard: View {
                 Image(systemName: "timer")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(themeStore.mainAccentColor)
-                Text("\(plan.nextReviewCount) words ready in \(timeUntil(date))")
+                Text(wordsReadyLine(count: plan.nextReviewCount, date: date))
                     .font(themeStore.medium(13))
                     .foregroundStyle(themeStore.mainText)
             }
@@ -167,17 +167,40 @@ struct DailyLessonCard: View {
         }
     }
 
+    private func wordsReadyLine(count: Int, date: Date) -> String {
+        let time = timeUntil(date)
+        if RussianPlural.prefersRussian {
+            let noun = RussianPlural.words(count)
+            let verb = RussianPlural.form(count: count, one: "будет готово", few: "будут готовы", many: "будут готовы")
+            return "\(count) \(noun) \(verb) через \(time)"
+        }
+        return String(localized: "\(count) words ready in \(time)")
+    }
+
     private func timeUntil(_ date: Date) -> String {
         let seconds = max(0, date.timeIntervalSince(Date()))
         let minutes = Int(seconds / 60)
         if minutes < 60 {
-            return String(localized: "\(max(1, minutes)) min")
+            let m = max(1, minutes)
+            if RussianPlural.prefersRussian {
+                let unit = RussianPlural.form(count: m, one: "минуту", few: "минуты", many: "минут")
+                return "\(m) \(unit)"
+            }
+            return String(localized: "\(m) min")
         }
         let hours = minutes / 60
         if hours < 24 {
+            if RussianPlural.prefersRussian {
+                let unit = RussianPlural.form(count: hours, one: "час", few: "часа", many: "часов")
+                return "\(hours) \(unit)"
+            }
             return String(localized: "\(hours) h")
         }
         let days = hours / 24
+        if RussianPlural.prefersRussian {
+            let unit = RussianPlural.form(count: days, one: "день", few: "дня", many: "дней")
+            return "\(days) \(unit)"
+        }
         return String(localized: "\(days) d")
     }
 }

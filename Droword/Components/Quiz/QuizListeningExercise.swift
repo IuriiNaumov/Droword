@@ -57,11 +57,7 @@ struct QuizListeningExercise: View {
             if hasAnswered {
                 Group {
                     if isCorrect {
-                        QuizFeedbackBadge(
-                            icon: "checkmark.circle.fill",
-                            text: DuoChaosCopy.correct(),
-                            color: themeStore.successStrong
-                        )
+                        QuizCorrectFeedbackBadge()
                     } else {
                         QuizFeedbackBadge(
                             icon: "xmark.circle.fill",

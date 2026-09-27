@@ -48,6 +48,8 @@ struct DailyChallengeButton: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Done"))
                 .accessibilityHint(Text("Hide until tomorrow"))
+            } else {
+                DisclosureChevron()
             }
         }
         .padding(DesignSpacing.md)

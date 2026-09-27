@@ -12,6 +12,14 @@ enum RussianPlural {
         }
     }
 
+    static func words(_ count: Int) -> String {
+        form(count: count, one: "слово", few: "слова", many: "слов")
+    }
+
+    static func newWords(_ count: Int) -> String {
+        form(count: count, one: "новое слово", few: "новых слова", many: "новых слов")
+    }
+
     static var prefersRussian: Bool {
         let preferred = Locale.preferredLanguages.first ?? Locale.current.identifier
         return preferred.lowercased().hasPrefix("ru")

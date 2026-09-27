@@ -48,8 +48,8 @@ enum NotificationCopy {
 
 
 
-    static func pickDaily() -> (title: String, body: String) {
-        pick([
+    static func pickDaily(dueCount: Int) -> (title: String, body: String) {
+        let copy = pick([
             (
                 L("bestie open the app",
                   ru: "Бести, открой апп",
@@ -63,22 +63,22 @@ enum NotificationCopy {
                   zhHans: "bestie 打开 app",
                   zhHant: "bestie 打開 app",
                   pt: "bestie abre a app"),
-                L("your streak is shaking rn. two minutes. do it.",
-                  ru: "А то серия трясётся",
-                  de: "deine serie zittert rn. zwei minuten. mach’s.",
-                  es: "tu racha está temblando rn. dos minutos. hazlo.",
-                  fr: "ta série tremble rn. deux minutes. fais-le.",
-                  ja: "連続が今揺れてる。2分。やって。",
-                  ko: "연속이 지금 흔들림. 2분. 해.",
-                  ar: "سلسلتك عم ترجف هلأ. دقيقتين. سوّيها.",
-                  it: "la serie trema rn. due minuti. falla.",
-                  zhHans: "连续打卡在抖。两分钟。去做。",
-                  zhHant: "連續打卡在抖。兩分鐘。去做。",
-                  pt: "a sequência está a tremer rn. dois minutos. faz.")
+                L("{COUNT} {WORDS} waiting for review.",
+                  ru: "{COUNT} {WORDS} {AWAIT} повторения.",
+                  de: "{COUNT} {WORDS} {AWAIT} aufs Review.",
+                  es: "{COUNT} {WORDS} {AWAIT} repaso.",
+                  fr: "{COUNT} {WORDS} {AWAIT} une révi.",
+                  ja: "{COUNT}語が復習待ち。",
+                  ko: "{COUNT}개 단어가 복습을 기다려.",
+                  ar: "{COUNT} {WORDS} {AWAIT} المراجعة.",
+                  it: "{COUNT} {WORDS} {AWAIT} il ripasso.",
+                  zhHans: "{COUNT} 个词等着复习。",
+                  zhHant: "{COUNT} 個詞等著複習。",
+                  pt: "{COUNT} {WORDS} à espera de revisão.")
             ),
             (
                 L("plot twist: you study today",
-                  ru: "Вииижууу будущее",
+                  ru: "Вижу будущее",
                   de: "plot twist: du lernst heute",
                   es: "plot twist: estudias hoy",
                   fr: "plot twist: tu étudies aujourd’hui",
@@ -89,18 +89,18 @@ enum NotificationCopy {
                   zhHans: "剧情反转：你今天学",
                   zhHant: "劇情反轉：你今天學",
                   pt: "plot twist: estudas hoje"),
-                L("scrolling ≠ studying. open droword. soft threat.",
-                  ru: "Сегодня ты учишься!",
-                  de: "scrollen ≠ lernen. öffne droword. soft threat.",
-                  es: "scroll ≠ estudiar. abre droword. amenaza soft.",
-                  fr: "scroll ≠ étude. ouvre droword. soft threat.",
-                  ja: "スクロール≠勉強。droword開いて。やさしい脅し。",
-                  ko: "스크롤 ≠ 공부. droword 열어. 소프트 협박.",
-                  ar: "السك롤 ≠ دراسة. افتح droword. تهديد لطيف.",
-                  it: "scroll ≠ studio. apri droword. soft threat.",
-                  zhHans: "刷手机 ≠ 学习。打开 droword。温柔威胁。",
-                  zhHant: "刷手機 ≠ 學習。打開 droword。溫柔威脅。",
-                  pt: "scroll ≠ estudar. abre o droword. soft threat.")
+                L("Today you study! Just {COUNT} {WORDS} to review.",
+                  ru: "Сегодня ты учишься! Всего {COUNT} {WORDS} к повторению.",
+                  de: "Heute lernst du! Nur {COUNT} {WORDS} zum Review.",
+                  es: "¡Hoy estudias! Solo {COUNT} {WORDS} por repasar.",
+                  fr: "Aujourd’hui tu étudies ! Juste {COUNT} {WORDS} à réviser.",
+                  ja: "今日は勉強！復習は{COUNT}語だけ。",
+                  ko: "오늘 공부해! 복습은 {COUNT}개뿐.",
+                  ar: "اليوم بتدرس! بس {COUNT} {WORDS} للمراجعة.",
+                  it: "Oggi studi! Solo {COUNT} {WORDS} da ripassare.",
+                  zhHans: "今天你学习！只要复习 {COUNT} 个词。",
+                  zhHant: "今天你學習！只要複習 {COUNT} 個詞。",
+                  pt: "Hoje estudas! Só {COUNT} {WORDS} para rever.")
             ),
             (
                 L("we’re not ghosting you",
@@ -115,18 +115,18 @@ enum NotificationCopy {
                   zhHans: "不是我们在 ghost 你",
                   zhHant: "不是我們在 ghost 你",
                   pt: "não te estamos a ghostar"),
-                L("…you ghosted the vocab though. come back.",
-                  ru: "Зайди повторить словечки",
-                  de: "…aber du hast die vokabeln geghostet. komm zurück.",
-                  es: "…pero tú ghosteaste el vocabulario. vuelve.",
-                  fr: "…par contre tu as ghost le vocab. reviens.",
-                  ja: "…でも語彙をゴーストしたのは君。戻ってきて。",
-                  ko: "…근데 단어는 네가 고스트함. 돌아와.",
-                  ar: "…بس أنت غوست الكلمات. ارجع.",
-                  it: "…però hai ghostato il vocab. torna.",
-                  zhHans: "…是你 ghost 了单词。回来。",
-                  zhHant: "…是你 ghost 了單字。回來。",
-                  pt: "…mas tu ghostaste o vocabulário. volta.")
+                L("Come review {COUNT} {WORDS}.",
+                  ru: "Зайди повторить {COUNT} {WORDS}.",
+                  de: "Komm und wiederhole {COUNT} {WORDS}.",
+                  es: "Ven a repasar {COUNT} {WORDS}.",
+                  fr: "Viens réviser {COUNT} {WORDS}.",
+                  ja: "{COUNT}語を復習しに来て。",
+                  ko: "{COUNT}개 단어 복습하러 와.",
+                  ar: "تعال راجع {COUNT} {WORDS}.",
+                  it: "Vieni a ripassare {COUNT} {WORDS}.",
+                  zhHans: "来复习 {COUNT} 个词。",
+                  zhHant: "來複習 {COUNT} 個詞。",
+                  pt: "Vem rever {COUNT} {WORDS}.")
             ),
             (
                 L("main character energy check",
@@ -141,18 +141,18 @@ enum NotificationCopy {
                   zhHans: "主角光环点名",
                   zhHant: "主角光環點名",
                   pt: "check de energia main character"),
-                L("side characters scroll. you open the lesson. go.",
-                  ru: "Договор?",
-                  de: "nebenfiguren scrollen. du öffnest die lesson. go.",
-                  es: "los secundarios scrollean. tú abres la lección. go.",
-                  fr: "les seconds rôles scrollent. toi tu ouvres la leçon. go.",
-                  ja: "脇役はスクロール。君はレッスン開く。行け。",
-                  ko: "조연은 스크롤. 너는 레슨 연다. 가.",
-                  ar: "الثانويين بيسكرولوا. أنت بتفتح الدرس. يلا.",
-                  it: "i secondari scrollano. tu apri la lezione. go.",
-                  zhHans: "配角在刷。你打开课。走。",
-                  zhHant: "配角在刷。你打開課。走。",
-                  pt: "secundários fazem scroll. tu abres a lição. go.")
+                L("First {COUNT} {WORDS}. Deal?",
+                  ru: "Сначала {COUNT} {WORDS}. Договор?",
+                  de: "Zuerst {COUNT} {WORDS}. Deal?",
+                  es: "Primero {COUNT} {WORDS}. ¿Trato?",
+                  fr: "D’abord {COUNT} {WORDS}. Deal ?",
+                  ja: "まず{COUNT}語。いい？",
+                  ko: "먼저 {COUNT}개. 딜?",
+                  ar: "أولًا {COUNT} {WORDS}. صفقة؟",
+                  it: "Prima {COUNT} {WORDS}. Affare?",
+                  zhHans: "先 {COUNT} 个词。成交？",
+                  zhHant: "先 {COUNT} 個詞。成交？",
+                  pt: "Primeiro {COUNT} {WORDS}. Trato?")
             ),
             (
                 L("touch grass… after one word",
@@ -167,18 +167,18 @@ enum NotificationCopy {
                   zhHans: "touch grass…先学一个词",
                   zhHant: "touch grass…先學一個詞",
                   pt: "touch grass… depois de uma palavra"),
-                L("deal? tiny review then free. we’re watching.",
-                  ru: "Открой droword или я продолжу заваливать тебя уведомлениями",
-                  de: "deal? mini-review dann frei. wir schauen zu.",
-                  es: "¿trato? mini review y libre. te estamos mirando.",
-                  fr: "deal ? mini révi puis libre. on regarde.",
-                  ja: "取引？ちょっと復習してから自由。見てるよ。",
-                  ko: "딜? 짧게 복습하고 자유. 우리가 보고 있어.",
-                  ar: "صفقة؟ مراجعة صغيرة وبعدين حر. عم نراقب.",
-                  it: "affare? mini ripasso e poi libero. stiamo guardando.",
-                  zhHans: "成交？短复习然后自由。我们看着呢。",
-                  zhHant: "成交？短複習然後自由。我們看著呢。",
-                  pt: "trato? mini revisão e depois livre. estamos a ver.")
+                L("Open the dictionary or the notifications continue.",
+                  ru: "Открой словарь или уведомления продолжатся.",
+                  de: "Öffne das Wörterbuch oder die Notifs gehen weiter.",
+                  es: "Abre el diccionario o siguen las notifs.",
+                  fr: "Ouvre le dico ou les notifs continuent.",
+                  ja: "辞書を開かないと通知は続くよ。",
+                  ko: "사전 안 열면 알림 계속됨.",
+                  ar: "افتح القاموس أو الإشعارات بنكمل.",
+                  it: "Apri il dizionario o le notif continuano.",
+                  zhHans: "打开词典，不然通知继续。",
+                  zhHant: "打開詞典，不然通知繼續。",
+                  pt: "Abre o dicionário ou as notifs continuam.")
             ),
             (
                 L("your words left on read",
@@ -193,18 +193,18 @@ enum NotificationCopy {
                   zhHans: "单词已读不回",
                   zhHant: "單字已讀不回",
                   pt: "as tuas palavras left on read"),
-                L("rude. open up and reply with a review.",
-                  ru: "Пофикси",
-                  de: "frech. öffne und antworte mit einem review.",
-                  es: "qué grosero. abre y responde con un repaso.",
-                  fr: "vrai. ouvre et réponds avec une révi.",
-                  ja: "失礼。開いて復習で返信して。",
-                  ko: "무례함. 열고 복습으로 답장해.",
-                  ar: "وقح. افتح ورد بمراجعة.",
-                  it: "scortese. apri e rispondi con un ripasso.",
-                  zhHans: "过分。打开用复习回一下。",
-                  zhHant: "過分。打開用複習回一下。",
-                  pt: "grosseiro. abre e responde com uma revisão.")
+                L("{COUNT} {WORDS} left behind.",
+                  ru: "Заброшено {COUNT} {WORDS}.",
+                  de: "{COUNT} {WORDS} vernachlässigt.",
+                  es: "{COUNT} {WORDS} {LEFT}.",
+                  fr: "{COUNT} {WORDS} {LEFT} de côté.",
+                  ja: "{COUNT}語放置中。",
+                  ko: "{COUNT}개 방치됨.",
+                  ar: "{COUNT} {WORDS} متروكة.",
+                  it: "{COUNT} {WORDS} {LEFT}.",
+                  zhHans: "落下了 {COUNT} 个词。",
+                  zhHant: "落下了 {COUNT} 個詞。",
+                  pt: "{COUNT} {WORDS} {LEFT}.")
             ),
             (
                 L("soft threat unlocked",
@@ -219,18 +219,18 @@ enum NotificationCopy {
                   zhHans: "温柔威胁已解锁",
                   zhHant: "溫柔威脅已解鎖",
                   pt: "soft threat desbloqueada"),
-                L("open droword or we keep vibing in your notifications.",
-                  ru: "Смотри мне, а то я позвоню куда надо.",
-                  de: "öffne droword oder wir vibieren weiter in deinen notifs.",
-                  es: "abre droword o seguimos vibing en tus notifs.",
-                  fr: "ouvre droword ou on continue de vibes dans tes notifs.",
-                  ja: "droword開かないと通知でバイブス続けるよ。",
-                  ko: "droword 안 열면 알림에서 계속 바이브 함.",
-                  ar: "افتح droword أو بنكمل فايبنغ بالإشعارات.",
-                  it: "apri droword o continuiamo a vibare nelle notif.",
-                  zhHans: "打开 droword，不然我们继续在通知里蹦迪。",
-                  zhHant: "打開 droword，不然我們繼續在通知裡蹦迪。",
-                  pt: "abre o droword ou continuamos a vibar nas notifs.")
+                L("Debt: {COUNT} {WORDS} to review.",
+                  ru: "Долг: {COUNT} {WORDS} к повторению.",
+                  de: "Schuld: {COUNT} {WORDS} zum Review.",
+                  es: "Deuda: {COUNT} {WORDS} por repasar.",
+                  fr: "Dette : {COUNT} {WORDS} à réviser.",
+                  ja: "借金：復習{COUNT}語。",
+                  ko: "빚: 복습 {COUNT}개.",
+                  ar: "الدين: {COUNT} {WORDS} للمراجعة.",
+                  it: "Debito: {COUNT} {WORDS} da ripassare.",
+                  zhHans: "欠债：复习 {COUNT} 个词。",
+                  zhHant: "欠債：複習 {COUNT} 個詞。",
+                  pt: "Dívida: {COUNT} {WORDS} para rever.")
             ),
             (
                 L("bro the streak is dramatizing",
@@ -245,18 +245,18 @@ enum NotificationCopy {
                   zhHans: "连续打卡开始演了",
                   zhHant: "連續打卡開始演了",
                   pt: "bro a sequência está a dramatizar"),
-                L("one word. save the arc. be the plot armor.",
-                  ru: "Поговори с ней, плизз!",
-                  de: "ein wort. rette den arc. sei plot armor.",
-                  es: "una palabra. salva el arco. sé el plot armor.",
-                  fr: "un mot. sauve l’arc. sois le plot armor.",
-                  ja: "1語。アークを救え。plot armorになれ。",
-                  ko: "단어 하나. 아크 구해. plot armor 돼.",
-                  ar: "كلمة. أنقذ القوس. كن الـ plot armor.",
-                  it: "una parola. salva l’arco. sii il plot armor.",
-                  zhHans: "一个词。救剧情。当护体光环。",
-                  zhHant: "一個詞。救劇情。當護體光環。",
-                  pt: "uma palavra. salva o arco. sê o plot armor.")
+                L("Talk to it — {COUNT} {WORDS} waiting.",
+                  ru: "Поговори с ней — там {COUNT} {WORDS}.",
+                  de: "Rede mit ihr — da sind {COUNT} {WORDS}.",
+                  es: "Habla con ella — hay {COUNT} {WORDS}.",
+                  fr: "Parle-lui — il y a {COUNT} {WORDS}.",
+                  ja: "話して — {COUNT}語待ってる。",
+                  ko: "말해 줘 — {COUNT}개 기다려.",
+                  ar: "احكي معها — في {COUNT} {WORDS}.",
+                  it: "Parlale — ci sono {COUNT} {WORDS}.",
+                  zhHans: "跟它说说 — 有 {COUNT} 个词。",
+                  zhHant: "跟它說說 — 有 {COUNT} 個詞。",
+                  pt: "Fala com ela — há {COUNT} {WORDS}.")
             ),
             (
                 L("it’s giving neglected dictionary",
@@ -271,20 +271,76 @@ enum NotificationCopy {
                   zhHans: "it’s giving 被冷落的词典",
                   zhHant: "it’s giving 被冷落的詞典",
                   pt: "it’s giving dicionário abandonado"),
-                L("fix that. two minutes. we believe in you (kinda).",
-                  ru: "Зайди к ним",
-                  de: "fix das. zwei minuten. wir glauben an dich (irgendwie).",
-                  es: "arrégalo. dos minutos. creemos en ti (tipo).",
-                  fr: "fix ça. deux minutes. on croit en toi (genre).",
-                  ja: "直して。2分。信じてる(まあ少し)。",
-                  ko: "고쳐. 2분. 믿어 (약간).",
-                  ar: "صلّحها. دقيقتين. منآمن فيك (نوعًا).",
-                  it: "sistema. due minuti. crediamo in te (tipo).",
-                  zhHans: "修一下。两分钟。我们信你(大概)。",
-                  zhHant: "修一下。兩分鐘。我們信你(大概)。",
-                  pt: "arranja isso. dois minutos. acreditamos em ti (tipo).")
+                L("There are {COUNT} of them. Come say hi.",
+                  ru: "Их там {COUNT}. Зайди к ним.",
+                  de: "Es sind {COUNT}. Schau vorbei.",
+                  es: "Hay {COUNT}. Pásate.",
+                  fr: "Il y en a {COUNT}. Passe les voir.",
+                  ja: "{COUNT}語いるよ。会いに来て。",
+                  ko: "{COUNT}개야. 들러 줘.",
+                  ar: "في {COUNT}. فوت عليهم.",
+                  it: "Ce ne sono {COUNT}. Passa a trovarle.",
+                  zhHans: "有 {COUNT} 个。去看看它们。",
+                  zhHant: "有 {COUNT} 個。去看看它們。",
+                  pt: "São {COUNT}. Vai ter com elas.")
             ),
         ])
+        return (copy.title, fillDueCount(copy.body, count: dueCount))
+    }
+
+    private static func fillDueCount(_ template: String, count: Int) -> String {
+        let n = max(count, 1)
+        let one = n == 1
+        let words: String
+        let awaitVerb: String
+        let left: String
+        switch languageCode {
+        case "ru":
+            words = RussianPlural.words(n)
+            awaitVerb = RussianPlural.form(count: n, one: "ждёт", few: "ждут", many: "ждут")
+            left = ""
+        case "de":
+            words = one ? "Wort" : "Wörter"
+            awaitVerb = one ? "wartet" : "warten"
+            left = "vernachlässigt"
+        case "es":
+            words = one ? "palabra" : "palabras"
+            awaitVerb = one ? "espera" : "esperan"
+            left = one ? "abandonada" : "abandonadas"
+        case "fr":
+            words = one ? "mot" : "mots"
+            awaitVerb = one ? "attend" : "attendent"
+            left = one ? "laissé" : "laissés"
+        case "it":
+            words = one ? "parola" : "parole"
+            awaitVerb = one ? "aspetta" : "aspettano"
+            left = one ? "abbandonata" : "abbandonate"
+        case "pt-PT":
+            words = one ? "palavra" : "palavras"
+            awaitVerb = one ? "espera" : "esperam"
+            left = one ? "abandonada" : "abandonadas"
+        case "ar":
+            if n == 1 {
+                words = "كلمة"
+                awaitVerb = "تنتظر"
+            } else if n == 2 {
+                words = "كلمتان"
+                awaitVerb = "تنتظران"
+            } else {
+                words = "كلمات"
+                awaitVerb = "تنتظر"
+            }
+            left = ""
+        default:
+            words = one ? "word" : "words"
+            awaitVerb = "waiting"
+            left = "left behind"
+        }
+        return template
+            .replacingOccurrences(of: "{COUNT}", with: "\(n)")
+            .replacingOccurrences(of: "{WORDS}", with: words)
+            .replacingOccurrences(of: "{AWAIT}", with: awaitVerb)
+            .replacingOccurrences(of: "{LEFT}", with: left)
     }
 
 
@@ -542,7 +598,7 @@ enum NotificationCopy {
     }
 
     private static func russianWordsReady(_ count: Int) -> String {
-        RussianPlural.form(count: count, one: "слово", few: "слова", many: "слов")
+        RussianPlural.words(count)
     }
 
     static func vocabBody(

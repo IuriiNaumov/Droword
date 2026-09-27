@@ -50,13 +50,12 @@ struct QuizMixedView: View {
     @State private var correctSentenceWords: [String] = []
 
     @State private var streakScale: CGFloat = 1.0
-    @State private var streakMilestone: Int? = nil
-    @State private var streakMilestoneOpacity: Double = 0
 
     @State private var hasEnoughWords: Bool = true
 
     @State private var reward: (id: Int, text: String)? = nil
     @State private var rewardCounter = 0
+    @State private var correctFeedbackText: String? = nil
     @State private var completionMoments: [StudyMoment] = []
     @State private var chatSceneTarget: ChatSceneTarget?
     @ObservedObject private var network = NetworkMonitor.shared
@@ -225,14 +224,7 @@ struct QuizMixedView: View {
                 }
             }
         }
-        .overlay(alignment: .top) {
-            if let milestone = streakMilestone {
-                QuizStreakMilestoneBanner(streak: milestone)
-                    .opacity(streakMilestoneOpacity)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .padding(.top, 60)
-            }
-        }
+        .environment(\.quizCorrectFeedback, correctFeedbackText)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.currentIndex)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
         .onAppear {
@@ -539,6 +531,7 @@ struct QuizMixedView: View {
         shakeOffset = 0
         hintShown = false
         hintText = ""
+        correctFeedbackText = nil
 
         switch exerciseType {
         case .multipleChoice:
@@ -875,7 +868,19 @@ struct QuizMixedView: View {
     private func celebrateCorrectAnswer() {
         Haptics.success()
         showReward("+1")
+        let streak = session.currentStreak
+        if Self.isStreakMilestone(streak) {
+            Haptics.combo(streak: streak)
+            correctFeedbackText = DuoChaosCopy.streak(streak)
+        } else {
+            if streak >= 3 { Haptics.tick() }
+            correctFeedbackText = DuoChaosCopy.correct()
+        }
         animateStreakPulse()
+    }
+
+    private static func isStreakMilestone(_ streak: Int) -> Bool {
+        streak == 3 || streak == 5 || streak == 7 || streak == 10 || (streak > 10 && streak % 5 == 0)
     }
 
     private func animateStreakPulse() {
@@ -884,28 +889,6 @@ struct QuizMixedView: View {
         streakScale = 1.4
         withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
             streakScale = 1.0
-        }
-
-        if streak == 3 || streak == 5 || streak == 7 || streak == 10 || (streak > 10 && streak % 5 == 0) {
-            Haptics.combo(streak: streak)
-            showStreakMilestone(streak)
-        } else if streak >= 3 {
-            Haptics.tick()
-        }
-    }
-
-    private func showStreakMilestone(_ streak: Int) {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            streakMilestone = streak
-            streakMilestoneOpacity = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
-            withAnimation(.easeOut(duration: 0.28)) {
-                streakMilestoneOpacity = 0
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                streakMilestone = nil
-            }
         }
     }
 

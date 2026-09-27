@@ -38,74 +38,60 @@ enum DuoChaosCopy {
     static func correct() -> String {
         line([
         [
-            "en": "Nice one",
+            "en": "Well done",
             "ru": "Молодец",
             "de": "Gut gemacht",
             "es": "Muy bien",
             "fr": "Bravo",
-            "ja": "すごい",
+            "ja": "よくできた",
             "ko": "잘했어",
-            "ar": "برابو",
+            "ar": "أحسنت",
             "it": "Bravo",
             "zh-Hans": "真棒",
             "zh-Hant": "真棒",
             "pt-PT": "Muito bem"
         ],
         [
-            "en": "Wow",
-            "ru": "Воу",
-            "de": "Wow",
-            "es": "Wow",
-            "fr": "Wow",
-            "ja": "わお",
-            "ko": "와우",
-            "ar": "واو",
-            "it": "Wow",
-            "zh-Hans": "哇",
-            "zh-Hant": "哇",
-            "pt-PT": "Wow"
+            "en": "Right",
+            "ru": "Верно",
+            "de": "Richtig",
+            "es": "Correcto",
+            "fr": "Exact",
+            "ja": "正解",
+            "ko": "맞아",
+            "ar": "صح",
+            "it": "Giusto",
+            "zh-Hans": "对",
+            "zh-Hant": "對",
+            "pt-PT": "Certo"
         ],
         [
-            "en": "Yesss",
-            "ru": "Вернооооо",
-            "de": "Richtiggg",
-            "es": "Correctooo",
-            "fr": "Exacteee",
-            "ja": "正解ーー",
-            "ko": "정다아압",
-            "ar": "صححح",
-            "it": "Giustooo",
-            "zh-Hans": "答对啦",
-            "zh-Hant": "答對啦",
-            "pt-PT": "Certooo"
-        ],
-        [
-            "en": "Spot on",
+            "en": "Exactly",
             "ru": "Точно",
             "de": "Genau",
             "es": "Exacto",
-            "fr": "Pile poil",
+            "fr": "Exactement",
             "ja": "その通り",
-            "ko": "딱 맞아",
-            "ar": "تمام",
+            "ko": "정확해",
+            "ar": "بالضبط",
             "it": "Esatto",
             "zh-Hans": "没错",
             "zh-Hant": "沒錯",
             "pt-PT": "Exato"
         ],
         [
-            "en": "You got it",
-            "ru": "Красава",
-            "de": "Super",
-            "es": "Genial",
-            "fr": "Nickel",
-            "ja": "いいね",
-            "ko": "멋져",
-            "ar": "ممتاز",
-            "it": "Ottimo",
-            "zh-Hans": "漂亮",
-            "zh-Hant": "漂亮",
-            "pt-PT": "Boa"
+            "en": "Correct",
+            "ru": "Правильно",
+            "de": "Korrekt",
+            "es": "Bien",
+            "fr": "Correct",
+            "ja": "正しい",
+            "ko": "정답",
+            "ar": "صحيح",
+            "it": "Corretto",
+            "zh-Hans": "正确",
+            "zh-Hant": "正確",
+            "pt-PT": "Correto"
         ],
         ])
     }
@@ -217,32 +203,18 @@ enum DuoChaosCopy {
             "pt-PT": "Quase tinhas"
         ],
         [
-            "en": "Next one",
-            "ru": "Дальше будет",
-            "de": "Nächste klappt",
-            "es": "La siguiente",
-            "fr": "La prochaine",
-            "ja": "次いける",
-            "ko": "다음은 된다",
-            "ar": "الي بعدها",
-            "it": "La prossima",
-            "zh-Hans": "下一题",
-            "zh-Hant": "下一題",
-            "pt-PT": "A seguir"
-        ],
-        [
-            "en": "No stress",
-            "ru": "Без стресса",
-            "de": "Kein Stress",
-            "es": "Sin estrés",
-            "fr": "Tranquille",
-            "ja": "大丈夫",
-            "ko": "괜찮아",
-            "ar": "عادي",
-            "it": "Niente stress",
-            "zh-Hans": "没事的",
-            "zh-Hant": "沒事的",
-            "pt-PT": "Sem stress"
+            "en": "Don't give up",
+            "ru": "Не сдавайся",
+            "de": "Nicht aufgeben",
+            "es": "No te rindas",
+            "fr": "N’abandonne pas",
+            "ja": "あきらめないで",
+            "ko": "포기하지 마",
+            "ar": "لا تستسلم",
+            "it": "Non mollare",
+            "zh-Hans": "别放弃",
+            "zh-Hant": "別放棄",
+            "pt-PT": "Não desistas"
         ],
         ])
     }
@@ -253,48 +225,48 @@ enum DuoChaosCopy {
 
         case 3:
             table = [
-            "en": "3 in a row — nice start",
-            "ru": "3 подряд — хороший старт",
-            "de": "3 in Folge — starker Start",
-            "es": "3 seguidas — buen comienzo",
-            "fr": "3 d’affilée — beau départ",
+            "en": "3 in a row — Good start",
+            "ru": "3 подряд — Хороший старт",
+            "de": "3 in Folge — Guter Start",
+            "es": "3 seguidas — Buen comienzo",
+            "fr": "3 d’affilée — Bon départ",
             "ja": "3連続 — いいスタート",
             "ko": "3연속 — 좋은 시작",
-            "ar": "٣ متتالية — بداية حلوة",
-            "it": "3 di fila — bel inizio",
-            "zh-Hans": "连对 3 个 — 开局不错",
-            "zh-Hant": "連對 3 個 — 開局不錯",
-            "pt-PT": "3 seguidas — bom começo"
+            "ar": "٣ متتالية — بداية قوية",
+            "it": "3 di fila — Buon inizio",
+            "zh-Hans": "连对 3 个 — 好的开始",
+            "zh-Hant": "連對 3 個 — 好的開始",
+            "pt-PT": "3 seguidas — Bom começo"
             ]
         case 5:
             table = [
-            "en": "5 streak — you're warming up",
-            "ru": "5 стрик — разогрев пошёл",
-            "de": "5er-Streak — du kommst in Fahrt",
-            "es": "Racha de 5 — vas calentando",
-            "fr": "Série de 5 — tu chauffes",
-            "ja": "5連続 — 調子出てきた",
-            "ko": "5연속 — 몸이 풀리는 중",
-            "ar": "سلسلة ٥ — عم تسخّن",
-            "it": "Streak da 5 — ti stai scaldando",
-            "zh-Hans": "连击 5 — 状态上来了",
-            "zh-Hant": "連擊 5 — 狀態上來了",
-            "pt-PT": "Sequência de 5 — estás a aquecer"
+            "en": "5 streak — Keep it up",
+            "ru": "5 стрик — Продолжай в том же духе",
+            "de": "5er-Streak — Weiter so",
+            "es": "Racha de 5 — Sigue así",
+            "fr": "Série de 5 — Continue comme ça",
+            "ja": "5連続 — その調子で",
+            "ko": "5연속 — 그 페이스 유지해",
+            "ar": "سلسلة ٥ — كمّل بنفس الروح",
+            "it": "Streak da 5 — Continua così",
+            "zh-Hans": "连击 5 — 继续保持",
+            "zh-Hant": "連擊 5 — 繼續保持",
+            "pt-PT": "Sequência de 5 — Continua assim"
             ]
         case 7:
             table = [
-            "en": "7 streak — strong",
-            "ru": "7 стрик — мощно",
-            "de": "7er-Streak — stark",
-            "es": "Racha de 7 — fuerte",
-            "fr": "Série de 7 — costaud",
-            "ja": "7連続 — 強い",
-            "ko": "7연속 — 강하다",
-            "ar": "سلسلة ٧ — قوي",
-            "it": "Streak da 7 — forte",
-            "zh-Hans": "连击 7 — 很强",
-            "zh-Hant": "連擊 7 — 很強",
-            "pt-PT": "Sequência de 7 — forte"
+            "en": "7 streak — Awesome. Well done",
+            "ru": "7 стрик — Круто. Ты молодец",
+            "de": "7er-Streak — Cool. Gut gemacht",
+            "es": "Racha de 7 — Genial. Muy bien",
+            "fr": "Série de 7 — Cool. Bravo",
+            "ja": "7連続 — すごい。よくできた",
+            "ko": "7연속 — 멋져. 잘했어",
+            "ar": "سلسلة ٧ — رهيب. أنت نجم",
+            "it": "Streak da 7 — Figo. Bravissimo",
+            "zh-Hans": "连击 7 — 太棒了。你真行",
+            "zh-Hant": "連擊 7 — 太棒了。你真行",
+            "pt-PT": "Sequência de 7 — Fixe. Muito bem"
             ]
         case 10:
             table = [
@@ -302,18 +274,17 @@ enum DuoChaosCopy {
             "ru": "Идеальные 10",
             "de": "Perfekte 10",
             "es": "10 perfectos",
-            "fr": "10 parfait",
+            "fr": "10 parfaits",
             "ja": "パーフェクト10",
             "ko": "퍼펙트 10",
-            "ar": "١٠ كاملة",
-            "it": "10 perfetto",
+            "ar": "١٠ مثالية",
+            "it": "10 perfetti",
             "zh-Hans": "完美的 10",
             "zh-Hant": "完美的 10",
-            "pt-PT": "10 perfeito"
+            "pt-PT": "10 perfeitos"
             ]
         default:
             table = [
-
             "en": "{N} in a row",
             "ru": "{N} подряд",
             "de": "{N} in Folge",
@@ -785,9 +756,11 @@ enum DuoChaosCopy {
             "zh-Hant": "都複習完了",
             "pt-PT": "Estás em dia"
         ]),
-            t([
+            {
+                let ru = "Ты разобрал \(count) \(RussianPlural.words(count)). Новые появятся, когда придёт время."
+                return t([
             "en": "You reviewed {COUNT} words. New ones appear when it's time.",
-            "ru": "Ты разобрал {COUNT} слов. Новые появятся, когда придёт время.",
+            "ru": ru,
             "de": "Du hast {COUNT} Wörter wiederholt. Neue kommen, wenn’s soweit ist.",
             "es": "Repasaste {COUNT} palabras. Las nuevas aparecen a su tiempo.",
             "fr": "Tu as révisé {COUNT} mots. Les nouveaux arrivent au bon moment.",
@@ -799,6 +772,7 @@ enum DuoChaosCopy {
             "zh-Hant": "你複習了 {COUNT} 個詞。新的會在合適的時候出現。",
             "pt-PT": "Reviste {COUNT} palavras. As novas aparecem na altura certa."
         ]).replacingOccurrences(of: "{COUNT}", with: "\(count)")
+            }()
         )
     }
 
@@ -818,9 +792,11 @@ enum DuoChaosCopy {
             "zh-Hant": "做得漂亮",
             "pt-PT": "Bom trabalho"
         ]),
-            t([
+            {
+                let ru = "\(count) \(RussianPlural.newWords(count)) теперь в ротации ревью."
+                return t([
             "en": "{COUNT} new words are in your review rotation.",
-            "ru": "{COUNT} новых слов теперь в ротации ревью.",
+            "ru": ru,
             "de": "{COUNT} neue Wörter sind in deiner Review-Rotation.",
             "es": "{COUNT} palabras nuevas están en tu rotación de repaso.",
             "fr": "{COUNT} nouveaux mots sont dans ta rotation de révision.",
@@ -832,6 +808,7 @@ enum DuoChaosCopy {
             "zh-Hant": "{COUNT} 個新詞已進入複習輪替。",
             "pt-PT": "{COUNT} palavras novas estão na rotação de revisão."
         ]).replacingOccurrences(of: "{COUNT}", with: "\(count)")
+            }()
         )
     }
 
@@ -950,9 +927,10 @@ enum DuoChaosCopy {
             "pt-PT": "1 palavra revista. Leve e bom."
         ])
         } else {
+            let ru = "\(count) \(RussianPlural.words(count)). Стрик в порядке."
             subtitle = t([
             "en": "{COUNT} words reviewed. Streak looks good.",
-            "ru": "{COUNT} слов. Стрик в порядке.",
+            "ru": ru,
             "de": "{COUNT} Wörter wiederholt. Streak sieht gut aus.",
             "es": "{COUNT} palabras repasadas. La racha va bien.",
             "fr": "{COUNT} mots révisés. La série est bonne.",
