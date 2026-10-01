@@ -78,7 +78,6 @@ struct DictionaryView: View {
                 illustration: AnyView(CryingEmptyIllustration()),
                 title: DuoChaosCopy.dictionaryGarden().title,
                 subtitle: DuoChaosCopy.dictionaryGarden().subtitle,
-                tip: String(localized: "One word unlocks lessons and practice"),
                 ctaTitle: "Add a word",
                 onCTA: {
                     NotificationCenter.default.post(name: .openAddWord, object: nil)
@@ -241,12 +240,7 @@ struct DictionaryView: View {
             EmptyListView(
                 icon: "tag",
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
-                subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle,
-                tip: String(localized: "Add a word with this tag — or clear the filter"),
-                ctaTitle: "Add a word",
-                onCTA: {
-                    NotificationCenter.default.post(name: .openAddWord, object: nil)
-                }
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
             )
         } else if !searchText.isEmpty {
             EmptyListView(
@@ -264,7 +258,7 @@ struct DictionaryView: View {
 
     private var selectAllRow: some View {
         let allSelected = selectedWordIDs.count == filteredWords.count
-        let icon = allSelected ? "checkmark.circle" : "circle"
+        let icon = allSelected ? "checkmark.circle.fill" : "circle"
         let iconColor = allSelected ? themeStore.mainAccentColor : themeStore.secondaryText
         let title = String(localized: "Select all (\(filteredWords.count))")
 
@@ -492,7 +486,7 @@ private struct DictionaryWordRow: View {
             HStack(spacing: 12) {
                 if isSelectMode {
                     Button(action: onToggleSelect) {
-                        Image(systemName: isSelected ? "checkmark.circle" : "circle")
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 22))
                             .foregroundStyle(isSelected ? themeStore.mainAccentColor : themeStore.secondaryText)
                     }

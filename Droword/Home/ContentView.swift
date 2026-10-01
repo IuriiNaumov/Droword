@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding: Bool = false
-    @State private var showSplash = true
+    @State private var showSplash = !SplashGate.skip
 
     var body: some View {
         ZStack {
@@ -24,6 +24,9 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
         .animation(.easeInOut(duration: 0.45), value: showSplash)
+        .onReceive(NotificationCenter.default.publisher(for: .skipSplash)) { _ in
+            showSplash = false
+        }
     }
 }
 

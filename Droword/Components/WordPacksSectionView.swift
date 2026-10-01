@@ -4,8 +4,6 @@ struct WordPacksButton: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var languageStore: LanguageStore
 
-    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-
     let availableCount: Int
 
     var body: some View {
@@ -22,10 +20,6 @@ struct WordPacksButton: View {
                     Text("Word Packs")
                         .font(themeStore.bold(16))
                         .foregroundStyle(themeStore.mainText)
-
-                    if !isPremium {
-                        ProPillBadge()
-                    }
                 }
 
                 Text(RussianPlural.packsReady(availableCount))
@@ -53,7 +47,6 @@ struct WordPacksDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
-    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasSeenWordPacksHint) private var hasSeenHint: Bool = false
 
     @State private var selectedPack: WordPack?

@@ -30,6 +30,10 @@ struct QuizMultipleChoiceExercise: View {
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
 
                 if !isReversed, let tr = item.transcription, !tr.isEmpty {
                     Text("[\(tr)]")
@@ -110,12 +114,14 @@ struct QuizMultipleChoiceExercise: View {
         return Button {
             onSelect(option)
         } label: {
-            HStack {
+            HStack(alignment: .center, spacing: 12) {
                 Text(option.displayCapitalized)
                     .font(themeStore.medium(16))
                     .foregroundStyle(textColor)
-
-                Spacer()
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 if hasAnswered && isThisCorrect {
                     Image(systemName: "checkmark.circle.fill")

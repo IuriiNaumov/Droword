@@ -32,20 +32,17 @@ struct QuizSentenceBuildingExercise: View {
 
             VStack(spacing: 8) {
                 Text("Build the sentence")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
+                    .font(themeStore.bold(15))
+                    .foregroundStyle(Color(hex: "#FF8C00"))
 
                 Text(item.translation.displayCapitalized)
                     .font(themeStore.bold(22))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
-
-                Text(String(localized: "Tap only the words you need · includes «\(item.word)»"))
-                    .font(themeStore.regular(13))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
             }
             .padding(.bottom, 24)
 

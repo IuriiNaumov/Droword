@@ -48,7 +48,7 @@ enum LearningGoal: String, CaseIterable, Identifiable, Codable {
     var icon: String {
         switch self {
         case .dailyChat: return "bubble.left.and.bubble.right"
-        case .travel: return "airplane"
+        case .travel: return "suitcase"
         case .work: return "briefcase"
         case .exam: return "graduationcap"
         case .school: return "book"

@@ -5,5 +5,6 @@ import SwiftUI
 struct Droword_WidgetBundle: WidgetBundle {
     var body: some Widget {
         Droword_Widget()
+        AddWordQuickWidget()
     }
 }

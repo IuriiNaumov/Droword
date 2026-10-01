@@ -551,18 +551,18 @@ enum DuoChaosCopy {
             "pt-PT": "Ainda sem palavras"
             ]),
             t([
-            "en": "It's so empty in here… we're crying.",
-            "ru": "Тут так пусто… мы плачем.",
-            "de": "So leer hier… wir heulen.",
-            "es": "Está tan vacío… estamos llorando.",
-            "fr": "C’est tellement vide… on pleure.",
-            "ja": "空っぽすぎて…泣いてる。",
-            "ko": "너무 비어서… 울고 있어.",
-            "ar": "فاضي أوي… عم نبكي.",
-            "it": "È così vuoto… stiamo piangendo.",
-            "zh-Hans": "空得要命…我们在哭。",
-            "zh-Hant": "空得要命…我們在哭。",
-            "pt-PT": "Está tão vazio… estamos a chorar."
+            "en": "It's so empty here.",
+            "ru": "Тут так пусто.",
+            "de": "So leer hier.",
+            "es": "Está tan vacío.",
+            "fr": "C’est tellement vide.",
+            "ja": "空っぽすぎる。",
+            "ko": "너무 비어 있어.",
+            "ar": "فاضي أوي.",
+            "it": "È così vuoto.",
+            "zh-Hans": "空得要命。",
+            "zh-Hant": "空得要命。",
+            "pt-PT": "Está tão vazio."
             ])
         )
     }
@@ -632,19 +632,19 @@ enum DuoChaosCopy {
         if let tag, !tag.isEmpty {
             return (
                 t([
-                "en": "Nothing in «{TAG}» yet",
-                "ru": "В «{TAG}» пока пусто",
-                "de": "Noch nichts in „{TAG}“",
-                "es": "Nada en «{TAG}» aún",
-                "fr": "Rien dans « {TAG} » pour l’instant",
-                "ja": "「{TAG}」にはまだない",
-                "ko": "«{TAG}»에 아직 없음",
-                "ar": "ما في شي بـ «{TAG}» بعد",
-                "it": "Niente in «{TAG}» ancora",
-                "zh-Hans": "「{TAG}」里还没有",
-                "zh-Hant": "「{TAG}」裡還沒有",
-                "pt-PT": "Nada em «{TAG}» ainda"
-            ]).replacingOccurrences(of: "{TAG}", with: BuiltInTag.displayName(tag)),
+                "en": "Nothing yet",
+                "ru": "Пока ничего",
+                "de": "Noch nichts",
+                "es": "Nada aún",
+                "fr": "Rien pour l’instant",
+                "ja": "まだない",
+                "ko": "아직 없음",
+                "ar": "ما في شي بعد",
+                "it": "Niente ancora",
+                "zh-Hans": "还没有",
+                "zh-Hant": "還沒有",
+                "pt-PT": "Ainda nada"
+            ]),
                 t([
                 "en": "Tag some words or pick another filter.",
                 "ru": "Навесь тег на слова или смени фильтр.",

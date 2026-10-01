@@ -7,22 +7,23 @@ struct DailyLessonSessionView: View {
     @EnvironmentObject private var badgeStore: BadgeStore
 
     let plan: DailyLessonPlan
+    @State private var quizComplete = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Text(plan.title)
-                    .font(themeStore.bold(16))
-                    .foregroundStyle(themeStore.mainText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 4)
+                if !quizComplete {
+                    Text(plan.title)
+                        .sheetTitle()
+                }
 
                 if plan.canStart {
                     QuizMixedView(
                         sessionSize: plan.words.count,
                         persistSession: false,
                         presetWords: plan.words,
-                        recordsLesson: true
+                        recordsLesson: true,
+                        onCompleteChange: { quizComplete = $0 }
                     )
                 } else {
                     PracticeEmptyContent(

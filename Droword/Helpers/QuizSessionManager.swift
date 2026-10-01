@@ -62,6 +62,16 @@ final class QuizSessionManager: ObservableObject {
 
     var total: Int { queue.count }
 
+    private static func nextPracticeSlice(from words: [StoredWord], count: Int) -> [StoredWord] {
+        guard !words.isEmpty, count > 0 else { return [] }
+        let take = min(count, words.count)
+        let defaults = UserDefaults.standard
+        let start = defaults.integer(forKey: AppStorageKeys.practiceRotationCursor) % words.count
+        let selected = (0..<take).map { words[(start + $0) % words.count] }
+        defaults.set((start + take) % words.count, forKey: AppStorageKeys.practiceRotationCursor)
+        return selected
+    }
+
     func prepareMixedSession(
         from words: [StoredWord],
         filterTag: String? = nil,
@@ -75,29 +85,13 @@ final class QuizSessionManager: ObservableObject {
         if let tag = filterTag, !tag.isEmpty {
             filtered = filtered.filter { $0.tag == tag }
         }
+        _ = preferredTopics
 
-        let preferred = Set(preferredTopics.map { $0.lowercased() })
-        func topicBoost(_ word: StoredWord) -> Bool {
-            guard !preferred.isEmpty, let tag = word.tag?.lowercased() else { return false }
-            return preferred.contains(tag)
+        let eligible = filtered.sorted { lhs, rhs in
+            if lhs.dateAdded != rhs.dateAdded { return lhs.dateAdded < rhs.dateAdded }
+            return lhs.id.uuidString < rhs.id.uuidString
         }
-
-        let today = Date()
-        let dueAll = filtered.filter { w in
-            WordDue.isDue(introduced: w.introduced, dueDate: w.dueDate, now: today)
-        }
-        var due = dueAll.filter(topicBoost).shuffled() + dueAll.filter { !topicBoost($0) }.shuffled()
-
-        let notDueAll = filtered.filter { w in
-            w.introduced && WordDue.isUpcoming(introduced: w.introduced, dueDate: w.dueDate, now: today)
-        }
-        let notDue = notDueAll.filter(topicBoost).shuffled() + notDueAll.filter { !topicBoost($0) }.shuffled()
-
-        if due.count < maxSessionSize {
-            due.append(contentsOf: notDue.prefix(maxSessionSize - due.count))
-        }
-
-        let selected = Array(due.prefix(maxSessionSize))
+        let selected = Self.nextPracticeSlice(from: eligible, count: maxSessionSize)
 
         let items = selected.map { w in
             QuizItem(

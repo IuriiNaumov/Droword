@@ -26,9 +26,9 @@ struct WordPacksData {
     static let allPacks: [WordPack] = [
         WordPack(id: "basics", icon: "star", colorKey: "accentGold",
                  titleKey: "Basics", descriptionKey: "Essential everyday words"),
-        WordPack(id: "food", icon: "fork.knife", colorKey: "accentGreen",
+        WordPack(id: "food", icon: "pizza.slice", colorKey: "accentGreen",
                  titleKey: "Food & Drinks", descriptionKey: "What to eat and drink"),
-        WordPack(id: "travel", icon: "airplane", colorKey: "accentBlue",
+        WordPack(id: "travel", icon: "suitcase", colorKey: "accentBlue",
                  titleKey: "Travel", descriptionKey: "Getting around and exploring"),
         WordPack(id: "shopping", icon: "bag", colorKey: "mainAccentColor",
                  titleKey: "Shopping", descriptionKey: "Buying and paying"),
@@ -38,13 +38,19 @@ struct WordPacksData {
 
     static func words(packID: String, learning: String, native: String) -> [StarterWord]? {
         let key = "\(learning)→\(native)"
+        let bank: [StarterWord]?
         switch packID {
-        case "basics": return basicsBank[key]
-        case "food": return foodBank[key]
-        case "travel": return travelBank[key]
-        case "shopping": return shoppingBank[key]
-        case "daily_life": return dailyLifeBank[key]
-        default: return nil
+        case "basics": bank = basicsBank[key]
+        case "food": bank = foodBank[key]
+        case "travel": bank = travelBank[key]
+        case "shopping": bank = shoppingBank[key]
+        case "daily_life": bank = dailyLifeBank[key]
+        default: bank = nil
+        }
+        guard let bank else { return nil }
+        let factsPack = packID == "daily_life" ? "dailyLife" : packID
+        return bank.enumerated().map { index, word in
+            WordPackFacts.apply(word, pack: factsPack, index: index, learning: learning, native: native)
         }
     }
 

@@ -36,7 +36,12 @@ struct QuizClozeExercise: View {
                     Text("(\(item.translation.displayCapitalized))")
                         .font(themeStore.medium(16))
                         .foregroundStyle(themeStore.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity)
                         .padding(.top, 4)
+                        .padding(.horizontal, 24)
                 }
             }
             .padding(.bottom, 32)

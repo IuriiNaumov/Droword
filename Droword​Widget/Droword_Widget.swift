@@ -504,6 +504,66 @@ struct Droword_Widget: Widget {
     }
 }
 
+struct AddWordQuickEntry: TimelineEntry {
+    let date: Date
+}
+
+struct AddWordQuickProvider: TimelineProvider {
+    func placeholder(in context: Context) -> AddWordQuickEntry {
+        AddWordQuickEntry(date: Date())
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (AddWordQuickEntry) -> Void) {
+        completion(AddWordQuickEntry(date: Date()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<AddWordQuickEntry>) -> Void) {
+        completion(Timeline(entries: [AddWordQuickEntry(date: Date())], policy: .never))
+    }
+}
+
+struct AddWordQuickWidgetView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.widgetRenderingMode) private var renderingMode
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "plus")
+                .font(.system(size: 42, weight: .bold, design: .rounded))
+                .foregroundStyle(WidgetChrome.accent)
+                .widgetAccentable()
+            Text("Add a word")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(for: .widget) {
+            if renderingMode == .accented {
+                Color.clear
+            } else if colorScheme == .dark {
+                WidgetChrome.darkBg
+            } else {
+                WidgetChrome.softBg
+            }
+        }
+    }
+}
+
+struct AddWordQuickWidget: Widget {
+    let kind: String = "AddWordQuickWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: AddWordQuickProvider()) { _ in
+            AddWordQuickWidgetView()
+                .widgetURL(URL(string: "droword://add"))
+        }
+        .configurationDisplayName("Add a word")
+        .description("Open add word right away")
+        .supportedFamilies([.systemSmall])
+        .contentMarginsDisabled()
+    }
+}
+
 private struct WidgetBackground: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.widgetRenderingMode) private var renderingMode

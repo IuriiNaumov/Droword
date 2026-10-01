@@ -71,4 +71,5 @@ enum AppStorageKeys {
     static let notifEveningChatMinute = "notifEveningChatMinute"
     static let customThemeAccentHex = "customThemeAccentHex"
     static let iCloudSyncEnabled = "iCloudSyncEnabled"
+    static let practiceRotationCursor = "practiceRotationCursor"
 }

@@ -34,6 +34,10 @@ struct QuizTypingExercise: View {
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
 
                 if !isReversed, let tr = item.transcription, !tr.isEmpty {
                     Text("[\(tr)]")

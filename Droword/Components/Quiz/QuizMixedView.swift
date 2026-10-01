@@ -80,6 +80,12 @@ struct QuizMixedView: View {
                     isLesson: recordsLesson,
                     onScene: recordsLesson && FeatureGates.homeChatEnabled && showHomeChat && network.isConnected ? { openLessonScene() } : nil,
                     onClose: {
+                        if presetWords.isEmpty {
+                            startSession()
+                            if persistSession {
+                                session.saveSession()
+                            }
+                        }
                         if let onClose {
                             onClose()
                         } else {
@@ -411,9 +417,14 @@ struct QuizMixedView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             if !example.isEmpty, example != "Add an example later" {
-                Text(HighlightedExample.make(example: example, word: item.word))
-                    .font(themeStore.regular(15))
-                    .foregroundStyle(themeStore.mainText)
+                Text(HighlightedExample.make(
+                    example: example,
+                    word: item.word,
+                    baseColor: UIColor(themeStore.mainText),
+                    highlightColor: UIColor(themeStore.accentGold),
+                    baseFont: themeStore.uiFont(size: 15, weight: .regular),
+                    highlightFont: themeStore.uiFont(size: 15, weight: .bold)
+                ))
                     .fixedSize(horizontal: false, vertical: true)
             }
             if !note.isEmpty {

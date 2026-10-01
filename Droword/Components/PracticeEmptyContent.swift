@@ -6,7 +6,7 @@ struct PracticeEmptyContent: View {
     let icon: String
     let title: String
     let subtitle: String
-    let tip: String
+    var tip: String? = nil
     var ctaTitle: LocalizedStringKey? = nil
     var onCTA: (() -> Void)? = nil
 
@@ -40,18 +40,20 @@ struct PracticeEmptyContent: View {
                 .padding(.horizontal, 32)
                 .opacity(subtitleOpacity)
 
-            Text(tip)
-                .font(themeStore.bold(13))
-                .foregroundStyle(themeStore.mainAccentColor)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(themeStore.mainAccentColor.opacity(0.12))
-                )
-                .opacity(subtitleOpacity)
-                .padding(.horizontal, 28)
+            if let tip, !tip.isEmpty {
+                Text(tip)
+                    .font(themeStore.bold(13))
+                    .foregroundStyle(themeStore.mainAccentColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(themeStore.mainAccentColor.opacity(0.12))
+                    )
+                    .opacity(subtitleOpacity)
+                    .padding(.horizontal, 28)
+            }
 
             if let ctaTitle, let onCTA {
                 Button {

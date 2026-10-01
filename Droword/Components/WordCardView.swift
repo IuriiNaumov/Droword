@@ -24,7 +24,6 @@ struct WordCardView: View {
     let collocations: [String]
     let synonyms: [String]
     let antonyms: [String]
-    let mnemonic: String?
     let reaction: String?
     let storedWord: StoredWord?
     let onDelete: () -> Void
@@ -35,7 +34,7 @@ struct WordCardView: View {
     private static let revealTransition: AnyTransition =
         .opacity.combined(with: .offset(y: -8))
 
-    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil) {
+    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic _: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil) {
         self.word = word
         self.translation = translation
         self.type = type
@@ -49,7 +48,6 @@ struct WordCardView: View {
         self.collocations = collocations
         self.synonyms = synonyms
         self.antonyms = antonyms
-        self.mnemonic = mnemonic
         self.reaction = reaction
         self.storedWord = storedWord
         self.onDelete = onDelete
@@ -67,8 +65,6 @@ struct WordCardView: View {
     @State private var showReactionPicker = false
     @State private var showEmojiKeyboard = false
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-    @State private var highlightedExample: AttributedString = ""
-    @State private var highlightedExtraExamples: [AttributedString] = []
     @State private var showShareSheet = false
     @State private var shareImage: UIImage?
     @State private var showEditWord = false
@@ -172,28 +168,6 @@ struct WordCardView: View {
         .onDisappear {
             showReactionPicker = false
             showEmojiKeyboard = false
-        }
-        .onAppear {
-            if let example = example {
-                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
-            } else {
-                highlightedExample = ""
-            }
-            highlightedExtraExamples = examples.dropFirst().map {
-                Self.makeHighlightedExample(comment: $0, word: word)
-            }
-        }
-        .onChange(of: example) { _, newValue in
-            if let example = newValue {
-                highlightedExample = Self.makeHighlightedExample(comment: example, word: word)
-            } else {
-                highlightedExample = ""
-            }
-        }
-        .onChange(of: examples) { _, newValue in
-            highlightedExtraExamples = newValue.dropFirst().map {
-                Self.makeHighlightedExample(comment: $0, word: word)
-            }
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
@@ -354,19 +328,15 @@ struct WordCardView: View {
             }
 
             if isExpanded {
-                if let _ = example {
-                    Text(highlightedExample)
-                        .font(themeStore.regular(16))
-                        .foregroundStyle(primaryTextColor)
+                if let example, !example.isEmpty {
+                    Text(highlightedSentence(example))
                         .fixedSize(horizontal: false, vertical: true)
                         .transition(Self.revealTransition)
 
                     if examples.count > 1 {
                         if showAllExamples {
-                            ForEach(Array(highlightedExtraExamples.enumerated()), id: \.offset) { _, attr in
-                                Text(attr)
-                                    .font(themeStore.regular(16))
-                                    .foregroundStyle(primaryTextColor)
+                            ForEach(Array(examples.dropFirst().enumerated()), id: \.offset) { _, sentence in
+                                Text(highlightedSentence(sentence))
                                     .fixedSize(horizontal: false, vertical: true)
                                     .transition(Self.revealTransition)
                             }
@@ -443,22 +413,6 @@ struct WordCardView: View {
                         Text(antonyms.joined(separator: "  ·  "))
                             .font(themeStore.regular(15))
                             .foregroundStyle(primaryTextColor)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 6)
-                    .transition(Self.revealTransition)
-                }
-
-                if let mnemonic = mnemonic, !mnemonic.isEmpty {
-                    HStack(alignment: .top, spacing: 6) {
-                        Image(systemName: "lightbulb")
-                            .font(.system(size: 14))
-                            .foregroundStyle(themeStore.accentGold)
-                            .padding(.top, 1)
-                        Text(mnemonic)
-                            .font(themeStore.regular(14))
-                            .foregroundStyle(secondaryTextColor)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -575,8 +529,15 @@ struct WordCardView: View {
         }
     }
 
-    private static func makeHighlightedExample(comment: String, word: String) -> AttributedString {
-        HighlightedExample.make(example: comment, word: word)
+    private func highlightedSentence(_ sentence: String) -> AttributedString {
+        HighlightedExample.make(
+            example: sentence,
+            word: word,
+            baseColor: UIColor(primaryTextColor),
+            highlightColor: UIColor(themeStore.accentGold),
+            baseFont: themeStore.uiFont(size: 16, weight: .regular),
+            highlightFont: themeStore.uiFont(size: 16, weight: .bold)
+        )
     }
 }
 

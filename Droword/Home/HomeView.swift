@@ -94,6 +94,19 @@ struct HomeView: View {
         DateFormatting.dayFormatter.string(from: Date())
     }
 
+    private var lessonReadyToStart: Bool {
+        let plan = DailyLessonBuilder.plan(
+            words: store.words,
+            profile: learningProfile,
+            learningLanguage: languageStore.learningLanguage
+        )
+        return plan.canStart && !plan.isDone
+    }
+
+    private var lessonNeedsWords: Bool {
+        !lessonReadyToStart && !StudyActivityStore.shared.isLessonDone()
+    }
+
     var body: some View {
         homeOverlays(homeEvents(homeCovers(tabRoot)))
     }
@@ -246,8 +259,10 @@ struct HomeView: View {
     private func homeEvents<Content: View>(_ content: Content) -> some View {
         content
         .onReceive(NotificationCenter.default.publisher(for: .sharedWordReceived)) { notification in
+            SplashGate.pendingAddWord = nil
             if let word = notification.userInfo?["word"] as? String {
                 sharedWord = word
+                selectedTab = .home
                 showAddWordView = true
             }
         }
@@ -271,9 +286,9 @@ struct HomeView: View {
                 return
             }
             selectedTab = .home
-            if host == "add" {
+            if host == "add" || lessonNeedsWords {
                 showAddWordView = true
-            } else if !StudyActivityStore.shared.isLessonDone() {
+            } else if lessonReadyToStart {
                 showDailyLesson = true
             }
         }
@@ -483,7 +498,7 @@ struct HomeView: View {
                         now: context.date
                     )
                     let dismissedDone = plan.isDone && dailyLessonDoneDismissedDay == todayDayString
-                    if !dismissedDone {
+                    if !dismissedDone, !store.words.isEmpty {
                         DailyLessonCard(
                             plan: plan,
                             onStart: {
@@ -622,7 +637,6 @@ struct HomeView: View {
                             ? String(localized: "No recent words")
                             : String(localized: "Your word garden is waiting"),
                         subtitle: empty.subtitle,
-                        tip: String(localized: "One word unlocks lessons and practice"),
                         ctaTitle: LocalizedStringKey(empty.cta),
                         onCTA: {
                             Haptics.buttonPress()
@@ -649,6 +663,12 @@ struct HomeView: View {
             .ignoresSafeArea()
         }
         .onAppear {
+            if let pending = SplashGate.pendingAddWord {
+                SplashGate.pendingAddWord = nil
+                sharedWord = pending
+                selectedTab = .home
+                showAddWordView = true
+            }
             if !homeQuietedV1 {
                 showDailyChallengesSection = false
                 homeQuietedV1 = true
@@ -659,7 +679,7 @@ struct HomeView: View {
                 openChatScene(wordId: pending.wordId, word: pending.word)
             }
 
-            if !hasSeenFirstWords && store.words.isEmpty,
+            if !showAddWordView && !hasSeenFirstWords && store.words.isEmpty,
                StarterWordBank.words(learning: languageStore.learningLanguage, native: languageStore.nativeLanguage) != nil {
                 Task { @MainActor in
                     try? await Task.sleep(for: .seconds(0.6))

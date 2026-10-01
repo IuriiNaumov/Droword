@@ -278,6 +278,18 @@ public enum Haptics {
         }
     }
 
+    public static func sparkle() {
+        if supportsCoreHaptics {
+            play([
+                transient(time: 0.00, intensity: 0.22, sharpness: 0.55),
+                transient(time: 0.07, intensity: 0.38, sharpness: 0.4),
+                transient(time: 0.14, intensity: 0.16, sharpness: 0.72)
+            ])
+        } else {
+            fallbackImpact(.soft, intensity: 0.4)
+        }
+    }
+
     public static func softTap() {
         if supportsCoreHaptics {
             play([transient(time: 0.00, intensity: 0.28, sharpness: 0.32)])

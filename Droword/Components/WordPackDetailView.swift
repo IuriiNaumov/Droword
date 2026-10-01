@@ -8,14 +8,10 @@ struct WordPackDetailView: View {
 
     let pack: WordPack
 
-    @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-    private let freePreviewLimit = 5
-
     @State private var addedWordIDs: Set<String> = []
     @State private var skippedWordIDs: Set<String> = []
     @State private var alreadyInDictionary: Set<String> = []
     @State private var addedCount = 0
-    @State private var showPremiumWall = false
 
     private var allWords: [StarterWord] {
         WordPacksData.words(
@@ -30,10 +26,6 @@ struct WordPackDetailView: View {
             let id = word.word
             return !addedWordIDs.contains(id) && !skippedWordIDs.contains(id) && !alreadyInDictionary.contains(id)
         }
-    }
-
-    private var canAddMoreFree: Bool {
-        isPremium || addedCount < freePreviewLimit
     }
 
     private var color: Color {
@@ -62,12 +54,6 @@ struct WordPackDetailView: View {
                             }
                         }
 
-                        if !isPremium {
-                            Text("Free preview: add up to \(freePreviewLimit) words")
-                                .font(themeStore.regular(13))
-                                .foregroundStyle(themeStore.secondaryText)
-                        }
-
                         if visibleWords.count > 1 {
                             Button {
                                 Haptics.lightImpact()
@@ -75,7 +61,7 @@ struct WordPackDetailView: View {
                             } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "plus.circle")
-                                    Text(isPremium ? "Add all" : "Add preview")
+                                    Text("Add all")
                                 }
                                 .duo3DStyle(color)
                             }
@@ -107,11 +93,6 @@ struct WordPackDetailView: View {
         .onAppear {
             detectAlreadyAdded()
         }
-        .fullScreenCover(isPresented: $showPremiumWall) {
-            PremiumView(asWall: true)
-                .environmentObject(themeStore)
-                .tint(themeStore.mainAccentColor)
-        }
     }
 
     private func wordCard(_ word: StarterWord) -> some View {
@@ -134,19 +115,44 @@ struct WordPackDetailView: View {
                 .font(themeStore.regular(13))
                 .foregroundStyle(themeStore.secondaryText.opacity(0.6))
 
+            if let example = word.example, !example.isEmpty {
+                Text(HighlightedExample.make(
+                    example: example,
+                    word: word.word,
+                    baseColor: UIColor(themeStore.secondaryText),
+                    highlightColor: UIColor(themeStore.accentGold),
+                    baseFont: themeStore.uiFont(size: 16, weight: .regular),
+                    highlightFont: themeStore.uiFont(size: 16, weight: .bold)
+                ))
+                .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let explanation = word.explanation, !explanation.isEmpty {
+                Text(explanation)
+                    .font(themeStore.regular(15))
+                    .foregroundStyle(themeStore.mainText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if !word.collocations.isEmpty {
+                factLine("Common phrases", word.collocations.joined(separator: "  ·  "))
+            }
+            if !word.synonyms.isEmpty {
+                factLine("Synonyms", word.synonyms.joined(separator: "  ·  "))
+            }
+            if !word.antonyms.isEmpty {
+                factLine("Opposites", word.antonyms.joined(separator: "  ·  "))
+            }
+
             HStack {
                 Button {
-                    if canAddMoreFree {
-                        withAnimation(.spring()) {
-                            addWord(word)
-                        }
-                    } else {
-                        showPremiumWall = true
+                    withAnimation(.spring()) {
+                        addWord(word)
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: canAddMoreFree ? "plus.circle" : "lock")
-                        Text(canAddMoreFree ? "Add" : "PRO")
+                        Image(systemName: "plus.circle")
+                        Text("Add")
                     }
                     .font(themeStore.medium(13))
                     .foregroundStyle(.white)
@@ -221,35 +227,57 @@ struct WordPackDetailView: View {
         .padding(.vertical, 24)
     }
 
-    private func addWord(_ word: StarterWord) {
-        guard canAddMoreFree else {
-            showPremiumWall = true
-            return
+    private func factLine(_ title: LocalizedStringKey, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(themeStore.medium(13))
+                .foregroundStyle(themeStore.secondaryText)
+            Text(value)
+                .font(themeStore.regular(15))
+                .foregroundStyle(themeStore.mainText)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var packTag: String? {
+        switch pack.id {
+        case "food": return "Food"
+        case "travel": return "Travel"
+        case "daily_life": return "Daily life"
+        default: return nil
+        }
+    }
+
+    private func addWord(_ word: StarterWord) {
+        let hasCard = !(word.example ?? "").isEmpty && !(word.explanation ?? "").isEmpty
         let newWord = StoredWord(
             word: word.word,
             type: word.type,
             translation: word.translation,
-            example: nil,
+            example: word.example,
+            explanation: word.explanation,
             transcription: word.transcription,
+            tag: packTag,
             fromLanguage: languageStore.learningLanguage,
             toLanguage: languageStore.nativeLanguage,
-            needsEnrichment: true
+            needsEnrichment: !hasCard,
+            examples: word.example.map { [$0] } ?? [],
+            collocations: word.collocations,
+            synonyms: word.synonyms,
+            antonyms: word.antonyms
         )
         store.add(newWord)
         addedWordIDs.insert(word.word)
         addedCount += 1
-
-        NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
+        if !hasCard {
+            NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
+        }
         checkCompletion()
     }
 
     private func addAllWords() {
         for word in visibleWords {
-            guard canAddMoreFree else {
-                showPremiumWall = true
-                break
-            }
             addWord(word)
         }
     }

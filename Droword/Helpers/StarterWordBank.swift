@@ -5,6 +5,11 @@ struct StarterWord {
     let translation: String
     let type: String
     let transcription: String?
+    var example: String? = nil
+    var explanation: String? = nil
+    var collocations: [String] = []
+    var synonyms: [String] = []
+    var antonyms: [String] = []
 }
 
 struct StarterWordBank {

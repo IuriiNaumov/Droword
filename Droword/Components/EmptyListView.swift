@@ -99,7 +99,7 @@ struct EmptyListView: View {
     EmptyListView(
         illustration: AnyView(EmptyDictionaryArt()),
         title: "No words yet",
-        subtitle: "It's so empty we're crying."
+        subtitle: "It's so empty here."
     )
     .environmentObject(ThemeStore())
     .preferredColorScheme(.light)

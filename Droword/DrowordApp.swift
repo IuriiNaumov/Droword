@@ -266,6 +266,9 @@ struct DrowordApp: App {
             let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
             let defaults = UserDefaults(suiteName: "group.com.droword.shared")
+            SplashGate.skip = true
+            SplashGate.pendingAddWord = word
+            NotificationCenter.default.post(name: .skipSplash, object: nil)
             if word.isEmpty, let pending = defaults?.string(forKey: "pendingSharedWord"), !pending.isEmpty {
                 defaults?.removeObject(forKey: "pendingSharedWord")
                 NotificationCenter.default.post(
@@ -310,4 +313,10 @@ extension Notification.Name {
     static let openFromWidget = Notification.Name("openFromWidget")
     static let openAddWord = Notification.Name("openAddWord")
     static let openChatScene = Notification.Name("openChatScene")
+    static let skipSplash = Notification.Name("skipSplash")
+}
+
+enum SplashGate {
+    static var skip = false
+    static var pendingAddWord: String?
 }
