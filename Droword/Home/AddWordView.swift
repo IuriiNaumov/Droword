@@ -133,10 +133,7 @@ struct AddWordView: View {
                     .tint(themeStore.mainAccentColor)
                     .transaction { $0.disablesAnimations = true }
             }
-        }
-
-        .overlay {
-            if showOfflineAlert {
+            .fullScreenCover(isPresented: $showOfflineAlert) {
                 CustomAlertView(
                     icon: "wifi.slash",
                     iconColor: themeStore.accentGold,
@@ -152,12 +149,9 @@ struct AddWordView: View {
                         showOfflineAlert = false
                     }
                 )
-                .transition(.opacity)
-                .zIndex(999)
+                .environmentObject(themeStore)
             }
-        }
-        .overlay {
-            if showDuplicateAlert {
+            .fullScreenCover(isPresented: $showDuplicateAlert) {
                 CustomAlertView(
                     icon: "doc.on.doc",
                     iconColor: themeStore.accentGold,
@@ -167,8 +161,7 @@ struct AddWordView: View {
                         showDuplicateAlert = false
                     }
                 )
-                .transition(.opacity)
-                .zIndex(999)
+                .environmentObject(themeStore)
             }
         }
         .overlay(alignment: .top) {
@@ -337,7 +330,9 @@ struct AddWordView: View {
                     collocations: result.collocations ?? [],
                     synonyms: result.synonyms ?? [],
                     antonyms: result.antonyms ?? [],
-                    mnemonic: result.mnemonic
+                    mnemonic: result.mnemonic,
+                    forms: result.forms ?? [],
+                    formsResolved: result.forms != nil
                 )
                 store.add(newWord)
                 if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }

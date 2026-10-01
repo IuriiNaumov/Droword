@@ -62,6 +62,7 @@ const PATH_LIMITS: Record<string, Window> = {
   "/extract-words": { max: 6, seconds: 60 },
   "/story": { max: 8, seconds: 60 },
   "/scene": { max: 20, seconds: 60 },
+  "/forms": { max: 30, seconds: 60 },
 };
 
 const DAY_LIMITS: Record<string, number> = {
@@ -71,6 +72,7 @@ const DAY_LIMITS: Record<string, number> = {
   "/extract-words": 20,
   "/story": 30,
   "/scene": 80,
+  "/forms": 400,
 };
 
 async function bump(cache: Cache, key: string, max: number, ttl: number): Promise<boolean> {
@@ -97,11 +99,11 @@ export async function allowIP(request: Request, path: string): Promise<boolean> 
 
   const minuteOk = await bump(
     cache,
-    `https:
+    `https://droword.rate/m/${path}/${ip}/${minute}`,
     window.max,
     window.seconds
   );
   if (!minuteOk) return false;
 
-  return bump(cache, `https:
+  return bump(cache, `https://droword.rate/d/${path}/${ip}/${day}`, dayMax, 86_400);
 }

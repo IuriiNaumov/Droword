@@ -618,16 +618,19 @@ struct GlassCardModifier: ViewModifier {
     let isGlass: Bool
     var cornerRadius: CGFloat = 20
     var shape: GlassShapeStyle = .roundedRect(20)
+    var interactive: Bool = true
 
-    init(isGlass: Bool, cornerRadius: CGFloat = 20) {
+    init(isGlass: Bool, cornerRadius: CGFloat = 20, interactive: Bool = true) {
         self.isGlass = isGlass
         self.cornerRadius = cornerRadius
         self.shape = .roundedRect(cornerRadius)
+        self.interactive = interactive
     }
 
-    init(isGlass: Bool, shape: GlassShapeStyle) {
+    init(isGlass: Bool, shape: GlassShapeStyle, interactive: Bool = true) {
         self.isGlass = isGlass
         self.shape = shape
+        self.interactive = interactive
         if case .roundedRect(let radius) = shape {
             self.cornerRadius = radius
         } else {
@@ -640,9 +643,9 @@ struct GlassCardModifier: ViewModifier {
             if #available(iOS 26, *) {
                 switch shape {
                 case .roundedRect(let radius):
-                    content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: radius))
+                    content.glassEffect(glass, in: .rect(cornerRadius: radius))
                 case .capsule:
-                    content.glassEffect(.regular.interactive(), in: .capsule)
+                    content.glassEffect(glass, in: .capsule)
                 }
             } else {
                 content
@@ -650,5 +653,10 @@ struct GlassCardModifier: ViewModifier {
         } else {
             content
         }
+    }
+
+    @available(iOS 26, *)
+    private var glass: Glass {
+        interactive ? .regular.interactive() : .regular
     }
 }

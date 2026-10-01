@@ -38,97 +38,112 @@ struct CoachMarkView: View {
     let onComplete: () -> Void
 
     @State private var currentStep = 0
-    @State private var cardScale: CGFloat = 0.92
-    @State private var cardOpacity: Double = 0
+    @State private var contentOpacity: Double = 0
 
-    private var step: CoachMarkStep { steps[currentStep] }
     private var isLast: Bool { currentStep >= steps.count - 1 }
+
+    private func accent(for index: Int) -> Color {
+        switch index {
+        case 0: return themeStore.accentGreen
+        case 1: return themeStore.accentGold
+        case 2: return themeStore.accentPink
+        default: return themeStore.accentRed
+        }
+    }
 
     var body: some View {
         ZStack {
-            themeStore.appBg.opacity(0.55)
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
-                .onTapGesture { advance() }
+            themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 18) {
-                HStack(spacing: 6) {
-                    ForEach(0..<steps.count, id: \.self) { i in
-                        Capsule(style: .continuous)
-                            .fill(i == currentStep ? themeStore.mainAccentColor : themeStore.secondaryText.opacity(0.25))
-                            .frame(width: i == currentStep ? 18 : 8, height: 8)
+            VStack(spacing: 0) {
+                TabView(selection: $currentStep) {
+                    ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                        stepPage(step, accent: accent(for: index))
+                            .tag(index)
+                            .padding(.horizontal, 28)
                     }
                 }
-                .animation(.spring(response: 0.35, dampingFraction: 0.8), value: currentStep)
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.spring(response: 0.45, dampingFraction: 0.9), value: currentStep)
 
-                Image(systemName: step.icon)
-                    .font(.system(size: 36, weight: .semibold))
-                    .foregroundStyle(themeStore.mainAccentColor)
-                    .id(currentStep)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                VStack(spacing: 16) {
+                    PageCapsules(count: steps.count, selection: currentStep)
 
-                VStack(spacing: 8) {
-                    Text(step.title)
-                        .font(themeStore.display(22))
-                        .foregroundStyle(themeStore.mainText)
-                        .tracking(-0.4)
-                        .multilineTextAlignment(.center)
-                        .id("title-\(currentStep)")
-
-                    Text(step.message)
-                        .font(themeStore.regular(15))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .id("msg-\(currentStep)")
-                }
-                .padding(.horizontal, 4)
-
-                VStack(spacing: 10) {
-                    Button {
-                        advance()
-                    } label: {
-                        Text(isLast ? "Get Started" : "Next")
-                            .duo3DStyle(themeStore.mainAccentColor)
-                    }
-                    .buttonStyle(Duo3DButtonStyle())
-
-                    if !isLast {
+                    VStack(spacing: 12) {
                         Button {
-                            Haptics.lightImpact()
-                            onComplete()
+                            advance()
                         } label: {
-                            Text("Skip tour")
-                                .duo3DSecondaryStyle()
+                            Text(isLast ? "Get Started" : "Next")
+                                .duo3DStyle(themeStore.mainAccentColor)
                         }
                         .buttonStyle(Duo3DButtonStyle())
+
+                        if !isLast {
+                            Button {
+                                Haptics.lightImpact()
+                                onComplete()
+                            } label: {
+                                Text("Skip tour")
+                                    .duo3DSecondaryStyle()
+                            }
+                            .buttonStyle(Duo3DButtonStyle())
+                        }
                     }
                 }
-                .padding(.top, 4)
+                .padding(.horizontal, 28)
+                .padding(.bottom, 20)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 28)
-            .frame(maxWidth: 360)
-            .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.dialog)
-            .padding(.horizontal, 28)
-            .scaleEffect(cardScale)
-            .opacity(cardOpacity)
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: currentStep)
+            .frame(maxWidth: 460)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .opacity(contentOpacity)
         }
         .onAppear {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
-                cardScale = 1
-                cardOpacity = 1
+            withAnimation(.easeOut(duration: 0.35)) {
+                contentOpacity = 1
             }
+        }
+        .onChange(of: currentStep) {
+            Haptics.lightImpact()
+        }
+    }
+
+    private func stepPage(_ step: CoachMarkStep, accent: Color) -> some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
+
+            Image(systemName: step.icon)
+                .font(.system(size: 42, weight: .semibold))
+                .foregroundStyle(accent)
+
+            VStack(spacing: 10) {
+                Text(step.title)
+                    .font(themeStore.display(32))
+                    .foregroundStyle(themeStore.mainText)
+                    .tracking(-0.4)
+                    .multilineTextAlignment(.center)
+
+                Text(step.message)
+                    .font(themeStore.regular(17))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 18)
+            .padding(.horizontal, 4)
+
+            Spacer(minLength: 24)
         }
     }
 
     private func advance() {
-        Haptics.lightImpact()
         if isLast {
+            Haptics.lightImpact()
             onComplete()
         } else {
-            currentStep += 1
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
+                currentStep += 1
+            }
         }
     }
 }

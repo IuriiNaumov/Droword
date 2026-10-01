@@ -19,7 +19,7 @@ enum OnboardingModalPreview: String, CaseIterable, Identifiable {
         switch self {
         case .firstWords: return "textformat"
         case .homeTour: return "house"
-        case .suggestedWords: return "lightbulb"
+        case .suggestedWords: return "wand.and.sparkles"
         }
     }
 }
@@ -47,7 +47,7 @@ struct FeatureFlagsView: View {
                     VStack(spacing: 0) {
                         HStack(spacing: 14) {
                             MenuSymbol(
-                                systemName: "sparkles",
+                                systemName: "sparkle",
                                 color: themeStore.accentBlue,
                                 size: 22,
                                 weight: .medium
@@ -200,51 +200,7 @@ struct FeatureFlagsView: View {
                 .padding(.horizontal, 20)
             }
             .background(themeStore.appBg.ignoresSafeArea())
-
-            if let previewCase {
-                previewCase.makeView {
-                    withAnimation(.easeOut(duration: 0.18)) {
-                        self.previewCase = nil
-                    }
-                }
-                .environmentObject(themeStore)
-                .transition(.opacity)
-                .zIndex(10)
-            }
-
-            if let onboardingPreview {
-                Group {
-                    switch onboardingPreview {
-                    case .firstWords:
-                        FirstWordsView {
-                            withAnimation(.easeOut(duration: 0.18)) {
-                                self.onboardingPreview = nil
-                            }
-                        }
-                        .environmentObject(themeStore)
-                        .environmentObject(store)
-                        .environmentObject(languageStore)
-                    case .homeTour:
-                        CoachMarkView(steps: CoachMarkCatalog.homeSteps) {
-                            withAnimation(.easeOut(duration: 0.18)) {
-                                self.onboardingPreview = nil
-                            }
-                        }
-                        .environmentObject(themeStore)
-                    case .suggestedWords:
-                        SuggestedWordsIntroView {
-                            withAnimation(.easeOut(duration: 0.18)) {
-                                self.onboardingPreview = nil
-                            }
-                        }
-                        .environmentObject(themeStore)
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(11)
-            }
         }
-        .animation(.easeOut(duration: 0.2), value: previewCase?.id)
         .animation(.easeOut(duration: 0.2), value: onboardingPreview?.id)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -262,6 +218,35 @@ struct FeatureFlagsView: View {
                 onRestart: { showWellDone = false }
             )
             .environmentObject(themeStore)
+        }
+        .fullScreenCover(item: $previewCase) { item in
+            item.makeView {
+                previewCase = nil
+            }
+            .environmentObject(themeStore)
+        }
+        .fullScreenCover(item: $onboardingPreview) { item in
+            Group {
+                switch item {
+                case .firstWords:
+                    FirstWordsView {
+                        onboardingPreview = nil
+                    }
+                    .environmentObject(themeStore)
+                    .environmentObject(store)
+                    .environmentObject(languageStore)
+                case .homeTour:
+                    CoachMarkView(steps: CoachMarkCatalog.homeSteps) {
+                        onboardingPreview = nil
+                    }
+                    .environmentObject(themeStore)
+                case .suggestedWords:
+                    SuggestedWordsIntroView {
+                        onboardingPreview = nil
+                    }
+                    .environmentObject(themeStore)
+                }
+            }
         }
     }
 }

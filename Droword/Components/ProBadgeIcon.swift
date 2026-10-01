@@ -32,7 +32,6 @@ struct ProPlusMark: View {
     var size: CGFloat = 120
 
     private var accent: Color { themeStore.mainAccentColor }
-    private let period: Double = 3.0
 
     private struct TwinkleStar: Identifiable {
         let id: Int
@@ -52,61 +51,48 @@ struct ProPlusMark: View {
         ]
     }
 
-    @Environment(\.scenePhase) private var scenePhase
-
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: scenePhase != .active)) { context in
-            let cycle = (context.date.timeIntervalSinceReferenceDate / period)
-                .truncatingRemainder(dividingBy: 1.0)
-            let centerPulse = sparkle(cycle: cycle, phase: 0)
+        ZStack {
+            HaloRings(color: accent, size: size * 0.88)
 
-            ZStack {
-                HaloRings(color: accent, size: size * 0.88)
-                    .scaleEffect(0.96 + 0.04 * centerPulse)
-                    .opacity(0.85 + 0.15 * centerPulse)
+            Image(systemName: "sparkle")
+                .font(.system(size: size * 0.26, weight: .semibold))
+                .foregroundStyle(accent)
+                .symbolRenderingMode(.hierarchical)
 
-                Image(systemName: "sparkles")
-                    .font(.system(size: size * 0.26, weight: .semibold))
-                    .foregroundStyle(accent)
-                    .symbolRenderingMode(.hierarchical)
-                    .scaleEffect(0.88 + 0.16 * centerPulse)
-                    .opacity(0.75 + 0.25 * centerPulse)
-                    .rotationEffect(.degrees((centerPulse - 0.5) * 8))
-                    .offset(y: (centerPulse - 0.5) * size * 0.03)
-
-                ForEach(stars) { star in
-                    let pulse = sparkle(cycle: cycle, phase: star.phase)
-                    Image(systemName: "sparkle")
-                        .font(.system(size: size * star.baseSize, weight: .bold))
-                        .foregroundStyle(star.isPink ? themeStore.accentPink : themeStore.accentRed)
-                        .scaleEffect(0.4 + 0.75 * pulse)
-                        .opacity(0.2 + 0.8 * pulse)
-                        .offset(x: size * star.x, y: size * star.y)
-                }
+            ForEach(stars) { star in
+                Image(systemName: "sparkle")
+                    .font(.system(size: size * star.baseSize, weight: .bold))
+                    .foregroundStyle(star.isPink ? themeStore.accentPink : themeStore.accentRed)
+                    .offset(x: size * star.x, y: size * star.y)
             }
-            .frame(width: size * 1.12, height: size * 1.12)
         }
+        .frame(width: size * 1.12, height: size * 1.12)
         .accessibilityLabel(Text("Droword PRO"))
-    }
-
-    private func sparkle(cycle: Double, phase: Double) -> CGFloat {
-        let shifted = (cycle + phase).truncatingRemainder(dividingBy: 1.0)
-        return CGFloat(0.5 + 0.5 * sin(shifted * 2 * .pi))
     }
 }
 
 struct ProPillBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    var prominent: Bool = false
+
+    private var star: CGFloat { prominent ? 14 : 8 }
+    private var labelSize: CGFloat { prominent ? 15 : 9 }
 
     var body: some View {
-        Text("PRO")
-            .font(themeStore.bold(9))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(
-                Capsule().fill(themeStore.mainAccentColor)
-            )
+        HStack(spacing: prominent ? 6 : 3) {
+            Image(systemName: prominent ? "sparkles" : "sparkle")
+                .font(.system(size: star, weight: .bold))
+
+            Text("PRO")
+                .font(themeStore.bold(labelSize))
+                .tracking(prominent ? 1.1 : 0.3)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, prominent ? 12 : 6)
+        .padding(.vertical, prominent ? 7 : 3)
+        .background(Capsule().fill(themeStore.mainAccentColor))
+        .accessibilityLabel(Text("PRO"))
     }
 }
 

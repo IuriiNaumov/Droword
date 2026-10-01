@@ -442,6 +442,7 @@ struct QuizMixedView: View {
                 Text(HighlightedExample.make(
                     example: example,
                     word: item.word,
+                    forms: store.words.first { $0.id == item.id }?.forms ?? [],
                     baseColor: UIColor(themeStore.mainText),
                     highlightColor: UIColor(themeStore.accentGold),
                     baseFont: themeStore.uiFont(size: 15, weight: .regular),

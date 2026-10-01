@@ -165,6 +165,7 @@ Wrappers:
 | `ClaudeStory` | `POST /story` | Story from words |
 | `ClaudeScene` | `POST /scene` | Chat scene turns |
 | `ClaudeExtractWords` | `POST /extract-words` | Words from photo and/or pasted text |
+| `fetchWordForms` (`ClaudeTranslate.swift`) | `POST /forms` | Inflected forms of one headword that appear in its example / collocations |
 | `AudioManager` | `POST /tts` | OpenAI TTS audio |
 
 Prompts and CEFR/script rules live in **`droword-worker/src/index.ts`**. Rate limits / body size / key check in `guard.ts`. Worker README: `droword-worker/README.md`.
@@ -222,6 +223,30 @@ Sheets stay on `appBg` (white). Duo content cards use gray fill **without** a st
 
 Match neighboring screen patterns (sheet chrome, close/back buttons, toast/coach marks) before inventing new layout systems.
 
+### Language pair
+
+`LanguageCatalog.availableLanguages` is the source for onboarding and settings. Names are endonyms. After the original 12 (English, Español, Русский, Français, Deutsch, Italiano, Português, 한국어, 中文, 日本語, العربية, हिन्दी) the catalog also includes Українська, Türkçe, Ελληνικά, Nederlands, Polski, Svenska, Norsk, Dansk, Suomi, Tiếng Việt, Bahasa Indonesia, ไทย, עברית, Čeština, Română, Magyar. `LanguageLevels` is the same CEFR list for every language. Word packs still cover only some pairs and fall back.
+
+Picker flags are drawn illustrations (`LanguageFlagView`), used by `LanguageCube` and `LanguagePairHero`. Do not switch them back to emoji, and do not put a `DragGesture(minimumDistance: 0)` on language cards — that gesture blocks scrolling over the icons. Glass on those cards is non-interactive for the same reason.
+
+### App icons
+
+`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. The tab bar uses the system SF Symbols (`house`, cards, `bolt`, `plus.circle`). `SlidingTabBar.sizeThatFits` makes the bar content 12pt shorter than the system height, and never below 44.
+
+### Page indicators and theme picker
+
+Onboarding, the Home & Practice tour, replay, and the theme picker use `PageCapsules` (`Components/PageCapsules.swift`). Do not bring back `UIPageControl`. Capsules are liquid glass when the app theme is glass, and also when the theme picker is previewing the glass page. Theme-picker capsule color otherwise follows the previewed palette (Green Owl green, Custom = chosen accent, Droword blue).
+
+Theme preview cards hug their content (equal inset, leftover space is sheet background). The Custom accent control is the color circle in the preview header, opposite the avatar, with no “Accent color” label. Green Owl **Choose** uses `duo3DStyle` `verticalPadding: 14` so face + 4pt lip matches the flat buttons’ 32pt. Gap from Choose to the capsules is 16.
+
+### PRO mark
+
+`ProPillBadge` (settings and paywall) and `ProPlusMark` keep a static sparkle. Do not add `symbolEffect` bounce/pulse or a `TimelineView` twinkle. The App Customization settings row does not show a PRO badge.
+
+### Irregular forms
+
+Highlight conjugated/inflected forms only inside the example sentence. The worker returns `forms` on translate/suggest and on `POST /forms`; `HighlightedExample` paints those strings. Do not highlight the headword itself or forms outside the example.
+
 ---
 
 ## Important behaviors to preserve
@@ -238,6 +263,9 @@ Match neighboring screen patterns (sheet chrome, close/back buttons, toast/coach
 10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; still local-first App Group file. Personal Team cannot ship iCloud entitlements — comment them in entitlements, keep Swift code.
 11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson).
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
+13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
+14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar icons stay system symbols.
+15. **PRO sparkle** — static. No bounce or pulse.
 
 ---
 
@@ -260,7 +288,9 @@ Match neighboring screen patterns (sheet chrome, close/back buttons, toast/coach
 | Onboarding | `Onboarding/*` |
 | Settings / flags | `SettingsView`, `FeatureFlagsView`, `AppStorageKeys` |
 | Notifications | `NotificationManager`, `NotificationCopy`, `DrowordApp` |
-| Themes / Duo chrome | `ThemeStore`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |
+| Themes / Duo chrome | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |
+| Language pair / flags | `LanguageCatalog`, `LanguageFlagView`, `LanguageCube` |
+| App icons | `AppIconStyle.customizationCases`, `AppCustomizationView` |
 | Seasonal | `SeasonalOverlayView`, season components |
 | Worker API | `droword-worker/src/index.ts`, `guard.ts` |
 

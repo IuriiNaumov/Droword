@@ -5,6 +5,7 @@ struct Duo3DStyle: ViewModifier {
     let bgColor: Color
     var isDisabled: Bool = false
     var force3D: Bool = false
+    var verticalPadding: CGFloat = 16
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -40,7 +41,7 @@ struct Duo3DStyle: ViewModifier {
         content
             .font(themeStore.bold(17))
             .foregroundStyle(primaryLabelColor)
-            .padding(.vertical, 16)
+            .padding(.vertical, verticalPadding)
             .frame(maxWidth: .infinity)
             .background(
                 ZStack {
@@ -156,8 +157,8 @@ struct Duo3DButtonStyle: ButtonStyle {
 }
 
 extension View {
-    func duo3DStyle(_ color: Color, isDisabled: Bool = false, force3D: Bool = false) -> some View {
-        modifier(Duo3DStyle(bgColor: color, isDisabled: isDisabled, force3D: force3D))
+    func duo3DStyle(_ color: Color, isDisabled: Bool = false, force3D: Bool = false, verticalPadding: CGFloat = 16) -> some View {
+        modifier(Duo3DStyle(bgColor: color, isDisabled: isDisabled, force3D: force3D, verticalPadding: verticalPadding))
     }
 
     func duo3DSecondaryStyle() -> some View {

@@ -27,6 +27,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
     var synonyms: [String] = []
     var antonyms: [String] = []
     var mnemonic: String? = nil
+    var forms: [String] = []
+    var formsResolved: Bool = false
     var reaction: String? = nil
 
     var introduced: Bool = false
@@ -56,6 +58,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
         synonyms: [String] = [],
         antonyms: [String] = [],
         mnemonic: String? = nil,
+        forms: [String] = [],
+        formsResolved: Bool = false,
         reaction: String? = nil,
         introduced: Bool = false
     ) {
@@ -83,6 +87,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
         self.synonyms = synonyms
         self.antonyms = antonyms
         self.mnemonic = mnemonic
+        self.forms = forms
+        self.formsResolved = formsResolved
         self.reaction = reaction
         self.introduced = introduced
     }
@@ -118,6 +124,8 @@ struct StoredWord: Identifiable, Codable, Equatable {
         synonyms = try container.decodeIfPresent([String].self, forKey: .synonyms) ?? []
         antonyms = try container.decodeIfPresent([String].self, forKey: .antonyms) ?? []
         mnemonic = try container.decodeIfPresent(String.self, forKey: .mnemonic)
+        forms = try container.decodeIfPresent([String].self, forKey: .forms) ?? []
+        formsResolved = try container.decodeIfPresent(Bool.self, forKey: .formsResolved) ?? false
         reaction = try container.decodeIfPresent(String.self, forKey: .reaction)
 
         introduced = try container.decodeIfPresent(Bool.self, forKey: .introduced) ?? (repetitions > 0 || intervalDays > 0)
@@ -153,6 +161,8 @@ final class WordsStore: ObservableObject {
     private var savesSinceBackup = 0
     private var lastWidgetReloadAt: Date = .distantPast
     private var lastLoadedFileModification: Date?
+    private var pendingFormLookups: [UUID] = []
+    private var activeFormLookups = 0
 
     private var sharedDefaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? UserDefaults.standard
@@ -415,7 +425,7 @@ final class WordsStore: ObservableObject {
         words[idx] = w
     }
 
-    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil) {
+    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil, forms: [String] = [], formsResolved: Bool = false) {
         guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
         var w = words[idx]
         w.translation = translation
@@ -428,6 +438,8 @@ final class WordsStore: ObservableObject {
         w.synonyms = synonyms
         w.antonyms = antonyms
         w.mnemonic = mnemonic
+        w.forms = forms
+        w.formsResolved = formsResolved
         w.needsEnrichment = false
         if examples.isEmpty {
             w.examples = [example]
@@ -435,6 +447,65 @@ final class WordsStore: ObservableObject {
             w.examples = examples
         }
         words[idx] = w
+    }
+
+    func scheduleFormLookup(id: UUID) {
+        guard let word = words.first(where: { $0.id == id }) else { return }
+        guard !word.formsResolved else { return }
+        guard !Self.exampleSentences(of: word).isEmpty else { return }
+        if pendingFormLookups.contains(id) {
+            pumpFormLookups()
+            return
+        }
+        pendingFormLookups.append(id)
+        pumpFormLookups()
+    }
+
+    private func pumpFormLookups() {
+        guard NetworkMonitor.shared.isConnected else { return }
+        while activeFormLookups < 2, !pendingFormLookups.isEmpty {
+            let id = pendingFormLookups.removeFirst()
+            guard let word = words.first(where: { $0.id == id }), !word.formsResolved else { continue }
+            let sentences = Self.exampleSentences(of: word)
+            guard !sentences.isEmpty else { continue }
+            let headword = word.word
+            let language = word.fromLanguage
+            activeFormLookups += 1
+            Task { @MainActor in
+                defer {
+                    activeFormLookups -= 1
+                    pumpFormLookups()
+                }
+                do {
+                    let forms = try await fetchWordForms(
+                        word: headword,
+                        sentences: sentences,
+                        learningLanguage: language
+                    )
+                    applyResolvedForms(id: id, forms: forms)
+                } catch {
+                    return
+                }
+            }
+        }
+    }
+
+    private func applyResolvedForms(id: UUID, forms: [String]) {
+        guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
+        var w = words[idx]
+        guard !w.formsResolved else { return }
+        w.forms = forms
+        w.formsResolved = true
+        words[idx] = w
+    }
+
+    private static func exampleSentences(of word: StoredWord) -> [String] {
+        let stored = word.examples
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if !stored.isEmpty { return stored }
+        let single = word.example?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return single.isEmpty ? [] : [single]
     }
 
     static func activityDays(from words: [StoredWord]) -> Set<Date> {

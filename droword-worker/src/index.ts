@@ -132,7 +132,8 @@ STRICT RULES:
 - type → part of speech, only ${nativeLanguage} (e.g. "существительное", "глагол" for Russian).
 - explanation → 1–2 short sentences in ${nativeLanguage}. Write like you're explaining to a friend — casual, clear, helpful. Focus on when and how the word is used, not a dictionary definition. Adapt to ${lvl.label} level.
 - breakdown → only ${nativeLanguage} or null. Brief etymology or word structure if helpful.
-- example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match the ${lvl.label} level. ${lvl.guideline} Capitalize only the first letter of each sentence (and proper nouns). Do NOT capitalize the headword mid-sentence.
+- example → only ${learningLanguage}. IMPORTANT: The example sentence MUST match the ${lvl.label} level. ${lvl.guideline} Capitalize only the first letter of each sentence (and proper nouns). Do NOT capitalize the headword mid-sentence. Use a natural inflection or conjugation of "${word}" when that is how a native would say it.
+- forms → array of every conjugated or inflected surface form of "${word}" that appears in "example" or "collocations", copied exactly from that text, including accents. The form may share no letters with the headword. Examples: saber → supe, supo, sé; ser → soy, fue; ir → voy, fui; ver → vi; go → went; être → suis. Do not include synonyms or unrelated words. Return [] only when no inflected form appears.
 - collocations → an array of 2–4 short, very common collocations or set phrases built with "${word}", ONLY in ${learningLanguage} (no translation). Natural word combinations a native speaker actually uses (e.g. for English "make": ["make a decision", "make a mistake", "make friends"]). Keep them short. Return [] if none are natural.
 - synonyms → an array of 0–3 common synonyms of "${word}", ONLY in ${learningLanguage} (no translation). Return [] if there are no close synonyms.
 - antonyms → an array of 0–2 common antonyms of "${word}", ONLY in ${learningLanguage} (no translation). Return [] if the word has no natural opposite.
@@ -161,7 +162,8 @@ Return ONLY valid JSON:
   "collocations": ["...", "..."],
   "synonyms": ["...", "..."],
   "antonyms": ["...", "..."],
-  "mnemonic": null or "..."
+  "mnemonic": null or "...",
+  "forms": ["..."]
 }`;
 
   const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
@@ -263,10 +265,15 @@ TASK:
    - not in the list
    - suitable for the ${lvl.label} level. ${lvl.guideline}
    - common in daily use
-- Provide a short example sentence in the learning language, appropriate for the ${lvl.label} level. Natural sentence casing only (capitalize sentence start and proper nouns — never Title Case every word, and do not capitalize the headword mid-sentence).
+- Provide a short example sentence in the learning language, appropriate for the ${lvl.label} level. Natural sentence casing only (capitalize sentence start and proper nouns — never Title Case every word, and do not capitalize the headword mid-sentence). Use a natural inflection or conjugation when that is how a native would say the word.
+- forms → array of every conjugated or inflected surface form of the headword that appears in the example or collocations, copied exactly from that text. The form may share no letters with the headword (saber → supe, ser → soy, ir → fui, go → went). Return [] only when no inflected form appears.
 - Provide a short one‑sentence explanation in the native language.
 - Provide a brief breakdown/etymology in the native language if relevant (optional).
 - Provide transcription that helps the learner pronounce the word correctly.
+- collocations → an array of 2–4 short, very common phrases built with the word, ONLY in ${learningLanguage}. Return [] if none are natural.
+- synonyms → an array of 0–3 common synonyms, ONLY in ${learningLanguage}. Return [] if there are no close synonyms.
+- antonyms → an array of 0–2 common antonyms, ONLY in ${learningLanguage}. Return [] if the word has no natural opposite.
+- mnemonic → one short memory hook in ${nativeLanguage}, a single sentence, or null.
 
 STRICT:
 - word and example → only ${learningLanguage}
@@ -291,7 +298,12 @@ STRICT:
       "example": "string",
       "explanation": "string",
       "breakdown": "string",
-      "transcription": "string"
+      "transcription": "string",
+      "collocations": ["..."],
+      "synonyms": ["..."],
+      "antonyms": ["..."],
+      "mnemonic": null,
+      "forms": ["..."]
     },
     {
       "word": "string",
@@ -300,7 +312,12 @@ STRICT:
       "example": "string",
       "explanation": "string",
       "breakdown": "string",
-      "transcription": "string"
+      "transcription": "string",
+      "collocations": ["..."],
+      "synonyms": ["..."],
+      "antonyms": ["..."],
+      "mnemonic": null,
+      "forms": ["..."]
     }
   ]
 }`;
@@ -314,7 +331,7 @@ STRICT:
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5",
-      max_tokens: 1024,
+      max_tokens: 1800,
       system: "You always return strictly valid JSON without explanations.",
       messages: [{ role: "user", content: prompt }],
     }),
@@ -770,6 +787,89 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
   });
 }
 
+async function handleForms(request: Request, env: Env): Promise<Response> {
+  const raw = await request.json<{
+    word: string;
+    sentences: string[];
+    learningLanguage: string;
+  }>();
+
+  const word = clipText(raw.word, limits.word);
+  const learningLanguage = clipText(raw.learningLanguage, 48);
+  const sentences = takeList(raw.sentences, 8, 500);
+
+  if (!word || !learningLanguage || !sentences) {
+    return errorResponse("Missing required fields: word, sentences, learningLanguage", 400);
+  }
+
+  const listed = sentences.map((sentence, index) => `${index + 1}. ${sentence}`).join("\n");
+  const prompt = `Identify the conjugated or inflected forms of one headword inside the sentences.
+
+Headword: "${word}"
+Language: ${learningLanguage}
+Sentences:
+${listed}
+
+Return every surface form in those sentences that is a grammatical form of "${word}".
+Copy each form exactly as written, including accents and capitalization.
+The form may look nothing like the headword. Irregular and suppletive forms count:
+saber → supe, supo, sé; ser → soy, era, fue; ir → voy, fui; ver → vi; tener → tuve; go → went; be → was, were; être → suis, fut; sein → bin, war.
+Do not include synonyms, translations, or unrelated words.
+If the headword only appears unchanged, return an empty array.
+
+Return ONLY valid JSON:
+{ "forms": ["..."] }`;
+
+  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5",
+      max_tokens: 256,
+      system: "You always return strictly valid JSON without explanations.",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!anthropicResponse.ok) {
+    await anthropicResponse.text();
+    return errorResponse("Upstream error", 502);
+  }
+
+  const claude = await anthropicResponse.json<{
+    content?: { type: string; text?: string }[];
+    error?: { message: string };
+  }>();
+
+  if (claude.error) {
+    return errorResponse("Upstream error", 502);
+  }
+
+  const text = claude.content?.find((c) => c.type === "text")?.text;
+  if (!text) {
+    return errorResponse("Empty response from Claude", 502);
+  }
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return errorResponse("Invalid JSON from Claude", 502);
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]) as { forms?: unknown };
+    const forms = Array.isArray(parsed.forms)
+      ? parsed.forms.filter((form): form is string => typeof form === "string" && form.trim().length > 0)
+      : [];
+    return jsonResponse({ forms });
+  } catch {
+    return errorResponse("Failed to parse Claude response", 502);
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "OPTIONS") {
@@ -815,6 +915,8 @@ export default {
           return await handleStory(request, env);
         case "/scene":
           return await handleScene(request, env);
+        case "/forms":
+          return await handleForms(request, env);
         default:
           return errorResponse("Not found", 404);
       }

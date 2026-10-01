@@ -11,8 +11,6 @@ struct FirstWordsView: View {
     @State private var textOpacity: Double = 0
     @State private var wordsOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
-    @State private var cardScale: CGFloat = 0.92
-    @State private var cardOpacity: Double = 0
     @State private var addedWords: Set<Int> = []
 
     private var starterWords: [StarterWord] {
@@ -24,28 +22,29 @@ struct FirstWordsView: View {
 
     var body: some View {
         ZStack {
-            themeStore.appBg.opacity(0.55)
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
+            themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 18) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 24)
+
                 Image(systemName: "textformat")
-                    .font(.system(size: 36, weight: .semibold))
+                    .font(.system(size: 42, weight: .semibold))
                     .foregroundStyle(themeStore.accentBlue)
                     .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text("Start with these words")
-                        .font(themeStore.display(22))
+                        .font(themeStore.display(32))
                         .foregroundStyle(themeStore.mainText)
                         .tracking(-0.4)
                         .multilineTextAlignment(.center)
 
                     Text("Tap any word to add it to your dictionary")
-                        .font(themeStore.regular(15))
+                        .font(themeStore.regular(16))
                         .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
+                .padding(.top, 18)
                 .opacity(textOpacity)
 
                 VStack(spacing: 10) {
@@ -53,7 +52,10 @@ struct FirstWordsView: View {
                         wordRow(starter, index: index)
                     }
                 }
+                .padding(.top, 28)
                 .opacity(wordsOpacity)
+
+                Spacer(minLength: 24)
 
                 Button {
                     Haptics.lightImpact()
@@ -64,20 +66,15 @@ struct FirstWordsView: View {
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 28)
-            .frame(maxWidth: 360)
-            .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.dialog)
+            .frame(maxWidth: 460)
             .padding(.horizontal, 28)
-            .scaleEffect(cardScale)
-            .opacity(cardOpacity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
             Haptics.mediumImpact()
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
-                cardScale = 1
-                cardOpacity = 1
+            withAnimation(.spring(response: 0.46, dampingFraction: 0.72)) {
                 iconScale = 1
             }
             withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
@@ -144,7 +141,7 @@ struct FirstWordsView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.secondaryText.opacity(0.08))
+                .fill(themeStore.cardBg)
         )
     }
 }

@@ -1,0 +1,56 @@
+---
+description: Droword project map and coding constraints for every session
+alwaysApply: true
+---
+
+# Droword
+
+Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full map: **`AGENTS.md`**.
+
+## Stack
+
+- App: `Droword/` (SwiftUI). Entry: `DrowordApp` → `ContentView` → onboarding or `HomeView`.
+- API: `droword-worker/` → `https://droword-api.droword.workers.dev` (`X-App-Key`).
+- Shared data: App Group `group.com.droword.shared` (`WordsStore`, `LanguageStore`).
+- Optional sync: `WordsICloudSync` → `iCloud.com.droword` (entitlements may be commented for Personal Team).
+
+## Where to edit
+
+| Area | Path |
+|------|------|
+| Words / SRS | `Store/WordsStore.swift`, `Domain/SRSScheduler.swift` |
+| Home / lesson | `Home/HomeView.swift`, `DailyLessonBuilder`, `DailyLessonCard` |
+| Scan / capture | `ScanWordsView`, `ClaudeExtractWords`, Share extension |
+| iCloud | `Helpers/WordsICloudSync.swift`, `DictionarySettingsView`, `Droword.entitlements` |
+| Badges | `BadgeStore`, `HomeView` celebrations |
+| AI calls | `Claude/*.swift` + `droword-worker/src/index.ts` |
+| Limits / Pro | `Helpers/DailyLimitsManager.swift`, `Components/PremiumView.swift` |
+| Keys / prefs | `Helpers/AppStorageKeys.swift` |
+| Design / Duo | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle` |
+| Languages | `LanguageCatalog`, `LanguageFlagView` |
+| App icons | `AppIconStyle.customizationCases` |
+
+## Do
+
+- Reuse stores, design tokens, and existing sheet/button patterns.
+- Keep dictionary local-first; AI is optional enrichment.
+- Put new `@AppStorage` keys in `AppStorageKeys`.
+- Leave worker CEFR/script prompt rules intact unless the task is explicitly about them.
+- Home: one lesson hero (`DailyLessonCard`); due reviews live inside the lesson queue.
+- Green Owl only: white pages (`appBg`), gray blocks (`cardBg` `#F7F7F7`), `duo3DStyle` CTAs, `cardRadius`/`chipRadius`. No gray stroke borders on Duo cards.
+- Practice correct/wrong = toast greens/reds (`successStrong` / `errorStrong` → `accentGreen` / `accentRed`).
+- Empty states: tip + strong Add CTA (`EmptyListView` / `PracticeEmptyContent`).
+- Scan: photo only; long Share → extract-words. Dedup against dictionary. No clipboard-paste extract on Add.
+- Language picker flags are illustrated (`LanguageFlagView`). Page dots are `PageCapsules`.
+- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons). Tab bar icons stay system SF Symbols.
+
+## Don't
+
+- Commit secrets (`.dev.vars`, API keys).
+- Dump Practice quiz UI or a second review CTA onto Home.
+- Apply Duo gray card surfaces to non-`.duolingo` themes.
+- Delete `WordsICloudSync` when disabling iCloud — comment entitlements only for Personal Team.
+- Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
+- Put language/flag app icons back in App Customization, or replace tab-bar symbols with custom art unless asked.
+- Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static).
+- Highlight irregular forms outside the example sentence. `forms` / `POST /forms` feed `HighlightedExample` only.

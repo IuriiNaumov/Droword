@@ -183,7 +183,7 @@ struct AppCustomizationView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(AppIconStyle.allCases) { style in
+                    ForEach(AppIconStyle.customizationCases) { style in
                         iconTile(style)
                     }
                 }

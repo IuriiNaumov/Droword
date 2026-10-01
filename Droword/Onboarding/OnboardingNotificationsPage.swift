@@ -448,13 +448,11 @@ struct OnboardingNotificationsPage: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-            ScrollView(showsIndicators: false) {
+        ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Stay in the loop")
-                            .font(themeStore.bold(28))
+                            .font(themeStore.display(32))
                             .foregroundStyle(themeStore.mainText)
                         Text("Turn on nudges so Droword can pull you back to your words.")
                             .font(themeStore.regular(15))
@@ -471,7 +469,6 @@ struct OnboardingNotificationsPage: View {
                 }
                 .padding(.top, 54)
                 .padding(.bottom, 12)
-            }
         }
     }
 }

@@ -154,24 +154,23 @@ struct PremiumView: View {
         .background(themeStore.appBg.ignoresSafeArea())
     }
 
+    private var proBadge: some View {
+        ProPillBadge(prominent: true)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text("Droword PRO"))
+    }
+
     private var headerSection: some View {
         VStack(spacing: 18) {
-            MenuSymbol(
-                systemName: "sparkles",
-                color: themeStore.accentBlue,
-                size: 56,
-                weight: .medium,
-                frameSize: 64
-            )
-            .scaleEffect(appeared ? 1.0 : 0.82)
-            .opacity(appeared ? 1.0 : 0)
-            .accessibilityLabel(Text("Droword PRO"))
-
             if isPremium {
-                Text("DROWORD PRO IS YOURS")
-                    .font(themeStore.bold(26))
-                    .foregroundStyle(themeStore.mainText)
-                    .multilineTextAlignment(.center)
+                HStack(spacing: 10) {
+                    proBadge
+                    Text("is yours")
+                        .font(themeStore.bold(26))
+                        .foregroundStyle(themeStore.mainText)
+                }
+                .scaleEffect(appeared ? 1.0 : 0.92)
+                .opacity(appeared ? 1.0 : 0)
 
                 if let days = trialDaysRemaining {
                     Text("Trial · \(days) days left", comment: "PRO trial countdown")
@@ -183,6 +182,10 @@ struct PremiumView: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
             } else {
+                proBadge
+                    .scaleEffect(appeared ? 1.0 : 0.92)
+                    .opacity(appeared ? 1.0 : 0)
+
                 Text("Learn without limits")
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
@@ -470,7 +473,7 @@ struct PremiumView: View {
         VStack(spacing: 16) {
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
-                    Image(systemName: "sparkles")
+                    Image(systemName: "sparkle")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(themeStore.mainAccentColor)
                         .frame(width: 36, height: 36)

@@ -10,8 +10,12 @@ struct CustomAlertView: View {
     let primaryButton: AlertButton
     var secondaryButton: AlertButton? = nil
 
-    @State private var cardScale: CGFloat = 0.92
-    @State private var cardOpacity: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var iconIn = false
+    @State private var copyIn = false
+    @State private var actionsIn = false
+    @State private var ring = false
+    @State private var litSparkles = 0
 
     struct AlertButton {
         let title: LocalizedStringKey
@@ -25,92 +29,195 @@ struct CustomAlertView: View {
         }
     }
 
+    private enum Mood {
+        case destructive
+        case success
+        case notice
+    }
+
+    private var mood: Mood {
+        if primaryButton.style == .destructive { return .destructive }
+        if ModalIconKind.from(systemName: icon) == .success { return .success }
+        return .notice
+    }
+
+    private var pageColor: Color {
+        switch mood {
+        case .destructive: return themeStore.errorStrong
+        case .success: return themeStore.successStrong
+        case .notice: return themeStore.mainAccentColor
+        }
+    }
+
     var body: some View {
         ZStack {
-            themeStore.appBg.opacity(0.55)
-                .background(.ultraThinMaterial)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    if let secondary = secondaryButton, secondary.style == .cancel {
-                        secondary.action()
+            pageColor.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Spacer(minLength: 24)
+
+                ZStack {
+                    if mood == .success {
+                        alertSparkles
+                    } else {
+                        Circle()
+                            .stroke(Color.white.opacity(0.95), lineWidth: 2)
+                            .frame(width: 92, height: 92)
+                            .scaleEffect(ring ? 1.65 : 0.72)
+                            .opacity(ring ? 0 : 0.9)
                     }
+
+                    Image(systemName: icon)
+                        .font(.system(size: 42, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .scaleEffect(iconIn ? 1 : 0.4)
+                        .opacity(iconIn ? 1 : 0)
                 }
+                .frame(height: 120)
+                .accessibilityHidden(true)
 
-            VStack(spacing: 18) {
-                Image(systemName: icon)
-                    .font(.system(size: 36, weight: .semibold))
-                    .foregroundStyle(iconColor)
-                    .padding(.top, 2)
-
-                VStack(spacing: 8) {
+                VStack(spacing: 12) {
                     Text(title)
-                        .font(themeStore.display(22))
-                        .foregroundStyle(themeStore.mainText)
-                        .tracking(-0.4)
+                        .font(themeStore.display(34))
+                        .foregroundStyle(.white)
+                        .tracking(-0.5)
                         .multilineTextAlignment(.center)
 
                     Text(message)
-                        .font(themeStore.regular(15))
-                        .foregroundStyle(themeStore.secondaryText)
+                        .font(themeStore.regular(17))
+                        .foregroundStyle(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+                .offset(y: copyIn ? 0 : 18)
+                .opacity(copyIn ? 1 : 0)
 
-                VStack(spacing: 10) {
-                    Button {
-                        Haptics.lightImpact()
-                        primaryButton.action()
-                    } label: {
-                        Text(primaryButton.title)
-                            .duo3DStyle(buttonBgColor(primaryButton.style))
-                    }
-                    .buttonStyle(Duo3DButtonStyle())
+                Spacer(minLength: 24)
 
+                VStack(spacing: 12) {
+                    pageButton(primaryButton, filled: true)
                     if let secondary = secondaryButton {
-                        Button {
-                            Haptics.lightImpact()
-                            secondary.action()
-                        } label: {
-                            if secondary.style == .cancel {
-                                Text(secondary.title)
-                                    .duo3DSecondaryStyle()
-                            } else {
-                                Text(secondary.title)
-                                    .duo3DStyle(buttonBgColor(secondary.style))
-                            }
-                        }
-                        .buttonStyle(Duo3DButtonStyle())
+                        pageButton(secondary, filled: secondary.style != .cancel)
                     }
                 }
-                .padding(.top, 4)
+                .offset(y: actionsIn ? 0 : 28)
+                .opacity(actionsIn ? 1 : 0)
+                .padding(.bottom, 8)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 28)
-            .frame(maxWidth: 360)
-            .cleanCard(themeStore: themeStore, cornerRadius: DesignRadius.dialog)
+            .frame(maxWidth: 460)
             .padding(.horizontal, 28)
-            .scaleEffect(cardScale)
-            .opacity(cardOpacity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onAppear {
-            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
-                cardScale = 1
-                cardOpacity = 1
+        .preferredColorScheme(.dark)
+        .onAppear(perform: play)
+    }
+
+    private var alertSparkles: some View {
+        ZStack {
+            ForEach(AlertSparkle.samples) { sparkle in
+                Image(systemName: "sparkle")
+                    .font(.system(size: sparkle.size, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .rotationEffect(.degrees(sparkle.turn))
+                    .scaleEffect(sparkle.id < litSparkles ? 1 : 0.15)
+                    .opacity(sparkle.id < litSparkles ? 1 : 0)
+                    .offset(x: sparkle.x, y: sparkle.y)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.6), value: litSparkles)
             }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func pageButton(_ button: AlertButton, filled: Bool) -> some View {
+        Button {
+            Haptics.lightImpact()
+            button.action()
+        } label: {
+            Text(button.title)
+                .font(themeStore.bold(17))
+                .foregroundStyle(filled ? pageColor : .white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background {
+                    if filled {
+                        RoundedRectangle(cornerRadius: themeStore.controlRadius, style: .continuous)
+                            .fill(.white)
+                    }
+                }
+                .overlay {
+                    if !filled {
+                        RoundedRectangle(cornerRadius: themeStore.controlRadius, style: .continuous)
+                            .strokeBorder(.white.opacity(0.7), lineWidth: 2)
+                    }
+                }
+        }
+        .buttonStyle(Duo3DButtonStyle())
+    }
+
+    private func play() {
+        switch mood {
+        case .destructive:
+            Haptics.error()
+        case .notice:
+            Haptics.warning()
+        case .success:
+            break
+        }
+
+        guard !reduceMotion else {
+            iconIn = true
+            copyIn = true
+            actionsIn = true
+            ring = true
+            litSparkles = AlertSparkle.samples.count
+            if mood == .success { Haptics.success() }
+            return
+        }
+
+        withAnimation(.spring(response: 0.46, dampingFraction: 0.72)) {
+            iconIn = true
+            ring = true
+        }
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.84).delay(0.08)) {
+            copyIn = true
+        }
+        withAnimation(.spring(response: 0.48, dampingFraction: 0.86).delay(0.16)) {
+            actionsIn = true
+        }
+        if mood == .success {
+            revealSparkles()
         }
     }
 
-    private func buttonBgColor(_ style: AlertButton.Style) -> Color {
-        switch style {
-        case .primary:
-            return themeStore.mainAccentColor
-        case .destructive:
-            return themeStore.accentRed
-        case .cancel:
-            return themeStore.secondaryText.opacity(0.55)
+    private func revealSparkles() {
+        let total = AlertSparkle.samples.count
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            for index in 0..<total {
+                litSparkles = index + 1
+                Haptics.sparkleTick()
+                try? await Task.sleep(for: .milliseconds(110))
+            }
         }
     }
+}
+
+private struct AlertSparkle: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let y: CGFloat
+    let size: CGFloat
+    let turn: Double
+
+    static let samples: [AlertSparkle] = [
+        AlertSparkle(id: 0, x: -78, y: -28, size: 16, turn: -12),
+        AlertSparkle(id: 1, x: 82, y: -18, size: 13, turn: 18),
+        AlertSparkle(id: 2, x: -54, y: 36, size: 11, turn: 8),
+        AlertSparkle(id: 3, x: 60, y: 40, size: 15, turn: -20),
+        AlertSparkle(id: 4, x: 6, y: -52, size: 12, turn: 6)
+    ]
 }
 
 enum CustomAlertPreviewCase: String, CaseIterable, Identifiable {

@@ -82,25 +82,30 @@ struct LanguageSelectionView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
-        .overlay {
-            if pending != nil {
-                CustomAlertView(
-                    icon: "exclamationmark.triangle",
-                    iconColor: themeStore.accentGold,
-                    title: LocalizedStringKey(pendingAlertTitle),
-                    message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
-                    primaryButton: .init(title: "Switch", style: .primary) {
-                        applyPending()
-                    },
-                    secondaryButton: .init(title: "Cancel", style: .cancel) {
-                        pending = nil
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(999)
-            }
+        .fullScreenCover(isPresented: languageAlertPresented) {
+            CustomAlertView(
+                icon: "exclamationmark.triangle",
+                iconColor: themeStore.accentGold,
+                title: LocalizedStringKey(pendingAlertTitle),
+                message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
+                primaryButton: .init(title: "Switch", style: .primary) {
+                    applyPending()
+                },
+                secondaryButton: .init(title: "Cancel", style: .cancel) {
+                    pending = nil
+                }
+            )
+            .environmentObject(themeStore)
         }
-        .animation(.easeOut(duration: 0.2), value: pending)
+    }
+
+    private var languageAlertPresented: Binding<Bool> {
+        Binding(
+            get: { pending != nil },
+            set: { isPresented in
+                if !isPresented { pending = nil }
+            }
+        )
     }
 
     private var selectedLanguageColor: Color { themeStore.mainAccentColor }

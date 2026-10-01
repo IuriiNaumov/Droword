@@ -106,7 +106,7 @@ struct SettingsView: View {
 
                         groupedSettingsSection([
                             SettingItem(icon: "textformat.size", title: "Language Pair", value: languageStore.learningLanguage),
-                            SettingItem(icon: "paintbrush", title: "App customization", showProBadge: !isPremium),
+                            SettingItem(icon: "paintbrush", title: "App customization"),
                             SettingItem(icon: "bell", title: "Notifications"),
                             SettingItem(icon: "mic", title: "Voice & Speech"),
                             SettingItem(icon: "hand.tap", title: "Haptics"),
@@ -283,7 +283,7 @@ struct SettingsView: View {
         } label: {
             HStack(spacing: 14) {
                 MenuSymbol(
-                    systemName: "sparkles",
+                    systemName: "sparkle",
                     color: themeStore.accentBlue,
                     size: 22,
                     weight: .medium

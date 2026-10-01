@@ -37,8 +37,11 @@ struct DictionaryView: View {
     var body: some View {
         dictionaryContent
             .overlay(alignment: .bottom) { bulkDeleteBar }
-            .overlay { bulkDeleteAlert }
             .background(themeStore.appBg)
+            .fullScreenCover(isPresented: $showBulkDeleteConfirmation) {
+                bulkDeleteAlert
+                    .environmentObject(themeStore)
+            }
             .sheet(isPresented: $showAddTag) {
                 AddTagView()
                     .presentationDetents([.fraction(0.65)])
@@ -58,6 +61,16 @@ struct DictionaryView: View {
             .onChange(of: searchText) { debounceSearch() }
             .onChange(of: debouncedSearch) { recalculateFiltered(); animateCardsIn() }
             .onChange(of: sortOption) { recalculateFiltered(); animateCardsIn() }
+            .onReceive(NotificationCenter.default.publisher(for: .exitDictionarySelect)) { _ in
+                resetSelectMode()
+            }
+    }
+
+    private func resetSelectMode() {
+        guard isSelectMode || showBulkDeleteConfirmation || !selectedWordIDs.isEmpty else { return }
+        isSelectMode = false
+        selectedWordIDs.removeAll()
+        showBulkDeleteConfirmation = false
     }
 
     @ViewBuilder
@@ -305,27 +318,22 @@ struct DictionaryView: View {
         }
     }
 
-    @ViewBuilder
     private var bulkDeleteAlert: some View {
-        if showBulkDeleteConfirmation {
-            CustomAlertView(
-                icon: "trash",
-                iconColor: themeStore.accentRed,
-                title: "Delete \(selectedWordIDs.count) words?",
-                message: "This action cannot be undone.",
-                primaryButton: .init(title: "Delete", style: .destructive) {
-                    store.removeMultiple(ids: selectedWordIDs)
-                    selectedWordIDs.removeAll()
-                    isSelectMode = false
-                    showBulkDeleteConfirmation = false
-                },
-                secondaryButton: .init(title: "Cancel", style: .cancel) {
-                    showBulkDeleteConfirmation = false
-                }
-            )
-            .transition(.opacity)
-            .zIndex(999)
-        }
+        CustomAlertView(
+            icon: "trash",
+            iconColor: themeStore.accentRed,
+            title: "Delete \(selectedWordIDs.count) words?",
+            message: "This action cannot be undone.",
+            primaryButton: .init(title: "Delete", style: .destructive) {
+                store.removeMultiple(ids: selectedWordIDs)
+                selectedWordIDs.removeAll()
+                isSelectMode = false
+                showBulkDeleteConfirmation = false
+            },
+            secondaryButton: .init(title: "Cancel", style: .cancel) {
+                showBulkDeleteConfirmation = false
+            }
+        )
     }
 
     private func toggleSelection(_ id: UUID) {

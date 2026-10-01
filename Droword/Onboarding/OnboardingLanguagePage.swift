@@ -5,9 +5,7 @@ struct OnboardingLanguagePage: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-            ScrollView(showsIndicators: false) {
+        ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     LanguagePairHero(
                         nativeName: languageStore.nativeLanguage,
@@ -40,7 +38,6 @@ struct OnboardingLanguagePage: View {
                 }
                 .padding(.top, 54)
                 .padding(.bottom, 12)
-            }
         }
     }
 }
@@ -50,13 +47,11 @@ struct OnboardingLevelPage: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        ZStack {
-            themeStore.appBg.ignoresSafeArea()
-            ScrollView(showsIndicators: false) {
+        ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("What's your level?")
-                            .font(themeStore.bold(28))
+                            .font(themeStore.display(32))
                             .foregroundStyle(themeStore.mainText)
                         Text("We'll match examples to how much you already know.")
                             .font(themeStore.regular(15))
@@ -69,7 +64,6 @@ struct OnboardingLevelPage: View {
                 }
                 .padding(.top, 54)
                 .padding(.bottom, 12)
-            }
         }
     }
 }

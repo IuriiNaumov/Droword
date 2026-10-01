@@ -20,6 +20,12 @@ struct OnboardingReplayView: View {
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
             accent: themeStore.accentGreen
+        ),
+        .init(
+            title: "Make it yours",
+            subtitle: "Choose languages, voices and themes. Make it yours!",
+            illustrationStyle: .customize,
+            accent: themeStore.accentGold
         )
     ]}
 
@@ -74,13 +80,7 @@ struct OnboardingReplayView: View {
 
     private var controls: some View {
         HStack {
-            HStack(spacing: 8) {
-                ForEach(0..<pages.count, id: \.self) { idx in
-                    Circle()
-                        .fill(idx == page ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
-                        .frame(width: 8, height: 8)
-                }
-            }
+            PageCapsules(count: pages.count, selection: page)
 
             Spacer()
 

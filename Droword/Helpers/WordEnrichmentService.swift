@@ -95,7 +95,9 @@ final class WordEnrichmentService {
                     collocations: result.collocations ?? [],
                     synonyms: result.synonyms ?? [],
                     antonyms: result.antonyms ?? [],
-                    mnemonic: result.mnemonic
+                    mnemonic: result.mnemonic,
+                    forms: result.forms ?? [],
+                    formsResolved: result.forms != nil
                 )
                 enrichedNames.append(word.word)
             } catch {

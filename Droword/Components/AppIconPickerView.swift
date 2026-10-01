@@ -45,7 +45,7 @@ struct AppIconPickerView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
-                    ForEach(AppIconStyle.allCases) { style in
+                    ForEach(AppIconStyle.customizationCases) { style in
                         Button {
                             Haptics.menuTap()
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {

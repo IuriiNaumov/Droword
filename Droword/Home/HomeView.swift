@@ -137,6 +137,9 @@ struct HomeView: View {
         .onChange(of: selectedTab) { _, newValue in
             tabBarVisibility.show()
             NotificationCenter.default.post(name: .dismissReactionPicker, object: nil)
+            if newValue != .list {
+                NotificationCenter.default.post(name: .exitDictionarySelect, object: nil)
+            }
             if newValue == .add {
                 Haptics.addWordTap()
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
@@ -409,38 +412,28 @@ struct HomeView: View {
                 .transition(.opacity)
                 .zIndex(100)
             }
-
-            if showSuggestedIntro {
-                SuggestedWordsIntroView {
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        showSuggestedIntro = false
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(101)
+        }
+        .fullScreenCover(isPresented: $showSuggestedIntro) {
+            SuggestedWordsIntroView {
+                showSuggestedIntro = false
             }
-
-            if showCoachMarks {
-                CoachMarkView(steps: coachMarkSteps) {
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        showCoachMarks = false
-                        hasSeenCoachMarks = true
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(102)
+            .environmentObject(themeStore)
+        }
+        .fullScreenCover(isPresented: $showCoachMarks) {
+            CoachMarkView(steps: coachMarkSteps) {
+                showCoachMarks = false
+                hasSeenCoachMarks = true
             }
-
-            if showFirstWords {
-                FirstWordsView {
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        showFirstWords = false
-                        hasSeenFirstWords = true
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(103)
+            .environmentObject(themeStore)
+        }
+        .fullScreenCover(isPresented: $showFirstWords) {
+            FirstWordsView {
+                showFirstWords = false
+                hasSeenFirstWords = true
             }
+            .environmentObject(themeStore)
+            .environmentObject(store)
+            .environmentObject(languageStore)
         }
         .overlay(alignment: .top) {
             if let toast = enrichmentToast {
@@ -846,6 +839,14 @@ private enum TabBarSlideFlag {
 }
 
 private final class SlidingTabBar: UITabBar {
+    override func sizeThatFits(_ size: CGSize) -> CGSize {
+        var fitted = super.sizeThatFits(size)
+        let inset = safeAreaInsets.bottom
+        let content = max(0, fitted.height - inset)
+        fitted.height = max(44, content - 12) + inset
+        return fitted
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
         guard layer.animation(forKey: "transform") == nil else { return }

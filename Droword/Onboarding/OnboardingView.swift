@@ -25,6 +25,12 @@ struct OnboardingView: View {
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
             accent: themeStore.accentGreen
+        ),
+        .init(
+            title: "Make it yours",
+            subtitle: "Choose languages, voices and themes. Make it yours!",
+            illustrationStyle: .customize,
+            accent: themeStore.accentGold
         )
     ]}
 
@@ -100,19 +106,22 @@ struct OnboardingView: View {
                 VStack {
                     HStack {
                         if page > 0 {
-                            Button(action: {
-                                Haptics.selection()
+                            Button {
+                                Haptics.menuTap()
                                 withAnimation(.spring(response: 0.45, dampingFraction: 0.9)) {
                                     page = max(0, page - 1)
                                 }
-                            }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(themeStore.secondaryText.opacity(0.55))
+                            } label: {
+                                Image(systemName: "chevron.backward")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(themeStore.mainAccentColor)
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            .padding(.leading, 20)
-                            .padding(.top, 12)
+                            .accessibilityLabel(Text("Back"))
+                            .padding(.leading, 8)
+                            .padding(.top, 4)
                         }
 
                         Spacer()
@@ -148,29 +157,16 @@ struct OnboardingView: View {
     }
 
     private var controls: some View {
-        HStack {
-            HStack(spacing: 8) {
-                ForEach(0..<totalPages, id: \.self) { idx in
-                    Circle()
-                        .fill(idx == page ? themeStore.mainText : themeStore.secondaryText.opacity(0.3))
-                        .frame(width: 8, height: 8)
-                }
-            }
-
-            Spacer()
+        VStack(spacing: 16) {
+            PageCapsules(count: totalPages, selection: page)
 
             Button(action: next) {
-                Image(systemName: page == totalPages - 1 ? (canProceedOnCurrentPage ? "checkmark" : "xmark") : "arrow.right")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 24, height: 24)
-                    .frame(width: 56, height: 56)
-                    .background(Circle().fill(themeStore.mainAccentColor))
-                    .contentShape(Circle())
-                    .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
+                Text(page == totalPages - 1 ? "Get Started" : "Continue")
+                    .duo3DStyle(themeStore.mainAccentColor, isDisabled: !canProceedOnCurrentPage)
             }
-            .buttonStyle(ScaledPressStyle())
+            .buttonStyle(Duo3DButtonStyle())
             .disabled(!canProceedOnCurrentPage)
+            .accessibilityLabel(page == totalPages - 1 ? (canProceedOnCurrentPage ? "Get Started" : "Name required") : "Continue")
         }
     }
 

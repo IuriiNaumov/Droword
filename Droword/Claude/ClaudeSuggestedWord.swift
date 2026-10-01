@@ -13,6 +13,12 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
     let explanation: String?
     let breakdown: String?
     let transcription: String?
+    let collocations: [String]
+    let synonyms: [String]
+    let antonyms: [String]
+    let mnemonic: String?
+    let forms: [String]
+    let hasFullCard: Bool
 
     init(
         id: UUID = UUID(),
@@ -22,7 +28,13 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
         example: String? = nil,
         explanation: String? = nil,
         breakdown: String? = nil,
-        transcription: String? = nil
+        transcription: String? = nil,
+        collocations: [String] = [],
+        synonyms: [String] = [],
+        antonyms: [String] = [],
+        mnemonic: String? = nil,
+        forms: [String] = [],
+        hasFullCard: Bool = false
     ) {
         self.id = id
         self.word = word
@@ -32,6 +44,12 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
         self.explanation = explanation
         self.breakdown = breakdown
         self.transcription = transcription
+        self.collocations = collocations
+        self.synonyms = synonyms
+        self.antonyms = antonyms
+        self.mnemonic = mnemonic
+        self.forms = forms
+        self.hasFullCard = hasFullCard
     }
 
     init(from decoder: Decoder) throws {
@@ -44,6 +62,16 @@ struct SuggestedWord: Identifiable, Codable, Equatable {
         self.explanation = try? container.decode(String.self, forKey: .explanation)
         self.breakdown = try? container.decode(String.self, forKey: .breakdown)
         self.transcription = try? container.decode(String.self, forKey: .transcription)
+        self.collocations = (try? container.decode([String].self, forKey: .collocations)) ?? []
+        self.synonyms = (try? container.decode([String].self, forKey: .synonyms)) ?? []
+        self.antonyms = (try? container.decode([String].self, forKey: .antonyms)) ?? []
+        self.mnemonic = try? container.decode(String.self, forKey: .mnemonic)
+        self.forms = (try? container.decode([String].self, forKey: .forms)) ?? []
+        if let flag = try container.decodeIfPresent(Bool.self, forKey: .hasFullCard) {
+            self.hasFullCard = flag
+        } else {
+            self.hasFullCard = container.contains(.collocations)
+        }
     }
 }
 
@@ -89,7 +117,17 @@ func fetchSuggestionsWithTopic(
             example: $0.example,
             explanation: $0.explanation,
             breakdown: $0.breakdown,
-            transcription: $0.transcription
+            transcription: $0.transcription,
+            collocations: $0.collocations,
+            synonyms: $0.synonyms,
+            antonyms: $0.antonyms,
+            mnemonic: $0.mnemonic,
+            forms: HighlightedExample.relevantForms(
+                $0.forms,
+                headword: $0.word,
+                texts: [$0.example ?? ""] + $0.collocations
+            ),
+            hasFullCard: $0.hasFullCard
         )
     }
     return (topic: container.topic, suggestions: normalized)

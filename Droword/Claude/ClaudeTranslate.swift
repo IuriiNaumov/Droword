@@ -12,6 +12,7 @@ struct TranslationResult: Codable {
     let synonyms: [String]?
     let antonyms: [String]?
     let mnemonic: String?
+    let forms: [String]?
 }
 
 @MainActor
@@ -41,6 +42,35 @@ func translateWithClaude(
         collocations: result.collocations,
         synonyms: result.synonyms,
         antonyms: result.antonyms,
-        mnemonic: result.mnemonic
+        mnemonic: result.mnemonic,
+        forms: result.forms.map {
+            HighlightedExample.relevantForms(
+                $0,
+                headword: word,
+                texts: [result.example] + (result.examples ?? []) + (result.collocations ?? [])
+            )
+        }
     )
+}
+
+struct WordFormsResult: Codable {
+    let forms: [String]
+}
+
+@MainActor
+func fetchWordForms(
+    word: String,
+    sentences: [String],
+    learningLanguage: String
+) async throws -> [String] {
+    let body: [String: Any] = [
+        "word": word,
+        "sentences": sentences,
+        "learningLanguage": learningLanguage
+    ]
+    let request = try APIClient.makeRequest(endpoint: "forms", body: body)
+    let (data, response) = try await APIClient.perform(request)
+    let validated = try APIClient.validateResponse(data, response)
+    let result = try JSONDecoder().decode(WordFormsResult.self, from: validated)
+    return HighlightedExample.relevantForms(result.forms, headword: word, texts: sentences)
 }

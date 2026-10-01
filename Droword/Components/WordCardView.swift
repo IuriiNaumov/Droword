@@ -4,6 +4,7 @@ import UIKit
 
 extension Notification.Name {
     static let dismissReactionPicker = Notification.Name("dismissReactionPicker")
+    static let exitDictionarySelect = Notification.Name("exitDictionarySelect")
 }
 
 struct WordCardView: View {
@@ -168,6 +169,10 @@ struct WordCardView: View {
         .onDisappear {
             showReactionPicker = false
             showEmojiKeyboard = false
+        }
+        .task(id: storedWord?.id) {
+            guard let id = storedWord?.id else { return }
+            store.scheduleFormLookup(id: id)
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
@@ -529,10 +534,19 @@ struct WordCardView: View {
         }
     }
 
+    private var resolvedForms: [String] {
+        if let id = storedWord?.id,
+           let live = store.words.first(where: { $0.id == id }) {
+            return live.forms
+        }
+        return storedWord?.forms ?? []
+    }
+
     private func highlightedSentence(_ sentence: String) -> AttributedString {
         HighlightedExample.make(
             example: sentence,
             word: word,
+            forms: resolvedForms,
             baseColor: UIColor(primaryTextColor),
             highlightColor: UIColor(themeStore.accentGold),
             baseFont: themeStore.uiFont(size: 16, weight: .regular),

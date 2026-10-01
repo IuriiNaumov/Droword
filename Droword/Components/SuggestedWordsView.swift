@@ -10,6 +10,7 @@ struct SuggestedWordsView: View {
     private var accent: Color { themeStore.accentBlue }
 
     @State private var cachedExamples: [String: AttributedString] = [:]
+    @State private var addingWordID: UUID?
 
     var body: some View {
         if suggested.isLoading || !suggested.suggestedWords.isEmpty || suggested.lastError != nil {
@@ -55,15 +56,24 @@ struct SuggestedWordsView: View {
 
                                 HStack {
                                     Button {
+                                        guard addingWordID == nil else { return }
                                         Haptics.softTap()
-                                        withAnimation(.spring()) {
-                                            suggested.accept(word, store: store, languageStore: languageStore)
+                                        addingWordID = word.id
+                                        Task {
+                                            await suggested.accept(word, store: store, languageStore: languageStore)
                                             badgeStore.recordSuggestedWordAccepted()
+                                            addingWordID = nil
                                         }
                                     } label: {
                                         HStack(spacing: 6) {
-                                            Image(systemName: "plus.circle")
-                                            Text("Add")
+                                            if addingWordID == word.id {
+                                                ProgressView()
+                                                    .controlSize(.small)
+                                                    .tint(.white)
+                                            } else {
+                                                Image(systemName: "plus.circle")
+                                                Text("Add")
+                                            }
                                         }
                                         .font(themeStore.medium(13))
                                         .foregroundStyle(.white)
@@ -148,12 +158,15 @@ struct SuggestedWordsView: View {
         var cache: [String: AttributedString] = [:]
         for word in suggested.suggestedWords {
             guard let example = word.example else { continue }
-            var attributed = AttributedString(example)
-            if let range = attributed.range(of: word.word, options: .caseInsensitive) {
-                attributed[range].foregroundColor = UIColor(themeStore.accentGold)
-                attributed[range].font = themeStore.uiFont(size: 16, weight: .bold)
-            }
-            cache[word.id.uuidString] = attributed
+            cache[word.id.uuidString] = HighlightedExample.make(
+                example: example,
+                word: word.word,
+                forms: word.forms,
+                baseColor: UIColor(themeStore.mainText),
+                highlightColor: UIColor(themeStore.accentGold),
+                baseFont: themeStore.uiFont(size: 16, weight: .regular),
+                highlightFont: themeStore.uiFont(size: 16, weight: .bold)
+            )
         }
         cachedExamples = cache
     }

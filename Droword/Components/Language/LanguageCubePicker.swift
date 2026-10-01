@@ -211,8 +211,7 @@ struct LanguagePairHero: View {
 
     private func pairSide(flag: String, name: String, caption: String) -> some View {
         VStack(spacing: 8) {
-            Text(flag)
-                .font(.system(size: 36))
+            LanguageFlagView(language: name.isEmpty ? flag : name, width: 44, height: 30)
 
             Text(caption)
                 .font(themeStore.regular(12))

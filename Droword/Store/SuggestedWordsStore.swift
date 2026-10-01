@@ -69,22 +69,67 @@ final class SuggestedWordsStore: ObservableObject {
         }
     }
 
-    func accept(_ word: SuggestedWord, store: WordsStore, languageStore: LanguageStore) {
-        let newWord = StoredWord(
+    func accept(_ word: SuggestedWord, store: WordsStore, languageStore: LanguageStore) async {
+        if word.hasFullCard {
+            store.add(storedWord(from: word, languageStore: languageStore))
+            suggestedWords.removeAll { $0.id == word.id }
+            return
+        }
+
+        do {
+            let result = try await translateWithClaude(word: word.word, languageStore: languageStore)
+            let example = result.example
+            let stored = StoredWord(
+                word: word.word.displayCapitalized,
+                type: result.type,
+                translation: result.translation,
+                example: example,
+                explanation: result.explanation,
+                breakdown: result.breakdown,
+                transcription: result.transcription,
+                comment: nil,
+                tag: "Suggested",
+                fromLanguage: languageStore.learningLanguage,
+                toLanguage: languageStore.nativeLanguage,
+                needsEnrichment: false,
+                examples: result.examples ?? (example.isEmpty ? [] : [example]),
+                collocations: result.collocations ?? [],
+                synonyms: result.synonyms ?? [],
+                antonyms: result.antonyms ?? [],
+                mnemonic: result.mnemonic,
+                forms: result.forms ?? [],
+                formsResolved: result.forms != nil
+            )
+            store.add(stored)
+        } catch {
+            store.add(storedWord(from: word, languageStore: languageStore))
+        }
+        suggestedWords.removeAll { $0.id == word.id }
+    }
+
+    private func storedWord(from word: SuggestedWord, languageStore: LanguageStore) -> StoredWord {
+        let example = word.example
+        return StoredWord(
             word: word.word.displayCapitalized,
             type: word.type ?? "",
             translation: word.translation.displayCapitalized,
-            example: word.example,
+            example: example,
             explanation: word.explanation,
             breakdown: word.breakdown,
             transcription: word.transcription,
             comment: nil,
             tag: "Suggested",
             fromLanguage: languageStore.learningLanguage,
-            toLanguage: languageStore.nativeLanguage
+            toLanguage: languageStore.nativeLanguage,
+            needsEnrichment: false,
+            examples: example.map { [$0] } ?? [],
+            collocations: word.collocations,
+            synonyms: word.synonyms,
+            antonyms: word.antonyms,
+            mnemonic: word.mnemonic,
+            forms: word.forms,
+            formsResolved: !word.forms.isEmpty
         )
-        store.add(newWord)
-        suggestedWords.removeAll { $0.id == word.id }
     }
 
     func skip(_ suggestion: SuggestedWord) {

@@ -85,7 +85,7 @@ struct ProfileHeaderView: View {
 
                         if isPremium {
                             MenuSymbol(
-                                systemName: "sparkles",
+                                systemName: "sparkle",
                                 color: themeStore.accentBlue,
                                 size: 16,
                                 weight: .medium,

@@ -4,10 +4,16 @@ struct SettingsBackButton: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @Environment(\.dismiss) private var dismiss
 
+    var action: (() -> Void)? = nil
+
     var body: some View {
         Button {
             Haptics.menuTap()
-            dismiss()
+            if let action {
+                action()
+            } else {
+                dismiss()
+            }
         } label: {
             MenuSymbol(
                 systemName: "chevron.left",

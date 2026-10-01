@@ -8,8 +8,6 @@ struct LanguageCube: View {
     let isBlocked: Bool
     let onTap: () -> Void
 
-    @State private var internalPressedState: Bool = false
-
     private var accent: Color { themeStore.mainAccentColor }
 
     var body: some View {
@@ -19,8 +17,7 @@ struct LanguageCube: View {
         } label: {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 8) {
-                    Text(language.flag)
-                        .font(.system(size: 28))
+                    LanguageFlagView(language: language.name, width: 38, height: 26)
 
                     Text(language.name)
                         .font(themeStore.medium(13))
@@ -39,21 +36,23 @@ struct LanguageCube: View {
                                 : (themeStore.isGlass ? Color.clear : themeStore.cardBg)
                         )
                 )
-                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, cornerRadius: themeStore.cardRadius))
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isSelected, cornerRadius: themeStore.cardRadius, interactive: false))
             }
-            .scaleEffect(internalPressedState ? 0.97 : 1.0)
             .opacity(isBlocked ? 0.4 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.82), value: isSelected)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(LanguageCubePressStyle())
         .disabled(isBlocked)
         .accessibilityLabel(Text(language.name))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .pressAction { pressed in
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                internalPressedState = pressed
-            }
-        }
+    }
+}
+
+private struct LanguageCubePressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.8), value: configuration.isPressed)
     }
 }
 
@@ -71,34 +70,6 @@ extension Color {
             blue: max(b - amount, 0),
             opacity: a
         )
-    }
-}
-
-extension View {
-    func pressAction(onChange: @escaping (Bool) -> Void) -> some View {
-        modifier(PressActionsModifier(onChange: onChange))
-    }
-}
-
-struct PressActionsModifier: ViewModifier {
-    @State private var isPressed = false
-    let onChange: (Bool) -> Void
-
-    func body(content: Content) -> some View {
-        content
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        if !isPressed {
-                            isPressed = true
-                            onChange(true)
-                        }
-                    }
-                    .onEnded { _ in
-                        isPressed = false
-                        onChange(false)
-                    }
-            )
     }
 }
 

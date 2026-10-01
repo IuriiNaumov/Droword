@@ -110,53 +110,66 @@ struct DictionarySettingsView: View {
                 importError = String(localized: "Couldn't open that file.")
             }
         }
-        .overlay {
-            if showClearConfirm {
-                CustomAlertView(
-                    icon: "trash",
-                    iconColor: Color.accentRed,
-                    title: "Clear dictionary?",
-                    message: "All words will be deleted and cannot be recovered.",
-                    primaryButton: .init(title: "Clear all", style: .destructive) {
-                        store.clear()
-                        showClearConfirm = false
-                        Haptics.warning()
-                    },
-                    secondaryButton: .init(title: "Cancel", style: .cancel) {
-                        showClearConfirm = false
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(999)
-            } else if let count = importedCount {
-                CustomAlertView(
-                    icon: "checkmark.circle",
-                    iconColor: themeStore.mainAccentColor,
-                    title: "Import Complete",
-                    message: LocalizedStringKey(
-                        count == 0
-                            ? String(localized: "No new words to import.")
-                            : String(localized: "\(count) words imported successfully.")
-                    ),
-                    primaryButton: .init(title: "OK", style: .primary) {
-                        importedCount = nil
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(999)
-            } else if let importError {
-                CustomAlertView(
-                    icon: "exclamationmark.triangle",
-                    iconColor: themeStore.accentGold,
-                    title: "Import failed",
-                    message: LocalizedStringKey(importError),
-                    primaryButton: .init(title: "OK", style: .primary) {
-                        self.importError = nil
-                    }
-                )
-                .transition(.opacity)
-                .zIndex(999)
+        .fullScreenCover(isPresented: dictionaryAlertPresented) {
+            dictionaryAlert
+                .environmentObject(themeStore)
+        }
+    }
+
+    private var dictionaryAlertPresented: Binding<Bool> {
+        Binding(
+            get: { showClearConfirm || importedCount != nil || importError != nil },
+            set: { isPresented in
+                if !isPresented {
+                    showClearConfirm = false
+                    importedCount = nil
+                    importError = nil
+                }
             }
+        )
+    }
+
+    @ViewBuilder
+    private var dictionaryAlert: some View {
+        if showClearConfirm {
+            CustomAlertView(
+                icon: "trash",
+                iconColor: Color.accentRed,
+                title: "Clear dictionary?",
+                message: "All words will be deleted and cannot be recovered.",
+                primaryButton: .init(title: "Clear all", style: .destructive) {
+                    store.clear()
+                    showClearConfirm = false
+                    Haptics.warning()
+                },
+                secondaryButton: .init(title: "Cancel", style: .cancel) {
+                    showClearConfirm = false
+                }
+            )
+        } else if let count = importedCount {
+            CustomAlertView(
+                icon: "checkmark.circle",
+                iconColor: themeStore.mainAccentColor,
+                title: "Import Complete",
+                message: LocalizedStringKey(
+                    count == 0
+                        ? String(localized: "No new words to import.")
+                        : String(localized: "\(count) words imported successfully.")
+                ),
+                primaryButton: .init(title: "OK", style: .primary) {
+                    importedCount = nil
+                }
+            )
+        } else if let importError {
+            CustomAlertView(
+                icon: "exclamationmark.triangle",
+                iconColor: themeStore.accentGold,
+                title: "Import failed",
+                message: LocalizedStringKey(importError),
+                primaryButton: .init(title: "OK", style: .primary) {
+                    self.importError = nil
+                }
+            )
         }
     }
 
