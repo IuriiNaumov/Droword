@@ -117,7 +117,7 @@ struct Duo3DChipModifier: ViewModifier {
     var lipDepth: CGFloat = 3
 
     private var use3D: Bool { themeStore.isDuolingo && !themeStore.isGlass }
-    private var resolvedRadius: CGFloat { use3D ? themeStore.chipRadius : cornerRadius }
+    private var resolvedRadius: CGFloat { cornerRadius }
 
     func body(content: Content) -> some View {
         content

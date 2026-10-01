@@ -42,7 +42,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Empty states: tip + strong Add CTA (`EmptyListView` / `PracticeEmptyContent`).
 - Scan: photo only; long Share → extract-words. Dedup against dictionary. No clipboard-paste extract on Add.
 - Language picker flags are illustrated (`LanguageFlagView`). Page dots are `PageCapsules`.
-- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons). Tab bar icons stay system SF Symbols.
+- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
 
 ## Don't
 

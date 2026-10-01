@@ -183,14 +183,14 @@ struct DictionaryView: View {
                         .foregroundStyle(textColor)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
-                        .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.chipRadius)
+                        .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
                 } else {
                     Text(label)
                         .font(themeStore.bold(15))
                         .foregroundStyle(textColor)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
-                        .duo3DChipOutlined(cornerRadius: themeStore.chipRadius)
+                        .duo3DChipOutlined(cornerRadius: themeStore.controlRadius)
                 }
             }
         }

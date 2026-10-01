@@ -130,7 +130,7 @@ struct HomeView: View {
                 .tabItem { tabLabel(for: .add) }
                 .tag(Tab.add)
         }
-        .tint(themeStore.tabTint)
+        .tint(themeStore.mainAccentColor)
         .background(themeStore.appBg.ignoresSafeArea())
         .environmentObject(suggested)
         .environmentObject(tabBarVisibility)
@@ -151,7 +151,7 @@ struct HomeView: View {
     }
 
     private func tabLabel(for tab: Tab) -> some View {
-        Image(systemName: tab.systemImage)
+        Image(uiImage: MenuBarIcons.image(for: tab, selected: selectedTab == tab))
             .accessibilityLabel(Text(tab.title))
     }
 
@@ -787,7 +787,6 @@ struct HomeView: View {
     }
 }
 
-/// Slides the system tab bar down off screen, without changing its height.
 private struct TabBarSlideInstaller: UIViewControllerRepresentable {
     var hidden: Bool
 
@@ -800,6 +799,16 @@ private struct TabBarSlideInstaller: UIViewControllerRepresentable {
     final class Controller: UIViewController {
         private var hidden = false
 
+        override func didMove(toParent parent: UIViewController?) {
+            super.didMove(toParent: parent)
+            prepareBar()
+        }
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            prepareBar()
+        }
+
         func setHidden(_ hidden: Bool) {
             let changed = hidden != self.hidden
             self.hidden = hidden
@@ -809,12 +818,21 @@ private struct TabBarSlideInstaller: UIViewControllerRepresentable {
             }
         }
 
-        private func slide(animated: Bool) {
-            guard let bar = tabBarController?.tabBar else { return }
+        @discardableResult
+        private func prepareBar() -> UITabBar? {
+            guard let bar = tabBarController?.tabBar else { return nil }
             if object_getClass(bar) != SlidingTabBar.self {
                 object_setClass(bar, SlidingTabBar.self)
+                bar.invalidateIntrinsicContentSize()
+                bar.superview?.setNeedsLayout()
             }
+            SlidingTabBar.installIcons(on: bar)
             bar.clipsToBounds = false
+            return bar
+        }
+
+        private func slide(animated: Bool) {
+            guard let bar = prepareBar() else { return }
             let shift = bar.bounds.height + 20
             let target: CGAffineTransform = hidden
                 ? CGAffineTransform(translationX: 0, y: shift)
@@ -839,16 +857,30 @@ private enum TabBarSlideFlag {
 }
 
 private final class SlidingTabBar: UITabBar {
+    private static var baseContentHeight: CGFloat?
+
     override func sizeThatFits(_ size: CGSize) -> CGSize {
         var fitted = super.sizeThatFits(size)
         let inset = safeAreaInsets.bottom
         let content = max(0, fitted.height - inset)
-        fitted.height = max(44, content - 12) + inset
+        let base = max(Self.baseContentHeight ?? content, content)
+        Self.baseContentHeight = base
+        fitted.height = max(44, base - 10) + inset
         return fitted
+    }
+
+    static func installIcons(on bar: UITabBar) {
+        guard let items = bar.items else { return }
+        let tabs: [HomeView.Tab] = [.home, .list, .practice, .add]
+        for (index, item) in items.enumerated() where tabs.indices.contains(index) {
+            item.image = MenuBarIcons.image(for: tabs[index], selected: false)
+            item.selectedImage = MenuBarIcons.image(for: tabs[index], selected: true)
+        }
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        Self.installIcons(on: self)
         guard layer.animation(forKey: "transform") == nil else { return }
         let shift = bounds.height + 20
         transform = TabBarSlideFlag.hidden

@@ -12,6 +12,11 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     case forest
     case glass
     case pride
+    case wordInk
+    case wordPaper
+    case wordSky
+    case wordLime
+    case wordCoral
     case english
     case spanish
     case french
@@ -53,6 +58,11 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .forest: return String(localized: "Forest")
         case .glass: return "Liquid Glass"
         case .pride: return "Pride"
+        case .wordInk: return String(localized: "Ink")
+        case .wordPaper: return String(localized: "Paper")
+        case .wordSky: return String(localized: "Sky")
+        case .wordLime: return String(localized: "Lime")
+        case .wordCoral: return String(localized: "Coral")
         case .english: return String(localized: "English")
         case .spanish: return String(localized: "Spanish")
         case .french: return String(localized: "French")
@@ -94,6 +104,11 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .forest: return "AppIconForest"
         case .glass: return "AppIconGlass"
         case .pride: return "AppIconPride"
+        case .wordInk: return "AppIconWordInk"
+        case .wordPaper: return "AppIconWordPaper"
+        case .wordSky: return "AppIconWordSky"
+        case .wordLime: return "AppIconWordLime"
+        case .wordCoral: return "AppIconWordCoral"
         case .english: return "AppIconEnglish"
         case .spanish: return "AppIconSpanish"
         case .french: return "AppIconFrench"
@@ -137,6 +152,11 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .forest: return Color(hex: "#58CC02")
         case .glass: return Color(hex: "#007AFF")
         case .pride: return Color(hex: "#E40303")
+        case .wordInk: return Color(hex: "#1C1C1E")
+        case .wordPaper: return Color(hex: "#B9A98A")
+        case .wordSky: return Color(hex: "#3D72C4")
+        case .wordLime: return Color(hex: "#7CB518")
+        case .wordCoral: return Color(hex: "#E8457C")
         case .english: return Color(hex: "#012169")
         case .spanish: return Color(hex: "#C60B1E")
         case .french: return Color(hex: "#002395")

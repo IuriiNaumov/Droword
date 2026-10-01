@@ -231,7 +231,7 @@ Picker flags are drawn illustrations (`LanguageFlagView`), used by `LanguageCube
 
 ### App icons
 
-`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. The tab bar uses the system SF Symbols (`house`, cards, `bolt`, `plus.circle`). `SlidingTabBar.sizeThatFits` makes the bar content 12pt shorter than the system height, and never below 44.
+`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, or the Poppins `Droword` wordmark (`word*` cases); keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height; do not shrink it repeatedly in `sizeThatFits`. The rest of the app uses SF Symbols.
 
 ### Page indicators and theme picker
 
@@ -264,7 +264,7 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson).
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
-14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar icons stay system symbols.
+14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar artwork lives in `MenuBarIcons`.
 15. **PRO sparkle** — static. No bounce or pulse.
 
 ---

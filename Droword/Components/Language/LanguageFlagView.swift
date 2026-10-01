@@ -231,7 +231,6 @@ struct LanguageFlagView: View {
     private func koreaFlag(w: CGFloat, h: CGFloat) -> some View {
         let red = Color(hex: "#CD2E3A")
         let blue = Color(hex: "#0047A0")
-        let black = Color(hex: "#1C1C1E")
         let r = h * 0.24
 
         return ZStack {

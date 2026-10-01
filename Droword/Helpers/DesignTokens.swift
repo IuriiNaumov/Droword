@@ -100,11 +100,21 @@ extension View {
 
 private struct ModernSheetModifier: ViewModifier {
     @EnvironmentObject private var themeStore: ThemeStore
+    @AppStorage(AppStorageKeys.appAppearance) private var storedAppearance: String = AppAppearance.system.rawValue
 
     func body(content: Content) -> some View {
         content
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(DesignRadius.dialog)
             .presentationBackground(themeStore.sheetBg)
+            .preferredColorScheme(sheetScheme)
+    }
+
+    private var sheetScheme: ColorScheme {
+        if let scheme = (AppAppearance(rawValue: storedAppearance) ?? .system).colorScheme {
+            return scheme
+        }
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        return scene?.traitCollection.userInterfaceStyle == .dark ? .dark : .light
     }
 }

@@ -35,6 +35,7 @@ enum AppStorageKeys {
     static let ttsRate = "ttsRate"
     static let seasonalEffectsEnabled = "seasonalEffectsEnabled"
     static let seasonalAnimationEnabled = "seasonalAnimationEnabled"
+    static let seasonalEffectsSelection = "seasonalEffectsSelection"
     static let hasSeenSuggestedIntro = "hasSeenSuggestedIntro"
     static let hasSeenCoachMarks = "hasSeenCoachMarks"
     static let lastCelebratedWordCount = "lastCelebratedWordCount"
