@@ -319,6 +319,39 @@ enum DuoChaosCopy {
         ])
     }
 
+    static func finishSplash(percentage: Int) -> String {
+        if percentage >= 70 {
+            return t([
+                "en": "Well done",
+                "ru": "Молодец",
+                "de": "Gut gemacht",
+                "es": "Bien hecho",
+                "fr": "Bien joué",
+                "ja": "よくできた",
+                "ko": "잘했어",
+                "ar": "أحسنت",
+                "it": "Ben fatto",
+                "zh-Hans": "做得好",
+                "zh-Hant": "做得好",
+                "pt-PT": "Muito bem"
+            ])
+        }
+        return t([
+            "en": "Keep going",
+            "ru": "Продолжай",
+            "de": "Weiter so",
+            "es": "Sigue",
+            "fr": "Continue",
+            "ja": "その調子",
+            "ko": "계속 가자",
+            "ar": "كمّل",
+            "it": "Continua",
+            "zh-Hans": "继续",
+            "zh-Hant": "繼續",
+            "pt-PT": "Continua"
+        ])
+    }
+
     static func quizDone(percentage: Int) -> (title: String, subtitle: String) {
         let pair: ([String: String], [String: String])
         switch percentage {

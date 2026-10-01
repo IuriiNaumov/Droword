@@ -9,6 +9,7 @@ final class ThemeStore: ObservableObject {
         case glass
         case ocean
         case sunset
+        case anime
         case paper
         case custom
         case night
@@ -16,7 +17,7 @@ final class ThemeStore: ObservableObject {
         var id: String { rawValue }
 
         static var pickerOrder: [Palette] {
-            [.colorful, .duolingo, .glass, .ocean, .sunset, .paper, .custom]
+            [.colorful, .duolingo, .glass, .custom]
         }
 
         var title: String {
@@ -26,6 +27,7 @@ final class ThemeStore: ObservableObject {
             case .glass: return "Liquid Glass"
             case .ocean: return String(localized: "Ocean")
             case .sunset: return String(localized: "Sunset")
+            case .anime: return String(localized: "Anime")
             case .paper: return String(localized: "Paper")
             case .custom: return String(localized: "Custom")
             case .night: return String(localized: "Night")
@@ -39,6 +41,7 @@ final class ThemeStore: ObservableObject {
             case .glass: return String(localized: "Apple glass aesthetic")
             case .ocean: return String(localized: "Calm teal wash")
             case .sunset: return String(localized: "Cozy sunset vibes")
+            case .anime: return String(localized: "Soft pink, a little sparkle")
             case .paper: return String(localized: "Warm paper")
             case .custom: return String(localized: "Pick your accent color")
             case .night: return String(localized: "Deep black canvas")
@@ -54,6 +57,7 @@ final class ThemeStore: ObservableObject {
             case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
             case .ocean: return [Color(hex: "#7EE0D6"), Color(hex: "#0B3D4A")]
             case .sunset: return [Color(hex: "#FFB07A"), Color(hex: "#C2185B")]
+            case .anime: return [Color(hex: "#FFE6F2"), Color(hex: "#F7A8C4")]
             case .paper: return [Color(hex: "#FFF8EC"), Color(hex: "#E4D2B8")]
             case .custom: return [Color(hex: "#F5F5F7"), Color(hex: "#C7C7CC")]
             case .night: return [Color(hex: "#2A2438"), Color(hex: "#0B0B10")]
@@ -67,6 +71,7 @@ final class ThemeStore: ObservableObject {
             case .glass: return Color(hex: "#007AFF")
             case .ocean: return Color(hex: "#2EC4B6")
             case .sunset: return Color(hex: "#E85D2C")
+            case .anime: return Color(hex: "#F48FB1")
             case .paper: return Color(hex: "#C4784A")
             case .custom: return Color(hex: "#5B9BD5")
             case .night: return Color(hex: "#A78BFA")
@@ -217,6 +222,28 @@ final class ThemeStore: ObservableObject {
                 iconPink: Color(hex: "#F0967A"),
                 iconBlue: Color(hex: "#E8825C")
             )
+        case .anime:
+            return Colors(
+                accentBlue: Color(hex: "#C9A6E8"),
+                accentGreen: Color(hex: "#7DCEA0"),
+                accentPurple: Color(hex: "#D4A5E8"),
+                accentPink: Color(hex: "#F48FB1"),
+                accentGold: Color(hex: "#F5C16C"),
+                accentRed: Color(hex: "#E5738A"),
+                mainAccentColor: Color(hex: "#F48FB1"),
+                appBg: Color(light: "#FFF6FA", dark: "#1A1218"),
+                cardBg: Color(light: "#FFEAF3", dark: "#2C1C26"),
+                mainText: Color(light: "#4A3044", dark: "#FFEAF3"),
+                secondaryText: Color(light: "#A88496", dark: "#C4A0B0"),
+                dividerColor: Color(light: "#F3D0E0", dark: "#3A2832"),
+                tabTint: Color(hex: "#F48FB1"),
+                buttonShadow: Color(hex: "#E07AA0"),
+                iconGreen: Color(hex: "#7DCEA0"),
+                iconGold: Color(hex: "#F5C16C"),
+                iconPurple: Color(hex: "#D4A5E8"),
+                iconPink: Color(hex: "#F48FB1"),
+                iconBlue: Color(hex: "#C9A6E8")
+            )
         case .paper:
             return Colors(
                 accentBlue: Color(hex: "#C4784A"),
@@ -358,8 +385,10 @@ final class ThemeStore: ObservableObject {
 
     init() {
         var raw = UserDefaults.standard.string(forKey: Self.storageKey) ?? Palette.colorful.rawValue
-        if raw == "monochrome" { raw = "sunset" }
-        if raw == "night" { raw = "colorful" }
+        if raw == "monochrome" || raw == "night" || raw == "ocean" || raw == "sunset" || raw == "anime" || raw == "paper" {
+            raw = Palette.colorful.rawValue
+            UserDefaults.standard.set(raw, forKey: Self.storageKey)
+        }
         if raw == "glass" {
             if #available(iOS 26, *) { } else { raw = "colorful" }
         }
@@ -379,6 +408,7 @@ final class ThemeStore: ObservableObject {
     var isMonochrome: Bool { palette == .sunset }
     var isDuolingo: Bool { palette == .duolingo }
     var isGlass: Bool { palette == .glass }
+    var isAnime: Bool { palette == .anime }
     var isCustom: Bool { palette == .custom }
     var title: String { palette.title }
 
@@ -419,6 +449,7 @@ final class ThemeStore: ObservableObject {
         case .night: return Color(light: "#2A2438", dark: "#1C1C24")
         case .ocean: return Color(light: "#D4F4F0", dark: "#163038")
         case .sunset: return Color(light: "#FFE8DD", dark: "#2E2226")
+        case .anime: return Color(light: "#FFE0EE", dark: "#3A2430")
         case .paper: return Color(light: "#F0E6D4", dark: "#2A2520")
         case .duolingo: return Color(light: "#D7FFB8", dark: "#243819")
         case .glass: return Color(light: "#E3F0FF", dark: "#1C2A3D")
@@ -428,11 +459,11 @@ final class ThemeStore: ObservableObject {
 
     var toastText: Color { accentGreen }
 
-    var controlRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+    var controlRadius: CGFloat { isDuolingo ? 16 : (isAnime ? 22 : DesignRadius.large) }
 
-    var cardRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+    var cardRadius: CGFloat { isDuolingo ? 16 : (isAnime ? 24 : DesignRadius.large) }
 
-    var chipRadius: CGFloat { isDuolingo ? 12 : DesignRadius.small }
+    var chipRadius: CGFloat { isDuolingo ? 12 : (isAnime ? 16 : DesignRadius.small) }
 
     var successSoft: Color {
         isDuolingo ? Color(light: "#D7FFB8", dark: "#243819") : accentGreen.opacity(0.18)

@@ -98,6 +98,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
 
     static func resolved(_ raw: String) -> AppIconStyle {
         if raw == "ember" { return .sun }
+        if raw == "anime" { return .classic }
         // Retired pride-flag variants → Pride
         if ["progress", "gay", "bi", "trans", "lesbian"].contains(raw) { return .pride }
         return AppIconStyle(rawValue: raw) ?? .classic

@@ -11,6 +11,7 @@ struct InstagramStoriesTemplateView: View {
         case .night:      return Color(red: 0.12, green: 0.10, blue: 0.20)
         case .ocean:      return Color(red: 0.07, green: 0.48, blue: 0.54)
         case .sunset:     return Color(red: 1.0, green: 0.42, blue: 0.42)
+        case .anime:      return Color(red: 0.96, green: 0.56, blue: 0.69)
         case .paper:      return Color(red: 0.77, green: 0.47, blue: 0.29)
         case .duolingo:   return Color(red: 0.345, green: 0.800, blue: 0.008) // #58CC02
 
@@ -25,6 +26,7 @@ struct InstagramStoriesTemplateView: View {
         case .night:      return Color(red: 0.65, green: 0.55, blue: 0.98)
         case .ocean:      return Color(red: 0.49, green: 0.88, blue: 0.84)
         case .sunset:     return Color(red: 1.0, green: 0.60, blue: 0.26)
+        case .anime:      return Color(red: 1.0, green: 0.82, blue: 0.88)
         case .paper:      return Color(red: 0.90, green: 0.82, blue: 0.68)
         case .duolingo:   return Color(red: 0.10, green: 0.54, blue: 0.43)
         case .glass:      return Color(red: 0.69, green: 0.32, blue: 0.87)
@@ -174,6 +176,9 @@ enum InstagramStoriesShare {
         case .sunset:
             topHex = "#E8825C"
             bottomHex = "#F0A850"
+        case .anime:
+            topHex = "#F48FB1"
+            bottomHex = "#FFD0E4"
         case .paper:
             topHex = "#C4784A"
             bottomHex = "#E4D2B8"

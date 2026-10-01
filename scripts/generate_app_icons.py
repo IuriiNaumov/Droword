@@ -436,6 +436,77 @@ def bg_chinese() -> Image.Image:
     return gloss(img, 24)
 
 
+def anime_icon() -> Image.Image:
+    img = radial_gradient(rgb("FFF4F8"), rgb("F7A8C4"), 0.42, 0.36)
+    img = soft_orb(img, rgb("FFFFFF"), (40, 20, 620, 520), alpha=110, blur=70)
+
+    def bezier(p0, p1, p2, p3, steps=80):
+        pts = []
+        for i in range(steps + 1):
+            t = i / steps
+            u = 1 - t
+            x = u**3 * p0[0] + 3 * u**2 * t * p1[0] + 3 * u * t**2 * p2[0] + t**3 * p3[0]
+            y = u**3 * p0[1] + 3 * u**2 * t * p1[1] + 3 * u * t**2 * p2[1] + t**3 * p3[1]
+            pts.append((x, y))
+        return pts
+
+    tail = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    td = ImageDraw.Draw(tail)
+
+    def ribbon(points, width0, width1, color):
+        left, right = [], []
+        last = len(points) - 1
+        for i, (x, y) in enumerate(points):
+            if i == 0:
+                dx, dy = points[1][0] - x, points[1][1] - y
+            elif i == last:
+                dx, dy = x - points[i - 1][0], y - points[i - 1][1]
+            else:
+                dx = points[i + 1][0] - points[i - 1][0]
+                dy = points[i + 1][1] - points[i - 1][1]
+            length = math.hypot(dx, dy) or 1
+            nx, ny = -dy / length, dx / length
+            w = width0 + (width1 - width0) * (i / last)
+            left.append((x + nx * w, y + ny * w))
+            right.append((x - nx * w, y - ny * w))
+        td.polygon(left + right[::-1], fill=color)
+        r0, r1 = width0, width1
+        x0, y0 = points[0]
+        x1, y1 = points[-1]
+        td.ellipse((x0 - r0, y0 - r0, x0 + r0, y0 + r0), fill=color)
+        td.ellipse((x1 - r1, y1 - r1, x1 + r1, y1 + r1), fill=color)
+
+    curve = bezier((680, 690), (1040, 640), (980, 220), (760, 130))
+    ribbon(curve, 86, 42, (*rgb("F48FB1"), 255))
+    ribbon(curve[6:-2], 28, 14, (*rgb("FFD6E8"), 255))
+    img = Image.alpha_composite(img, tail)
+
+    face = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    fd = ImageDraw.Draw(face)
+    hair = rgb("F48FB1")
+    skin = rgb("FFF8FC")
+    cx, cy = 430, 500
+    fd.polygon([(250, 340), (175, 120), (390, 280)], fill=(*hair, 255))
+    fd.polygon([(500, 280), (610, 100), (680, 340)], fill=(*hair, 255))
+    fd.ellipse((cx - 300, cy - 310, cx + 300, cy + 250), fill=(*hair, 255))
+    fd.ellipse((cx - 250, cy - 210, cx + 250, cy + 270), fill=(*skin, 255))
+    fd.polygon([(268, 330), (210, 175), (360, 300)], fill=(*rgb("FFD0E4"), 255))
+    fd.polygon([(520, 300), (575, 165), (640, 330)], fill=(*rgb("FFD0E4"), 255))
+
+    def eye(ex, ey):
+        fd.ellipse((ex - 52, ey - 68, ex + 52, ey + 68), fill=(*rgb("3A2A36"), 255))
+        fd.ellipse((ex - 22, ey - 40, ex + 10, ey - 8), fill=(255, 255, 255, 255))
+        fd.ellipse((ex + 8, ey + 16, ex + 26, ey + 34), fill=(255, 255, 255, 230))
+
+    eye(340, 500)
+    eye(520, 500)
+    fd.ellipse((250, 590, 360, 660), fill=(*rgb("F7B6CC"), 150))
+    fd.ellipse((500, 590, 610, 660), fill=(*rgb("F7B6CC"), 150))
+    fd.arc((390, 560, 490, 640), 20, 160, fill=(*rgb("E07AA0"), 255), width=10)
+    img = Image.alpha_composite(img, face)
+    return gloss(img, 28)
+
+
 def bg_korean() -> Image.Image:
     img = radial_gradient(rgb("FFFFFF"), rgb("F2F2F2"), 0.5, 0.4)
     d = ImageDraw.Draw(img)

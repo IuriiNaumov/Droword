@@ -14,6 +14,7 @@ struct QuizCompletionView: View {
     let onRestart: () -> Void
 
     @State private var animatedProgress: Double = 0
+    @State private var showFinishSplash = true
 
     private var percentage: Int {
         total > 0 ? Int(round(Double(correct) / Double(total) * 100)) : 0
@@ -32,19 +33,36 @@ struct QuizCompletionView: View {
     }
 
     var body: some View {
-        if isLesson {
-            completionStack
-        } else {
-            NavigationStack {
+        ZStack {
+            if isLesson {
                 completionStack
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarLeading) {
-                            if let onClose {
-                                CloseButton(action: onClose)
+                    .opacity(showFinishSplash ? 0 : 1)
+            } else {
+                NavigationStack {
+                    completionStack
+                        .opacity(showFinishSplash ? 0 : 1)
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                if let onClose {
+                                    CloseButton(action: onClose)
+                                }
                             }
                         }
+                }
+            }
+
+            if showFinishSplash {
+                PracticeFinishBurstView(
+                    accent: themeStore.mainAccentColor,
+                    message: DuoChaosCopy.finishSplash(percentage: percentage)
+                ) {
+                    withAnimation(.easeInOut(duration: 0.7)) {
+                        showFinishSplash = false
                     }
+                }
+                .transition(.opacity)
+                .zIndex(1)
             }
         }
     }
@@ -72,26 +90,16 @@ struct QuizCompletionView: View {
                 }
             }
 
-            if percentage >= 70 {
+            if !showFinishSplash, percentage >= 70 {
                 ConfettiView()
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
             }
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
+        .onChange(of: showFinishSplash) { _, showing in
+            guard !showing else { return }
+            withAnimation(.easeOut(duration: 0.8)) {
                 animatedProgress = Double(percentage) / 100.0
-            }
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(300))
-                if percentage == 100 {
-                    SoundFX.play(.sparkle)
-                    Haptics.celebration()
-                } else if percentage >= 70 {
-                    Haptics.celebration()
-                } else {
-                    Haptics.lightImpact()
-                }
             }
         }
     }

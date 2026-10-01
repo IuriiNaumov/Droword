@@ -829,9 +829,9 @@ private struct TabBarSlideInstaller: UIViewControllerRepresentable {
             let updates = { bar.transform = target }
             if animated {
                 UIView.animate(
-                    withDuration: 0.45,
+                    withDuration: 0.22,
                     delay: 0,
-                    options: [.curveEaseInOut, .beginFromCurrentState, .allowUserInteraction],
+                    options: [.curveEaseOut, .beginFromCurrentState, .allowUserInteraction],
                     animations: updates
                 )
             } else {
@@ -856,7 +856,7 @@ private final class SlidingTabBar: UITabBar {
     }
 }
 
-/// Slides the tab bar half a second after scrolling in that direction begins.
+/// Slides the tab bar shortly after scrolling in that direction begins.
 final class TabBarVisibility: ObservableObject {
     @Published private(set) var hidden = false
     private var settle: Task<Void, Never>?
@@ -878,7 +878,7 @@ final class TabBarVisibility: ObservableObject {
         settle?.cancel()
         settle = Task { @MainActor in
             do {
-                try await Task.sleep(for: .seconds(0.5))
+                try await Task.sleep(for: .milliseconds(180))
             } catch {
                 return
             }

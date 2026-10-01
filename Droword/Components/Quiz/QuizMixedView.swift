@@ -56,6 +56,8 @@ struct QuizMixedView: View {
     @State private var reward: (id: Int, text: String)? = nil
     @State private var rewardCounter = 0
     @State private var correctFeedbackText: String? = nil
+    @State private var showOnFireBurst = false
+    @State private var onFireBurstID = 0
     @State private var completionMoments: [StudyMoment] = []
     @State private var chatSceneTarget: ChatSceneTarget?
     @ObservedObject private var network = NetworkMonitor.shared
@@ -229,10 +231,30 @@ struct QuizMixedView: View {
                     bottomButton(exerciseType: exerciseType)
                 }
             }
+
+            if showOnFireBurst && !session.isComplete {
+                OnFireBurstView()
+                    .id(onFireBurstID)
+                    .transition(.opacity)
+            }
         }
         .environment(\.quizCorrectFeedback, correctFeedbackText)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.currentIndex)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: session.isComplete)
+        .animation(.easeOut(duration: 0.2), value: showOnFireBurst)
+        .onChange(of: session.currentStreak) { oldStreak, newStreak in
+            guard newStreak >= 7, oldStreak < 7 else { return }
+            onFireBurstID += 1
+            showOnFireBurst = true
+            Haptics.onFire()
+            let burstID = onFireBurstID
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(720))
+                if onFireBurstID == burstID {
+                    showOnFireBurst = false
+                }
+            }
+        }
         .onAppear {
             let usable = presetWords.isEmpty
                 ? store.words.filter({ $0.translation != nil && !$0.translation!.isEmpty }).count
@@ -877,13 +899,16 @@ struct QuizMixedView: View {
     }
 
     private func celebrateCorrectAnswer() {
-        Haptics.success()
         showReward("+1")
         let streak = session.currentStreak
-        if Self.isStreakMilestone(streak) {
+        if streak == 7 {
+            correctFeedbackText = DuoChaosCopy.streak(streak)
+        } else if Self.isStreakMilestone(streak) {
+            Haptics.success()
             Haptics.combo(streak: streak)
             correctFeedbackText = DuoChaosCopy.streak(streak)
         } else {
+            Haptics.success()
             if streak >= 3 { Haptics.tick() }
             correctFeedbackText = DuoChaosCopy.correct()
         }

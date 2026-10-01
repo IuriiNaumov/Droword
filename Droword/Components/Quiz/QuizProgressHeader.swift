@@ -18,8 +18,22 @@ struct QuizProgressHeader: View {
 
                 Spacer()
 
-                if session.currentStreak >= 3 {
+                if session.currentStreak >= 7 {
                     QuizComboBadge(streak: session.currentStreak, scale: streakScale)
+                        .id("on-fire")
+                        .transition(.asymmetric(
+                            insertion: .modifier(
+                                active: OnFireInsertModifier(active: true),
+                                identity: OnFireInsertModifier(active: false)
+                            ),
+                            removal: .modifier(
+                                active: OnFireRemoveModifier(active: true),
+                                identity: OnFireRemoveModifier(active: false)
+                            )
+                        ))
+                } else if session.currentStreak >= 3 {
+                    QuizComboBadge(streak: session.currentStreak, scale: streakScale)
+                        .id("combo")
                         .transition(.scale.combined(with: .opacity))
                 } else if session.currentStreak >= 2 {
                     HStack(spacing: 4) {
@@ -37,7 +51,12 @@ struct QuizProgressHeader: View {
             segmentedProgressBar
         }
         .padding(.top, 8)
-        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: session.currentStreak)
+        .animation(
+            session.currentStreak >= 7
+                ? .spring(response: 0.38, dampingFraction: 0.62)
+                : .easeIn(duration: 0.32),
+            value: session.currentStreak
+        )
         .overlay(alignment: .topTrailing) {
             if let reward {
                 FloatingRewardLabel(text: reward.text, color: themeStore.accentBlue)
@@ -106,4 +125,28 @@ struct QuizProgressHeader: View {
         reward: nil
     )
     .environmentObject(ThemeStore())
+}
+
+private struct OnFireInsertModifier: ViewModifier {
+    var active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(active ? 0.35 : 1)
+            .opacity(active ? 0 : 1)
+            .rotationEffect(.degrees(active ? -14 : 0))
+            .offset(y: active ? 8 : 0)
+    }
+}
+
+private struct OnFireRemoveModifier: ViewModifier {
+    var active: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(active ? 1.22 : 1)
+            .opacity(active ? 0 : 1)
+            .offset(y: active ? -16 : 0)
+            .blur(radius: active ? 3 : 0)
+    }
 }

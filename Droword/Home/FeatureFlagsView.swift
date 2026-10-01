@@ -35,6 +35,7 @@ struct FeatureFlagsView: View {
 
     @State private var previewCase: CustomAlertPreviewCase?
     @State private var onboardingPreview: OnboardingModalPreview?
+    @State private var showWellDone = false
 
     var body: some View {
         ZStack {
@@ -88,6 +89,37 @@ struct FeatureFlagsView: View {
                                 .labelsHidden()
                                 .tint(themeStore.mainAccentColor)
                                 .allowsHitTesting(false)
+                            }
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 18)
+                            .background(themeStore.cardBg)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+
+                    Text("Finish")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("Well done screen after practice and today's lesson.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    VStack(spacing: 0) {
+                        Button {
+                            Haptics.menuTap()
+                            showWellDone = true
+                        } label: {
+                            HStack(spacing: 14) {
+                                MenuSymbol(systemName: "sparkles")
+                                Text(DuoChaosCopy.finishSplash(percentage: 100))
+                                    .font(themeStore.regular(16))
+                                    .foregroundStyle(themeStore.mainText)
+                                Spacer()
+                                DisclosureChevron()
                             }
                             .padding(.vertical, 14)
                             .padding(.horizontal, 18)
@@ -221,6 +253,16 @@ struct FeatureFlagsView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
+        .fullScreenCover(isPresented: $showWellDone) {
+            QuizCompletionView(
+                correct: 8,
+                total: 10,
+                bestStreak: 4,
+                onClose: { showWellDone = false },
+                onRestart: { showWellDone = false }
+            )
+            .environmentObject(themeStore)
+        }
     }
 }
 

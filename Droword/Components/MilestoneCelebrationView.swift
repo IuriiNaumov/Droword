@@ -151,7 +151,6 @@ struct MilestoneCelebrationView: View {
         }
         .onAppear {
             Haptics.celebration()
-            SoundFX.play(.sparkle)
 
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
                 iconScale = 1.0

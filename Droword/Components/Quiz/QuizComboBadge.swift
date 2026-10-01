@@ -6,6 +6,8 @@ struct QuizComboBadge: View {
     let streak: Int
     var scale: CGFloat = 1
 
+    @State private var ring = false
+
     private var label: String {
         if streak >= 7 { return DuoChaosCopy.comboOnFire() }
         return "x\(streak)"
@@ -38,7 +40,21 @@ struct QuizComboBadge: View {
                     .fill(StreakFireStyle.red.opacity(0.16))
             }
         }
+        .overlay {
+            if streak >= 7 {
+                Capsule(style: .continuous)
+                    .stroke(Color.white.opacity(0.95), lineWidth: 1.5)
+                    .scaleEffect(ring ? 1.6 : 0.82)
+                    .opacity(ring ? 0 : 0.95)
+            }
+        }
         .scaleEffect(scale)
+        .onAppear {
+            guard streak >= 7 else { return }
+            withAnimation(.easeOut(duration: 0.48)) {
+                ring = true
+            }
+        }
         .accessibilityLabel(Text("Combo \(streak)"))
     }
 }

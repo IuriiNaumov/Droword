@@ -223,7 +223,7 @@ public enum Haptics {
                 transient(time: 0.055, intensity: 0.78, sharpness: 0.38)
             ])
         } else {
-            fallbackNotification(.success)
+            fallbackImpact(.medium, intensity: 0.8)
         }
     }
 
@@ -234,7 +234,7 @@ public enum Haptics {
                 continuous(time: 0.02, duration: 0.09, intensity: 0.38, sharpness: 0.08)
             ])
         } else {
-            fallbackNotification(.error)
+            fallbackImpact(.heavy, intensity: 0.9)
         }
     }
 
@@ -258,7 +258,7 @@ public enum Haptics {
                 ])
             }
         } else {
-            fallbackNotification(.success)
+            fallbackImpact(.medium, intensity: 0.8)
         }
     }
 
@@ -275,6 +275,29 @@ public enum Haptics {
             play([transient(time: 0.00, intensity: 0.34, sharpness: 0.78)])
         } else {
             fallbackSelection()
+        }
+    }
+
+    public static func onFire() {
+        if supportsCoreHaptics {
+            play([
+                transient(time: 0.00, intensity: 1.0, sharpness: 1.0),
+                transient(time: 0.055, intensity: 0.88, sharpness: 0.82)
+            ])
+        } else {
+            fallbackImpact(.heavy, intensity: 1)
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(55))
+                fallbackImpact(.heavy, intensity: 0.85)
+            }
+        }
+    }
+
+    public static func sparkleTick() {
+        if supportsCoreHaptics {
+            play([transient(time: 0.00, intensity: 0.34, sharpness: 0.74)])
+        } else {
+            fallbackImpact(.soft, intensity: 0.5)
         }
     }
 
@@ -391,7 +414,7 @@ public enum Haptics {
                 transient(time: 0.07, intensity: 0.38, sharpness: 0.16)
             ])
         } else {
-            fallbackNotification(.warning)
+            fallbackImpact(.rigid, intensity: 0.7)
         }
     }
 
@@ -445,12 +468,5 @@ public enum Haptics {
         let generator = UISelectionFeedbackGenerator()
         generator.prepare()
         generator.selectionChanged()
-    }
-
-    private static func fallbackNotification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        guard HapticFeel.current != .off else { return }
-        let generator = UINotificationFeedbackGenerator()
-        generator.prepare()
-        generator.notificationOccurred(type)
     }
 }
