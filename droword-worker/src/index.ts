@@ -147,6 +147,7 @@ STRICT RULES:
   • For European languages (English, French, Spanish, German, Italian, Portuguese, etc.) → use IPA in slashes (e.g. /pəˈteɪtoʊ/, /ʃɛʁʃe/)
   • Hindi → use IAST or simplified transliteration
   Return null if not applicable.
+- detectedLanguage → if the word is clearly not ${learningLanguage}, the language it actually belongs to, copied exactly from this list: English, Español, Русский, Français, Deutsch, Italiano, Português, 한국어, 中文, 日本語, العربية, हिन्दी, Українська, Türkçe, Ελληνικά, Nederlands, Polski, Svenska, Norsk, Dansk, Suomi, Tiếng Việt, Bahasa Indonesia, ไทย, עברית, Čeština, Română, Magyar. Return null when it matches ${learningLanguage} or you are not sure, including names, loanwords, and abbreviations.
 - Do not mix languages inside fields.
 - Capitalization: for scripts that have letter case (Latin, Cyrillic, Greek, etc.), always start "translation" with an uppercase letter. Keep the rest of the string as natural writing (do not Title Case every word). If the script has no case (e.g. Japanese, Chinese, Korean, Arabic), leave as-is.
 
@@ -163,7 +164,8 @@ Return ONLY valid JSON:
   "synonyms": ["...", "..."],
   "antonyms": ["...", "..."],
   "mnemonic": null or "...",
-  "forms": ["..."]
+  "forms": ["..."],
+  "detectedLanguage": null or "..."
 }`;
 
   const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {

@@ -16,23 +16,29 @@ enum MenuBarIcons {
             size: CGSize(width: 28, height: 28),
             format: format
         ).image { _ in
-            let path: UIBezierPath
-            switch tab {
-            case .home: path = homePath()
-            case .list: path = dictionaryPath()
-            case .practice: path = practicePath()
-            case .add: path = addPath()
-            }
-            path.lineWidth = selected ? 2.6 : 2.2
-            path.lineCapStyle = .round
-            path.lineJoinStyle = .round
-            UIColor.black.setStroke()
-            path.stroke()
+            stroke(path(for: tab), lineWidth: selected ? 2.6 : 2.2)
         }
         .withRenderingMode(.alwaysTemplate)
 
         cache[key] = image
         return image
+    }
+
+    private static func path(for tab: HomeView.Tab) -> UIBezierPath {
+        switch tab {
+        case .home: return homePath()
+        case .list: return dictionaryPath()
+        case .practice: return practicePath()
+        case .add: return addPath()
+        }
+    }
+
+    private static func stroke(_ path: UIBezierPath, lineWidth: CGFloat) {
+        path.lineWidth = lineWidth
+        path.lineCapStyle = .round
+        path.lineJoinStyle = .round
+        UIColor.black.setStroke()
+        path.stroke()
     }
 
     private static func homePath() -> UIBezierPath {

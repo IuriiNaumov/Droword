@@ -13,6 +13,7 @@ struct TranslationResult: Codable {
     let antonyms: [String]?
     let mnemonic: String?
     let forms: [String]?
+    let detectedLanguage: String?
 }
 
 @MainActor
@@ -49,7 +50,8 @@ func translateWithClaude(
                 headword: word,
                 texts: [result.example] + (result.examples ?? []) + (result.collocations ?? [])
             )
-        }
+        },
+        detectedLanguage: result.detectedLanguage
     )
 }
 

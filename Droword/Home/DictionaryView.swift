@@ -98,6 +98,8 @@ struct DictionaryView: View {
             )
             .padding(.bottom, 24)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onAppear { tabBarVisibility.show() }
         .iPadContentWidth(1000)
     }
 
@@ -251,7 +253,7 @@ struct DictionaryView: View {
     private var dictionaryEmptyFilter: some View {
         if let tag = selectedTag, !tag.isEmpty {
             EmptyListView(
-                icon: "tag",
+                illustration: AnyView(EmptyTagArt()),
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
             )

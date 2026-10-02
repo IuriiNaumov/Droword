@@ -111,7 +111,9 @@ struct HomeView: View {
         homeOverlays(homeEvents(homeCovers(tabRoot)))
     }
 
+    @ViewBuilder
     private var tabRoot: some View {
+        let _ = pinMenuBarWhenEmpty()
         TabView(selection: $selectedTab) {
             mainContent
                 .background(TabBarSlideInstaller(hidden: tabBarVisibility.hidden))
@@ -132,8 +134,17 @@ struct HomeView: View {
         }
         .tint(themeStore.mainAccentColor)
         .background(themeStore.appBg.ignoresSafeArea())
+        .tabBarMinimizeBehavior(store.words.isEmpty ? .never : .automatic)
         .environmentObject(suggested)
         .environmentObject(tabBarVisibility)
+        .onAppear {
+            tabBarVisibility.allowsHide = !store.words.isEmpty
+            if store.words.isEmpty { tabBarVisibility.show() }
+        }
+        .onChange(of: store.words.isEmpty) { _, isEmpty in
+            tabBarVisibility.allowsHide = !isEmpty
+            if isEmpty { tabBarVisibility.show() }
+        }
         .onChange(of: selectedTab) { _, newValue in
             tabBarVisibility.show()
             NotificationCenter.default.post(name: .dismissReactionPicker, object: nil)
@@ -148,6 +159,10 @@ struct HomeView: View {
                 selectedTab = .home
             }
         }
+    }
+
+    private func pinMenuBarWhenEmpty() {
+        tabBarVisibility.allowsHide = !store.words.isEmpty
     }
 
     private func tabLabel(for tab: Tab) -> some View {
@@ -625,6 +640,7 @@ struct HomeView: View {
                 } else {
                     let empty = DuoChaosCopy.homeEmpty(hasWords: hasEverAddedWord)
                     PracticeEmptyContent(
+                        illustration: AnyView(EmptyDictionaryArt()),
                         icon: "text.badge.plus",
                         title: hasEverAddedWord
                             ? String(localized: "No recent words")
@@ -895,7 +911,13 @@ final class TabBarVisibility: ObservableObject {
     private var settle: Task<Void, Never>?
     private var pendingHidden: Bool?
 
+    var allowsHide = true
+
     func report(offset: CGFloat, delta: CGFloat) {
+        guard allowsHide else {
+            show()
+            return
+        }
         let wantsHidden: Bool
         if offset <= 4 || delta < -0.5 {
             wantsHidden = false

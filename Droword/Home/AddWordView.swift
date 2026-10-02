@@ -16,6 +16,8 @@ struct AddWordView: View {
     @State private var showOfflineToast = false
     @State private var showDuplicateAlert = false
     @State private var showErrorToast = false
+    @State private var offeredLanguage: String?
+    @State private var pendingTranslation: TranslationResult?
     @State private var showScanWords = false
     @ObservedObject private var network = NetworkMonitor.shared
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
@@ -150,6 +152,26 @@ struct AddWordView: View {
                     }
                 )
                 .environmentObject(themeStore)
+            }
+            .fullScreenCover(isPresented: languageOfferPresented) {
+                if let offered = offeredLanguage {
+                    CustomAlertView(
+                        icon: "character.book.closed",
+                        iconColor: themeStore.mainAccentColor,
+                        title: "Switch to \(offered)?",
+                        message: languageOfferMessage(offered),
+                        primaryButton: .init(title: "Switch language", style: .primary) {
+                            let language = offered
+                            offeredLanguage = nil
+                            Task { await confirmLanguageSwitch(to: language) }
+                        },
+                        secondaryButton: .init(title: "Keep \(languageStore.learningLanguage)", style: .cancel) {
+                            offeredLanguage = nil
+                            keepCurrentLanguage()
+                        }
+                    )
+                    .environmentObject(themeStore)
+                }
             }
             .fullScreenCover(isPresented: $showDuplicateAlert) {
                 CustomAlertView(
@@ -303,6 +325,12 @@ struct AddWordView: View {
             return
         }
 
+        if let guessed = WordLanguageMatch.guess(word: trimmedWord, learningLanguage: languageStore.learningLanguage) {
+            offeredLanguage = guessed
+            pendingTranslation = nil
+            return
+        }
+
         isAdding = true
 
         do {
@@ -312,31 +340,18 @@ struct AddWordView: View {
                 DailyLimitsManager.recordTranslation()
             }
 
+            if let detected = WordLanguageMatch.catalogName(for: result.detectedLanguage),
+               detected != languageStore.learningLanguage {
+                await MainActor.run {
+                    pendingTranslation = result
+                    offeredLanguage = detected
+                    isAdding = false
+                }
+                return
+            }
+
             await MainActor.run {
-                let examplesArray = result.examples ?? [result.example]
-                let newWord = StoredWord(
-                    word: trimmedWord,
-                    type: result.type.lowercased(),
-                    translation: result.translation.isEmpty ? translation : result.translation,
-                    example: result.example,
-                    explanation: result.explanation,
-                    breakdown: result.breakdown,
-                    transcription: result.transcription,
-                    comment: comment,
-                    tag: selectedTag,
-                    fromLanguage: languageStore.learningLanguage,
-                    toLanguage: languageStore.nativeLanguage,
-                    examples: examplesArray,
-                    collocations: result.collocations ?? [],
-                    synonyms: result.synonyms ?? [],
-                    antonyms: result.antonyms ?? [],
-                    mnemonic: result.mnemonic,
-                    forms: result.forms ?? [],
-                    formsResolved: result.forms != nil
-                )
-                store.add(newWord)
-                if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
-                dismiss()
+                saveTranslated(result, word: trimmedWord)
             }
         } catch {
             #if DEBUG
@@ -352,6 +367,83 @@ struct AddWordView: View {
         }
 
         await MainActor.run { isAdding = false }
+    }
+
+    private var languageOfferPresented: Binding<Bool> {
+        Binding(
+            get: { offeredLanguage != nil },
+            set: { if !$0 { offeredLanguage = nil } }
+        )
+    }
+
+    private func languageOfferMessage(_ offered: String) -> LocalizedStringKey {
+        if offered == languageStore.nativeLanguage {
+            return "\(offered) will become the language you learn. \(languageStore.learningLanguage) will be used for translations."
+        }
+        return "You're learning \(languageStore.learningLanguage), but this word looks like \(offered)."
+    }
+
+    private func confirmLanguageSwitch(to language: String) async {
+        let trimmedWord = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        let alreadyTranslated = pendingTranslation != nil
+        await MainActor.run {
+            languageStore.switchLearning(to: language)
+            isAdding = true
+        }
+        do {
+            let result = try await translateWithClaude(word: trimmedWord, languageStore: languageStore)
+            if !isPremium && !alreadyTranslated {
+                DailyLimitsManager.recordTranslation()
+            }
+            await MainActor.run {
+                pendingTranslation = nil
+                saveTranslated(result, word: trimmedWord)
+                isAdding = false
+            }
+        } catch {
+            await MainActor.run {
+                pendingTranslation = nil
+                addWordOffline(trimmedWord)
+                showErrorToast = true
+                isAdding = false
+            }
+        }
+    }
+
+    private func keepCurrentLanguage() {
+        pendingTranslation = nil
+        word = ""
+        translation = ""
+        comment = ""
+        selectedTag = nil
+        focusedField = .word
+    }
+
+    private func saveTranslated(_ result: TranslationResult, word trimmedWord: String) {
+        let examplesArray = result.examples ?? [result.example]
+        let newWord = StoredWord(
+            word: trimmedWord,
+            type: result.type.lowercased(),
+            translation: result.translation.isEmpty ? translation : result.translation,
+            example: result.example,
+            explanation: result.explanation,
+            breakdown: result.breakdown,
+            transcription: result.transcription,
+            comment: comment,
+            tag: selectedTag,
+            fromLanguage: languageStore.learningLanguage,
+            toLanguage: languageStore.nativeLanguage,
+            examples: examplesArray,
+            collocations: result.collocations ?? [],
+            synonyms: result.synonyms ?? [],
+            antonyms: result.antonyms ?? [],
+            mnemonic: result.mnemonic,
+            forms: result.forms ?? [],
+            formsResolved: result.forms != nil
+        )
+        store.add(newWord)
+        if selectedTag != nil { DailyChallengeManager.shared.recordTaggedWordAdded() }
+        dismiss()
     }
 
     private func addWordOffline(_ trimmedWord: String, showToast: Bool = false) {

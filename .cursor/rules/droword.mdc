@@ -46,6 +46,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 
 ## Don't
 
+- Leave code comments. No `//`, `///`, or block comments in Swift, the worker, or scripts. Names and structure should be clear without them.
 - Commit secrets (`.dev.vars`, API keys).
 - Dump Practice quiz UI or a second review CTA onto Home.
 - Apply Duo gray card surfaces to non-`.duolingo` themes.

@@ -1,0 +1,13 @@
+---
+description: Do not add code comments
+alwaysApply: true
+---
+
+# No comments
+
+Do not add comments in code you write or edit.
+
+- No `//` line comments, no `///` docs, no `/* */` blocks.
+- This applies to Swift, TypeScript, Python, and scripts.
+- If a comment is already there and the task did not ask to document it, leave it alone. If you just added one, delete it.
+- Explain non-obvious choices in the chat reply, not in the file.

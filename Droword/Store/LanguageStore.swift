@@ -106,6 +106,15 @@ final class LanguageStore: ObservableObject {
         syncCurrentLevelMirror()
     }
 
+    func switchLearning(to language: String) {
+        guard LanguageCatalog.availableLanguages.contains(where: { $0.name == language }),
+              language != learningLanguage else { return }
+        if language == nativeLanguage {
+            nativeLanguage = learningLanguage
+        }
+        learningLanguage = language
+    }
+
     private func syncCurrentLevelMirror() {
         let level = learningLevel
         UserDefaults.standard.set(level, forKey: Self.learningLevelKey)
