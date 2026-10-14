@@ -219,7 +219,7 @@ Only this palette uses the Duo surface language:
 | Quiz feedback | `successStrong` / `errorStrong` | Always theme `accentGreen` / `accentRed` (toast match) |
 | Radii | card/control **16**, chips **12** | Match Duo feed cards |
 
-Sheets stay on `appBg` (white). Duo content cards use gray fill **without** a stroke border. Do not apply `#F7F7F7` card fill to other themes. When previewing Green Owl in `ThemePickerView`, use `duo3DStyle(..., force3D: true)` so **Choose** matches Add.
+Sheets stay on `appBg` (white). Duo content cards use gray fill **without** a stroke border. Do not apply `#F7F7F7` card fill to other themes. When previewing Green Owl in `ThemePickerView`, **Choose** is the Duo lip button. Do not route it through `duo3DStyle`, which follows the active theme.
 
 Match neighboring screen patterns (sheet chrome, close/back buttons, toast/coach marks) before inventing new layout systems.
 
@@ -231,17 +231,23 @@ Picker flags are drawn illustrations (`LanguageFlagView`), used by `LanguageCube
 
 ### App icons
 
-`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, or the Poppins `Droword` wordmark (`word*` cases); keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height; do not shrink it repeatedly in `sizeThatFits`. The rest of the app uses SF Symbols.
+`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, face-style quote variants (`hearts`, `glasses`, `dizzy`, `sleepy`), or the Poppins `Droword` wordmark (`word*` cases); keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height; do not shrink it repeatedly in `sizeThatFits`. The rest of the app uses SF Symbols.
 
 ### Page indicators and theme picker
 
-Onboarding, the Home & Practice tour, replay, and the theme picker use `PageCapsules` (`Components/PageCapsules.swift`). Do not bring back `UIPageControl`. Capsules are liquid glass when the app theme is glass, and also when the theme picker is previewing the glass page. Theme-picker capsule color otherwise follows the previewed palette (Green Owl green, Custom = chosen accent, Droword blue).
+Onboarding, the Home & Practice tour, replay, and the theme picker use `PageCapsules` (`Components/PageCapsules.swift`). Do not bring back `UIPageControl`. Capsules are liquid glass when the app theme is glass, and also when the theme picker is previewing the glass page. In the theme picker, pass `usesThemeGlass: false` so the active Liquid Glass theme does not glass every page indicator. Glass there only when the previewed page is Liquid Glass. Theme-picker capsule color otherwise follows the previewed palette (Green Owl green, Custom = chosen accent, Droword blue), with inactive dots in `MainGrey`.
 
-Theme preview cards hug their content (equal inset, leftover space is sheet background). The Custom accent control is the color circle in the preview header, opposite the avatar, with no “Accent color” label. Green Owl **Choose** uses `duo3DStyle` `verticalPadding: 14` so face + 4pt lip matches the flat buttons’ 32pt. Gap from Choose to the capsules is 16.
+Theme preview cards hug their content (equal inset, leftover space is sheet background). The Custom accent control is the color circle in the preview header, opposite the avatar, with no “Accent color” label. Green Owl **Choose** uses a 14pt vertical pad so face + 4pt lip matches the flat buttons’ 32pt. Gap from Choose to the capsules is 16. **Choose** always looks as it does when the app theme is Droword: flat accent fill, Duo lip only on the Green Owl page, glass only on the Liquid Glass page. The active theme must not turn every **Choose** into glass or Duo. Each preview card has a 1.5pt stroke: Droword uses `AccentPurple`; every other palette uses its `mainAccentColor`.
+
+The pager opens on the saved palette (`initialPalette`, otherwise `themeStore.palette` / `ThemeStore.rememberedPalette()`), not the first page. Mount the page `TabView` only after that selection is set (`showPager`). Setting the selection after the pager exists leaves it on Droword. The App Customization theme strip scrolls to the current palette.
 
 ### PRO mark
 
-`ProPillBadge` (settings and paywall) and `ProPlusMark` keep a static sparkle. Do not add `symbolEffect` bounce/pulse or a `TimelineView` twinkle. The App Customization settings row does not show a PRO badge.
+Next to the name on Home, PRO is a plain `MenuSymbol` sparkle in `accentBlue`. Do not replace it with `ProPillBadge` or a themed 3D/glass star.
+
+The paywall uses `ProPillBadge(prominent: true)`: theme `mainAccentColor`, a Duo lip (`darkerShade` 0.16, 4pt) when the palette is not glass, and a glass capsule (`accent` at 0.28 plus `GlassCardModifier(shape: .capsule)`) when `themeStore.isGlass`. The label is white on the solid lip; on glass it is black in light mode and white in dark. The sparkle inside the pill stays a plain icon.
+
+Small `ProPillBadge()` chips in settings and App Customization stay a flat accent capsule. `ProPlusMark` and every PRO sparkle stay static: no `symbolEffect` bounce/pulse and no `TimelineView` twinkle. The App Customization settings row does not show a PRO badge.
 
 ### Irregular forms
 
@@ -261,11 +267,12 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 8. **node_modules** under `droword-worker/` — ignore; not app source.
 9. **Capture** — Share long text opens extract (`ScanWordsView`, `/extract-words` text). Short Share still opens Add. Photo scan on Scan. Dedup against existing dictionary words. No clipboard-paste extract UI.
 10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; still local-first App Group file. Personal Team cannot ship iCloud entitlements — comment them in entitlements, keep Swift code.
-11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson).
+11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson). Home is `text.badge.plus`. Dictionary is `HaloIcon` `textformat` in `accentBlue`. Practice is `HaloIcon` `bolt` in `accentGreen`. An empty tag filter is `tag`. Do not swap these for custom drawings.
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
 14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar artwork lives in `MenuBarIcons`.
-15. **PRO sparkle** — static. No bounce or pulse.
+15. **PRO sparkle** — static. No bounce or pulse. Home keeps the plain blue sparkle. Only the paywall plaque is themed (accent, Duo lip, glass on Liquid Glass).
+16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales translate that Russian, including the short and odd lines. Do not put back English slang that says something else.
 
 ---
 

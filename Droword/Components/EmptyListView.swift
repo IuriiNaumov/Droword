@@ -10,6 +10,7 @@ struct EmptyListView: View {
     var tip: String? = nil
     var ctaTitle: LocalizedStringKey? = nil
     var onCTA: (() -> Void)? = nil
+    var ctaFeedback: () -> Void = { Haptics.softTap() }
 
     @State private var iconScale: CGFloat = 0.4
     @State private var titleOpacity: Double = 0
@@ -62,11 +63,12 @@ struct EmptyListView: View {
 
             if let ctaTitle, let onCTA {
                 Button {
-                    Haptics.softTap()
+                    ctaFeedback()
                     onCTA()
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus.circle")
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .bold))
                         Text(ctaTitle)
                     }
                     .duo3DStyle(themeStore.mainAccentColor)

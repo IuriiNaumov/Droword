@@ -640,7 +640,6 @@ struct HomeView: View {
                 } else {
                     let empty = DuoChaosCopy.homeEmpty(hasWords: hasEverAddedWord)
                     PracticeEmptyContent(
-                        illustration: AnyView(EmptyDictionaryArt()),
                         icon: "text.badge.plus",
                         title: hasEverAddedWord
                             ? String(localized: "No recent words")
@@ -648,11 +647,11 @@ struct HomeView: View {
                         subtitle: empty.subtitle,
                         ctaTitle: LocalizedStringKey(empty.cta),
                         onCTA: {
-                            Haptics.buttonPress()
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                                 showAddWordView = true
                             }
-                        }
+                        },
+                        ctaFeedback: { Haptics.addWordTap() }
                     )
                     .padding(.top, 12)
                     .frame(minHeight: 320)
@@ -905,7 +904,6 @@ private final class SlidingTabBar: UITabBar {
     }
 }
 
-/// Slides the tab bar shortly after scrolling in that direction begins.
 final class TabBarVisibility: ObservableObject {
     @Published private(set) var hidden = false
     private var settle: Task<Void, Never>?

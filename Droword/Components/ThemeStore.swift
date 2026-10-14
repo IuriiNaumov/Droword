@@ -100,6 +100,11 @@ final class ThemeStore: ObservableObject {
     static private let storageKey = "appThemePalette"
     static let defaultCustomAccentHex = "#5B9BD5"
 
+    static func rememberedPalette() -> Palette {
+        let raw = UserDefaults.standard.string(forKey: storageKey) ?? Palette.colorful.rawValue
+        return Palette(rawValue: raw) ?? .colorful
+    }
+
     private struct Colors {
         let accentBlue: Color
         let accentGreen: Color

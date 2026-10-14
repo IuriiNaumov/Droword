@@ -94,7 +94,8 @@ struct DictionaryView: View {
                 ctaTitle: "Add a word",
                 onCTA: {
                     NotificationCenter.default.post(name: .openAddWord, object: nil)
-                }
+                },
+                ctaFeedback: { Haptics.addWordTap() }
             )
             .padding(.bottom, 24)
         }
@@ -253,7 +254,7 @@ struct DictionaryView: View {
     private var dictionaryEmptyFilter: some View {
         if let tag = selectedTag, !tag.isEmpty {
             EmptyListView(
-                illustration: AnyView(EmptyTagArt()),
+                icon: "tag",
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
             )
@@ -266,7 +267,8 @@ struct DictionaryView: View {
                 ctaTitle: "Add a word",
                 onCTA: {
                     NotificationCenter.default.post(name: .openAddWord, object: nil)
-                }
+                },
+                ctaFeedback: { Haptics.addWordTap() }
             )
         }
     }

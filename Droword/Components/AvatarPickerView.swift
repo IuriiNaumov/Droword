@@ -24,16 +24,14 @@ struct AvatarPickerView: View {
                 VStack(spacing: 12) {
                     sourceButton(
                         icon: "camera",
-                        title: "Take a photo",
-                        color: Color.accentBlue
+                        title: "Take a photo"
                     ) {
                         showCamera = true
                     }
 
                     sourceButton(
                         icon: "photo.on.rectangle",
-                        title: "Choose from gallery",
-                        color: Color.accentGreen
+                        title: "Choose from gallery"
                     ) {
                         showPhotosPicker = true
                     }
@@ -42,7 +40,7 @@ struct AvatarPickerView: View {
                         sourceButton(
                             icon: "trash",
                             title: "Remove photo",
-                            color: Color.accentRed
+                            color: themeStore.accentRed
                         ) {
                             onRemoved()
                             dismiss()
@@ -91,18 +89,10 @@ struct AvatarPickerView: View {
         }
     }
 
-    private func sourceButton(icon: String, title: LocalizedStringKey, color: Color, action: @escaping () -> Void) -> some View {
+    private func sourceButton(icon: String, title: LocalizedStringKey, color: Color? = nil, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(themeStore.isGlass ? 0.22 : 0.12))
-                        .frame(width: 44, height: 44)
-                        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(color)
-                }
+            HStack(spacing: 14) {
+                MenuSymbol(systemName: icon, color: color)
 
                 Text(title)
                     .font(themeStore.medium(16))
@@ -116,7 +106,7 @@ struct AvatarPickerView: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                    .fill(themeStore.isGlass ? color.opacity(0.18) : themeStore.cardBg)
+                    .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
             )
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         }

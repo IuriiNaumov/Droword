@@ -74,16 +74,13 @@ struct AddWordView: View {
                         Task { await addWord() }
                     } label: {
                         ZStack {
-
-                            Text("Add")
-                                .font(themeStore.bold(17))
+                            addWordLabel
                                 .foregroundStyle(.clear)
 
                             if isAdding {
                                 BouncingDotsView()
                             } else {
-                                Text("Add")
-                                    .font(themeStore.bold(17))
+                                addWordLabel
                                     .foregroundStyle(themeStore.isGlass ? themeStore.mainText : .white)
                             }
                         }
@@ -224,6 +221,15 @@ struct AddWordView: View {
         }
         .onDisappear {
             Haptics.stopHeartbeat()
+        }
+    }
+
+    private var addWordLabel: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "plus")
+                .font(.system(size: 14, weight: .bold))
+            Text("Add")
+                .font(themeStore.bold(17))
         }
     }
 

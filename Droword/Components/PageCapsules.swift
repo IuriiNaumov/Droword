@@ -8,6 +8,7 @@ struct PageCapsules: View {
     let selection: Int
     var activeColor: Color? = nil
     var glass: Bool = false
+    var usesThemeGlass: Bool = true
 
     var body: some View {
         HStack(spacing: 6) {
@@ -18,7 +19,8 @@ struct PageCapsules: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: selection)
     }
 
-    private var useGlass: Bool { glass || themeStore.isGlass }
+    private var useGlass: Bool { glass || (usesThemeGlass && themeStore.isGlass) }
+    private var inactive: Color { usesThemeGlass ? themeStore.secondaryText : Color("MainGrey") }
 
     private func capsule(active: Bool) -> some View {
         Capsule(style: .continuous)
@@ -32,8 +34,8 @@ struct PageCapsules: View {
         if useGlass {
             return active
                 ? accent.opacity(colorScheme == .dark ? 0.45 : 0.35)
-                : themeStore.secondaryText.opacity(0.18)
+                : inactive.opacity(0.18)
         }
-        return active ? accent : themeStore.secondaryText.opacity(0.25)
+        return active ? accent : inactive.opacity(0.25)
     }
 }

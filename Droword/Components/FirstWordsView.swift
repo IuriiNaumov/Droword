@@ -130,7 +130,7 @@ struct FirstWordsView: View {
                 )
                 store.add(storedWord)
             } label: {
-                Image(systemName: isAdded ? "checkmark.circle" : "plus.circle")
+                Image(systemName: isAdded ? "checkmark.circle" : "plus")
                     .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(isAdded ? themeStore.accentGreen : themeStore.mainAccentColor)
             }

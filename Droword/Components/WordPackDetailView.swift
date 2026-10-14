@@ -60,7 +60,7 @@ struct WordPackDetailView: View {
                                 addAllWords()
                             } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "plus.circle")
+                                    Image(systemName: "plus")
                                     Text("Add all")
                                 }
                                 .duo3DStyle(color)
@@ -151,7 +151,7 @@ struct WordPackDetailView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "plus.circle")
+                        Image(systemName: "plus")
                         Text("Add")
                     }
                     .font(themeStore.medium(13))

@@ -97,15 +97,23 @@ struct AppCustomizationView: View {
                 .padding(.horizontal, 18)
                 .padding(.top, 18)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(availablePalettes) { palette in
-                        backgroundTile(palette)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(availablePalettes) { palette in
+                            backgroundTile(palette)
+                                .id(palette)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 4)
+                    .padding(.bottom, 18)
+                }
+                .onAppear {
+                    DispatchQueue.main.async {
+                        proxy.scrollTo(themeStore.palette, anchor: .center)
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.top, 4)
-                .padding(.bottom, 18)
             }
         }
         .plataSurface(themeStore)

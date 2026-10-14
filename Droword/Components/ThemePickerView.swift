@@ -3,14 +3,24 @@ import SwiftUI
 struct ThemePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-    @State private var selectedPalette: ThemeStore.Palette = .colorful
+    @State private var selectedPalette: ThemeStore.Palette
     @State private var showPremiumWall = false
-    @State private var customPickerColor: Color = Color(hex: ThemeStore.defaultCustomAccentHex)
+    @State private var customPickerColor: Color
+    @State private var showPager = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
 
     var initialPalette: ThemeStore.Palette? = nil
     var isSheet: Bool = false
+
+    init(initialPalette: ThemeStore.Palette? = nil, isSheet: Bool = false) {
+        self.initialPalette = initialPalette
+        self.isSheet = isSheet
+        let start = initialPalette ?? ThemeStore.rememberedPalette()
+        _selectedPalette = State(initialValue: start)
+        let hex = UserDefaults.standard.string(forKey: AppStorageKeys.customThemeAccentHex) ?? ThemeStore.defaultCustomAccentHex
+        _customPickerColor = State(initialValue: Color(hex: hex))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,13 +34,17 @@ struct ThemePickerView: View {
             }
             .padding(.bottom, 12)
 
-            TabView(selection: $selectedPalette) {
-                ForEach(availablePalettes) { palette in
-                    previewStage(palette: palette)
-                        .tag(palette)
+            Group {
+                if showPager {
+                    TabView(selection: $selectedPalette) {
+                        ForEach(availablePalettes) { palette in
+                            previewStage(palette: palette)
+                                .tag(palette)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(maxHeight: .infinity)
 
             PageCapsules(
@@ -40,7 +54,8 @@ struct ThemePickerView: View {
                     for: selectedPalette,
                     customHex: themeStore.customAccentHex
                 ).mainAccentColor,
-                glass: selectedPalette == .glass
+                glass: selectedPalette == .glass,
+                usesThemeGlass: false
             )
             .padding(.top, 4)
 
@@ -63,8 +78,10 @@ struct ThemePickerView: View {
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
         .onAppear {
-            selectedPalette = initialPalette ?? themeStore.palette
+            let page = initialPalette ?? themeStore.palette
+            selectedPalette = page
             customPickerColor = Color(hex: themeStore.customAccentHex)
+            showPager = true
         }
         .onChange(of: selectedPalette) { _, new in
             if new == .custom {
@@ -149,6 +166,10 @@ struct ThemePickerView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 36, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 36, style: .continuous)
+                    .stroke(previewStroke(palette: palette, accent: c.mainAccentColor), lineWidth: 1.5)
+            }
             .padding(.horizontal, 28)
             .padding(.vertical, 12)
             .id(palette.rawValue)
@@ -156,6 +177,15 @@ struct ThemePickerView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func previewStroke(palette: ThemeStore.Palette, accent: Color) -> Color {
+        switch palette {
+        case .colorful:
+            return Color("AccentPurple")
+        default:
+            return accent
+        }
     }
 
     private var glassPreviewWash: some View {
@@ -233,10 +263,8 @@ struct ThemePickerView: View {
             for: selectedPalette,
             customHex: selectedPalette == .custom ? themeStore.customAccentHex : ThemeStore.defaultCustomAccentHex
         )
-        let useDuoChrome = selectedPalette == .duolingo || themeStore.isDuolingo
-        let accent = isCurrent
-            ? (useDuoChrome ? Color(hex: "#E5E5E5") : themeStore.secondaryText.opacity(0.55))
-            : c.mainAccentColor
+        let useDuoChrome = selectedPalette == .duolingo
+        let accent = isCurrent ? Color(hex: "#E5E5E5") : c.mainAccentColor
 
         return Button(action: applySelection) {
             setButtonLabel(isCurrent: isCurrent)
@@ -248,7 +276,7 @@ struct ThemePickerView: View {
                     labelColor: colorScheme == .dark ? .white : .black
                 ))
         }
-        .buttonStyle(Duo3DButtonStyle())
+        .buttonStyle(ThemeChoosePressStyle())
         .disabled(isCurrent && themeStore.palette == selectedPalette)
     }
 
@@ -315,14 +343,42 @@ private struct SetButtonChrome: ViewModifier {
                         .fill(isCurrent ? themeStore.secondaryText.opacity(0.25) : accent.opacity(0.28))
                 }
                 .modifier(GlassCardModifier(isGlass: !isCurrent, cornerRadius: DesignRadius.large))
+        } else if useDuoChrome {
+            content
+                .font(themeStore.bold(17))
+                .foregroundStyle(isCurrent ? Color(hex: "#AFAFAF") : .white)
+                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity)
+                .background {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isCurrent ? Color(hex: "#AFAFAF").opacity(0.55) : darkerShade(of: accent, by: 0.16))
+                            .offset(y: 4)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(isCurrent ? Color(hex: "#E5E5E5") : accent)
+                    }
+                }
+                .padding(.bottom, 4)
         } else {
-            content.duo3DStyle(
-                accent,
-                isDisabled: isCurrent,
-                force3D: useDuoChrome,
-                verticalPadding: useDuoChrome ? 14 : 16
-            )
+            content
+                .font(themeStore.bold(17))
+                .foregroundStyle(.white)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background {
+                    RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
+                        .fill(isCurrent ? themeStore.secondaryText.opacity(0.4) : accent)
+                }
         }
+    }
+}
+
+private struct ThemeChoosePressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.85 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 

@@ -235,8 +235,6 @@ def draw_stars(d: ImageDraw.ImageDraw, cx, cy, r, color, n=5):
     d.polygon(pts, fill=color)
 
 
-# --- trendy backgrounds -------------------------------------------------
-
 def bg_classic() -> Image.Image:
     img = radial_gradient(rgb("FFFFFF"), rgb("D8E2F0"), 0.48, 0.32)
     img = soft_orb(img, rgb("A8C4F0"), (-120, -180, 620, 560), 90, 100)
@@ -341,8 +339,6 @@ def bg_glass() -> Image.Image:
     return gloss(img, 48)
 
 
-# --- pride ---------------------------------------------------------------
-
 def bg_pride() -> Image.Image:
     img = soft_stripes(
         [
@@ -357,8 +353,6 @@ def bg_pride() -> Image.Image:
     )
     return gloss(img, 30)
 
-
-# --- language flags (kept recognizable, soft finish) ---------------------
 
 def bg_english() -> Image.Image:
     blue, white, red = rgb("012169"), rgb("FFFFFF"), rgb("C8102E")

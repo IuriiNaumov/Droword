@@ -74,24 +74,50 @@ struct ProPlusMark: View {
 
 struct ProPillBadge: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
     var prominent: Bool = false
 
     private var star: CGFloat { prominent ? 14 : 8 }
     private var labelSize: CGFloat { prominent ? 15 : 9 }
+    private var accent: Color { themeStore.mainAccentColor }
+    private var lip: CGFloat { prominent && !themeStore.isGlass ? 4 : 0 }
+
+    private var labelColor: Color {
+        if prominent && themeStore.isGlass {
+            return colorScheme == .dark ? .white : .black
+        }
+        return .white
+    }
 
     var body: some View {
         HStack(spacing: prominent ? 6 : 3) {
-            Image(systemName: prominent ? "sparkles" : "sparkle")
+            Image(systemName: "sparkle")
                 .font(.system(size: star, weight: .bold))
 
             Text("PRO")
                 .font(themeStore.bold(labelSize))
                 .tracking(prominent ? 1.1 : 0.3)
         }
-        .foregroundStyle(.white)
-        .padding(.horizontal, prominent ? 12 : 6)
-        .padding(.vertical, prominent ? 7 : 3)
-        .background(Capsule().fill(themeStore.mainAccentColor))
+        .foregroundStyle(labelColor)
+        .padding(.horizontal, prominent ? 14 : 6)
+        .padding(.vertical, prominent ? 8 : 3)
+        .background {
+            if prominent && themeStore.isGlass {
+                Capsule().fill(accent.opacity(0.28))
+            } else if prominent {
+                ZStack {
+                    Capsule()
+                        .fill(darkerShade(of: accent, by: 0.16))
+                        .offset(y: lip)
+                    Capsule()
+                        .fill(accent)
+                }
+            } else {
+                Capsule().fill(accent)
+            }
+        }
+        .padding(.bottom, lip)
+        .modifier(GlassCardModifier(isGlass: prominent && themeStore.isGlass, shape: .capsule))
         .accessibilityLabel(Text("PRO"))
     }
 }

@@ -71,7 +71,7 @@ struct SuggestedWordsView: View {
                                                     .controlSize(.small)
                                                     .tint(.white)
                                             } else {
-                                                Image(systemName: "plus.circle")
+                                                Image(systemName: "plus")
                                                 Text("Add")
                                             }
                                         }

@@ -13,7 +13,7 @@ struct InstagramStoriesTemplateView: View {
         case .sunset:     return Color(red: 1.0, green: 0.42, blue: 0.42)
         case .anime:      return Color(red: 0.96, green: 0.56, blue: 0.69)
         case .paper:      return Color(red: 0.77, green: 0.47, blue: 0.29)
-        case .duolingo:   return Color(red: 0.345, green: 0.800, blue: 0.008) // #58CC02
+        case .duolingo:   return Color(red: 0.345, green: 0.800, blue: 0.008)
 
         case .glass:      return Color(red: 0.0, green: 0.48, blue: 1.0)
         case .custom:     return themeStore.mainAccentColor

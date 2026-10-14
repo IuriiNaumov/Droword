@@ -82,8 +82,12 @@ struct AddTagView: View {
                 Spacer()
 
                 Button(action: { saveTag() }) {
-                    Text(isSaving ? "Adding..." : "Add")
-                        .duo3DStyle(themeStore.mainAccentColor, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14, weight: .bold))
+                        Text(isSaving ? "Adding..." : "Add")
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// System-style list disclosure chevron (Telegram / iOS Settings gray ›).
 struct DisclosureChevron: View {
     @EnvironmentObject private var themeStore: ThemeStore
     var opacity: Double = 0.45

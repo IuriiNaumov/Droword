@@ -17,6 +17,10 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     case wordSky
     case wordLime
     case wordCoral
+    case hearts
+    case glasses
+    case dizzy
+    case sleepy
     case english
     case spanish
     case french
@@ -63,6 +67,10 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .wordSky: return String(localized: "Sky")
         case .wordLime: return String(localized: "Lime")
         case .wordCoral: return String(localized: "Coral")
+        case .hearts: return String(localized: "Hearts")
+        case .glasses: return String(localized: "Glasses")
+        case .dizzy: return String(localized: "Dizzy")
+        case .sleepy: return String(localized: "Sleepy")
         case .english: return String(localized: "English")
         case .spanish: return String(localized: "Spanish")
         case .french: return String(localized: "French")
@@ -109,6 +117,10 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .wordSky: return "AppIconWordSky"
         case .wordLime: return "AppIconWordLime"
         case .wordCoral: return "AppIconWordCoral"
+        case .hearts: return "AppIconFaceHearts"
+        case .glasses: return "AppIconFaceGlasses"
+        case .dizzy: return "AppIconFaceDizzy"
+        case .sleepy: return "AppIconFaceSleepy"
         case .english: return "AppIconEnglish"
         case .spanish: return "AppIconSpanish"
         case .french: return "AppIconFrench"
@@ -157,6 +169,10 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .wordSky: return Color(hex: "#3D72C4")
         case .wordLime: return Color(hex: "#7CB518")
         case .wordCoral: return Color(hex: "#E8457C")
+        case .hearts: return Color(hex: "#E8457C")
+        case .glasses: return Color(hex: "#1C1C1E")
+        case .dizzy: return Color(hex: "#00D4D4")
+        case .sleepy: return Color(hex: "#5B9BD5")
         case .english: return Color(hex: "#012169")
         case .spanish: return Color(hex: "#C60B1E")
         case .french: return Color(hex: "#002395")
@@ -202,7 +218,6 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     static func resolved(_ raw: String) -> AppIconStyle {
         if raw == "ember" { return .sun }
         if raw == "anime" { return .classic }
-        // Retired pride-flag variants → Pride
         if ["progress", "gay", "bi", "trans", "lesbian"].contains(raw) { return .pride }
         return AppIconStyle(rawValue: raw) ?? .classic
     }

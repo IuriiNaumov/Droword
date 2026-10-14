@@ -53,5 +53,8 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Delete `WordsICloudSync` when disabling iCloud — comment entitlements only for Personal Team.
 - Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
 - Put language/flag app icons back in App Customization, or replace tab-bar symbols with custom art unless asked.
-- Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static).
+- Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static). Home PRO stays a plain `accentBlue` sparkle. Only the paywall plaque is themed.
+- Open the theme picker on the first palette. It stays on the saved theme (`showPager` after the selection is set).
+- Replace empty-state halos (`text.badge.plus`, dictionary `textformat`, practice `bolt`, tag `tag`) with custom drawings.
+- Rewrite `NotificationCopy` from old English slang. Russian is the source of meaning.
 - Highlight irregular forms outside the example sentence. `forms` / `POST /forms` feed `HighlightedExample` only.
