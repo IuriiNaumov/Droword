@@ -439,4 +439,10 @@ final class NotificationManager {
     func cancelAll() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
     }
+
+    func clearBadge() {
+        let center = UNUserNotificationCenter.current()
+        center.setBadgeCount(0)
+        center.removeAllDeliveredNotifications()
+    }
 }

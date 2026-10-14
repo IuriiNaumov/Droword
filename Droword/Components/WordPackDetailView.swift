@@ -34,7 +34,13 @@ struct WordPackDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
+            Group {
+                if visibleWords.isEmpty && addedCount > 0 {
+                    WordsAddedPage(count: addedCount) {
+                        dismiss()
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     Text(pack.titleKey)
                         .sheetTitle()
@@ -81,12 +87,16 @@ struct WordPackDetailView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 20)
                 .iPadContentWidth(600)
+                    }
+                }
             }
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    CloseButton()
+                    if !(visibleWords.isEmpty && addedCount > 0) {
+                        CloseButton()
+                    }
                 }
             }
         }

@@ -264,7 +264,7 @@ struct PremiumView: View {
                 rows: [
                     ("paintpalette", "All themes", "Sunset, Green Owl, Liquid Glass"),
                     ("sparkles", "Seasonal effects", "Atmosphere that matches the season"),
-                    ("flame", "Streak freeze", "One missed day a week, no drama")
+                    ("app", "App icons", "A whole shelf of icons, most of them PRO")
                 ]
             )
         }

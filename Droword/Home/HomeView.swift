@@ -406,27 +406,22 @@ struct HomeView: View {
 
     private func homeOverlays<Content: View>(_ content: Content) -> some View {
         content
-        .overlay {
-            if let milestone = activeMilestone {
-                MilestoneCelebrationView(
-                    milestone: milestone,
-                    wordsCount: store.words.count,
-                    daysSinceStart: daysSinceStart
-                ) {
-                    let wasStreak: Bool = {
-                        if case .streak = milestone { return true }
-                        return false
-                    }()
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        activeMilestone = nil
-                    }
-                    if wasStreak && !isPremium && !hasSeenStreakPaywall {
-                        pendingStreakPaywall = true
-                    }
+        .fullScreenCover(item: $activeMilestone) { milestone in
+            MilestoneCelebrationView(
+                milestone: milestone,
+                wordsCount: store.words.count,
+                daysSinceStart: daysSinceStart
+            ) {
+                let wasStreak: Bool = {
+                    if case .streak = milestone { return true }
+                    return false
+                }()
+                activeMilestone = nil
+                if wasStreak && !isPremium && !hasSeenStreakPaywall {
+                    pendingStreakPaywall = true
                 }
-                .transition(.opacity)
-                .zIndex(100)
             }
+            .environmentObject(themeStore)
         }
         .fullScreenCover(isPresented: $showSuggestedIntro) {
             SuggestedWordsIntroView {

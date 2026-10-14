@@ -76,6 +76,10 @@ struct ScanWordsView: View {
                         .padding(.bottom, 20)
                         .iPadContentWidth(600)
                     }
+                } else if visibleWords.isEmpty && addedCount > 0 {
+                    WordsAddedPage(count: addedCount) {
+                        dismiss()
+                    }
                 } else {
                     ScrollView(showsIndicators: false) {
                         resultsSection
@@ -259,37 +263,6 @@ struct ScanWordsView: View {
                 ForEach(duplicateWords) { word in
                     duplicateWordCard(word)
                 }
-            }
-
-            if visibleWords.isEmpty && addedCount > 0 {
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 40))
-                        .foregroundStyle(themeStore.accentBlue)
-
-                    Text("All done!")
-                        .font(themeStore.bold(18))
-                        .foregroundStyle(themeStore.mainText)
-
-                    Text("\(addedCount) words added to your dictionary")
-                        .font(themeStore.regular(14))
-                        .foregroundStyle(themeStore.secondaryText)
-
-                    Button {
-                        Haptics.lightImpact()
-                        dismiss()
-                    } label: {
-                        Text("Close")
-                            .font(themeStore.medium(16))
-                            .foregroundStyle(themeStore.secondaryText)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 8)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
             }
 
             Button {

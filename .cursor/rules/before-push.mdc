@@ -1,0 +1,18 @@
+---
+description: Before a push, update both READMEs and remove code comments
+alwaysApply: true
+---
+
+# Before push
+
+When the user asks to push, do these steps in order. Do not push first.
+
+1. If the change affects behavior, the product map, or how an agent should work, update both:
+   - `AGENTS.md` — context for the LLM
+   - `README.md` — the same change in human language
+2. Remove code comments from the diff. Do not leave `//`, `///`, or `/* */` in Swift, the worker, or scripts. Prefer not to write them at all.
+3. Only then commit (if asked) and push.
+
+Leave the XML comments in `Droword/Droword.entitlements` that keep iCloud off for a Personal Team. Leave shebangs and `#Preview` strings. A URL that contains `//` is not a comment.
+
+Do not commit `droword-worker/node_modules`, `.derivedData`, or `xcuserdata`.

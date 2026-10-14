@@ -131,7 +131,7 @@ Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSc
 ### Streaks, badges, challenges
 
 `DayStreak` (+ Pro streak freeze), `DailyChallengeManager`.  
-Home shows `MilestoneCelebrationView` for word-count / streak / daily-goal milestones.  
+Home shows `MilestoneCelebrationView` for word-count / streak / daily-goal milestones as a full page, same layout as `SuggestedWordsIntroView`, not a dialog card. Adding every word from a scan or word pack opens `WordsAddedPage`. Feature Flags pushes these pages, plus alerts and onboarding screens.  
 `BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
 ### CSV / dictionary settings
@@ -245,7 +245,7 @@ The pager opens on the saved palette (`initialPalette`, otherwise `themeStore.pa
 
 Next to the name on Home, PRO is a plain `MenuSymbol` sparkle in `accentBlue`. Do not replace it with `ProPillBadge` or a themed 3D/glass star.
 
-The paywall uses `ProPillBadge(prominent: true)`: theme `mainAccentColor`, a Duo lip (`darkerShade` 0.16, 4pt) when the palette is not glass, and a glass capsule (`accent` at 0.28 plus `GlassCardModifier(shape: .capsule)`) when `themeStore.isGlass`. The label is white on the solid lip; on glass it is black in light mode and white in dark. The sparkle inside the pill stays a plain icon.
+The paywall uses `ProPillBadge(prominent: true)`: theme `mainAccentColor`, a Duo lip (`darkerShade` 0.16, 4pt) only on Green Owl, and a glass capsule (`accent` at 0.28 plus `GlassCardModifier(shape: .capsule)`) when `themeStore.isGlass`. On Droword and Custom the plaque is a flat accent capsule. The label is white on the solid lip; on glass it is black in light mode and white in dark. The sparkle inside the pill stays a plain icon.
 
 Small `ProPillBadge()` chips in settings and App Customization stay a flat accent capsule. `ProPlusMark` and every PRO sparkle stay static: no `symbolEffect` bounce/pulse and no `TimelineView` twinkle. The App Customization settings row does not show a PRO badge.
 
@@ -273,6 +273,7 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar artwork lives in `MenuBarIcons`.
 15. **PRO sparkle** — static. No bounce or pulse. Home keeps the plain blue sparkle. Only the paywall plaque is themed (accent, Duo lip, glass on Liquid Glass).
 16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales translate that Russian, including the short and odd lines. Do not put back English slang that says something else.
+17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
 
 ---
 
@@ -321,4 +322,5 @@ cd droword-worker && npm run deploy                # after wrangler secrets
 - Prefer existing helpers/stores over new parallel state.
 - When adding user-facing strings, update `Localizable.xcstrings` (or use `String(localized:)` consistently).
 - Commit only when the user asks; never force-push or rewrite git history.
+- Before a push the user asked for: update this file and `README.md` if behavior or the map changed, remove code comments from the diff, then push. Do not push with comments left in source. XML comments in `Droword.entitlements` that keep iCloud off for a Personal Team stay.
 - If unsure where a feature lives, search `Droword/` and this map before creating new top-level folders.

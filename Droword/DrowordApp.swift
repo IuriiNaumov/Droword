@@ -101,6 +101,7 @@ struct DrowordApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     switch newPhase {
                     case .active:
+                        NotificationManager.shared.clearBadge()
                         store.reloadFromDisk()
                         enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()

@@ -80,7 +80,7 @@ struct ProPillBadge: View {
     private var star: CGFloat { prominent ? 14 : 8 }
     private var labelSize: CGFloat { prominent ? 15 : 9 }
     private var accent: Color { themeStore.mainAccentColor }
-    private var lip: CGFloat { prominent && !themeStore.isGlass ? 4 : 0 }
+    private var lip: CGFloat { prominent && themeStore.isDuolingo ? 4 : 0 }
 
     private var labelColor: Color {
         if prominent && themeStore.isGlass {
@@ -104,7 +104,7 @@ struct ProPillBadge: View {
         .background {
             if prominent && themeStore.isGlass {
                 Capsule().fill(accent.opacity(0.28))
-            } else if prominent {
+            } else if prominent && themeStore.isDuolingo {
                 ZStack {
                     Capsule()
                         .fill(darkerShade(of: accent, by: 0.16))

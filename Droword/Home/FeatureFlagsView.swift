@@ -1,5 +1,13 @@
 import SwiftUI
 
+private enum FlagScreen: Hashable {
+    case wellDone
+    case wordsAdded
+    case onboarding(OnboardingModalPreview)
+    case alert(CustomAlertPreviewCase)
+    case milestone(MilestonePreview)
+}
+
 enum OnboardingModalPreview: String, CaseIterable, Identifiable {
     case firstWords
     case homeTour
@@ -32,10 +40,6 @@ struct FeatureFlagsView: View {
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.debugPremiumOverride) private var debugOverride: Bool = false
     @AppStorage(AppStorageKeys.hasCompletedOnboarding) private var hasCompletedOnboarding: Bool = false
-
-    @State private var previewCase: CustomAlertPreviewCase?
-    @State private var onboardingPreview: OnboardingModalPreview?
-    @State private var showWellDone = false
 
     var body: some View {
         ZStack {
@@ -108,27 +112,9 @@ struct FeatureFlagsView: View {
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
 
-                    VStack(spacing: 0) {
-                        Button {
-                            Haptics.menuTap()
-                            showWellDone = true
-                        } label: {
-                            HStack(spacing: 14) {
-                                MenuSymbol(systemName: "sparkles")
-                                Text(DuoChaosCopy.finishSplash(percentage: 100))
-                                    .font(themeStore.regular(16))
-                                    .foregroundStyle(themeStore.mainText)
-                                Spacer()
-                                DisclosureChevron()
-                            }
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 18)
-                            .background(themeStore.cardBg)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
+                    flagGroup {
+                        flagLink(.wellDone, icon: "sparkles", title: LocalizedStringKey(DuoChaosCopy.finishSplash(percentage: 100)))
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
                     Text("Onboarding modals")
                         .font(themeStore.bold(18))
@@ -139,69 +125,60 @@ struct FeatureFlagsView: View {
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
 
-                    VStack(spacing: 0) {
-                        ForEach(Array(OnboardingModalPreview.allCases.enumerated()), id: \.element.id) { index, item in
-                            Button {
-                                Haptics.menuTap()
-                                onboardingPreview = item
-                            } label: {
-                                HStack(spacing: 14) {
-                                    MenuSymbol(systemName: item.icon)
-                                    Text(item.title)
-                                        .font(themeStore.regular(16))
-                                        .foregroundStyle(themeStore.mainText)
-                                    Spacer()
-                                    DisclosureChevron()
-                                }
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 18)
-                                .background(themeStore.cardBg)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
+                    flagGroup {
+                        ForEach(OnboardingModalPreview.allCases) { item in
+                            flagLink(.onboarding(item), icon: item.icon, title: item.title)
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
 
-                    Text("Modals")
+                    Text("Words added")
                         .font(themeStore.bold(18))
                         .foregroundStyle(themeStore.mainText)
                         .padding(.top, 4)
 
-                    Text("Preview alert styles used across the app.")
+                    Text("Page after adding words from a scan or a word pack.")
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
 
-                    VStack(spacing: 0) {
-                        ForEach(Array(CustomAlertPreviewCase.allCases.enumerated()), id: \.element.id) { index, item in
-                            Button {
-                                Haptics.menuTap()
-                                previewCase = item
-                            } label: {
-                                HStack(spacing: 14) {
-                                    MenuSymbol(systemName: "rectangle.portrait.on.rectangle.portrait")
-                                    Text(item.title)
-                                        .font(themeStore.regular(16))
-                                        .foregroundStyle(themeStore.mainText)
-                                    Spacer()
-                                    DisclosureChevron()
-                                }
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 18)
-                                .background(themeStore.cardBg)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
+                    flagGroup {
+                        flagLink(.wordsAdded, icon: "checkmark.circle", title: "3 words added")
+                    }
+
+                    Text("Celebrations")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("Word count, streak, daily goal, and badge pages.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    flagGroup {
+                        ForEach(MilestonePreview.allCases) { item in
+                            flagLink(.milestone(item), icon: "sparkles", title: item.title)
                         }
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+
+                    Text("Alerts")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("Confirmations and errors, opened as pages.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    flagGroup {
+                        ForEach(CustomAlertPreviewCase.allCases) { item in
+                            flagLink(.alert(item), icon: "rectangle.portrait", title: item.title)
+                        }
+                    }
                 }
                 .padding(.bottom, 20)
                 .padding(.horizontal, 20)
             }
             .background(themeStore.appBg.ignoresSafeArea())
         }
-        .animation(.easeOut(duration: 0.2), value: onboardingPreview?.id)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 SettingsBackButton()
@@ -209,43 +186,82 @@ struct FeatureFlagsView: View {
         }
         .navigationBarBackButtonHidden(true)
         .enableSwipeBack()
-        .fullScreenCover(isPresented: $showWellDone) {
+        .navigationDestination(for: FlagScreen.self) { screen in
+            FlagScreenPage(screen: screen)
+                .environmentObject(themeStore)
+                .environmentObject(store)
+                .environmentObject(languageStore)
+        }
+    }
+
+    private func flagGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+        }
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+    }
+
+    private func flagLink(_ screen: FlagScreen, icon: String, title: LocalizedStringKey) -> some View {
+        NavigationLink(value: screen) {
+            HStack(spacing: 14) {
+                MenuSymbol(systemName: icon)
+                Text(title)
+                    .font(themeStore.regular(16))
+                    .foregroundStyle(themeStore.mainText)
+                Spacer()
+                DisclosureChevron()
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 18)
+            .background(themeStore.cardBg)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct FlagScreenPage: View {
+    @Environment(\.dismiss) private var dismiss
+    let screen: FlagScreen
+
+    var body: some View {
+        content
+            .toolbar(.hidden, for: .navigationBar)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch screen {
+        case .wellDone:
             QuizCompletionView(
                 correct: 8,
                 total: 10,
                 bestStreak: 4,
-                onClose: { showWellDone = false },
-                onRestart: { showWellDone = false }
+                onClose: { dismiss() },
+                onRestart: { dismiss() }
             )
-            .environmentObject(themeStore)
-        }
-        .fullScreenCover(item: $previewCase) { item in
-            item.makeView {
-                previewCase = nil
+        case .wordsAdded:
+            WordsAddedPage(count: 3) {
+                dismiss()
             }
-            .environmentObject(themeStore)
-        }
-        .fullScreenCover(item: $onboardingPreview) { item in
-            Group {
-                switch item {
-                case .firstWords:
-                    FirstWordsView {
-                        onboardingPreview = nil
-                    }
-                    .environmentObject(themeStore)
-                    .environmentObject(store)
-                    .environmentObject(languageStore)
-                case .homeTour:
-                    CoachMarkView(steps: CoachMarkCatalog.homeSteps) {
-                        onboardingPreview = nil
-                    }
-                    .environmentObject(themeStore)
-                case .suggestedWords:
-                    SuggestedWordsIntroView {
-                        onboardingPreview = nil
-                    }
-                    .environmentObject(themeStore)
-                }
+        case .onboarding(let item):
+            switch item {
+            case .firstWords:
+                FirstWordsView { dismiss() }
+            case .homeTour:
+                CoachMarkView(steps: CoachMarkCatalog.homeSteps) { dismiss() }
+            case .suggestedWords:
+                SuggestedWordsIntroView { dismiss() }
+            }
+        case .alert(let item):
+            item.makeView { dismiss() }
+        case .milestone(let item):
+            MilestoneCelebrationView(
+                milestone: item.milestone,
+                wordsCount: item.wordsCount,
+                daysSinceStart: item.daysSinceStart
+            ) {
+                dismiss()
             }
         }
     }

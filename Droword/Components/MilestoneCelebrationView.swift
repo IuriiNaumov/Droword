@@ -106,48 +106,50 @@ struct MilestoneCelebrationView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
+            themeStore.appBg.ignoresSafeArea()
 
             ConfettiView()
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
+                Spacer(minLength: 24)
+
                 Text(milestone.emoji)
                     .font(.system(size: 72))
                     .scaleEffect(iconScale)
 
                 VStack(spacing: 8) {
                     Text(milestone.title)
-                        .font(themeStore.bold(28))
+                        .font(themeStore.display(32))
                         .foregroundStyle(themeStore.mainText)
+                        .tracking(-0.4)
+                        .multilineTextAlignment(.center)
 
                     Text(milestone.message(wordsCount: wordsCount, daysSinceStart: daysSinceStart))
                         .font(themeStore.regular(16))
                         .foregroundStyle(themeStore.secondaryText)
                         .multilineTextAlignment(.center)
                 }
+                .padding(.top, 18)
                 .opacity(textOpacity)
+
+                Spacer(minLength: 24)
 
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .font(themeStore.bold(17))
-                        .foregroundStyle(.white)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .duo3DStyle(themeStore.mainAccentColor)
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
+                .padding(.bottom, 8)
             }
-            .padding(32)
-            .background(
-                RoundedRectangle(cornerRadius: DesignRadius.dialog, style: .continuous)
-                    .fill(themeStore.appBg)
-            )
-            .padding(.horizontal, 32)
+            .frame(maxWidth: 460)
+            .padding(.horizontal, 28)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
             Haptics.celebration()
@@ -161,6 +163,97 @@ struct MilestoneCelebrationView: View {
             withAnimation(.easeOut(duration: 0.3).delay(0.6)) {
                 buttonOpacity = 1.0
             }
+        }
+    }
+}
+
+enum MilestonePreview: String, CaseIterable, Identifiable, Hashable {
+    case words10
+    case words25
+    case words50
+    case words100
+    case words200
+    case words500
+    case streak7
+    case streak30
+    case streak100
+    case streak365
+    case dailyGoal
+    case badge
+
+    var id: String { rawValue }
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .words10: return "10 words"
+        case .words25: return "25 words"
+        case .words50: return "50 words"
+        case .words100: return "100 words"
+        case .words200: return "200 words"
+        case .words500: return "500 words"
+        case .streak7: return "7-day streak"
+        case .streak30: return "30-day streak"
+        case .streak100: return "100-day streak"
+        case .streak365: return "365-day streak"
+        case .dailyGoal: return "Daily goal"
+        case .badge: return "Badge unlocked"
+        }
+    }
+
+    var milestone: MilestoneType {
+        switch self {
+        case .words10: return .wordCount(10)
+        case .words25: return .wordCount(25)
+        case .words50: return .wordCount(50)
+        case .words100: return .wordCount(100)
+        case .words200: return .wordCount(200)
+        case .words500: return .wordCount(500)
+        case .streak7: return .streak(7)
+        case .streak30: return .streak(30)
+        case .streak100: return .streak(100)
+        case .streak365: return .streak(365)
+        case .dailyGoal: return .dailyGoal
+        case .badge:
+            return .badge(
+                id: "quiz.10",
+                emoji: "📝",
+                title: String(localized: "Badge unlocked!"),
+                message: "Quiz Rookie — Complete 10 quizzes"
+            )
+        }
+    }
+
+    var wordsCount: Int {
+        switch self {
+        case .words10: return 10
+        case .words25: return 25
+        case .words50: return 50
+        case .words100: return 100
+        case .words200: return 200
+        case .words500: return 500
+        case .streak7: return 30
+        case .streak30: return 80
+        case .streak100: return 140
+        case .streak365: return 400
+        case .dailyGoal: return 22
+        case .badge: return 40
+        }
+    }
+
+    var daysSinceStart: Int {
+        switch self {
+        case .words10: return 3
+        case .words25: return 10
+        case .words50: return 20
+        case .words100: return 40
+        case .words200: return 80
+        case .words500: return 200
+        case .streak7: return 10
+        case .streak30: return 35
+        case .streak100: return 100
+        case .streak365: return 365
+        case .dailyGoal: return 12
+        case .badge: return 20
         }
     }
 }
