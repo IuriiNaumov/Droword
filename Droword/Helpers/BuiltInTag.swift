@@ -18,6 +18,10 @@ enum BuiltInTag {
         case movie: return String(localized: "Movie")
         case street: return String(localized: "Street")
         case socialMedia: return String(localized: "Social media")
+        case "Basics": return String(localized: "Basics")
+        case "Food": return String(localized: "Food")
+        case "Shopping": return String(localized: "Shopping")
+        case "Daily life": return String(localized: "Daily life")
         default: return storedName
         }
     }

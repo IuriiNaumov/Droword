@@ -46,8 +46,10 @@ struct PracticeView: View {
                     )
                 } else {
                     practiceEmptyState
+                        .padding(.bottom, 24)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .iPadContentWidth()
         }
         .onAppear {
@@ -76,9 +78,8 @@ struct PracticeView: View {
 
             Spacer()
         }
-        .padding(.horizontal, DesignSpacing.screenInset)
         .padding(.top, DesignSpacing.titleTop)
-        .transaction { $0.animation = nil }
+        .padding(.horizontal, DesignSpacing.screenInset)
     }
 
     private var practiceEmptyState: some View {

@@ -205,7 +205,13 @@ struct StreakCalendarView: View {
             ZStack {
                 Circle()
                     .fill(monthCellColor(for: day))
-                    .frame(width: isSelected ? 38 : 34, height: isSelected ? 38 : 34)
+                    .frame(width: 34, height: 34)
+                    .overlay {
+                        if isSelected {
+                            Circle()
+                                .stroke(themeStore.mainAccentColor, lineWidth: 2.5)
+                        }
+                    }
 
                 Text("\(dayNum)")
                     .font(themeStore.medium(13))

@@ -3,7 +3,6 @@ import SwiftUI
 struct WordPack: Identifiable {
     let id: String
     let icon: String
-    let colorKey: String
     let titleKey: LocalizedStringKey
     let descriptionKey: LocalizedStringKey
     let wordCount: Int = 20
@@ -24,17 +23,41 @@ struct WordPackTracker {
 struct WordPacksData {
 
     static let allPacks: [WordPack] = [
-        WordPack(id: "basics", icon: "star", colorKey: "accentGold",
+        WordPack(id: "basics", icon: "star",
                  titleKey: "Basics", descriptionKey: "Essential everyday words"),
-        WordPack(id: "food", icon: "pizza.slice", colorKey: "accentGreen",
+        WordPack(id: "food", icon: "pizza.slice",
                  titleKey: "Food & Drinks", descriptionKey: "What to eat and drink"),
-        WordPack(id: "travel", icon: "suitcase", colorKey: "accentBlue",
+        WordPack(id: "travel", icon: "suitcase",
                  titleKey: "Travel", descriptionKey: "Getting around and exploring"),
-        WordPack(id: "shopping", icon: "bag", colorKey: "mainAccentColor",
+        WordPack(id: "shopping", icon: "bag",
                  titleKey: "Shopping", descriptionKey: "Buying and paying"),
-        WordPack(id: "daily_life", icon: "house", colorKey: "accentRed",
+        WordPack(id: "daily_life", icon: "house",
                  titleKey: "Daily Life", descriptionKey: "Home and routine"),
     ]
+
+    static func tagName(for packID: String) -> String? {
+        switch packID {
+        case "basics": return "Basics"
+        case "food": return "Food"
+        case "travel": return "Travel"
+        case "shopping": return "Shopping"
+        case "daily_life": return "Daily life"
+        default: return nil
+        }
+    }
+
+    static func ensureTag(_ name: String) {
+        if BuiltInTag.allStoredNames.contains(name) { return }
+        let hex: String
+        switch name {
+        case "Basics": hex = "#EBA130"
+        case "Food": hex = "#38B05B"
+        case "Shopping": hex = "#7D71C8"
+        case "Daily life": hex = "#E04F4F"
+        default: hex = "#5B9BD5"
+        }
+        TagStore.shared.ensureTag(name: name, colorHex: hex)
+    }
 
     static func words(packID: String, learning: String, native: String) -> [StarterWord]? {
         let key = "\(learning)→\(native)"
@@ -51,17 +74,6 @@ struct WordPacksData {
         let factsPack = packID == "daily_life" ? "dailyLife" : packID
         return bank.enumerated().map { index, word in
             WordPackFacts.apply(word, pack: factsPack, index: index, learning: learning, native: native)
-        }
-    }
-
-    static func packColor(for pack: WordPack, themeStore: ThemeStore) -> Color {
-        switch pack.colorKey {
-        case "accentGold": return themeStore.accentGold
-        case "accentGreen": return themeStore.accentGreen
-        case "accentBlue": return themeStore.accentBlue
-        case "accentRed": return themeStore.accentRed
-        case "mainAccentColor": return themeStore.mainAccentColor
-        default: return themeStore.mainAccentColor
         }
     }
 

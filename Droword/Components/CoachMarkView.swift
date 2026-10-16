@@ -49,62 +49,34 @@ struct CoachMarkView: View {
     @State private var textOpacity: Double = 0
 
     private var isLast: Bool { currentStep >= steps.count - 1 }
-    private var tint: Color { accent(for: currentStep) }
-
-    private func accent(for index: Int) -> Color {
-        switch index {
-        case 0: return themeStore.accentGreen
-        case 1: return themeStore.accentGold
-        case 2: return themeStore.accentPink
-        default: return themeStore.accentRed
-        }
-    }
 
     var body: some View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            SoftCoverCentered {
                 TabView(selection: $currentStep) {
                     ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                        stepPage(step, accent: accent(for: index))
+                        stepPage(step)
                             .tag(index)
-                            .padding(.horizontal, DesignSpacing.screenInset)
                     }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.spring(response: 0.45, dampingFraction: 0.9), value: currentStep)
-
+                .frame(height: 220)
+            } footer: {
                 VStack(spacing: 16) {
                     PageCapsules(count: steps.count, selection: currentStep)
 
-                    VStack(spacing: DesignSpacing.buttonGap) {
-                        Button {
-                            advance()
-                        } label: {
-                            Text(isLast ? "Get Started" : "Next")
-                                .duo3DStyle(tint)
-                        }
-                        .buttonStyle(Duo3DButtonStyle())
-
-                        if !isLast {
-                            Button {
-                                Haptics.softTap()
-                                onComplete()
-                            } label: {
-                                Text("Skip tour")
-                                    .duo3DSecondaryStyle()
-                            }
-                            .buttonStyle(Duo3DButtonStyle())
-                        }
+                    Button {
+                        advance()
+                    } label: {
+                        Text(isLast ? "Get Started" : "Next")
+                            .duo3DStyle(themeStore.mainAccentColor)
                     }
+                    .buttonStyle(Duo3DButtonStyle())
                 }
-                .padding(.horizontal, DesignSpacing.screenInset)
-                .padding(.bottom, 12)
-                .padding(.top, 8)
             }
-            .frame(maxWidth: 460)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear(perform: play)
         .onChange(of: currentStep) {
@@ -113,13 +85,11 @@ struct CoachMarkView: View {
         }
     }
 
-    private func stepPage(_ step: CoachMarkStep, accent: Color) -> some View {
+    private func stepPage(_ step: CoachMarkStep) -> some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 24)
-
             SoftCoverHero(
                 systemName: step.icon,
-                color: accent,
+                color: themeStore.iconAccent,
                 iconScale: iconScale
             )
 
@@ -139,9 +109,8 @@ struct CoachMarkView: View {
             .padding(.top, 18)
             .padding(.horizontal, 4)
             .opacity(textOpacity)
-
-            Spacer(minLength: 24)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private func play() {

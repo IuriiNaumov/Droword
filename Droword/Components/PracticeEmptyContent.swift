@@ -17,11 +17,13 @@ struct PracticeEmptyContent: View {
 
     var body: some View {
         VStack(spacing: 18) {
+            Spacer(minLength: 0)
+
             Group {
                 if let illustration {
                     illustration
                 } else {
-                    HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+                    HaloIcon(symbol: icon, color: themeStore.iconAccent, size: 168)
                 }
             }
             .frame(width: 176, height: 176)
@@ -52,8 +54,8 @@ struct PracticeEmptyContent: View {
                         Capsule(style: .continuous)
                             .fill(themeStore.mainAccentColor.opacity(0.12))
                     )
-                    .opacity(subtitleOpacity)
                     .padding(.horizontal, 28)
+                    .opacity(subtitleOpacity)
             }
 
             if let ctaTitle, let onCTA {
@@ -72,10 +74,12 @@ struct PracticeEmptyContent: View {
                 .padding(.horizontal, 40)
                 .opacity(subtitleOpacity)
             }
+
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.55)) {
                 iconScale = 1.0
             }
             withAnimation(.easeOut(duration: 0.35).delay(0.1)) {

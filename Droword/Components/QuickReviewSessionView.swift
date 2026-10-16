@@ -262,7 +262,7 @@ struct QuickReviewSessionView: View {
 
             if showAnswer {
                 HStack(spacing: 8) {
-                    gradeButton("Hard", color: themeStore.accentRed) {
+                    gradeButton("Hard", color: themeStore.mainAccentColor) {
                         Haptics.warning()
                         grade(.hard)
                     }
@@ -270,7 +270,7 @@ struct QuickReviewSessionView: View {
                         Haptics.buttonPress()
                         grade(.good)
                     }
-                    gradeButton("Easy", color: themeStore.accentGreen) {
+                    gradeButton("Easy", color: themeStore.mainAccentColor) {
                         Haptics.success()
                         grade(.easy)
                     }

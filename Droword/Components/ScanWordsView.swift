@@ -322,7 +322,7 @@ struct ScanWordsView: View {
                     .foregroundStyle(.white)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 12)
-                    .background(themeStore.accentBlue)
+                    .background(themeStore.mainAccentColor)
                     .clipShape(Capsule())
                 }
 
@@ -338,7 +338,7 @@ struct ScanWordsView: View {
                         Text("Skip")
                     }
                     .font(themeStore.regular(13))
-                    .foregroundStyle(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.mainAccentColor)
                 }
             }
             .padding(.top, 10)

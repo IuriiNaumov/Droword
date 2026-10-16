@@ -22,7 +22,7 @@ Tone: friendly tutor, Duolingo-adjacent energy (`DuoChaosCopy`, soft chaos), not
 | `Droword.xcodeproj/` | Xcode project |
 | `droword-worker/` | Cloudflare Worker API (`src/index.ts`, `src/guard.ts`) |
 | `DrowordShare/` | Share extension → short text = Add; long text = extract |
-| `DrowordWidget/` | Home-screen widget (lightweight launcher) |
+| `Droword​Widget/` | Widgets: **Add a new word** (plus → `droword://add`; home small + lock circular), **Recent words** (last 3 → dictionary), **Today's lesson** (home small/medium + lock rectangular) |
 | `docs/` | Privacy / terms / support HTML |
 | `marketing/app-store/` | Listing copy, poster compose helpers |
 | `scripts/` | Icon / preview helpers |
@@ -204,11 +204,11 @@ Worker IP limits in `guard.ts` are abuse protection only — not the product pay
 
 - Fonts: bundled **Poppins** (registered in `DrowordApp`).
 - Spacing / radius: `Helpers/DesignTokens.swift` (`DesignSpacing`, `DesignRadius`, `DesignChip` for tag-row circles / reaction emoji size).
-- Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor`, `cleanCard(themeStore:)`, `modernSheet()`.
+- Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor` for CTAs. Large empty/soft-cover heroes use `themeStore.iconAccent` (Droword `#6A3AC4`, Green Owl blue, Glass purple, Custom purple). Small settings/menu icons stay `mainText` or the rainbow `iconBlue` / `iconGreen` / … tokens. Soft-cover pages: content vertically centered, CTAs pinned to the bottom. `cleanCard(themeStore:)`, `modernSheet()`.
 - Theme-aware radii: `themeStore.cardRadius` (blocks), `controlRadius` (primary buttons), `chipRadius` (tags/chips). Prefer these over hard-coded `DesignRadius.*` on content cards.
 - Buttons: `duo3DStyle` / `duo3DSecondaryStyle` + `Duo3DButtonStyle` (`Helpers/DuoButtonStyle.swift`) for primary/secondary CTAs; tags via `TagBadge` / `TagsView` Duo chips. `PressableButtonStyle` only where Duo chrome does not apply.
 - Empty states: `EmptyListView` / `PracticeEmptyContent` — include tip + **Add** CTA when the user can fix emptiness by adding words.
-- Localization: `Localizable.xcstrings` + `String(localized:)` / `LocalizedStringKey`. Many locales in Share extension `.lproj`.
+- Localization: `Localizable.xcstrings` + `String(localized:)` / `LocalizedStringKey`. Locales: en, ru, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant. When adding UI copy, translate all of them in the same change. Count-based strings need catalog `plural` variants with correct declension (see `.cursor/rules/localization.mdc`). Share extension also has `.lproj` files.
 - Settings keys: always add to `AppStorageKeys` — do not scatter raw string keys.
 - iPad: `iPadContentWidth` for readable width.
 
@@ -282,6 +282,8 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales (en, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant) translate that Russian, including the short and odd lines. Streak notification pool only when `FeatureGates.streakEnabled`. Do not put back English slang that says something else.
 17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
 18. **Dictionary reactions** — used card reactions appear as circular filter chips after tags; searching an emoji finds those cards.
+19. **Widgets** — **Add a new word** is plus-only (`droword://add`): home-screen `systemSmall` and lock-screen `accessoryCircular`. Recent words shows the last 3 as mini dictionary cards (small = stack, medium = three tiles; `droword://dictionary`). **Today’s lesson** is small/medium + lock-screen `accessoryRectangular` only (no circular). Lesson widget has no streak copy while streak is gated off. Gallery copy lives in `Droword​Widget/Localizable.xcstrings`. Edit the live target in `Droword​Widget/` (ZWSP folder), not `DrowordWidget/`.
+20. **Word packs** — pack word cards use normal `cardBg` (no tinted pack colors). Adding a word tags it Basics / Food / Travel / Shopping / Daily life and `ensureTag`s custom ones into `TagStore` (Travel stays built-in). Skip matches Cancel: `secondaryButtonBg` + `mainText`, no icon.
 
 ---
 
@@ -328,7 +330,7 @@ cd droword-worker && npm run deploy                # after wrangler secrets
 
 - Keep diffs focused; no drive-by refactors or unrelated markdown.
 - Prefer existing helpers/stores over new parallel state.
-- When adding user-facing strings, update `Localizable.xcstrings` (or use `String(localized:)` consistently).
+- When adding user-facing strings, update `Localizable.xcstrings` for every locale and plural form (see `.cursor/rules/localization.mdc`).
 - Commit only when the user asks; never force-push or rewrite git history.
 - Before a push the user asked for: update this file and `README.md` if behavior or the map changed, remove code comments from the diff, then push. Do not push with comments left in source. XML comments in `Droword.entitlements` that keep iCloud off for a Personal Team stay.
 - After substantive edits, follow `.cursor/rules/self-review.mdc`: re-read the diff, fix issues, and for larger changes spawn a review agent. Bugbot only when the user asks.

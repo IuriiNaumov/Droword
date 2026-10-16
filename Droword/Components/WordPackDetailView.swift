@@ -28,10 +28,6 @@ struct WordPackDetailView: View {
         }
     }
 
-    private var color: Color {
-        WordPacksData.packColor(for: pack, themeStore: themeStore)
-    }
-
     var body: some View {
         NavigationStack {
             Group {
@@ -69,7 +65,7 @@ struct WordPackDetailView: View {
                                     Image(systemName: "plus")
                                     Text("Add all")
                                 }
-                                .duo3DStyle(color)
+                                .duo3DStyle(themeStore.mainAccentColor)
                             }
                             .buttonStyle(Duo3DButtonStyle())
                         }
@@ -107,6 +103,10 @@ struct WordPackDetailView: View {
 
     private func wordCard(_ word: StarterWord) -> some View {
         VStack(alignment: .leading, spacing: 10) {
+            if let packTag {
+                TagBadge(text: packTag)
+            }
+
             Text(word.word)
                 .font(themeStore.bold(22))
                 .foregroundStyle(themeStore.mainText)
@@ -168,7 +168,7 @@ struct WordPackDetailView: View {
                     .foregroundStyle(.white)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 12)
-                    .background(color)
+                    .background(themeStore.mainAccentColor)
                     .clipShape(Capsule())
                 }
 
@@ -180,23 +180,25 @@ struct WordPackDetailView: View {
                         checkCompletion()
                     }
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "xmark.circle")
-                        Text("Skip")
-                    }
-                    .font(themeStore.regular(13))
-                    .foregroundStyle(color)
+                    Text("Skip")
+                        .font(themeStore.medium(13))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .background(themeStore.secondaryButtonBg)
+                        .clipShape(Capsule())
                 }
             }
             .padding(.top, 10)
         }
-        .padding(20)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(color.opacity(0.15))
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var completionView: some View {
@@ -251,16 +253,14 @@ struct WordPackDetailView: View {
     }
 
     private var packTag: String? {
-        switch pack.id {
-        case "food": return "Food"
-        case "travel": return "Travel"
-        case "daily_life": return "Daily life"
-        default: return nil
-        }
+        WordPacksData.tagName(for: pack.id)
     }
 
     private func addWord(_ word: StarterWord) {
         let hasCard = !(word.example ?? "").isEmpty && !(word.explanation ?? "").isEmpty
+        if let packTag {
+            WordPacksData.ensureTag(packTag)
+        }
         let newWord = StoredWord(
             word: word.word,
             type: word.type,

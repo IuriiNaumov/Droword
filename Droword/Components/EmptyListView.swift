@@ -25,7 +25,7 @@ struct EmptyListView: View {
                     if let illustration {
                         illustration
                     } else if let icon {
-                        HaloIcon(symbol: icon, color: themeStore.mainAccentColor, size: 168)
+                        HaloIcon(symbol: icon, color: themeStore.iconAccent, size: 168)
                     }
                 }
                 .frame(width: 176, height: 176)
@@ -101,7 +101,7 @@ struct EmptyListView: View {
     EmptyListView(
         illustration: AnyView(EmptyDictionaryArt()),
         title: "No words yet",
-        subtitle: "It's so empty here."
+        subtitle: "Add a word and start learning."
     )
     .environmentObject(ThemeStore())
     .preferredColorScheme(.light)

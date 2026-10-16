@@ -1,0 +1,36 @@
+---
+description: Translate new user-facing strings into all app locales with correct plurals
+alwaysApply: true
+---
+
+# Localization
+
+When you add or change user-facing text in the app, update `Droword/Localizable.xcstrings` in the same turn. Do not leave English-only keys.
+
+## Locales
+
+Translate every new or edited key into all of these (same set as existing strings):
+
+`en`, `ru`, `de`, `es`, `fr`, `it`, `pt-PT`, `ja`, `ko`, `ar`, `zh-Hans`, `zh-Hant`
+
+Use real native wording, not literal word-for-word English. Match the tone of nearby strings (friendly tutor, short UI labels).
+
+## Plurals and number
+
+If the string depends on a count (`%lld`, `%d`, “N words”, days, badges, etc.):
+
+- Use String Catalog `variations.plural` for every locale.
+- Fill the categories that language needs (`one` / `other` minimum; also `zero` / `few` / `many` / `two` when Russian, Arabic, etc. require them).
+- Decline nouns and adjectives correctly (Russian: 1 слово / 2 слова / 5 слов; Arabic dual/plural; etc.).
+- Prefer `String(localized:defaultValue:)` / interpolated localized strings that pick plural forms automatically.
+
+Look at existing plural keys in `Localizable.xcstrings` (e.g. `"%lld new words"`) and mirror that shape.
+
+## Do not
+
+- Ship a new `Text("…")` / `LocalizedStringKey` without catalog entries for every locale.
+- Reuse an old key whose English meaning changed without updating all locales.
+- Skip plural variants and rely on English “word/words” only.
+- Translate worker API prompts or code comments as product UI (UI only).
+
+Share extension `.lproj` files: update them when the string is also shown in the Share extension.

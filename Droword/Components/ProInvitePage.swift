@@ -45,47 +45,40 @@ struct ProInvitePage: View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        hero
-                            .padding(.top, 48)
+            SoftCoverScrollCentered(footerHeight: 140) {
+                VStack(spacing: 0) {
+                    hero
 
-                        VStack(spacing: 8) {
-                            Text("Want the cap off?")
-                                .font(themeStore.display(32))
-                                .foregroundStyle(themeStore.mainText)
-                                .tracking(-0.4)
-                                .multilineTextAlignment(.center)
+                    VStack(spacing: 8) {
+                        Text("Want the cap off?")
+                            .font(themeStore.display(32))
+                            .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
+                            .multilineTextAlignment(.center)
 
-                            Text("AI cards, scans, and voice, without the daily limit.")
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(themeStore.secondaryText)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.top, 18)
-                        .opacity(textOpacity)
-
-                        VStack(spacing: 10) {
-                            ForEach(Array(benefits.enumerated()), id: \.element.id) { index, benefit in
-                                row(benefit)
-                                    .opacity(rowsVisible ? 1 : 0)
-                                    .offset(y: rowsVisible ? 0 : 14)
-                                    .animation(
-                                        .spring(response: 0.45, dampingFraction: 0.82)
-                                            .delay(reduceMotion ? 0 : 0.2 + Double(index) * 0.08),
-                                        value: rowsVisible
-                                    )
-                            }
-                        }
-                        .padding(.top, 28)
-                        .padding(.bottom, 12)
+                        Text("AI cards, scans, and voice, without the daily limit.")
+                            .font(themeStore.regular(16))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
                     }
-                    .frame(maxWidth: 460)
-                    .padding(.horizontal, DesignSpacing.screenInset)
-                    .frame(maxWidth: .infinity)
-                }
+                    .padding(.top, 18)
+                    .opacity(textOpacity)
 
+                    VStack(spacing: 10) {
+                        ForEach(Array(benefits.enumerated()), id: \.element.id) { index, benefit in
+                            row(benefit)
+                                .opacity(rowsVisible ? 1 : 0)
+                                .offset(y: rowsVisible ? 0 : 14)
+                                .animation(
+                                    .spring(response: 0.45, dampingFraction: 0.82)
+                                        .delay(reduceMotion ? 0 : 0.2 + Double(index) * 0.08),
+                                    value: rowsVisible
+                                )
+                        }
+                    }
+                    .padding(.top, 28)
+                }
+            } footer: {
                 VStack(spacing: DesignSpacing.buttonGap) {
                     Button {
                         Haptics.success()
@@ -105,9 +98,6 @@ struct ProInvitePage: View {
                     }
                     .buttonStyle(Duo3DButtonStyle())
                 }
-                .frame(maxWidth: 460)
-                .padding(.horizontal, DesignSpacing.screenInset)
-                .padding(.bottom, 12)
                 .opacity(footerOpacity)
             }
         }
@@ -117,28 +107,31 @@ struct ProInvitePage: View {
     private var hero: some View {
         SoftCoverHero(
             systemName: "sparkle",
-            color: themeStore.mainAccentColor,
+            color: themeStore.iconAccent,
             iconScale: iconScale
         )
     }
 
     private func row(_ benefit: ProInviteBenefit) -> some View {
-        VStack(spacing: 8) {
+        HStack(spacing: 12) {
             Image(systemName: benefit.icon)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(themeStore.mainAccentColor)
-                .frame(width: 28, height: 28)
+                .frame(width: 28)
 
             Text(benefit.text)
-                .font(themeStore.regular(16))
-                .foregroundStyle(themeStore.mainText)
+                .font(themeStore.regular(14))
+                .foregroundStyle(themeStore.mainText.opacity(0.85))
                 .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
-        .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
+                .fill(themeStore.cardBg)
+        )
     }
 
     private func play() {

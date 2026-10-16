@@ -6,28 +6,22 @@ struct StatCardView: View {
     let title: LocalizedStringKey
     let value: String
 
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         VStack(spacing: 6) {
             Text(value)
                 .font(themeStore.bold(22))
-                .foregroundStyle(themeStore.isMonochrome ? .white : themeStore.mainText)
+                .foregroundStyle(themeStore.mainText)
                 .contentTransition(.numericText())
 
             Text(title)
                 .font(themeStore.medium(13))
-                .foregroundStyle(themeStore.isMonochrome ? .white.opacity(0.75) : themeStore.secondaryText)
+                .foregroundStyle(themeStore.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.isGlass
-                      ? Color.clear
-                      : (themeStore.isMonochrome
-                         ? themeStore.mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-                         : themeStore.appBg))
+                .fill(themeStore.isGlass ? Color.clear : themeStore.appBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
         .cardDepth(cornerRadius: themeStore.cardRadius)

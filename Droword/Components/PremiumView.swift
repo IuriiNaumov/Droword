@@ -60,15 +60,14 @@ struct PremiumView: View {
         FeatureRow(id: 1, title: "Voice pronunciation", free: "\(DailyLimitsManager.maxFreeTTS) / day", pro: "Unlimited"),
         FeatureRow(id: 2, title: "Word suggestions", free: "\(DailyLimitsManager.maxFreeSuggestionFetches) / day", pro: "Unlimited"),
         FeatureRow(id: 3, title: "Stories", free: "\(DailyLimitsManager.maxFreeStories) / day", pro: "Unlimited"),
-        FeatureRow(id: 4, title: "Chat scenes", free: "\(DailyLimitsManager.maxFreeScenes) / day", pro: "Unlimited"),
-        FeatureRow(id: 5, title: "Photo scans", free: "\(DailyLimitsManager.maxFreePhotoScans) / day", pro: "Unlimited"),
-        FeatureRow(id: 6, title: "Themes", free: "Default only", pro: "All themes"),
-        FeatureRow(id: 7, title: "Seasonal effects", free: "—", pro: "All effects"),
-        FeatureRow(id: 8, title: "Streak freeze", free: "—", pro: "2 / week"),
+        FeatureRow(id: 4, title: "Photo scans", free: "\(DailyLimitsManager.maxFreePhotoScans) / day", pro: "Unlimited"),
+        FeatureRow(id: 5, title: "Themes", free: "Default only", pro: "All themes"),
+        FeatureRow(id: 6, title: "Seasonal effects", free: "—", pro: "All effects"),
+        FeatureRow(id: 7, title: "Streak freeze", free: "—", pro: "2 / week"),
     ]
 
     private var featureRows: [FeatureRow] {
-        Self.baseFeatureRows.filter { FeatureGates.streakEnabled || $0.id != 8 }
+        Self.baseFeatureRows.filter { FeatureGates.streakEnabled || $0.id != 7 }
     }
 
     var body: some View {
@@ -223,30 +222,27 @@ struct PremiumView: View {
             .padding(.bottom, 12)
 
             ForEach(featureRows) { row in
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack {
-                        Text(row.title)
-                            .font(themeStore.regular(15))
-                            .foregroundStyle(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                HStack {
+                    Text(row.title)
+                        .font(themeStore.regular(15))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                        Text(row.free)
-                            .font(themeStore.regular(13))
-                            .foregroundStyle(themeStore.secondaryText)
-                            .frame(width: 80)
+                    Text(row.free)
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .frame(width: 80)
 
-                        Text(row.pro)
-                            .font(themeStore.medium(13))
-                            .foregroundStyle(themeStore.mainAccentColor)
-                            .frame(width: 80)
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
+                    Text(row.pro)
+                        .font(themeStore.medium(13))
+                        .foregroundStyle(themeStore.mainAccentColor)
+                        .frame(width: 80)
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                 .fill(themeStore.isGlass ? Color.clear : themeStore.mainAccentColor.opacity(0.10))
@@ -527,7 +523,7 @@ struct PremiumView: View {
                     Image(systemName: "arrow.up.right")
                         .font(.system(size: 13, weight: .bold))
                 }
-                .duo3DSecondaryStyle()
+                .duo3DStyle(themeStore.mainAccentColor)
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, 16)

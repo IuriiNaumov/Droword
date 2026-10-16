@@ -11,6 +11,10 @@ extension ThemeStore {
         case "Street": return accentPurple
         case "Social media": return accentGold
         case "Suggested": return accentBlue
+        case "Basics": return accentGold
+        case "Food": return accentGreen
+        case "Shopping": return accentPurple
+        case "Daily life": return accentRed
         default:
             let store = TagStore.shared
             let currentRevision = store.tags.count

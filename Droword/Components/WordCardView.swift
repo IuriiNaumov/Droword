@@ -669,7 +669,7 @@ private struct WordCardFocusOverlay: View {
 
     private var actionMenu: some View {
         VStack(spacing: 0) {
-            menuRow(title: "Copy", systemImage: "doc.on.doc", action: onCopy)
+            menuRow(title: "Copy word", systemImage: "doc.on.doc", action: onCopy)
 
             if !(translation ?? "").isEmpty {
                 menuDivider

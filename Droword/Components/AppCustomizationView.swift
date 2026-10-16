@@ -148,7 +148,7 @@ struct AppCustomizationView: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(palette == .night ? 0.12 : 0.35),
+                                    Color.white.opacity(0.35),
                                     Color.white.opacity(0)
                                 ],
                                 startPoint: .top,

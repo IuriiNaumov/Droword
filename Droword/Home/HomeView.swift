@@ -313,6 +313,10 @@ struct HomeView: View {
                 selectedTab = .practice
                 return
             }
+            if host == "dictionary" || host == "list" {
+                selectedTab = .list
+                return
+            }
             selectedTab = .home
             if host == "add" || lessonNeedsWords {
                 showAddWordView = true

@@ -4,7 +4,8 @@
 
 ## Что делает приложение
 
-- **Словарь** — свои слова с переводом, примерами, тегами, реакциями-эмодзи (фильтр в ряду тегов и поиск), озвучкой, редактированием  
+- **Словарь** — свои слова с переводом, примерами, тегами, реакциями-эмодзи (фильтр в ряду тегов и поиск), озвучкой, редактированием; word packs кладут слова с тегами Basics / Food / Travel / Shopping  
+
 - **AI** — перевод / enrichment, подсказки слов, истории из своих слов с вопросом по значению, мини-чат, scan с фото или вставленного текста  
 - **Capture** — Share (короткий → Add, длинный → extract), scan фото  
 - **Учёба** — один daily lesson на Home (due + новые в одной очереди), Practice-квизы (на итогах без tab bar), недельный календарь без серии и заморозки, бейджи с celebration  
@@ -25,7 +26,7 @@ Support: `hello@droword.app`
 |------|-----------------|
 | **`Droword/`** | Основное SwiftUI-приложение |
 | **`DrowordShare/`** | Share Extension |
-| **`DrowordWidget/`** | Home Screen Widget |
+| **`Droword​Widget/`** | Виджеты: плюс «Add a new word» (Home + lock circular), 3 последних слова, Today’s lesson (прямоугольный на lock) |
 | **`droword-worker/`** | API-прокси к Claude + OpenAI TTS |
 | **`docs/`** | Privacy / Terms / Support (URL для App Store) |
 | **`marketing/app-store/`** | Постеры, listing-копирайт, `compose.py` для скринов |

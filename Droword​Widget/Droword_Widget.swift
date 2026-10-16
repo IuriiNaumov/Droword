@@ -134,18 +134,15 @@ struct Provider: TimelineProvider {
     }
 }
 
-// MARK: - Brand tokens (widget-local; theme store isn't available here)
-
 private enum WidgetChrome {
-    static let accent = Color(red: 0.52, green: 0.40, blue: 0.95)
-    static let streak = Color(red: 1.0, green: 0.23, blue: 0.19)
+    static let accent = Color(red: 0.416, green: 0.227, blue: 0.769)
     static let success = Color(red: 0.20, green: 0.78, blue: 0.35)
 
     static var softBg: some View {
         LinearGradient(
             colors: [
-                Color(red: 0.96, green: 0.95, blue: 1.0),
-                Color(red: 0.93, green: 0.91, blue: 0.99)
+                Color(red: 0.963, green: 0.966, blue: 0.979),
+                Color(red: 0.94, green: 0.945, blue: 0.97)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -161,6 +158,16 @@ private enum WidgetChrome {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+    }
+
+    static func cardFill(colorScheme: ColorScheme, renderingMode: WidgetRenderingMode) -> Color {
+        if renderingMode == .accented {
+            return Color.primary.opacity(0.14)
+        }
+        if colorScheme == .dark {
+            return Color(red: 0.16, green: 0.15, blue: 0.22)
+        }
+        return .white
     }
 }
 
@@ -182,31 +189,6 @@ private struct WidgetMark: View {
     }
 }
 
-private struct StreakPill: View {
-    let count: Int
-    var compact: Bool = false
-
-    var body: some View {
-        HStack(spacing: compact ? 3 : 4) {
-            Image(systemName: "flame")
-                .font(.system(size: compact ? 10 : 11, weight: .bold))
-            Text("\(count)")
-                .font(.system(size: compact ? 11 : 12, weight: .bold, design: .rounded))
-                .contentTransition(.numericText())
-        }
-        .foregroundStyle(WidgetChrome.streak)
-        .padding(.horizontal, compact ? 7 : 8)
-        .padding(.vertical, compact ? 3 : 4)
-        .background(
-            Capsule(style: .continuous)
-                .fill(WidgetChrome.streak.opacity(0.14))
-        )
-        .widgetAccentable()
-    }
-}
-
-// MARK: - Small
-
 struct DrowordWidgetEntryView: View {
     var entry: Provider.Entry
     @Environment(\.widgetRenderingMode) private var renderingMode
@@ -216,17 +198,11 @@ struct DrowordWidgetEntryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                WidgetMark(
-                    systemName: markIcon,
-                    tint: markTint,
-                    size: 36
-                )
-                Spacer(minLength: 0)
-                if entry.currentStreak > 0 {
-                    StreakPill(count: entry.currentStreak, compact: true)
-                }
-            }
+            WidgetMark(
+                systemName: markIcon,
+                tint: markTint,
+                size: 36
+            )
 
             Spacer(minLength: 8)
 
@@ -260,7 +236,7 @@ struct DrowordWidgetEntryView: View {
 
     private var headline: String {
         if entry.totalWords == 0 { return "Add a word" }
-        if entry.lessonDone { return "See you tomorrow" }
+        if entry.lessonDone { return "Done for today" }
         return "Today's lesson"
     }
 
@@ -275,8 +251,6 @@ struct DrowordWidgetEntryView: View {
     }
 }
 
-// MARK: - Medium
-
 struct DrowordMediumWidgetView: View {
     var entry: Provider.Entry
     @Environment(\.widgetRenderingMode) private var renderingMode
@@ -286,24 +260,22 @@ struct DrowordMediumWidgetView: View {
     var body: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 10) {
-                if entry.currentStreak > 0 {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Image(systemName: "flame")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(isAccented ? Color.primary : WidgetChrome.streak)
-                            .widgetAccentable()
-                        Text("\(entry.currentStreak)")
-                            .font(.system(size: 34, weight: .bold, design: .rounded))
-                            .foregroundStyle(isAccented ? Color.primary : WidgetChrome.streak)
-                            .widgetAccentable()
-                            .contentTransition(.numericText())
-                    }
-                    Text(entry.currentStreak == 1 ? "day streak" : "day streak")
+                if entry.dueCount > 0 {
+                    Text("\(entry.dueCount)")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(isAccented ? Color.primary : WidgetChrome.accent)
+                        .widgetAccentable()
+                        .contentTransition(.numericText())
+                    Text(entry.dueCount == 1 ? "word due" : "words due")
                         .font(.system(size: 12, weight: .medium, design: .rounded))
                         .foregroundStyle(.secondary)
                 } else {
-                    WidgetMark(systemName: "bolt", size: 40)
-                    Text("Start a streak")
+                    WidgetMark(
+                        systemName: entry.lessonDone ? "checkmark" : "bolt",
+                        tint: entry.lessonDone ? WidgetChrome.success : WidgetChrome.accent,
+                        size: 40
+                    )
+                    Text(entry.lessonDone ? "Done for today" : "Today's lesson")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
@@ -390,31 +362,6 @@ struct DrowordMediumWidgetView: View {
     }
 }
 
-// MARK: - Lock Screen
-
-struct DrowordCircularWidgetView: View {
-    var entry: Provider.Entry
-
-    var body: some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            if entry.lessonDone {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .widgetAccentable()
-            } else if entry.dueCount > 0 {
-                Text("\(entry.dueCount)")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .widgetAccentable()
-            } else {
-                Image(systemName: entry.totalWords > 0 ? "bolt" : "plus")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .widgetAccentable()
-            }
-        }
-    }
-}
-
 struct DrowordRectangularWidgetView: View {
     var entry: Provider.Entry
 
@@ -451,14 +398,11 @@ struct DrowordRectangularWidgetView: View {
 
     private var title: String {
         if entry.totalWords == 0 { return "Add a word" }
-        if entry.lessonDone { return "See you tomorrow" }
+        if entry.lessonDone { return "Done for today" }
         return "Today's lesson"
     }
 
     private var subtitle: String {
-        if entry.currentStreak > 0 {
-            return "\(entry.currentStreak)-day streak"
-        }
         if entry.dueCount > 0 {
             return "\(entry.dueCount) due"
         }
@@ -466,16 +410,12 @@ struct DrowordRectangularWidgetView: View {
     }
 }
 
-// MARK: - Adaptive shell
-
 struct DrowordAdaptiveWidgetView: View {
     var entry: Provider.Entry
     @Environment(\.widgetFamily) var family
 
     var body: some View {
         switch family {
-        case .accessoryCircular:
-            DrowordCircularWidgetView(entry: entry)
         case .accessoryRectangular:
             DrowordRectangularWidgetView(entry: entry)
         case .systemMedium:
@@ -497,9 +437,9 @@ struct Droword_Widget: Widget {
                 }
                 .widgetURL(URL(string: "droword://open"))
         }
-        .configurationDisplayName("Droword")
-        .description("Today's lesson, streak, and a word of the day")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
+        .configurationDisplayName(Text("Today's lesson"))
+        .description(Text("Lesson status and a word of the day"))
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
         .contentMarginsDisabled()
     }
 }
@@ -525,27 +465,25 @@ struct AddWordQuickProvider: TimelineProvider {
 struct AddWordQuickWidgetView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "plus")
-                .font(.system(size: 42, weight: .bold, design: .rounded))
-                .foregroundStyle(WidgetChrome.accent)
-                .widgetAccentable()
-            Text("Add a word")
-                .font(.system(size: 15, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .containerBackground(for: .widget) {
-            if renderingMode == .accented {
-                Color.clear
-            } else if colorScheme == .dark {
-                WidgetChrome.darkBg
-            } else {
-                WidgetChrome.softBg
+        Image(systemName: "plus")
+            .font(.system(size: family == .accessoryCircular ? 22 : 48, weight: .bold, design: .rounded))
+            .foregroundStyle(family == .accessoryCircular ? .primary : WidgetChrome.accent)
+            .widgetAccentable()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .containerBackground(for: .widget) {
+                if family == .accessoryCircular {
+                    AccessoryWidgetBackground()
+                } else if renderingMode == .accented {
+                    Color.clear
+                } else if colorScheme == .dark {
+                    WidgetChrome.darkBg
+                } else {
+                    WidgetChrome.softBg
+                }
             }
-        }
     }
 }
 
@@ -557,9 +495,176 @@ struct AddWordQuickWidget: Widget {
             AddWordQuickWidgetView()
                 .widgetURL(URL(string: "droword://add"))
         }
-        .configurationDisplayName("Add a word")
-        .description("Open add word right away")
-        .supportedFamilies([.systemSmall])
+        .configurationDisplayName(Text("Add a new word"))
+        .description(Text("Opens add word"))
+        .supportedFamilies([.systemSmall, .accessoryCircular])
+        .contentMarginsDisabled()
+    }
+}
+
+struct RecentWordsEntry: TimelineEntry {
+    let date: Date
+    let words: [(word: String, translation: String?)]
+}
+
+struct RecentWordsProvider: TimelineProvider {
+    private static let appGroupID = "group.com.droword.shared"
+    private static let storageKey = "WordsStore.words"
+
+    func placeholder(in context: Context) -> RecentWordsEntry {
+        RecentWordsEntry(date: Date(), words: [
+            ("bonjour", "hello"),
+            ("merci", "thanks"),
+            ("salut", "hi")
+        ])
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (RecentWordsEntry) -> Void) {
+        completion(buildEntry())
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<RecentWordsEntry>) -> Void) {
+        let entry = buildEntry()
+        let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date().addingTimeInterval(3600)
+        completion(Timeline(entries: [entry], policy: .after(next)))
+    }
+
+    private func buildEntry() -> RecentWordsEntry {
+        guard let defaults = UserDefaults(suiteName: Self.appGroupID),
+              let data = defaults.data(forKey: Self.storageKey),
+              let decoded = try? JSONDecoder().decode([WidgetWord].self, from: data) else {
+            return RecentWordsEntry(date: Date(), words: [])
+        }
+        let recent = decoded
+            .sorted { $0.dateAdded > $1.dateAdded }
+            .prefix(3)
+            .map { (word: $0.word, translation: $0.translation) }
+        return RecentWordsEntry(date: Date(), words: Array(recent))
+    }
+}
+
+struct RecentWordsWidgetView: View {
+    var entry: RecentWordsEntry
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.widgetFamily) private var family
+
+    private var isMedium: Bool { family == .systemMedium }
+
+    private var cardFill: Color {
+        WidgetChrome.cardFill(colorScheme: colorScheme, renderingMode: renderingMode)
+    }
+
+    var body: some View {
+        Group {
+            if entry.words.isEmpty {
+                emptyState
+            } else if isMedium {
+                mediumCards
+            } else {
+                smallCards
+            }
+        }
+        .padding(isMedium ? 14 : 12)
+        .containerBackground(for: .widget) {
+            if renderingMode == .accented {
+                Color.clear
+            } else if colorScheme == .dark {
+                WidgetChrome.darkBg
+            } else {
+                WidgetChrome.softBg
+            }
+        }
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "text.badge.plus")
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundStyle(WidgetChrome.accent)
+                .widgetAccentable()
+            Text("No words yet")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+            Text("Tap to open dictionary")
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var smallCards: some View {
+        VStack(spacing: 6) {
+            ForEach(Array(entry.words.enumerated()), id: \.offset) { _, item in
+                wordCard(item, compact: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private var mediumCards: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ForEach(Array(entry.words.enumerated()), id: \.offset) { _, item in
+                wordCard(item, compact: false)
+            }
+            if entry.words.count < 3 {
+                ForEach(0..<(3 - entry.words.count), id: \.self) { _ in
+                    Color.clear
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private func wordCard(
+        _ item: (word: String, translation: String?),
+        compact: Bool
+    ) -> some View {
+        VStack(alignment: .leading, spacing: compact ? 2 : 4) {
+            Text(item.word)
+                .font(.system(size: compact ? 14 : 15, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+                .lineLimit(compact ? 1 : 2)
+                .minimumScaleFactor(0.8)
+                .widgetAccentable()
+
+            if let translation = item.translation, !translation.isEmpty {
+                Text(translation)
+                    .font(.system(size: compact ? 11 : 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(compact ? 1 : 3)
+                    .minimumScaleFactor(0.85)
+            } else {
+                Spacer(minLength: 0)
+            }
+
+            if !compact {
+                Spacer(minLength: 0)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: compact ? nil : .infinity, alignment: .topLeading)
+        .padding(.horizontal, compact ? 10 : 12)
+        .padding(.vertical, compact ? 8 : 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(cardFill)
+        )
+    }
+}
+
+struct RecentWordsWidget: Widget {
+    let kind: String = "RecentWordsWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: RecentWordsProvider()) { entry in
+            RecentWordsWidgetView(entry: entry)
+                .widgetURL(URL(string: "droword://dictionary"))
+        }
+        .configurationDisplayName("Recent words")
+        .description("Last three words as dictionary cards")
+        .supportedFamilies([.systemSmall, .systemMedium])
         .contentMarginsDisabled()
     }
 }
@@ -607,11 +712,9 @@ private struct WidgetBackground: View {
 }
 
 #Preview(as: .accessoryCircular) {
-    Droword_Widget()
+    AddWordQuickWidget()
 } timeline: {
-    SimpleEntry(date: .now, dueCount: 3, totalWords: 20, currentStreak: 5,
-                featuredWord: nil, featuredTranslation: nil,
-                lessonDone: false, lessonScore: nil)
+    AddWordQuickEntry(date: .now)
 }
 
 #Preview(as: .accessoryRectangular) {
@@ -620,4 +723,25 @@ private struct WidgetBackground: View {
     SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 7,
                 featuredWord: nil, featuredTranslation: nil,
                 lessonDone: false, lessonScore: nil)
+}
+
+#Preview("Recent small", as: .systemSmall) {
+    RecentWordsWidget()
+} timeline: {
+    RecentWordsEntry(date: .now, words: [
+        ("bonjour", "hello"),
+        ("merci", "thanks"),
+        ("salut", "hi")
+    ])
+    RecentWordsEntry(date: .now, words: [])
+}
+
+#Preview("Recent medium", as: .systemMedium) {
+    RecentWordsWidget()
+} timeline: {
+    RecentWordsEntry(date: .now, words: [
+        ("bonjour", "hello"),
+        ("merci", "thanks"),
+        ("serendipity", "счастливая случайность")
+    ])
 }

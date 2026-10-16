@@ -29,6 +29,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 | Design / Duo | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle` |
 | Languages | `LanguageCatalog`, `LanguageFlagView` |
 | App icons | `AppIconStyle.customizationCases` |
+| Widgets | `Droword​Widget/` (ZWSP path; not `DrowordWidget/`) |
 
 ## Do
 
@@ -48,6 +49,8 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Practice results hide the tab bar; restore on close / new round.
 - Tab bar: system height (`.tabBarMinimizeBehavior(.never)`, no `sizeThatFits` shrink).
 - Before a push: update `AGENTS.md` and `README.md` if behavior or the map changed, delete code comments, then push.
+- New UI copy: translate into all catalog locales in `Localizable.xcstrings`; plurals need correct number/declension (see `localization.mdc`).
+- Large soft-cover / empty-state heroes use `themeStore.iconAccent`. Small settings/menu icons keep `mainText` or rainbow `icon*` tokens. Soft-cover: centered content, bottom CTAs. CTAs stay `mainAccentColor`; delete stays red; Home PRO sparkle stays `accentBlue`.
 
 ## Don't
 

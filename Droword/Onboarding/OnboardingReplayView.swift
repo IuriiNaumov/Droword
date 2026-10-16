@@ -13,19 +13,19 @@ struct OnboardingReplayView: View {
             title: "Build your dictionary",
             subtitle: "Save words with examples, tags and notes so they stay with you.",
             illustrationStyle: .dictionary,
-            accent: themeStore.accentBlue
+            accent: themeStore.iconAccent
         ),
         .init(
             title: "Smart practice",
             subtitle: "Review with a spaced schedule to keep words fresh in memory.",
             illustrationStyle: .practice,
-            accent: themeStore.accentGreen
+            accent: themeStore.iconAccent
         ),
         .init(
             title: "Make it yours",
             subtitle: "Choose languages, voices and themes. Make it yours!",
             illustrationStyle: .customize,
-            accent: themeStore.accentGold
+            accent: themeStore.iconAccent
         )
     ]}
 

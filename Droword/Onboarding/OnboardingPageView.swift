@@ -28,7 +28,8 @@ struct OnboardingPageView: View {
     var body: some View {
         VStack {
             Spacer(minLength: 0)
-            VStack(spacing: 34) {
+
+            VStack(spacing: 22) {
                 illustration
                     .opacity(showArt ? 1 : 0)
                     .offset(y: showArt ? 0 : 20)
@@ -39,6 +40,7 @@ struct OnboardingPageView: View {
                         .font(themeStore.display(32))
                         .foregroundStyle(themeStore.mainText)
                         .multilineTextAlignment(.center)
+                        .lineLimit(2)
                         .opacity(showTitle ? 1 : 0)
                         .offset(y: showTitle ? 0 : 12)
                         .animation(.spring(response: 0.55, dampingFraction: 0.9), value: showTitle)
@@ -47,12 +49,15 @@ struct OnboardingPageView: View {
                         .font(themeStore.regular(16))
                         .foregroundStyle(themeStore.mainText.opacity(0.75))
                         .multilineTextAlignment(.center)
+                        .lineLimit(3)
                         .opacity(showSubtitle ? 1 : 0)
                         .offset(y: showSubtitle ? 0 : 12)
                         .animation(.spring(response: 0.55, dampingFraction: 0.92), value: showSubtitle)
                 }
                 .padding(.horizontal, 6)
+                .frame(maxWidth: .infinity, minHeight: 110, alignment: .top)
             }
+
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

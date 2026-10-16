@@ -99,65 +99,55 @@ struct StudyExtrasPromptPage: View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        hero
-                            .padding(.top, 36)
+            SoftCoverScrollCentered {
+                VStack(spacing: 0) {
+                    hero
 
-                        VStack(spacing: 8) {
-                            Text("Nice work")
-                                .font(themeStore.display(32))
-                                .foregroundStyle(themeStore.mainText)
-                                .tracking(-0.4)
-                                .multilineTextAlignment(.center)
+                    VStack(spacing: 8) {
+                        Text("Nice work")
+                            .font(themeStore.display(32))
+                            .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
+                            .multilineTextAlignment(.center)
 
-                            Text("You started learning words. Here is what can help you keep going.")
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(themeStore.secondaryText)
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.top, 18)
-                        .opacity(textOpacity)
-
-                        VStack(spacing: 10) {
-                            ForEach(Array(shown.enumerated()), id: \.element.id) { index, extra in
-                                row(extra)
-                                    .opacity(rowsVisible ? 1 : 0)
-                                    .offset(y: rowsVisible ? 0 : 14)
-                                    .animation(
-                                        .spring(response: 0.45, dampingFraction: 0.82)
-                                            .delay(reduceMotion ? 0 : 0.22 + Double(index) * 0.08),
-                                        value: rowsVisible
-                                    )
-                            }
-                        }
-                        .padding(.top, 28)
-
-                        Text("You can always turn these off in Settings → Dictionary.")
-                            .font(themeStore.regular(13))
+                        Text("You started learning words. Here is what can help you keep going.")
+                            .font(themeStore.regular(16))
                             .foregroundStyle(themeStore.secondaryText)
                             .multilineTextAlignment(.center)
-                            .padding(.top, 18)
-                            .padding(.bottom, 12)
-                            .opacity(footerOpacity)
                     }
-                    .frame(maxWidth: 460)
-                    .padding(.horizontal, DesignSpacing.screenInset)
-                    .frame(maxWidth: .infinity)
-                }
+                    .padding(.top, 18)
+                    .opacity(textOpacity)
 
+                    VStack(spacing: 10) {
+                        ForEach(Array(shown.enumerated()), id: \.element.id) { index, extra in
+                            row(extra)
+                                .opacity(rowsVisible ? 1 : 0)
+                                .offset(y: rowsVisible ? 0 : 14)
+                                .animation(
+                                    .spring(response: 0.45, dampingFraction: 0.82)
+                                        .delay(reduceMotion ? 0 : 0.22 + Double(index) * 0.08),
+                                    value: rowsVisible
+                                )
+                        }
+                    }
+                    .padding(.top, 28)
+
+                    Text("You can always turn these off in Settings → Dictionary.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 18)
+                        .opacity(footerOpacity)
+                }
+            } footer: {
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .duo3DStyle(themeStore.accentGreen)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
-                .frame(maxWidth: 460)
-                .padding(.horizontal, DesignSpacing.screenInset)
-                .padding(.bottom, 12)
                 .opacity(buttonOpacity)
             }
         }
@@ -167,7 +157,7 @@ struct StudyExtrasPromptPage: View {
     private var hero: some View {
         SoftCoverHero(
             systemName: "sparkles",
-            color: themeStore.accentGreen,
+            color: themeStore.iconAccent,
             iconScale: iconScale
         )
     }
@@ -193,33 +183,39 @@ struct StudyExtrasPromptPage: View {
                 Haptics.softTap()
             }
         } label: {
-            VStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
                 Image(systemName: extra.icon)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(themeStore.accentGreen)
+                    .foregroundStyle(themeStore.mainText)
                     .frame(width: 28, height: 28)
                     .scaleEffect(popped == extra ? 1.12 : 1)
+                    .padding(.top, 2)
 
-                Text(extra.title)
-                    .font(themeStore.medium(16))
-                    .foregroundStyle(themeStore.mainText)
-                    .multilineTextAlignment(.center)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(extra.title)
+                        .font(themeStore.medium(16))
+                        .foregroundStyle(themeStore.mainText)
 
-                Text(extra.benefit)
-                    .font(themeStore.regular(13))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .multilineTextAlignment(.center)
+                    Text(extra.benefit)
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
 
                 Toggle("", isOn: binding(for: extra))
                     .labelsHidden()
-                    .tint(themeStore.accentGreen)
+                    .tint(themeStore.mainAccentColor)
                     .allowsHitTesting(false)
+                    .padding(.top, 2)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
-            .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
+                    .fill(themeStore.cardBg)
+            )
             .contentShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
         }
         .buttonStyle(.plain)

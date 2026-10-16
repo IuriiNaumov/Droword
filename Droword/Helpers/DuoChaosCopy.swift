@@ -584,18 +584,18 @@ enum DuoChaosCopy {
             "pt-PT": "Ainda sem palavras"
             ]),
             t([
-            "en": "It's so empty here.",
-            "ru": "Тут так пусто.",
-            "de": "So leer hier.",
-            "es": "Está tan vacío.",
-            "fr": "C’est tellement vide.",
-            "ja": "空っぽすぎる。",
-            "ko": "너무 비어 있어.",
-            "ar": "فاضي أوي.",
-            "it": "È così vuoto.",
-            "zh-Hans": "空得要命。",
-            "zh-Hant": "空得要命。",
-            "pt-PT": "Está tão vazio."
+            "en": "Add a word and start learning.",
+            "ru": "Добавь слово — и начни учить.",
+            "de": "Füg ein Wort hinzu und leg los.",
+            "es": "Añade una palabra y empieza a aprender.",
+            "fr": "Ajoute un mot et commence à apprendre.",
+            "ja": "単語を追加して、学び始めよう。",
+            "ko": "단어를 추가하고 공부를 시작해.",
+            "ar": "أضف كلمة وابدأ التعلم.",
+            "it": "Aggiungi una parola e inizia.",
+            "zh-Hans": "加个词，开始学吧。",
+            "zh-Hant": "加個詞，開始學吧。",
+            "pt-PT": "Adiciona uma palavra e começa a aprender."
             ])
         )
     }
@@ -743,18 +743,18 @@ enum DuoChaosCopy {
             "pt-PT": "É preciso mais algumas palavras"
         ]),
             t([
-            "en": "Add at least 4 words with translations to practice.",
-            "ru": "Добавь минимум 4 слова с переводами.",
-            "de": "Füge mindestens 4 Wörter mit Übersetzung hinzu.",
-            "es": "Añade al menos 4 palabras con traducción.",
-            "fr": "Ajoute au moins 4 mots avec traduction.",
-            "ja": "翻訳付きの単語を4語以上追加して。",
-            "ko": "번역이 있는 단어를 최소 4개 추가해.",
-            "ar": "أضف ٤ كلمات مع ترجمة على الأقل.",
-            "it": "Aggiungi almeno 4 parole con traduzione.",
-            "zh-Hans": "至少添加 4 个带翻译的单词。",
-            "zh-Hant": "至少新增 4 個有翻譯的單字。",
-            "pt-PT": "Adiciona pelo menos 4 palavras com tradução."
+            "en": "Add at least 4 words to practice.",
+            "ru": "Добавь минимум 4 слова — и практика откроется.",
+            "de": "Füge mindestens 4 Wörter hinzu, um zu üben.",
+            "es": "Añade al menos 4 palabras para practicar.",
+            "fr": "Ajoute au moins 4 mots pour pratiquer.",
+            "ja": "練習するには単語を4語以上追加して。",
+            "ko": "연습하려면 단어를 최소 4개 추가해.",
+            "ar": "أضف ٤ كلمات على الأقل عشان تتدرب.",
+            "it": "Aggiungi almeno 4 parole per esercitarti.",
+            "zh-Hans": "至少添加 4 个单词，就能练习。",
+            "zh-Hant": "至少新增 4 個單字，就能練習。",
+            "pt-PT": "Adiciona pelo menos 4 palavras para praticar."
         ]),
             t([
             "en": "Tip: grab words from chats, songs, or shows.",

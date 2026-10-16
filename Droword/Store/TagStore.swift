@@ -33,6 +33,15 @@ final class TagStore: ObservableObject {
         }
     }
 
+    func ensureTag(name: String, colorHex: String) {
+        let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedName.isEmpty else { return }
+        if tags.contains(where: { $0.name.caseInsensitiveCompare(normalizedName) == .orderedSame }) {
+            return
+        }
+        tags.append(TagItem(name: normalizedName, colorHex: normalizeHex(colorHex)))
+    }
+
     func removeTag(_ tag: TagItem) {
         tags.removeAll { $0.id == tag.id }
     }

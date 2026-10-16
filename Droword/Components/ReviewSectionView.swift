@@ -238,7 +238,7 @@ struct ReviewSectionView: View {
                     advanceToNext(didReinsert: true)
                 } label: {
                     Text("Hard")
-                        .duo3DStyle(themeStore.accentRed)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
 
@@ -249,7 +249,7 @@ struct ReviewSectionView: View {
                     showNextReviewHint(days: ivl)
                 } label: {
                     Text("Good")
-                        .duo3DStyle(themeStore.accentBlue)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
 
@@ -260,7 +260,7 @@ struct ReviewSectionView: View {
                     showNextReviewHint(days: ivl)
                 } label: {
                     Text("Easy")
-                        .duo3DStyle(themeStore.accentGreen)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
             }

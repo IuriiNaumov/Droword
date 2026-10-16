@@ -14,47 +14,40 @@ struct WordsAddedPage: View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                SoftCoverHero(
-                    systemName: "checkmark.circle",
-                    color: themeStore.accentBlue,
-                    iconScale: iconScale
-                )
+            SoftCoverCentered {
+                VStack(spacing: 0) {
+                    SoftCoverHero(
+                        systemName: "checkmark.circle",
+                        color: themeStore.iconAccent,
+                        iconScale: iconScale
+                    )
 
-                VStack(spacing: 8) {
-                    Text("All done!")
-                        .font(themeStore.display(32))
-                        .foregroundStyle(themeStore.mainText)
-                        .tracking(-0.4)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 8) {
+                        Text("All done!")
+                            .font(themeStore.display(32))
+                            .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
+                            .multilineTextAlignment(.center)
 
-                    Text("\(count) words added to your dictionary")
-                        .font(themeStore.regular(16))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .multilineTextAlignment(.center)
+                        Text("\(count) words added to your dictionary")
+                            .font(themeStore.regular(16))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 18)
+                    .opacity(textOpacity)
                 }
-                .padding(.top, 18)
-                .opacity(textOpacity)
-            }
-            .frame(maxWidth: 460)
-            .padding(.horizontal, DesignSpacing.screenInset)
-
-            VStack {
-                Spacer()
+            } footer: {
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .duo3DStyle(themeStore.accentBlue)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
-                .padding(.bottom, 12)
             }
-            .frame(maxWidth: 460)
-            .padding(.horizontal, DesignSpacing.screenInset)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear(perform: play)
     }

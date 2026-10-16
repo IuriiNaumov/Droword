@@ -46,15 +46,6 @@ enum MilestoneType: Identifiable, Equatable {
         }
     }
 
-    func tint(_ theme: ThemeStore) -> Color {
-        switch self {
-        case .wordCount: return theme.accentGreen
-        case .streak: return theme.accentPink
-        case .dailyGoal: return theme.accentGold
-        case .badge: return theme.accentPurple
-        }
-    }
-
     var title: String {
         switch self {
         case .wordCount(let n): return String(localized: "\(n) words!")
@@ -123,53 +114,44 @@ struct MilestoneCelebrationView: View {
     @State private var textOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
 
-    private var tint: Color { milestone.tint(themeStore) }
-
     var body: some View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                SoftCoverHero(
-                    systemName: milestone.symbol,
-                    color: tint,
-                    iconScale: iconScale
-                )
+            SoftCoverCentered {
+                VStack(spacing: 0) {
+                    SoftCoverHero(
+                        systemName: milestone.symbol,
+                        color: themeStore.iconAccent,
+                        iconScale: iconScale
+                    )
 
-                VStack(spacing: 8) {
-                    Text(milestone.title)
-                        .font(themeStore.display(32))
-                        .foregroundStyle(themeStore.mainText)
-                        .tracking(-0.4)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 8) {
+                        Text(milestone.title)
+                            .font(themeStore.display(32))
+                            .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
+                            .multilineTextAlignment(.center)
 
-                    Text(milestone.message(wordsCount: wordsCount, daysSinceStart: daysSinceStart))
-                        .font(themeStore.regular(16))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .multilineTextAlignment(.center)
+                        Text(milestone.message(wordsCount: wordsCount, daysSinceStart: daysSinceStart))
+                            .font(themeStore.regular(16))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.top, 18)
+                    .opacity(textOpacity)
                 }
-                .padding(.top, 18)
-                .opacity(textOpacity)
-            }
-            .frame(maxWidth: 460)
-            .padding(.horizontal, DesignSpacing.screenInset)
-
-            VStack {
-                Spacer()
+            } footer: {
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .duo3DStyle(tint)
+                        .duo3DStyle(themeStore.mainAccentColor)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
-                .padding(.bottom, 12)
             }
-            .frame(maxWidth: 460)
-            .padding(.horizontal, DesignSpacing.screenInset)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear(perform: play)
     }

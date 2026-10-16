@@ -21,7 +21,7 @@ struct TagsView: View {
 
     var allTags: [(name: String, color: Color, isCustom: Bool)] {
         let custom: [(name: String, color: Color, isCustom: Bool)] = TagStore.shared.tags.map {
-            ($0.name, themeStore.resolvedTagColor($0.colorHex), true)
+            ($0.name, themeStore.colorForTag($0.name), true)
         }
         let builtIn: [(name: String, color: Color, isCustom: Bool)] = [
             (BuiltInTag.suggested, themeStore.accentBlue, false),
@@ -225,7 +225,7 @@ struct TagsView: View {
         if duo {
             let face: Color = {
                 if isSelected {
-                    return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
+                    return baseColor
                 }
                 return themeStore.controlFace
             }()
@@ -260,7 +260,7 @@ struct TagsView: View {
             let face: Color = {
                 if dimmed { return baseColor.opacity(0.12) }
                 if isSelected {
-                    return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
+                    return baseColor
                 }
                 return themeStore.controlFace
             }()
@@ -366,7 +366,7 @@ struct TagsView: View {
         }
         if dimmed { return baseColor.opacity(0.12) }
         if isSelected {
-            return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
+            return baseColor
         }
         return baseColor.opacity(0.2)
     }
@@ -381,7 +381,6 @@ struct TagsView: View {
             return themeStore.mainText
         }
         if isSelected { return .white }
-        if themeStore.isMonochrome { return themeStore.mainText }
         return baseColor
     }
 }

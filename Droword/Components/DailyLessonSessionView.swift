@@ -30,7 +30,7 @@ struct DailyLessonSessionView: View {
                         illustration: AnyView(EmptyPracticeArt()),
                         icon: "rectangle.stack.badge.plus",
                         title: String(localized: "Need a few more words"),
-                        subtitle: String(localized: "Add at least 4 words with translations and this lesson unlocks."),
+                        subtitle: String(localized: "Add at least 4 words and this lesson unlocks."),
                         tip: String(localized: "Tag them with your topics so the next lesson hits harder."),
                         ctaTitle: "Add a word",
                         onCTA: {

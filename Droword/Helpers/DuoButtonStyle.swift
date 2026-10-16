@@ -73,25 +73,19 @@ struct Duo3DStyle: ViewModifier {
 
 struct Duo3DSecondaryStyle: ViewModifier {
     @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.colorScheme) private var colorScheme
 
     private var use3D: Bool { themeStore.isDuolingo && !themeStore.isGlass }
     private var radius: CGFloat { use3D ? 16 : themeStore.controlRadius }
-    private var labelColor: Color { colorScheme == .dark ? .white : .black }
 
     func body(content: Content) -> some View {
         content
             .font(themeStore.bold(17))
-            .foregroundStyle(labelColor)
+            .foregroundStyle(themeStore.mainText)
             .padding(.vertical, DesignSpacing.buttonVertical)
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(themeStore.appBg)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(themeStore.secondaryText.opacity(0.35), lineWidth: 2)
+                    .fill(themeStore.secondaryButtonBg)
             )
     }
 }

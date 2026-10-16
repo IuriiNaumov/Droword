@@ -39,66 +39,66 @@ struct CustomAlertView: View {
         return .notice
     }
 
-    private var pageColor: Color { iconColor }
+    private var heroColor: Color {
+        primaryButton.style == .destructive ? themeStore.accentRed : themeStore.iconAccent
+    }
+
+    private var primaryFill: Color {
+        primaryButton.style == .destructive ? themeStore.accentRed : themeStore.mainAccentColor
+    }
 
     var body: some View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer(minLength: 24)
+            SoftCoverCentered {
+                VStack(spacing: 0) {
+                    SoftCoverHero(
+                        systemName: icon,
+                        color: heroColor,
+                        iconScale: iconScale
+                    )
 
-                SoftCoverHero(
-                    systemName: icon,
-                    color: pageColor,
-                    iconScale: iconScale
-                )
+                    VStack(spacing: 8) {
+                        Text(title)
+                            .font(themeStore.display(32))
+                            .foregroundStyle(themeStore.mainText)
+                            .tracking(-0.4)
+                            .multilineTextAlignment(.center)
 
-                VStack(spacing: 8) {
-                    Text(title)
-                        .font(themeStore.display(32))
-                        .foregroundStyle(themeStore.mainText)
-                        .tracking(-0.4)
-                        .multilineTextAlignment(.center)
-
-                    Text(message)
-                        .font(themeStore.regular(16))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+                        Text(message)
+                            .font(themeStore.regular(16))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 18)
+                    .opacity(textOpacity)
                 }
-                .padding(.top, 18)
-                .opacity(textOpacity)
-
-                Spacer(minLength: 24)
-
+            } footer: {
                 VStack(spacing: DesignSpacing.buttonGap) {
                     Button {
                         Haptics.lightImpact()
                         primaryButton.action()
                     } label: {
                         Text(primaryButton.title)
-                            .duo3DStyle(pageColor)
+                            .duo3DStyle(primaryFill)
                     }
                     .buttonStyle(Duo3DButtonStyle())
 
                     if let secondary = secondaryButton {
-                    Button {
-                        Haptics.softTap()
-                        secondary.action()
-                    } label: {
-                        Text(secondary.title)
-                            .duo3DSecondaryStyle()
-                    }
-                    .buttonStyle(Duo3DButtonStyle())
+                        Button {
+                            Haptics.softTap()
+                            secondary.action()
+                        } label: {
+                            Text(secondary.title)
+                                .duo3DSecondaryStyle()
+                        }
+                        .buttonStyle(Duo3DButtonStyle())
                     }
                 }
                 .opacity(buttonOpacity)
-                .padding(.bottom, 8)
             }
-            .frame(maxWidth: 460)
-            .padding(.horizontal, DesignSpacing.screenInset)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear(perform: play)
     }

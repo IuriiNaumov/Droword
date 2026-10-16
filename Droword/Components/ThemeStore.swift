@@ -7,12 +7,7 @@ final class ThemeStore: ObservableObject {
         case colorful
         case duolingo
         case glass
-        case ocean
-        case sunset
-        case anime
-        case paper
         case custom
-        case night
 
         var id: String { rawValue }
 
@@ -25,12 +20,7 @@ final class ThemeStore: ObservableObject {
             case .colorful: return "Droword"
             case .duolingo: return "Green Owl"
             case .glass: return "Liquid Glass"
-            case .ocean: return String(localized: "Ocean")
-            case .sunset: return String(localized: "Sunset")
-            case .anime: return String(localized: "Anime")
-            case .paper: return String(localized: "Paper")
             case .custom: return String(localized: "Custom")
-            case .night: return String(localized: "Night")
             }
         }
 
@@ -39,12 +29,7 @@ final class ThemeStore: ObservableObject {
             case .colorful: return String(localized: "Warm and vibrant")
             case .duolingo: return String(localized: "White pages, gray cards, 3D buttons")
             case .glass: return String(localized: "Apple glass aesthetic")
-            case .ocean: return String(localized: "Calm teal wash")
-            case .sunset: return String(localized: "Cozy sunset vibes")
-            case .anime: return String(localized: "Soft pink, a little sparkle")
-            case .paper: return String(localized: "Warm paper")
             case .custom: return String(localized: "Pick your accent color")
-            case .night: return String(localized: "Deep black canvas")
             }
         }
 
@@ -55,12 +40,7 @@ final class ThemeStore: ObservableObject {
             case .colorful: return [Color(hex: "#F6F7FF"), Color(hex: "#DDE4FA")]
             case .duolingo: return [Color(hex: "#FFFFFF"), Color(hex: "#F7F7F7"), Color(hex: "#58CC02")]
             case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
-            case .ocean: return [Color(hex: "#7EE0D6"), Color(hex: "#0B3D4A")]
-            case .sunset: return [Color(hex: "#FFB07A"), Color(hex: "#C2185B")]
-            case .anime: return [Color(hex: "#FFE6F2"), Color(hex: "#F7A8C4")]
-            case .paper: return [Color(hex: "#FFF8EC"), Color(hex: "#E4D2B8")]
             case .custom: return [Color(hex: "#F5F5F7"), Color(hex: "#C7C7CC")]
-            case .night: return [Color(hex: "#2A2438"), Color(hex: "#0B0B10")]
             }
         }
 
@@ -69,12 +49,7 @@ final class ThemeStore: ObservableObject {
             case .colorful: return Color(hex: "#5B9BD5")
             case .duolingo: return Color(hex: "#58CC02")
             case .glass: return Color(hex: "#007AFF")
-            case .ocean: return Color(hex: "#2EC4B6")
-            case .sunset: return Color(hex: "#E85D2C")
-            case .anime: return Color(hex: "#F48FB1")
-            case .paper: return Color(hex: "#C4784A")
             case .custom: return Color(hex: "#5B9BD5")
-            case .night: return Color(hex: "#A78BFA")
             }
         }
     }
@@ -160,116 +135,6 @@ final class ThemeStore: ObservableObject {
                 iconPurple: Color(hex: "#7D71C8"),
                 iconPink: Color(hex: "#D86B94"),
                 iconBlue: Color(hex: "#5B9BD5")
-            )
-        case .night:
-            return Colors(
-                accentBlue: Color(hex: "#A78BFA"),
-                accentGreen: Color(hex: "#34D399"),
-                accentPurple: Color(hex: "#C4B5FD"),
-                accentPink: Color(hex: "#F472B6"),
-                accentGold: Color(hex: "#FBBF24"),
-                accentRed: Color(hex: "#F87171"),
-                mainAccentColor: Color(hex: "#A78BFA"),
-                appBg: Color(light: "#14141A", dark: "#000000"),
-                cardBg: Color(light: "#1C1C24", dark: "#1C1C1E"),
-                mainText: Color(light: "#F4F4F8", dark: "#FFFFFF"),
-                secondaryText: Color(hex: "#8E8E93"),
-                dividerColor: Color(light: "#2C2C34", dark: "#2C2C2E"),
-                tabTint: Color(hex: "#A78BFA"),
-                buttonShadow: Color(hex: "#6D28D9"),
-                iconGreen: Color(hex: "#34D399"),
-                iconGold: Color(hex: "#FBBF24"),
-                iconPurple: Color(hex: "#A78BFA"),
-                iconPink: Color(hex: "#F472B6"),
-                iconBlue: Color(hex: "#818CF8")
-            )
-        case .ocean:
-            return Colors(
-                accentBlue: Color(hex: "#2EC4B6"),
-                accentGreen: Color(hex: "#7ED9A0"),
-                accentPurple: Color(hex: "#7EB8D9"),
-                accentPink: Color(hex: "#7ED4D0"),
-                accentGold: Color(hex: "#F0C36A"),
-                accentRed: Color(hex: "#E07070"),
-                mainAccentColor: Color(hex: "#2EC4B6"),
-                appBg: Color(light: "#E8F6F4", dark: "#0D1F24"),
-                cardBg: Color(light: "#F4FFFD", dark: "#163038"),
-                mainText: Color(light: "#12343A", dark: "#F4FFFD"),
-                secondaryText: Color(light: "#6A9094", dark: "#7AA0A4"),
-                dividerColor: Color(light: "#CDE8E4", dark: "#24444C"),
-                tabTint: Color(hex: "#2EC4B6"),
-                buttonShadow: Color(hex: "#1A8A82"),
-                iconGreen: Color(hex: "#2EC4B6"),
-                iconGold: Color(hex: "#F0C36A"),
-                iconPurple: Color(hex: "#7EB8D9"),
-                iconPink: Color(hex: "#7ED4D0"),
-                iconBlue: Color(hex: "#2EC4B6")
-            )
-        case .sunset:
-            return Colors(
-                accentBlue: Color(hex: "#E8825C"),
-                accentGreen: Color(hex: "#8BBF7A"),
-                accentPurple: Color(hex: "#C4889A"),
-                accentPink: Color(hex: "#F0967A"),
-                accentGold: Color(hex: "#F0A850"),
-                accentRed: Color(hex: "#E07060"),
-                mainAccentColor: Color(hex: "#E8825C"),
-                appBg: Color(light: "#FFF0E8", dark: "#1C1315"),
-                cardBg: Color(light: "#FFF9F5", dark: "#2A2023"),
-                mainText: Color(light: "#3D2C2C", dark: "#FFF0EA"),
-                secondaryText: Color(light: "#B8A0A0", dark: "#9C8888"),
-                dividerColor: Color(light: "#F0DDD4", dark: "#3A2E32"),
-                tabTint: Color(hex: "#E8825C"),
-                buttonShadow: Color(hex: "#C46E4E"),
-                iconGreen: Color(hex: "#8BBF7A"),
-                iconGold: Color(hex: "#F0A850"),
-                iconPurple: Color(hex: "#C4889A"),
-                iconPink: Color(hex: "#F0967A"),
-                iconBlue: Color(hex: "#E8825C")
-            )
-        case .anime:
-            return Colors(
-                accentBlue: Color(hex: "#C9A6E8"),
-                accentGreen: Color(hex: "#7DCEA0"),
-                accentPurple: Color(hex: "#D4A5E8"),
-                accentPink: Color(hex: "#F48FB1"),
-                accentGold: Color(hex: "#F5C16C"),
-                accentRed: Color(hex: "#E5738A"),
-                mainAccentColor: Color(hex: "#F48FB1"),
-                appBg: Color(light: "#FFF6FA", dark: "#1A1218"),
-                cardBg: Color(light: "#FFEAF3", dark: "#2C1C26"),
-                mainText: Color(light: "#4A3044", dark: "#FFEAF3"),
-                secondaryText: Color(light: "#A88496", dark: "#C4A0B0"),
-                dividerColor: Color(light: "#F3D0E0", dark: "#3A2832"),
-                tabTint: Color(hex: "#F48FB1"),
-                buttonShadow: Color(hex: "#E07AA0"),
-                iconGreen: Color(hex: "#7DCEA0"),
-                iconGold: Color(hex: "#F5C16C"),
-                iconPurple: Color(hex: "#D4A5E8"),
-                iconPink: Color(hex: "#F48FB1"),
-                iconBlue: Color(hex: "#C9A6E8")
-            )
-        case .paper:
-            return Colors(
-                accentBlue: Color(hex: "#C4784A"),
-                accentGreen: Color(hex: "#7A9A62"),
-                accentPurple: Color(hex: "#A08070"),
-                accentPink: Color(hex: "#C4887A"),
-                accentGold: Color(hex: "#D4A017"),
-                accentRed: Color(hex: "#B85C4A"),
-                mainAccentColor: Color(hex: "#C4784A"),
-                appBg: Color(light: "#F6F1E8", dark: "#1C1916"),
-                cardBg: Color(light: "#FFFBF4", dark: "#2A2520"),
-                mainText: Color(light: "#2C2416", dark: "#F6F1E8"),
-                secondaryText: Color(light: "#A09080", dark: "#9C8C7C"),
-                dividerColor: Color(light: "#E8DCC8", dark: "#3A342C"),
-                tabTint: Color(hex: "#C4784A"),
-                buttonShadow: Color(hex: "#8B5E3C"),
-                iconGreen: Color(hex: "#7A9A62"),
-                iconGold: Color(hex: "#D4A017"),
-                iconPurple: Color(hex: "#A08070"),
-                iconPink: Color(hex: "#C4887A"),
-                iconBlue: Color(hex: "#C4784A")
             )
         case .duolingo:
             return Colors(
@@ -390,7 +255,7 @@ final class ThemeStore: ObservableObject {
 
     init() {
         var raw = UserDefaults.standard.string(forKey: Self.storageKey) ?? Palette.colorful.rawValue
-        if raw == "monochrome" || raw == "night" || raw == "ocean" || raw == "sunset" || raw == "anime" || raw == "paper" {
+        if raw == "monochrome" || raw == "night" || raw == "ocean" || raw == "sunset" || raw == "anime" || raw == "paper" || raw == "eightBit" {
             raw = Palette.colorful.rawValue
             UserDefaults.standard.set(raw, forKey: Self.storageKey)
         }
@@ -409,11 +274,8 @@ final class ThemeStore: ObservableObject {
         self.fontScale = stored > 0 ? CGFloat(stored) : 1.0
     }
 
-    var isSunset: Bool { palette == .sunset }
-    var isMonochrome: Bool { palette == .sunset }
     var isDuolingo: Bool { palette == .duolingo }
     var isGlass: Bool { palette == .glass }
-    var isAnime: Bool { palette == .anime }
     var isCustom: Bool { palette == .custom }
     var title: String { palette.title }
 
@@ -432,11 +294,48 @@ final class ThemeStore: ObservableObject {
 
     var controlFace: Color { isDuolingo ? appBg : cardBg }
 
+    var secondaryButtonBg: Color {
+        let page = appBg
+        return Color(UIColor { traits in
+            let resolved = UIColor(page).resolvedColor(with: traits)
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            guard resolved.getRed(&r, green: &g, blue: &b, alpha: &a) else {
+                return UIColor.systemGray5
+            }
+            let luma = (r + g + b) / 3
+            if traits.userInterfaceStyle == .dark && luma < 0.15 {
+                let lift: CGFloat = 0.10
+                return UIColor(
+                    red: min(r + lift, 1),
+                    green: min(g + lift, 1),
+                    blue: min(b + lift, 1),
+                    alpha: a
+                )
+            }
+            let amount: CGFloat = traits.userInterfaceStyle == .dark ? 0.08 : 0.055
+            return UIColor(
+                red: max(r - amount, 0),
+                green: max(g - amount, 0),
+                blue: max(b - amount, 0),
+                alpha: a
+            )
+        })
+    }
+
     var mainText: Color { cached.mainText }
     var secondaryText: Color { cached.secondaryText }
     var dividerColor: Color { cached.dividerColor }
     var tabTint: Color { cached.tabTint }
     var buttonShadow: Color { cached.buttonShadow }
+    var iconAccent: Color {
+        switch palette {
+        case .colorful: return Color(hex: "#6A3AC4")
+        case .duolingo: return accentBlue
+        case .glass: return accentPurple
+        case .custom: return accentPurple
+        }
+    }
+
     var iconGreen: Color { cached.iconGreen }
     var iconGold: Color { cached.iconGold }
     var iconPurple: Color { cached.iconPurple }
@@ -451,11 +350,6 @@ final class ThemeStore: ObservableObject {
     var toastBg: Color {
         switch palette {
         case .colorful: return Color(light: "#E3E8FA", dark: "#262B47")
-        case .night: return Color(light: "#2A2438", dark: "#1C1C24")
-        case .ocean: return Color(light: "#D4F4F0", dark: "#163038")
-        case .sunset: return Color(light: "#FFE8DD", dark: "#2E2226")
-        case .anime: return Color(light: "#FFE0EE", dark: "#3A2430")
-        case .paper: return Color(light: "#F0E6D4", dark: "#2A2520")
         case .duolingo: return Color(light: "#D7FFB8", dark: "#243819")
         case .glass: return Color(light: "#E3F0FF", dark: "#1C2A3D")
         case .custom: return mainAccentColor.opacity(0.14)
@@ -464,11 +358,11 @@ final class ThemeStore: ObservableObject {
 
     var toastText: Color { accentGreen }
 
-    var controlRadius: CGFloat { isDuolingo ? 16 : (isAnime ? 22 : DesignRadius.large) }
+    var controlRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
 
-    var cardRadius: CGFloat { isDuolingo ? 16 : (isAnime ? 24 : DesignRadius.large) }
+    var cardRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
 
-    var chipRadius: CGFloat { isDuolingo ? 12 : (isAnime ? 16 : DesignRadius.small) }
+    var chipRadius: CGFloat { isDuolingo ? 12 : DesignRadius.small }
 
     var successSoft: Color {
         isDuolingo ? Color(light: "#D7FFB8", dark: "#243819") : accentGreen.opacity(0.18)
@@ -489,7 +383,6 @@ final class ThemeStore: ObservableObject {
     }
 
     var monoDark: Color {
-        if isSunset { return Color(hex: "#E8825C") }
         if isGlass { return Color(light: "#8E8E93", dark: "#8E8E93") }
         return Color("MonoMedium")
     }
@@ -547,14 +440,7 @@ final class ThemeStore: ObservableObject {
         return UIFont.systemFont(ofSize: size, weight: .regular)
     }
 
-    func iconCircleFill(colorScheme: ColorScheme) -> Color {
-        isMonochrome
-            ? mainText.opacity(colorScheme == .dark ? 0.7 : 0.75)
-            : appBg
-    }
-
     func resolvedTagColor(_ hex: String?) -> Color {
-        guard !isSunset else { return Color(hex: "#E8825C") }
         guard !isGlass else { return accentBlue }
         guard let hex = hex, !hex.isEmpty else { return accentBlue }
         return Color(hex: hex)

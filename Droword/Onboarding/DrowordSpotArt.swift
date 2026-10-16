@@ -141,7 +141,7 @@ struct EmptyDictionaryArt: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        HaloIcon(symbol: "textformat", color: themeStore.accentBlue, size: 168)
+        HaloIcon(symbol: "textformat", color: themeStore.iconAccent, size: 168)
     }
 }
 
@@ -149,7 +149,7 @@ struct EmptyPracticeArt: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     var body: some View {
-        HaloIcon(symbol: "bolt", color: themeStore.accentGreen, size: 168)
+        HaloIcon(symbol: "bolt", color: themeStore.iconAccent, size: 168)
     }
 }
 
