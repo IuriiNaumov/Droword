@@ -52,50 +52,55 @@ struct AddWordView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("New word")
-                        .sheetTitle()
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("New word")
+                            .sheetTitle()
 
-                    wordSection
-                    translationSection
-                    commentSection
-                    Group {
-                        if didAppear {
-                            TagsView(selectedTag: $selectedTag, showManagementControls: false)
-                                .environmentObject(store)
-                        } else {
-                            Color.clear.frame(height: 1)
-                        }
-                    }
-
-                    Button {
-                        Haptics.addWordTap()
-                        Task { await addWord() }
-                    } label: {
-                        ZStack {
-                            addWordLabel
-                                .foregroundStyle(.clear)
-
-                            if isAdding {
-                                BouncingDotsView()
+                        wordSection
+                        translationSection
+                        commentSection
+                        Group {
+                            if didAppear {
+                                TagsView(selectedTag: $selectedTag, showManagementControls: false)
+                                    .environmentObject(store)
                             } else {
-                                addWordLabel
-                                    .foregroundStyle(themeStore.isGlass ? themeStore.mainText : .white)
+                                Color.clear.frame(height: 1)
                             }
                         }
-                        .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
                     }
-                    .buttonStyle(Duo3DButtonStyle())
-                    .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty || isAdding)
-                    .accessibilityLabel(Text(isAdding ? "Adding word" : "Add word"))
-                    .accessibilityHint(Text("Adds the word to your dictionary"))
+                    .padding(.horizontal, DesignSpacing.screenInset)
+                    .padding(.bottom, 12)
+                    .iPadContentWidth(600)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                .scrollDismissesKeyboard(.interactively)
+
+                Button {
+                    Haptics.addWordTap()
+                    Task { await addWord() }
+                } label: {
+                    ZStack {
+                        addWordLabel
+                            .foregroundStyle(.clear)
+
+                        if isAdding {
+                            BouncingDotsView()
+                        } else {
+                            addWordLabel
+                                .foregroundStyle(themeStore.isGlass ? themeStore.mainText : .white)
+                        }
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor, isDisabled: word.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+                .disabled(word.trimmingCharacters(in: .whitespaces).isEmpty || isAdding)
+                .accessibilityLabel(Text(isAdding ? "Adding word" : "Add word"))
+                .accessibilityHint(Text("Adds the word to your dictionary"))
+                .padding(.horizontal, DesignSpacing.screenInset)
+                .padding(.bottom, 12)
                 .iPadContentWidth(600)
             }
-            .scrollDismissesKeyboard(.interactively)
             .disabled(isAdding)
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
@@ -154,7 +159,7 @@ struct AddWordView: View {
                 if let offered = offeredLanguage {
                     CustomAlertView(
                         icon: "character.book.closed",
-                        iconColor: themeStore.mainAccentColor,
+                        iconColor: themeStore.accentPurple,
                         title: "Switch to \(offered)?",
                         message: languageOfferMessage(offered),
                         primaryButton: .init(title: "Switch language", style: .primary) {
@@ -173,7 +178,7 @@ struct AddWordView: View {
             .fullScreenCover(isPresented: $showDuplicateAlert) {
                 CustomAlertView(
                     icon: "doc.on.doc",
-                    iconColor: themeStore.accentGold,
+                    iconColor: themeStore.accentBlue,
                     title: "Word already exists",
                     message: "«\(word.trimmingCharacters(in: .whitespacesAndNewlines))» is already in your dictionary.",
                     primaryButton: .init(title: "Got it", style: .primary) {

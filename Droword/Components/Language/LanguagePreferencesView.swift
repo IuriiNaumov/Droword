@@ -51,6 +51,7 @@ struct LanguagePreferencesView: View {
                         showToastForChange()
                     }
                 }
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.bottom, 50)
             }
             .background(themeStore.appBg.ignoresSafeArea())

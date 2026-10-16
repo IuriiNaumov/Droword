@@ -40,6 +40,35 @@ enum HighlightedExample {
         return attr
     }
 
+    static func makeStory(
+        text: String,
+        highlights: [(word: String, forms: [String], link: URL?)],
+        baseColor: UIColor,
+        highlightColor: UIColor,
+        baseFont: UIFont,
+        highlightFont: UIFont
+    ) -> AttributedString {
+        var attr = AttributedString(text)
+        attr.foregroundColor = baseColor
+        attr.font = baseFont
+        for item in highlights {
+            let lemma = item.word.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !lemma.isEmpty else { continue }
+            paintSubstring(lemma, in: text, attr: &attr, color: highlightColor, font: highlightFont, link: item.link)
+            for form in item.forms {
+                let needle = form.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard needle.count >= 2, !sameWord(needle, lemma) else { continue }
+                if needle.contains(where: \.isWhitespace) || !text.contains(where: \.isWhitespace) {
+                    paintSubstring(needle, in: text, attr: &attr, color: highlightColor, font: highlightFont, link: item.link)
+                } else {
+                    paintTokens(equalTo: needle, in: text, attr: &attr, color: highlightColor, font: highlightFont, link: item.link)
+                }
+            }
+            paintRegularInflections(of: lemma, in: text, attr: &attr, color: highlightColor, font: highlightFont, link: item.link)
+        }
+        return attr
+    }
+
     static func relevantForms(_ forms: [String]?, headword: String, texts: [String]) -> [String] {
         let blob = texts.joined(separator: "\n")
         var seen: [String] = []
@@ -60,7 +89,8 @@ enum HighlightedExample {
         in example: String,
         attr: inout AttributedString,
         color: UIColor,
-        font: UIFont
+        font: UIFont,
+        link: URL? = nil
     ) {
         guard example.contains(where: \.isWhitespace) else { return }
         let foldedLemma = folded(lemma)
@@ -80,7 +110,7 @@ enum HighlightedExample {
                 && foldedLemma.count - shared <= 3
                 && foldedToken.count <= foldedLemma.count + 3
             guard closeEnding || regularEnding else { continue }
-            paint(token.range, in: example, attr: &attr, color: color, font: font)
+            paint(token.range, in: example, attr: &attr, color: color, font: font, link: link)
         }
     }
 
@@ -89,11 +119,12 @@ enum HighlightedExample {
         in example: String,
         attr: inout AttributedString,
         color: UIColor,
-        font: UIFont
+        font: UIFont,
+        link: URL? = nil
     ) {
         let foldedNeedle = folded(needle)
         for token in tokens(in: example) where folded(token.text) == foldedNeedle {
-            paint(token.range, in: example, attr: &attr, color: color, font: font)
+            paint(token.range, in: example, attr: &attr, color: color, font: font, link: link)
         }
     }
 
@@ -102,7 +133,8 @@ enum HighlightedExample {
         in example: String,
         attr: inout AttributedString,
         color: UIColor,
-        font: UIFont
+        font: UIFont,
+        link: URL? = nil
     ) {
         let ns = example as NSString
         var search = NSRange(location: 0, length: ns.length)
@@ -114,7 +146,7 @@ enum HighlightedExample {
             )
             if found.location == NSNotFound { break }
             if let stringRange = Range(found, in: example) {
-                paint(stringRange, in: example, attr: &attr, color: color, font: font)
+                paint(stringRange, in: example, attr: &attr, color: color, font: font, link: link)
             }
             let next = found.location + max(found.length, 1)
             if next >= ns.length { break }
@@ -127,11 +159,15 @@ enum HighlightedExample {
         in example: String,
         attr: inout AttributedString,
         color: UIColor,
-        font: UIFont
+        font: UIFont,
+        link: URL? = nil
     ) {
         guard let attrRange = Range(range, in: attr) else { return }
         attr[attrRange].foregroundColor = color
         attr[attrRange].font = font
+        if let link {
+            attr[attrRange].link = link
+        }
     }
 
     private struct Token {

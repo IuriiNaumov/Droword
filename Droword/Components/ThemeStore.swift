@@ -617,6 +617,7 @@ final class ThemeStore: ObservableObject {
 enum GlassShapeStyle {
     case roundedRect(CGFloat)
     case capsule
+    case circle
 }
 
 struct GlassCardModifier: ViewModifier {
@@ -651,6 +652,8 @@ struct GlassCardModifier: ViewModifier {
                     content.glassEffect(glass, in: .rect(cornerRadius: radius))
                 case .capsule:
                     content.glassEffect(glass, in: .capsule)
+                case .circle:
+                    content.glassEffect(glass, in: .circle)
                 }
             } else {
                 content

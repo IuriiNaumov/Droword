@@ -335,7 +335,7 @@ struct QuizMixedView: View {
             if exerciseType == .matching && !hasAnswered {
                 EmptyView()
             } else if (exerciseType == .typing || exerciseType == .speaking || exerciseType == .cloze) && !hasAnswered {
-                VStack(spacing: 10) {
+                VStack(spacing: DesignSpacing.buttonGap) {
                     Button {
                         checkTypingAnswer()
                     } label: {
@@ -352,15 +352,14 @@ struct QuizMixedView: View {
                         skipQuestion()
                     } label: {
                         Text(hintShown ? LocalizedStringKey("Show answer") : LocalizedStringKey("Don't know"))
-                            .font(themeStore.medium(14))
-                            .foregroundStyle(themeStore.secondaryText)
+                            .duo3DSecondaryStyle()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(Duo3DButtonStyle())
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             } else if exerciseType == .sentenceBuilding && !hasAnswered {
-                VStack(spacing: 10) {
+                VStack(spacing: DesignSpacing.buttonGap) {
                     Button {
                         checkSentenceBuildingAnswer()
                     } label: {
@@ -377,10 +376,9 @@ struct QuizMixedView: View {
                         skipSentenceBuilding()
                     } label: {
                         Text("Don't know")
-                            .font(themeStore.medium(14))
-                            .foregroundStyle(themeStore.secondaryText)
+                            .duo3DSecondaryStyle()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(Duo3DButtonStyle())
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
@@ -389,10 +387,10 @@ struct QuizMixedView: View {
                         skipListeningWithoutScheduling()
                     } label: {
                         Text("Can't listen")
-                            .font(themeStore.medium(14))
-                            .foregroundStyle(themeStore.secondaryText)
+                            .duo3DSecondaryStyle()
                     }
-                .buttonStyle(.plain)
+                .buttonStyle(Duo3DButtonStyle())
+                .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             } else if hasAnswered {
                 Button {

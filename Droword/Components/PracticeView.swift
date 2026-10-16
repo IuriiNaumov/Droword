@@ -10,6 +10,7 @@ struct PracticeView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var tabBarVisibility: TabBarVisibility
 
     var onCloseResults: (() -> Void)? = nil
 
@@ -31,10 +32,16 @@ struct PracticeView: View {
                         sessionSize: 10,
                         onClose: {
                             showingResults = false
+                            tabBarVisibility.show()
                             onCloseResults?()
                         },
                         onCompleteChange: { complete in
                             showingResults = complete
+                            if complete {
+                                tabBarVisibility.hide()
+                            } else {
+                                tabBarVisibility.show()
+                            }
                         }
                     )
                 } else {
@@ -43,8 +50,18 @@ struct PracticeView: View {
             }
             .iPadContentWidth()
         }
-        .onAppear { recalcHasEnough() }
+        .onAppear {
+            recalcHasEnough()
+            if showingResults {
+                tabBarVisibility.hide()
+            }
+        }
         .onChange(of: store.words.count) { recalcHasEnough() }
+        .onDisappear {
+            if showingResults {
+                tabBarVisibility.show()
+            }
+        }
     }
 
     private func recalcHasEnough() {
@@ -59,8 +76,8 @@ struct PracticeView: View {
 
             Spacer()
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
+        .padding(.horizontal, DesignSpacing.screenInset)
+        .padding(.top, DesignSpacing.titleTop)
         .transaction { $0.animation = nil }
     }
 
@@ -84,4 +101,5 @@ struct PracticeView: View {
         .environmentObject(WordsStore())
         .environmentObject(LanguageStore())
         .environmentObject(ThemeStore())
+        .environmentObject(TabBarVisibility())
 }

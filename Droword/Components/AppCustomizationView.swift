@@ -48,7 +48,7 @@ struct AppCustomizationView: View {
 
                 Spacer(minLength: 32)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
             .padding(.bottom, 20)
         }
         .background(themeStore.appBg.ignoresSafeArea())

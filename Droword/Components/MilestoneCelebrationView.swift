@@ -37,6 +37,24 @@ enum MilestoneType: Identifiable, Equatable {
         }
     }
 
+    var symbol: String {
+        switch self {
+        case .wordCount: return "text.book.closed"
+        case .streak: return "calendar"
+        case .dailyGoal: return "flag.checkered"
+        case .badge: return "medal"
+        }
+    }
+
+    func tint(_ theme: ThemeStore) -> Color {
+        switch self {
+        case .wordCount: return theme.accentGreen
+        case .streak: return theme.accentPink
+        case .dailyGoal: return theme.accentGold
+        case .badge: return theme.accentPurple
+        }
+    }
+
     var title: String {
         switch self {
         case .wordCount(let n): return String(localized: "\(n) words!")
@@ -95,29 +113,28 @@ enum MilestoneType: Identifiable, Equatable {
 
 struct MilestoneCelebrationView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let milestone: MilestoneType
     var wordsCount: Int = 0
     var daysSinceStart: Int = 0
     let onDismiss: () -> Void
 
-    @State private var iconScale: CGFloat = 0.3
+    @State private var iconScale: CGFloat = 0.72
     @State private var textOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
+
+    private var tint: Color { milestone.tint(themeStore) }
 
     var body: some View {
         ZStack {
             themeStore.appBg.ignoresSafeArea()
 
-            ConfettiView()
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
-
             VStack(spacing: 0) {
-                Spacer(minLength: 24)
-
-                Text(milestone.emoji)
-                    .font(.system(size: 72))
-                    .scaleEffect(iconScale)
+                SoftCoverHero(
+                    systemName: milestone.symbol,
+                    color: tint,
+                    iconScale: iconScale
+                )
 
                 VStack(spacing: 8) {
                     Text(milestone.title)
@@ -133,36 +150,46 @@ struct MilestoneCelebrationView: View {
                 }
                 .padding(.top, 18)
                 .opacity(textOpacity)
+            }
+            .frame(maxWidth: 460)
+            .padding(.horizontal, DesignSpacing.screenInset)
 
-                Spacer(minLength: 24)
-
+            VStack {
+                Spacer()
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .duo3DStyle(themeStore.mainAccentColor)
+                        .duo3DStyle(tint)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
-                .padding(.bottom, 8)
+                .padding(.bottom, 12)
             }
             .frame(maxWidth: 460)
-            .padding(.horizontal, 28)
+            .padding(.horizontal, DesignSpacing.screenInset)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onAppear {
-            Haptics.celebration()
+        .onAppear(perform: play)
+    }
 
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                iconScale = 1.0
-            }
-            withAnimation(.easeOut(duration: 0.4).delay(0.3)) {
-                textOpacity = 1.0
-            }
-            withAnimation(.easeOut(duration: 0.3).delay(0.6)) {
-                buttonOpacity = 1.0
-            }
+    private func play() {
+        Haptics.encourage()
+        guard !reduceMotion else {
+            iconScale = 1
+            textOpacity = 1
+            buttonOpacity = 1
+            return
+        }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.72)) {
+            iconScale = 1
+        }
+        withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
+            textOpacity = 1
+        }
+        withAnimation(.easeOut(duration: 0.3).delay(0.28)) {
+            buttonOpacity = 1
         }
     }
 }
@@ -182,6 +209,13 @@ enum MilestonePreview: String, CaseIterable, Identifiable, Hashable {
     case badge
 
     var id: String { rawValue }
+
+    var isStreak: Bool {
+        switch self {
+        case .streak7, .streak30, .streak100, .streak365: return true
+        default: return false
+        }
+    }
 
     var title: LocalizedStringKey {
         switch self {

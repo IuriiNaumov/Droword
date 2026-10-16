@@ -34,7 +34,7 @@ struct DetailedStatsView: View {
             NavigationStack {
                 ScrollView(showsIndicators: false) {
                     statsStack
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, DesignSpacing.screenInset)
                         .padding(.bottom, 40)
                         .iPadContentWidth()
                 }
@@ -138,11 +138,13 @@ struct DetailedStatsView: View {
                     label: String(localized: "Due today"),
                     tint: dueToday > 0 ? themeStore.accentGold : themeStore.secondaryText
                 )
-                snapshotTile(
-                    value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
-                    label: String(localized: "Day streak"),
-                    tint: themeStore.accentPink
-                )
+                if FeatureGates.streakEnabled {
+                    snapshotTile(
+                        value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
+                        label: String(localized: "Day streak"),
+                        tint: themeStore.accentPink
+                    )
+                }
             }
 
             if let level = cefrLine {
@@ -227,6 +229,13 @@ struct DetailedStatsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var quietStudyDetail: String {
+        if FeatureGates.streakEnabled {
+            return String(localized: "Keep the streak with a short lesson")
+        }
+        return String(localized: "A short lesson keeps the words fresh")
+    }
+
     private var focusSection: some View {
         sectionCard(title: "Focus", subtitle: String(localized: "What moves you forward next")) {
             VStack(alignment: .leading, spacing: 12) {
@@ -237,7 +246,7 @@ struct DetailedStatsView: View {
                         : String(localized: "\(dueToday) words ready to review"),
                     detail: dueSoon > 0
                         ? String(localized: "+\(dueSoon) more in the next 7 days")
-                        : String(localized: "Keep the streak with a short lesson")
+                        : quietStudyDetail
                 )
 
                 if let lesson = studyActivity.lastLesson, lesson.total > 0 {
@@ -278,10 +287,12 @@ struct DetailedStatsView: View {
         sectionCard(title: "Habit", subtitle: String(localized: "Consistency beats cramming")) {
             HStack(spacing: 12) {
                 studyTimeStat(value: "\(studiedThisWeek)/7", label: String(localized: "Days this week"))
-                studyTimeStat(
-                    value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
-                    label: String(localized: "Streak")
-                )
+                if FeatureGates.streakEnabled {
+                    studyTimeStat(
+                        value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
+                        label: String(localized: "Streak")
+                    )
+                }
                 studyTimeStat(value: studyTimeTracker.todayFormatted, label: String(localized: "Today"))
             }
         }

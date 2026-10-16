@@ -15,11 +15,11 @@ enum TTSPlayer {
             onNeedsNetwork?()
             return
         }
-        guard isPremium || DailyLimitsManager.canPlayTTS else {
+        guard isPremium || DailyLimitsManager.canPlayTTS(for: word) else {
             onNeedsPremium()
             return
         }
-        if !isPremium { DailyLimitsManager.recordTTS() }
+        if !isPremium { DailyLimitsManager.recordTTS(for: word) }
 
         activeTask?.cancel()
         holdGeneration += 1
@@ -61,11 +61,11 @@ enum TTSPlayer {
             onNeedsNetwork?()
             return
         }
-        guard isPremium || DailyLimitsManager.canPlayTTS else {
+        guard isPremium || DailyLimitsManager.canPlayTTS(for: word) else {
             onNeedsPremium()
             return
         }
-        if !isPremium { DailyLimitsManager.recordTTS() }
+        if !isPremium { DailyLimitsManager.recordTTS(for: word) }
 
         activeTask?.cancel()
         holdGeneration += 1

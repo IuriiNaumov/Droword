@@ -60,7 +60,7 @@ struct ThemePickerView: View {
             .padding(.top, 4)
 
             setButton
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.top, 16)
                 .padding(.bottom, 28)
         }
@@ -336,7 +336,7 @@ private struct SetButtonChrome: ViewModifier {
             content
                 .font(themeStore.bold(17))
                 .foregroundStyle(isCurrent ? themeStore.secondaryText : labelColor)
-                .padding(.vertical, 16)
+                .padding(.vertical, DesignSpacing.buttonVertical)
                 .frame(maxWidth: .infinity)
                 .background {
                     RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)
@@ -347,7 +347,7 @@ private struct SetButtonChrome: ViewModifier {
             content
                 .font(themeStore.bold(17))
                 .foregroundStyle(isCurrent ? Color(hex: "#AFAFAF") : .white)
-                .padding(.vertical, 14)
+                .padding(.vertical, DesignSpacing.buttonVertical - 2)
                 .frame(maxWidth: .infinity)
                 .background {
                     ZStack {
@@ -363,7 +363,7 @@ private struct SetButtonChrome: ViewModifier {
             content
                 .font(themeStore.bold(17))
                 .foregroundStyle(.white)
-                .padding(.vertical, 16)
+                .padding(.vertical, DesignSpacing.buttonVertical)
                 .frame(maxWidth: .infinity)
                 .background {
                     RoundedRectangle(cornerRadius: DesignRadius.large, style: .continuous)

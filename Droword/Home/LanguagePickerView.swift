@@ -72,6 +72,7 @@ struct LanguageSelectionView: View {
 
                 LanguageLevelPicker(color: selectedLanguageColor)
             }
+            .padding(.horizontal, DesignSpacing.screenInset)
             .padding(.bottom, 50)
         }
         .background(themeStore.appBg.ignoresSafeArea())
@@ -84,8 +85,8 @@ struct LanguageSelectionView: View {
         .enableSwipeBack()
         .fullScreenCover(isPresented: languageAlertPresented) {
             CustomAlertView(
-                icon: "exclamationmark.triangle",
-                iconColor: themeStore.accentGold,
+                icon: "arrow.left.arrow.right",
+                iconColor: themeStore.accentPurple,
                 title: LocalizedStringKey(pendingAlertTitle),
                 message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
                 primaryButton: .init(title: "Switch", style: .primary) {

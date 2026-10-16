@@ -29,13 +29,14 @@ struct WordCardView: View {
     let storedWord: StoredWord?
     let onDelete: () -> Void
     let onReaction: ((String?) -> Void)?
+    var expanded: Binding<Bool>?
 
     static let availableReactions = ["❤️", "👍", "🔥", "⭐️", "🤔", "😅"]
 
     private static let revealTransition: AnyTransition =
         .opacity.combined(with: .offset(y: -8))
 
-    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic _: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil) {
+    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic _: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil, expanded: Binding<Bool>? = nil) {
         self.word = word
         self.translation = translation
         self.type = type
@@ -53,10 +54,15 @@ struct WordCardView: View {
         self.storedWord = storedWord
         self.onDelete = onDelete
         self.onReaction = onReaction
+        self.expanded = expanded
     }
 
     @State private var cardID = UUID()
-    @State private var isExpanded = true
+    @State private var expandedFallback = true
+
+    private var isExpanded: Bool {
+        expanded?.wrappedValue ?? expandedFallback
+    }
     @State private var isPlaying = false
     @State private var isHoldingAudio = false
     @State private var holdStartedAt: Date?
@@ -100,8 +106,8 @@ struct WordCardView: View {
                         openReactionPicker()
                     } label: {
                         Text(reaction)
-                            .font(.system(size: 24))
-                            .padding(6)
+                            .font(.system(size: DesignChip.emoji))
+                            .frame(width: DesignChip.circle, height: DesignChip.circle)
                             .background(
                                 Circle()
                                     .fill(colorScheme == .dark ? themeStore.accentBlue : themeStore.accentBlueSoft)
@@ -158,7 +164,11 @@ struct WordCardView: View {
                 Haptics.cardExpand()
             }
             withAnimation(DesignMotion.card) {
-                isExpanded.toggle()
+                if let expanded {
+                    expanded.wrappedValue.toggle()
+                } else {
+                    expandedFallback.toggle()
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .dismissReactionPicker)) { note in

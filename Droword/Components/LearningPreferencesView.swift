@@ -222,7 +222,7 @@ struct OnboardingPreferencesPage: View {
                             .foregroundStyle(themeStore.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, DesignSpacing.screenInset)
 
                     LearningPreferencesForm(profile: profile, compact: true)
                 }

@@ -92,7 +92,7 @@ struct AddTagView: View {
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, DesignSpacing.screenInset)
             .padding(.bottom, 20)
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)

@@ -211,8 +211,12 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         .czech, .romanian, .hungarian
     ]
 
+    private static let faceIcons: Set<AppIconStyle> = [
+        .hearts, .glasses, .dizzy, .sleepy
+    ]
+
     static var customizationCases: [AppIconStyle] {
-        allCases.filter { !languageIcons.contains($0) }
+        allCases.filter { !languageIcons.contains($0) && !faceIcons.contains($0) }
     }
 
     static func resolved(_ raw: String) -> AppIconStyle {

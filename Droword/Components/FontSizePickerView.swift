@@ -16,7 +16,7 @@ struct FontSizePickerView: View {
                 .sheetTitle()
 
             wordCardPreview
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: themeStore.fontScale)
 
             VStack(spacing: 12) {
@@ -96,7 +96,7 @@ struct FontSizePickerView: View {
                 )
                 .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
 
             Spacer()
         }

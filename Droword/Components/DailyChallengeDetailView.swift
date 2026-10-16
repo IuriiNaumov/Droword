@@ -18,7 +18,7 @@ struct DailyChallengeDetailView: View {
                     challengesList
                     HomeVisibilityHint(message: "You can hide Daily Challenges from Home whenever you want.")
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.bottom, 40)
             }
             .background(themeStore.appBg.ignoresSafeArea())

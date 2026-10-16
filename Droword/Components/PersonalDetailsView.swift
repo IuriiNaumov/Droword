@@ -43,6 +43,8 @@ struct PersonalDetailsView: View {
                     )
                 }
 
+                Spacer()
+
                 Button(action: {
                     let trimmedName = tempName.trimmingCharacters(in: .whitespacesAndNewlines)
                     if !trimmedName.isEmpty && trimmedName.count <= 40 {
@@ -58,11 +60,10 @@ struct PersonalDetailsView: View {
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .disabled(!canSave)
-
-                Spacer()
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(themeStore.appBg.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

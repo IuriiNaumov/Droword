@@ -7,13 +7,73 @@ struct StoryResult: Codable {
     let usedWords: [String]
 }
 
+struct StorySeed: Codable, Identifiable, Equatable {
+    let id: UUID
+    let word: String
+    let translation: String
+    let forms: [String]
+}
+
+struct StoryQuizAnswer: Codable, Equatable {
+    let id: UUID
+    let remembered: Bool
+}
+
+struct SavedReading: Codable {
+    let day: String
+    let result: StoryResult
+    let seeds: [StorySeed]
+    let answers: [StoryQuizAnswer]
+
+    init(day: String, result: StoryResult, seeds: [StorySeed], answers: [StoryQuizAnswer] = []) {
+        self.day = day
+        self.result = result
+        self.seeds = seeds
+        self.answers = answers
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        day = try container.decode(String.self, forKey: .day)
+        result = try container.decode(StoryResult.self, forKey: .result)
+        seeds = try container.decode([StorySeed].self, forKey: .seeds)
+        answers = try container.decodeIfPresent([StoryQuizAnswer].self, forKey: .answers) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(day, forKey: .day)
+        try container.encode(result, forKey: .result)
+        try container.encode(seeds, forKey: .seeds)
+        try container.encode(answers, forKey: .answers)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case day, result, seeds, answers
+    }
+}
+
+enum StoryArchive {
+    static func today() -> SavedReading? {
+        guard let data = UserDefaults.standard.data(forKey: AppStorageKeys.savedReadingStory),
+              let saved = try? JSONDecoder().decode(SavedReading.self, from: data),
+              saved.day == DateFormatting.todayString else { return nil }
+        return saved
+    }
+
+    static func save(_ saved: SavedReading) {
+        guard let data = try? JSONEncoder().encode(saved) else { return }
+        UserDefaults.standard.set(data, forKey: AppStorageKeys.savedReadingStory)
+    }
+}
+
 enum StoryWordPicker {
     static func candidates(
         from words: [StoredWord],
         learningLanguage: String,
         preferredTags: [String],
         limit: Int = 5
-    ) -> [String] {
+    ) -> [StorySeed] {
         let eligible = words.filter {
             $0.fromLanguage == learningLanguage
                 && $0.translation != nil
@@ -40,7 +100,9 @@ enum StoryWordPicker {
                 picked.append(word)
             }
         }
-        return picked.map(\.word)
+        return picked.map {
+            StorySeed(id: $0.id, word: $0.word, translation: $0.translation ?? "", forms: $0.forms)
+        }
     }
 }
 

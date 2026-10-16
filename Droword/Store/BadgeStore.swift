@@ -98,6 +98,7 @@ final class BadgeStore: ObservableObject {
         seedCelebratedIfNeeded(totalWords: totalWords, currentStreak: currentStreak)
 
         for badge in Self.allBadges {
+            if !FeatureGates.streakEnabled && badge.category == .streak { continue }
             guard isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) else { continue }
             guard !celebratedIDs.contains(badge.id) else { continue }
             celebratedIDs.insert(badge.id)

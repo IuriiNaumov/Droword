@@ -5,7 +5,7 @@ struct Duo3DStyle: ViewModifier {
     let bgColor: Color
     var isDisabled: Bool = false
     var force3D: Bool = false
-    var verticalPadding: CGFloat = 16
+    var verticalPadding: CGFloat = DesignSpacing.buttonVertical
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -73,38 +73,26 @@ struct Duo3DStyle: ViewModifier {
 
 struct Duo3DSecondaryStyle: ViewModifier {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.colorScheme) private var colorScheme
 
     private var use3D: Bool { themeStore.isDuolingo && !themeStore.isGlass }
-    private var radius: CGFloat { themeStore.controlRadius }
-    private var borderColor: Color {
-        use3D ? themeStore.dividerColor : themeStore.secondaryText.opacity(0.45)
-    }
+    private var radius: CGFloat { use3D ? 16 : themeStore.controlRadius }
+    private var labelColor: Color { colorScheme == .dark ? .white : .black }
 
     func body(content: Content) -> some View {
         content
             .font(themeStore.bold(17))
-            .foregroundStyle(use3D ? themeStore.mainAccentColor : themeStore.mainText)
-            .padding(.vertical, 16)
+            .foregroundStyle(labelColor)
+            .padding(.vertical, DesignSpacing.buttonVertical)
             .frame(maxWidth: .infinity)
             .background(
-                ZStack {
-                    if use3D {
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .fill(Color(hex: "#AFAFAF").opacity(0.45))
-                            .offset(y: 4)
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .fill(themeStore.controlFace)
-                    } else {
-                        RoundedRectangle(cornerRadius: radius, style: .continuous)
-                            .fill(Color.clear)
-                    }
-                }
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(themeStore.appBg)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(borderColor, lineWidth: use3D ? 2 : 1)
+                    .strokeBorder(themeStore.secondaryText.opacity(0.35), lineWidth: 2)
             )
-            .padding(.bottom, use3D ? 4 : 0)
     }
 }
 
@@ -157,7 +145,7 @@ struct Duo3DButtonStyle: ButtonStyle {
 }
 
 extension View {
-    func duo3DStyle(_ color: Color, isDisabled: Bool = false, force3D: Bool = false, verticalPadding: CGFloat = 16) -> some View {
+    func duo3DStyle(_ color: Color, isDisabled: Bool = false, force3D: Bool = false, verticalPadding: CGFloat = DesignSpacing.buttonVertical) -> some View {
         modifier(Duo3DStyle(bgColor: color, isDisabled: isDisabled, force3D: force3D, verticalPadding: verticalPadding))
     }
 

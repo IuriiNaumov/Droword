@@ -84,7 +84,7 @@ struct WordPackDetailView: View {
                         completionView
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.bottom, 20)
                 .iPadContentWidth(600)
                     }

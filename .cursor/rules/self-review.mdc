@@ -1,0 +1,31 @@
+---
+description: Re-check own edits before finishing; spawn a review agent on larger changes
+alwaysApply: true
+---
+
+# Self-review after code
+
+After any substantive edit (new behavior, multi-file, UI, SRS, worker, or store), do not stop at the first write. Re-check before saying done.
+
+## Always (same turn)
+
+1. Re-read the diff and every call site you touched.
+2. Match project rules: no code comments, existing stores/tokens/patterns, AGENTS.md map.
+3. Fix what you find yourself (compile breaks, missing bindings, wrong empty states, leftover comments).
+4. Prefer `ReadLints` on edited files when the tool is available.
+
+## When to spawn another agent
+
+Launch a review pass with Task (`generalPurpose` or `explore`) when any of these is true:
+
+- 3+ files changed, or a behavior/product-map change
+- Touching SRS, WordsStore, worker prompts, IAP/limits, or notifications
+- You are unsure the change is correct end-to-end
+
+Prompt the reviewer with: absolute repo path, files changed, intended behavior, and “find bugs, rule violations, and missed call sites; do not rewrite unless broken.”
+
+Use `bugbot` / security-review **only** when the user explicitly asks for that review.
+
+## Done bar
+
+Only finish after the self-check (and the extra agent, if launched) with no known open issues — or report the leftover risk in one short line.

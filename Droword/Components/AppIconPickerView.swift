@@ -87,7 +87,7 @@ struct AppIconPickerView: View {
                         .buttonStyle(PressableButtonStyle(scale: 0.95))
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.top, 6)
             }
             .padding(.bottom, 20)
@@ -117,7 +117,7 @@ struct AppIconPickerView: View {
             }
             .buttonStyle(Duo3DButtonStyle())
             .disabled(currentApplied == selected)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
             .padding(.bottom, 24)
         }
         .background(themeStore.appBg.ignoresSafeArea())

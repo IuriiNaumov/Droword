@@ -44,6 +44,9 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Language picker flags are illustrated (`LanguageFlagView`). Page dots are `PageCapsules`.
 - App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
 - Opening the app clears the icon badge (`NotificationManager.clearBadge` on scene `.active`).
+- Dictionary: reaction emoji chips after tags filter cards; search matches reactions. Circles use `DesignChip` (same size on cards).
+- Practice results hide the tab bar; restore on close / new round.
+- Tab bar: system height (`.tabBarMinimizeBehavior(.never)`, no `sizeThatFits` shrink).
 - Before a push: update `AGENTS.md` and `README.md` if behavior or the map changed, delete code comments, then push.
 
 ## Don't
@@ -55,6 +58,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Delete `WordsICloudSync` when disabling iCloud — comment entitlements only for Personal Team.
 - Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
 - Put language/flag app icons back in App Customization, or replace tab-bar symbols with custom art unless asked.
+- Shrink the tab bar in `sizeThatFits` or turn minimize back on.
 - Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static). Home PRO stays a plain `accentBlue` sparkle. Only the paywall plaque is themed.
 - Open the theme picker on the first palette. It stays on the saved theme (`showPager` after the selection is set).
 - Replace empty-state halos (`text.badge.plus`, dictionary `textformat`, practice `bolt`, tag `tag`) with custom drawings.

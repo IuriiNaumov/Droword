@@ -21,9 +21,9 @@ enum HapticFeel: String, CaseIterable, Identifiable {
 
     var description: LocalizedStringKey {
         switch self {
-        case .silk: return "whisper tap, almost velvet"
+        case .silk: return "whisper soft, almost velvet"
         case .soft: return "rounded, like a pillow press"
-        case .crisp: return "clean iOS click"
+        case .crisp: return "clean system click"
         case .pop: return "short playful bump"
         case .off: return "no vibration"
         }

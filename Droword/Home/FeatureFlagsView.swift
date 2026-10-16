@@ -3,6 +3,8 @@ import SwiftUI
 private enum FlagScreen: Hashable {
     case wellDone
     case wordsAdded
+    case studyExtras
+    case proInvite
     case onboarding(OnboardingModalPreview)
     case alert(CustomAlertPreviewCase)
     case milestone(MilestonePreview)
@@ -144,17 +146,43 @@ struct FeatureFlagsView: View {
                         flagLink(.wordsAdded, icon: "checkmark.circle", title: "3 words added")
                     }
 
+                    Text("Study extras")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("After a few words, if stories, challenges, or packs are still off. Hidden when every extra is already on.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    flagGroup {
+                        flagLink(.studyExtras, icon: "sparkles", title: "Nice work")
+                    }
+
+                    Text("PRO invite")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("Shown every few days when PRO is off. Hidden for people who already have it.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    flagGroup {
+                        flagLink(.proInvite, icon: "sparkle", title: "Want the cap off?")
+                    }
+
                     Text("Celebrations")
                         .font(themeStore.bold(18))
                         .foregroundStyle(themeStore.mainText)
                         .padding(.top, 4)
 
-                    Text("Word count, streak, daily goal, and badge pages.")
+                    Text("Word count, daily goal, and badge pages.")
                         .font(themeStore.regular(13))
                         .foregroundStyle(themeStore.secondaryText)
 
                     flagGroup {
-                        ForEach(MilestonePreview.allCases) { item in
+                        ForEach(MilestonePreview.allCases.filter { FeatureGates.streakEnabled || !$0.isStreak }) { item in
                             flagLink(.milestone(item), icon: "sparkles", title: item.title)
                         }
                     }
@@ -175,7 +203,7 @@ struct FeatureFlagsView: View {
                     }
                 }
                 .padding(.bottom, 20)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
             }
             .background(themeStore.appBg.ignoresSafeArea())
         }
@@ -244,6 +272,15 @@ private struct FlagScreenPage: View {
             WordsAddedPage(count: 3) {
                 dismiss()
             }
+        case .studyExtras:
+            StudyExtrasPromptPage(showsEveryExtra: true) {
+                dismiss()
+            }
+        case .proInvite:
+            ProInvitePage(
+                onSeePro: { dismiss() },
+                onLater: { dismiss() }
+            )
         case .onboarding(let item):
             switch item {
             case .firstWords:

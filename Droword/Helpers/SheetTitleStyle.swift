@@ -7,8 +7,8 @@ struct SheetTitleStyle: ViewModifier {
             .font(themeStore.display(24))
             .tracking(-0.4)
             .foregroundStyle(themeStore.mainText)
-            .padding(.top, 12)
-            .padding(.bottom, 12)
+            .padding(.top, DesignSpacing.titleTop)
+            .padding(.bottom, DesignSpacing.titleBottom)
             .frame(maxWidth: .infinity, alignment: .center)
     }
 }

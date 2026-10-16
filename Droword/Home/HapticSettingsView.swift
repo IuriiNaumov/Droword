@@ -10,11 +10,6 @@ struct HapticSettingsView: View {
                 Text("Haptics")
                     .sheetTitle()
 
-                Text("Pick the feel. Tap a row to use it, or play a sample first.")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .padding(.horizontal)
-
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(HapticFeel.allCases) { feel in
                         hapticRow(feel)

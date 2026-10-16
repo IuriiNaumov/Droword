@@ -115,7 +115,7 @@ struct WordPacksDetailView: View {
 
                     HomeVisibilityHint(message: "You can hide Word Packs from Home whenever you want.")
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
                 .padding(.bottom, 40)
             }
             .background(themeStore.appBg.ignoresSafeArea())

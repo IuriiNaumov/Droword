@@ -102,15 +102,17 @@ struct ProfileHeaderView: View {
 
                 Spacer()
 
-                Button {
-                    Haptics.softTap()
-                    onOpenStreak?()
-                } label: {
-                    StreakFireBadge(count: currentStreak)
+                if FeatureGates.streakEnabled {
+                    Button {
+                        Haptics.softTap()
+                        onOpenStreak?()
+                    } label: {
+                        StreakFireBadge(count: currentStreak)
+                    }
+                    .buttonStyle(.plain)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
+                    .accessibilityHint(Text("Opens streak calendar and stats"))
                 }
-                .buttonStyle(.plain)
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
-                .accessibilityHint(Text("Opens streak calendar and stats"))
             }
 
         }
@@ -122,15 +124,7 @@ struct ProfileHeaderView: View {
 
             let isPremiumUser = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
             if isPremiumUser {
-                let result = WordsStore.computeCurrentStreakWithFreeze(from: store.words)
-                currentStreak = result.streak
-                if let freezeDay = result.freezeDate {
-                    let freezeStr = DateFormatting.dayFormatter.string(from: freezeDay)
-                    let lastFreezeStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
-                    if freezeStr != lastFreezeStr {
-                        UserDefaults.standard.set(freezeStr, forKey: AppStorageKeys.lastStreakFreezeDate)
-                    }
-                }
+                currentStreak = WordsStore.computeCurrentStreakWithFreeze(from: store.words).streak
             } else {
                 currentStreak = WordsStore.computeCurrentStreak(from: store.words)
             }

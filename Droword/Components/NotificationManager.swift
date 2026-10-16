@@ -403,6 +403,7 @@ final class NotificationManager {
     }
 
     func scheduleStreakMilestone(streak: Int) {
+        guard FeatureGates.streakEnabled else { return }
         let milestones = [7, 30, 100, 365]
         guard milestones.contains(streak) else { return }
         guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifGlobalEnabled) else { return }

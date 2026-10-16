@@ -33,25 +33,7 @@ struct QuizCompletionView: View {
     }
 
     var body: some View {
-        ZStack {
-            if isLesson {
-                completionStack
-                    .opacity(showFinishSplash ? 0 : 1)
-            } else {
-                NavigationStack {
-                    completionStack
-                        .opacity(showFinishSplash ? 0 : 1)
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .navigationBarLeading) {
-                                if let onClose {
-                                    CloseButton(action: onClose)
-                                }
-                            }
-                        }
-                }
-            }
-
+        Group {
             if showFinishSplash {
                 PracticeFinishBurstView(
                     accent: themeStore.mainAccentColor,
@@ -61,8 +43,20 @@ struct QuizCompletionView: View {
                         showFinishSplash = false
                     }
                 }
-                .transition(.opacity)
-                .zIndex(1)
+            } else if isLesson {
+                completionStack
+            } else {
+                NavigationStack {
+                    completionStack
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                if let onClose {
+                                    CloseButton(action: onClose)
+                                }
+                            }
+                        }
+                }
             }
         }
     }
@@ -108,7 +102,7 @@ struct QuizCompletionView: View {
         Text(isLesson ? String(localized: "Lesson done") : encouragementText)
             .sheetTitle()
             .multilineTextAlignment(.center)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, DesignSpacing.screenInset)
     }
 
     private var scoreRing: some View {
@@ -227,7 +221,7 @@ struct QuizCompletionView: View {
     @ViewBuilder
     private var actionButtons: some View {
         if isLesson, let onScene {
-            VStack(spacing: 10) {
+            VStack(spacing: DesignSpacing.buttonGap) {
                 Button {
                     Haptics.buttonPress()
                     onScene()
@@ -254,7 +248,7 @@ struct QuizCompletionView: View {
             .padding(.horizontal, 40)
             .padding(.top, 8)
         } else {
-            VStack(spacing: 10) {
+            VStack(spacing: DesignSpacing.buttonGap) {
                 Button(action: { Haptics.buttonPress(); onRestart() }) {
                     Text(isLesson ? "Once more" : "Try Again")
                         .duo3DStyle(themeStore.mainAccentColor)
@@ -274,14 +268,11 @@ struct QuizCompletionView: View {
         Button {
             Haptics.softTap()
             action()
-        } label: {
+        }         label: {
             Text("Close")
-                .font(themeStore.medium(16))
-                .foregroundStyle(themeStore.secondaryText)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .duo3DSecondaryStyle()
         }
-        .buttonStyle(.plain)
+        .buttonStyle(Duo3DButtonStyle())
     }
 
     private func statBubble(icon: String, value: String, label: LocalizedStringKey, color: Color) -> some View {

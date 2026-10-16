@@ -2,10 +2,11 @@ import SwiftUI
 
 struct WordsAddedPage: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let count: Int
     let onDismiss: () -> Void
 
-    @State private var iconScale: CGFloat = 0.4
+    @State private var iconScale: CGFloat = 0.72
     @State private var textOpacity: Double = 0
     @State private var buttonOpacity: Double = 0
 
@@ -14,12 +15,11 @@ struct WordsAddedPage: View {
             themeStore.appBg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Spacer(minLength: 24)
-
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 64, weight: .semibold))
-                    .foregroundStyle(themeStore.accentBlue)
-                    .scaleEffect(iconScale)
+                SoftCoverHero(
+                    systemName: "checkmark.circle",
+                    color: themeStore.accentBlue,
+                    iconScale: iconScale
+                )
 
                 VStack(spacing: 8) {
                     Text("All done!")
@@ -35,34 +35,46 @@ struct WordsAddedPage: View {
                 }
                 .padding(.top, 18)
                 .opacity(textOpacity)
+            }
+            .frame(maxWidth: 460)
+            .padding(.horizontal, DesignSpacing.screenInset)
 
-                Spacer(minLength: 24)
-
+            VStack {
+                Spacer()
                 Button {
                     Haptics.lightImpact()
                     onDismiss()
                 } label: {
                     Text("Continue")
-                        .duo3DStyle(themeStore.mainAccentColor)
+                        .duo3DStyle(themeStore.accentBlue)
                 }
                 .buttonStyle(Duo3DButtonStyle())
                 .opacity(buttonOpacity)
-                .padding(.bottom, 8)
+                .padding(.bottom, 12)
             }
             .frame(maxWidth: 460)
-            .padding(.horizontal, 28)
+            .padding(.horizontal, DesignSpacing.screenInset)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                iconScale = 1
-            }
-            withAnimation(.easeOut(duration: 0.35).delay(0.15)) {
-                textOpacity = 1
-            }
-            withAnimation(.easeOut(duration: 0.3).delay(0.3)) {
-                buttonOpacity = 1
-            }
+        .onAppear(perform: play)
+    }
+
+    private func play() {
+        Haptics.success()
+        guard !reduceMotion else {
+            iconScale = 1
+            textOpacity = 1
+            buttonOpacity = 1
+            return
+        }
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.72)) {
+            iconScale = 1
+        }
+        withAnimation(.easeOut(duration: 0.35).delay(0.12)) {
+            textOpacity = 1
+        }
+        withAnimation(.easeOut(duration: 0.3).delay(0.28)) {
+            buttonOpacity = 1
         }
     }
 }

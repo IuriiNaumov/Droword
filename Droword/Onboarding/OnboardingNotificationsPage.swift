@@ -154,11 +154,6 @@ struct NotificationPreferencesForm: View {
                 .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: eveningChatEnabled)
 
-                Text("Tap it. Three lines with that word. Then stop.")
-                    .font(themeStore.regular(12))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .padding(.horizontal, 8)
-
                 sectionHeader("Vocabulary")
 
                 if vocabEnabled {
@@ -224,21 +219,23 @@ struct NotificationPreferencesForm: View {
                 .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: vocabEnabled)
 
-                sectionHeader("Other")
+                if FeatureGates.streakEnabled {
+                    sectionHeader("Other")
 
-                VStack(spacing: 0) {
-                    toggleRow(
-                        icon: "flame",
-                        title: "Streak milestones",
-                        isOn: $streakMilestones
-                    )
+                    VStack(spacing: 0) {
+                        toggleRow(
+                            icon: "flame",
+                            title: "Streak milestones",
+                            isOn: $streakMilestones
+                        )
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+
+                    Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
+                        .font(themeStore.regular(12))
+                        .foregroundStyle(themeStore.secondaryText)
+                        .padding(.horizontal, 8)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
-
-                Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
-                    .font(themeStore.regular(12))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .padding(.horizontal, 8)
 
                 if onboardingStyle {
                     Text("You can change these anytime in Settings.")

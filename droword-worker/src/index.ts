@@ -419,11 +419,11 @@ Write ONE tiny story with:
 - a title that names the situation, not a vocab theme
 
 WORD RULES:
-- Use at most 3 of the candidate words. 2 is better than 3. 0 is allowed if none fit.
+- Use 2 of the candidate words. 2 is the target.
 - A word may appear only if a native speaker would say it in this scene.
 - You may inflect words. Do not force a word into an awkward sentence.
 - Never write one sentence per word. Never list. Never "and then they used X".
-- If a word would make the story worse, drop it.
+- If a word would make the story worse, choose a different fitting candidate. Do not finish with fewer than 2 candidate words.
 - Never mark the candidate words. No quotation marks, no guillemets, no asterisks, no markdown, no italics, no bold. Write them as plain words in the sentence.
 - Capitalization: only capitalize sentence starts and proper nouns. Candidate words mid-sentence must use natural casing (usually lowercase), even if the candidate list shows a capitalized form.
 
@@ -481,9 +481,55 @@ Return ONLY valid JSON:
 
   try {
     const parsed = JSON.parse(jsonMatch[0]);
+    const used = Array.isArray(parsed.usedWords) ? parsed.usedWords : [];
+    if (used.length >= 2) {
+      return jsonResponse(parsed);
+    }
+    const retry = await requestStory(
+      env,
+      `${prompt}\n\nRewrite the story so exactly 2 candidate words appear naturally in the sentences. usedWords must list those 2 words.`
+    );
+    if (retry && Array.isArray(retry.usedWords) && retry.usedWords.length >= used.length) {
+      return jsonResponse(retry);
+    }
     return jsonResponse(parsed);
   } catch {
     return errorResponse("Failed to parse Claude response", 502);
+  }
+}
+
+async function requestStory(env: Env, prompt: string): Promise<Record<string, unknown> | null> {
+  const anthropicResponse = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5",
+      max_tokens: 1500,
+      system: "You always return strictly valid JSON without explanations.",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+  if (!anthropicResponse.ok) {
+    await anthropicResponse.text();
+    return null;
+  }
+  const claude = await anthropicResponse.json<{
+    content?: { type: string; text?: string }[];
+    error?: { message: string };
+  }>();
+  if (claude.error) return null;
+  const text = claude.content?.find((c) => c.type === "text")?.text;
+  if (!text) return null;
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return null;
+  try {
+    return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+  } catch {
+    return null;
   }
 }
 

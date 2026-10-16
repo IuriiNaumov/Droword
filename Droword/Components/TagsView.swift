@@ -3,7 +3,9 @@ import SwiftUI
 struct TagsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var store: WordsStore
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var selectedTag: String?
+    var selectedReaction: Binding<String?>? = nil
     @ObservedObject private var tagStore = TagStore.shared
     var compact: Bool = false
     var hasSuggestedWords: Bool = false
@@ -41,19 +43,41 @@ struct TagsView: View {
         !tagStore.tags.isEmpty
     }
 
+    private var usedReactions: [String] {
+        guard selectedReaction != nil else { return [] }
+        var seen = Set<String>()
+        var ordered: [String] = []
+        for emoji in WordCardView.availableReactions {
+            if store.words.contains(where: { $0.reaction == emoji }) {
+                ordered.append(emoji)
+                seen.insert(emoji)
+            }
+        }
+        for word in store.words {
+            guard let reaction = word.reaction, !reaction.isEmpty, !seen.contains(reaction) else { continue }
+            ordered.append(reaction)
+            seen.insert(reaction)
+        }
+        return ordered
+    }
+
+    private var rowSpacing: CGFloat { compact ? 10 : 14 }
+    private var rowInset: CGFloat { compact ? 10 : contentInset }
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: compact ? 10 : 14) {
-                ForEach(visibleTags, id: \.name) { tag in
-                    tagChip(tag)
-                        .id(tag.name)
-                }
-
+            HStack(spacing: rowSpacing) {
+                tagChips
+                reactionChips
                 if showManagementControls {
-                    managementControls
+                    if isDeleteMode {
+                        doneEditingButton
+                    } else {
+                        managementControls
+                    }
                 }
             }
-            .padding(.horizontal, compact ? 10 : contentInset)
+            .padding(.horizontal, rowInset)
             .padding(.vertical, compact ? 14 : 10)
         }
         .scrollPosition(id: $scrollPosition)
@@ -65,6 +89,45 @@ struct TagsView: View {
                 }
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .exitDictionarySelect)) { _ in
+            guard isDeleteMode else { return }
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                isDeleteMode = false
+            }
+        }
+    }
+
+    private var tagChips: some View {
+        HStack(spacing: rowSpacing) {
+            ForEach(visibleTags, id: \.name) { tag in
+                tagChip(tag)
+                    .id(tag.name)
+            }
+        }
+    }
+
+    private var doneEditingButton: some View {
+        let textColor: Color = themeStore.isGlass
+            ? (colorScheme == .dark ? .white : .black)
+            : .white
+        return Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                isDeleteMode = false
+            }
+            Haptics.menuTap()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .bold))
+                Text("Done")
+                    .font(themeStore.bold(15))
+            }
+            .foregroundStyle(textColor)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
+        }
+        .buttonStyle(Duo3DButtonStyle())
     }
 
     @ViewBuilder
@@ -84,6 +147,7 @@ struct TagsView: View {
                     Haptics.warning()
                 }
             } else {
+                selectedReaction?.wrappedValue = nil
                 selectedTag = selectedTag == tag.name ? nil : tag.name
                 Haptics.tick()
             }
@@ -107,7 +171,7 @@ struct TagsView: View {
                         .transition(.opacity)
                 }
             }
-            .padding(.vertical, compact ? 8 : 10)
+            .frame(height: DesignChip.circleSize(compact: compact))
             .padding(.horizontal, compact ? 24 : 28)
             .background { tagBackground(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed) }
             .overlay { tagBorder(isSelected: isSelected) }
@@ -117,6 +181,76 @@ struct TagsView: View {
         }
         .buttonStyle(Duo3DButtonStyle())
         .disabled(isDeleteMode && !tag.isCustom)
+    }
+
+    @ViewBuilder
+    private var reactionChips: some View {
+        if let selectedReaction, !usedReactions.isEmpty {
+            HStack(spacing: rowSpacing) {
+                ForEach(usedReactions, id: \.self) { emoji in
+                    reactionChip(emoji, selectedReaction: selectedReaction)
+                        .id("reaction-\(emoji)")
+                }
+            }
+        }
+    }
+
+    private func reactionChip(_ emoji: String, selectedReaction: Binding<String?>) -> some View {
+        let isSelected = selectedReaction.wrappedValue == emoji
+        let baseColor = themeStore.accentBlue
+        let size = DesignChip.circleSize(compact: compact)
+
+        return Button {
+            guard !isDeleteMode else { return }
+            selectedTag = nil
+            selectedReaction.wrappedValue = isSelected ? nil : emoji
+            Haptics.tick()
+        } label: {
+            Text(emoji)
+                .font(.system(size: DesignChip.emojiSize(compact: compact)))
+                .frame(width: size, height: size)
+                .background { reactionBackground(isSelected: isSelected, baseColor: baseColor) }
+                .overlay { reactionBorder(isSelected: isSelected) }
+                .padding(.bottom, duo ? 3 : 0)
+                .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .circle))
+                .opacity(isDeleteMode ? 0.45 : 1.0)
+        }
+        .buttonStyle(Duo3DButtonStyle())
+        .disabled(isDeleteMode)
+        .accessibilityLabel(Text("Reaction \(emoji)"))
+    }
+
+    @ViewBuilder
+    private func reactionBackground(isSelected: Bool, baseColor: Color) -> some View {
+        if duo {
+            let face: Color = {
+                if isSelected {
+                    return themeStore.isMonochrome ? themeStore.mainText.opacity(0.85) : baseColor
+                }
+                return themeStore.controlFace
+            }()
+            let lip = isSelected
+                ? darkerShade(of: face, by: 0.16)
+                : Color(hex: "#AFAFAF").opacity(0.45)
+            ZStack {
+                Circle()
+                    .fill(lip)
+                    .offset(y: 3)
+                Circle()
+                    .fill(face)
+            }
+        } else {
+            Circle()
+                .fill(tagFill(isSelected: isSelected, baseColor: baseColor, dimmed: false))
+        }
+    }
+
+    @ViewBuilder
+    private func reactionBorder(isSelected: Bool) -> some View {
+        if duo, !isSelected {
+            Circle()
+                .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+        }
     }
 
     @ViewBuilder
@@ -174,19 +308,14 @@ struct TagsView: View {
             } label: {
                 managementIcon("arrow.up.arrow.down", filled: false)
             }
-            .opacity(isDeleteMode ? 0 : 1)
         }
 
         if hasCustomTags {
             Button(action: {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode.toggle() }
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { isDeleteMode = true }
                 Haptics.menuTap()
             }) {
-                managementIcon(
-                    isDeleteMode ? "checkmark" : "pencil",
-                    filled: isDeleteMode,
-                    fillColor: themeStore.mainAccentColor
-                )
+                managementIcon("pencil", filled: false)
             }
             .buttonStyle(Duo3DButtonStyle())
         }
@@ -198,36 +327,36 @@ struct TagsView: View {
             managementIcon("plus", filled: false)
         }
         .buttonStyle(Duo3DButtonStyle())
-        .opacity(isDeleteMode ? 0 : 1)
     }
 
     private func managementIcon(_ name: String, filled: Bool, fillColor: Color? = nil) -> some View {
         let face = filled ? (fillColor ?? themeStore.mainAccentColor) : (duo ? themeStore.controlFace : themeStore.secondaryText.opacity(0.12))
+        let size = DesignChip.circleSize(compact: compact)
         return Image(systemName: name)
-            .font(.system(size: 12, weight: .bold))
+            .font(.system(size: compact ? 13 : 14, weight: .bold))
             .foregroundStyle(filled && !themeStore.isGlass ? Color.white : themeStore.secondaryText)
-            .frame(width: 34, height: 34)
+            .frame(width: size, height: size)
             .background {
                 if duo {
                     ZStack {
-                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                        Circle()
                             .fill(filled ? darkerShade(of: face, by: 0.16) : Color(hex: "#AFAFAF").opacity(0.45))
-                            .offset(y: 2)
-                        RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                            .offset(y: 3)
+                        Circle()
                             .fill(face)
                     }
                 } else {
-                    Capsule().fill(themeStore.isGlass && !filled ? Color.clear : face)
+                    Circle().fill(themeStore.isGlass && !filled ? Color.clear : face)
                 }
             }
             .overlay {
                 if duo, !filled {
-                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                    Circle()
                         .strokeBorder(themeStore.dividerColor, lineWidth: 2)
                 }
             }
-            .padding(.bottom, duo ? 2 : 0)
-            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
+            .padding(.bottom, duo ? 3 : 0)
+            .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .circle))
     }
 
     private func tagFill(isSelected: Bool, baseColor: Color, dimmed: Bool) -> Color {

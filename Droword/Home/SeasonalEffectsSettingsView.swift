@@ -57,7 +57,7 @@ struct SeasonalEffectsSettingsView: View {
                 }
             }
             .padding(.bottom, 20)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
         }
         .background(themeStore.appBg.ignoresSafeArea())
         .toolbar {

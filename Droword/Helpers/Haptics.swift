@@ -422,6 +422,20 @@ public enum Haptics {
         combo(streak: 7)
     }
 
+    public static func encourage() {
+        if supportsCoreHaptics {
+            play([
+                continuous(time: 0.00, duration: 0.20, intensity: 0.16, sharpness: 0.06),
+                transient(time: 0.10, intensity: 0.26, sharpness: 0.10),
+                continuous(time: 0.24, duration: 0.22, intensity: 0.30, sharpness: 0.08),
+                transient(time: 0.36, intensity: 0.40, sharpness: 0.12),
+                continuous(time: 0.52, duration: 0.26, intensity: 0.18, sharpness: 0.06)
+            ], keepSustain: true)
+        } else {
+            fallbackImpact(.soft, intensity: 0.45)
+        }
+    }
+
     public static func suggestionsArrived() {
         suggestionTask?.cancel()
         guard HapticFeel.current != .off else { return }

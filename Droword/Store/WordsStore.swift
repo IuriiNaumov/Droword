@@ -517,17 +517,48 @@ final class WordsStore: ObservableObject {
         DayStreak.current(activityDays: activityDays(from: words))
     }
 
-    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, freezeDate: Date?) {
-        let lastFreezeDateStr = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
-        let lastFreezeDay = DateFormatting.dayFormatter.date(from: lastFreezeDateStr)
-        return DayStreak.currentWithFreeze(
+    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, coveredDays: Set<Date>) {
+        let used = loadStreakFreezeDays()
+        let result = DayStreak.currentWithFreeze(
             activityDays: activityDays(from: words),
-            lastFreezeDay: lastFreezeDay
+            usedFreezeDays: used
         )
+        saveStreakFreezeDays(merging: result.newFreezes)
+        return (result.streak, result.coveredDays)
+    }
+
+    private static func loadStreakFreezeDays() -> Set<Date> {
+        var keys = UserDefaults.standard.stringArray(forKey: AppStorageKeys.streakFreezeDates) ?? []
+        let legacy = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
+        if !legacy.isEmpty {
+            keys.append(legacy)
+        }
+        let calendar = Calendar.current
+        return Set(keys.compactMap { DateFormatting.dayFormatter.date(from: $0) }.map { calendar.startOfDay(for: $0) })
+    }
+
+    private static func saveStreakFreezeDays(merging newDays: Set<Date>) {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let cutoff = calendar.date(byAdding: .day, value: -14, to: today) ?? today
+        let merged = loadStreakFreezeDays().union(newDays).filter { $0 >= cutoff }
+        let strings = merged.map { DateFormatting.dayFormatter.string(from: $0) }.sorted()
+        let existing = UserDefaults.standard.stringArray(forKey: AppStorageKeys.streakFreezeDates) ?? []
+        if existing != strings {
+            UserDefaults.standard.set(strings, forKey: AppStorageKeys.streakFreezeDates)
+        }
+        let latest = strings.last ?? ""
+        let legacy = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
+        if legacy != latest {
+            UserDefaults.standard.set(latest, forKey: AppStorageKeys.lastStreakFreezeDate)
+        }
     }
 
     func syncStreakToAppGroup() {
-        let streak = Self.computeCurrentStreak(from: words)
+        let premium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
+        let streak = premium
+            ? Self.computeCurrentStreakWithFreeze(from: words).streak
+            : Self.computeCurrentStreak(from: words)
         sharedDefaults.set(streak, forKey: AppStorageKeys.currentStreak)
         UserDefaults.standard.set(streak, forKey: AppStorageKeys.currentStreak)
     }
@@ -572,5 +603,21 @@ final class WordsStore: ObservableObject {
         w.lapses = lapses
         w.dueDate = dueDate
         words[idx] = w
+    }
+
+    func bringStoryReviewCloser(id: UUID, remembered: Bool) {
+        guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
+        var word = words[idx]
+        guard word.introduced else { return }
+        let now = Date()
+        let calendar = Calendar.current
+        if remembered {
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
+            guard let due = word.dueDate, due > calendar.date(byAdding: .day, value: 1, to: tomorrow) ?? tomorrow else { return }
+            word.dueDate = tomorrow
+        } else {
+            word.dueDate = calendar.date(byAdding: .minute, value: 10, to: now) ?? now
+        }
+        words[idx] = word
     }
 }

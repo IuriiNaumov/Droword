@@ -68,7 +68,7 @@ struct DictionarySettingsView: View {
                 .opacity(store.words.isEmpty ? 0.45 : 1)
             }
             .padding(.bottom, 20)
-            .padding(.horizontal, 20)
+            .padding(.horizontal, DesignSpacing.screenInset)
         }
         .background(themeStore.appBg.ignoresSafeArea())
         .toolbar {
@@ -134,7 +134,7 @@ struct DictionarySettingsView: View {
         if showClearConfirm {
             CustomAlertView(
                 icon: "trash",
-                iconColor: Color.accentRed,
+                iconColor: themeStore.accentRed,
                 title: "Clear dictionary?",
                 message: "All words will be deleted and cannot be recovered.",
                 primaryButton: .init(title: "Clear all", style: .destructive) {
@@ -149,7 +149,7 @@ struct DictionarySettingsView: View {
         } else if let count = importedCount {
             CustomAlertView(
                 icon: "checkmark.circle",
-                iconColor: themeStore.mainAccentColor,
+                iconColor: themeStore.accentGreen,
                 title: "Import Complete",
                 message: LocalizedStringKey(
                     count == 0

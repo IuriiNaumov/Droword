@@ -7,6 +7,7 @@ struct DictionaryView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var tabBarVisibility: TabBarVisibility
     @State private var selectedTag: String? = nil
+    @State private var selectedReaction: String? = nil
     @State private var searchText = ""
     @State private var debouncedSearch = ""
     @FocusState private var isSearchFocused: Bool
@@ -14,6 +15,7 @@ struct DictionaryView: View {
     @State private var sortOption: DictionarySortOption = .newestFirst
 
     @State private var cachedTag: String? = nil
+    @State private var cachedReaction: String? = nil
     @State private var cachedSearch: String = ""
     @State private var cachedSort: DictionarySortOption = .newestFirst
     @State private var cachedRevision: Int = -1
@@ -23,10 +25,11 @@ struct DictionaryView: View {
     @State private var selectedWordIDs: Set<UUID> = []
     @State private var showBulkDeleteConfirmation = false
     @State private var cardAppeared: Set<UUID> = []
+    @State private var collapsedWordIDs: Set<UUID> = []
     @AppStorage(AppStorageKeys.hasSeenReactionHint) private var hasSeenReactionHint: Bool = false
 
     private var filteredWords: [StoredWord] { cachedFiltered }
-    private let horizontalPadding: CGFloat = 20
+    private let horizontalPadding: CGFloat = DesignSpacing.screenInset
 
     private var gridColumns: [GridItem] {
         hSize == .regular
@@ -53,6 +56,11 @@ struct DictionaryView: View {
                 animateCardsIn()
             }
             .onChange(of: selectedTag) {
+                isSearchFocused = false
+                recalculateFiltered()
+                animateCardsIn()
+            }
+            .onChange(of: selectedReaction) {
                 isSearchFocused = false
                 recalculateFiltered()
                 animateCardsIn()
@@ -153,7 +161,7 @@ struct DictionaryView: View {
                 selectModeButton
             }
         }
-        .padding(.top, 8)
+        .padding(.top, DesignSpacing.titleTop)
         .padding(.horizontal, horizontalPadding)
     }
 
@@ -181,12 +189,16 @@ struct DictionaryView: View {
         } label: {
             Group {
                 if isSelectMode && !disabled {
-                    Text(label)
-                        .font(themeStore.bold(15))
-                        .foregroundStyle(textColor)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .bold))
+                        Text(label)
+                            .font(themeStore.bold(15))
+                    }
+                    .foregroundStyle(textColor)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
                 } else {
                     Text(label)
                         .font(themeStore.bold(15))
@@ -206,6 +218,7 @@ struct DictionaryView: View {
     private var tagsRow: some View {
         TagsView(
             selectedTag: $selectedTag,
+            selectedReaction: $selectedReaction,
             hasSuggestedWords: store.words.contains { $0.tag == "Suggested" },
             onAddTag: { showAddTag = true },
             sortOption: $sortOption,
@@ -234,7 +247,17 @@ struct DictionaryView: View {
                             withAnimation { hasSeenReactionHint = true }
                         }
                     },
-                    onAppearCard: { appearCard(word.id, index: index) }
+                    onAppearCard: { appearCard(word.id, index: index) },
+                    isExpanded: Binding(
+                        get: { !collapsedWordIDs.contains(word.id) },
+                        set: { expanded in
+                            if expanded {
+                                collapsedWordIDs.remove(word.id)
+                            } else {
+                                collapsedWordIDs.insert(word.id)
+                            }
+                        }
+                    )
                 )
             }
         }
@@ -246,7 +269,9 @@ struct DictionaryView: View {
 
     private var showsDictionaryFilterEmpty: Bool {
         filteredWords.isEmpty && (
-            !(selectedTag ?? "").isEmpty || !searchText.isEmpty
+            !(selectedTag ?? "").isEmpty
+                || !(selectedReaction ?? "").isEmpty
+                || !searchText.isEmpty
         )
     }
 
@@ -257,6 +282,12 @@ struct DictionaryView: View {
                 icon: "tag",
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
+            )
+        } else if let reaction = selectedReaction, !reaction.isEmpty {
+            EmptyListView(
+                icon: "face.smiling",
+                title: DuoChaosCopy.dictionaryEmpty(tag: nil).title,
+                subtitle: DuoChaosCopy.dictionaryEmpty(tag: nil).subtitle
             )
         } else if !searchText.isEmpty {
             EmptyListView(
@@ -317,7 +348,7 @@ struct DictionaryView: View {
             }
             .buttonStyle(Duo3DButtonStyle())
             .padding(.horizontal, horizontalPadding)
-            .padding(.bottom, 8)
+            .padding(.bottom, DesignSpacing.lg)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
@@ -367,9 +398,14 @@ struct DictionaryView: View {
 
     private func recalculateFiltered() {
         let tag = selectedTag?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let reaction = selectedReaction ?? ""
         let search = debouncedSearch.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
-        if tag == cachedTag, search == cachedSearch, sortOption == cachedSort, store.revision == cachedRevision { return }
+        if tag == cachedTag,
+           reaction == (cachedReaction ?? ""),
+           search == cachedSearch,
+           sortOption == cachedSort,
+           store.revision == cachedRevision { return }
 
         var result = store.words
 
@@ -380,6 +416,10 @@ struct DictionaryView: View {
             }
         }
 
+        if !reaction.isEmpty {
+            result = result.filter { ($0.reaction ?? "") == reaction }
+        }
+
         if !search.isEmpty {
             result = result.filter { w in
                 if w.word.lowercased().contains(search) { return true }
@@ -388,6 +428,8 @@ struct DictionaryView: View {
                 if (w.explanation ?? "").lowercased().contains(search) { return true }
                 if (w.comment ?? "").lowercased().contains(search) { return true }
                 if (w.transcription ?? "").lowercased().contains(search) { return true }
+                if (w.reaction ?? "").contains(search) { return true }
+                if (w.tag ?? "").lowercased().contains(search) { return true }
                 return false
             }
         }
@@ -416,6 +458,7 @@ struct DictionaryView: View {
 
         cachedFiltered = result
         cachedTag = tag
+        cachedReaction = reaction
         cachedSearch = search
         cachedSort = sortOption
         cachedRevision = store.revision
@@ -492,6 +535,7 @@ private struct DictionaryWordRow: View {
     let onDelete: () -> Void
     let onReaction: (String?) -> Void
     let onAppearCard: () -> Void
+    @Binding var isExpanded: Bool
 
     var body: some View {
         VStack(spacing: 8) {
@@ -524,7 +568,8 @@ private struct DictionaryWordRow: View {
                     reaction: word.reaction,
                     storedWord: word,
                     onDelete: onDelete,
-                    onReaction: onReaction
+                    onReaction: onReaction,
+                    expanded: $isExpanded
                 )
             }
 

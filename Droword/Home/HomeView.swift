@@ -30,6 +30,8 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.seasonalAnimationEnabled) private var seasonalAnimationEnabled: Bool = true
     @AppStorage(AppStorageKeys.hasSeenCoachMarks) private var hasSeenCoachMarks: Bool = false
     @AppStorage(AppStorageKeys.hasSeenFirstWords) private var hasSeenFirstWords: Bool = false
+    @AppStorage(AppStorageKeys.hasSeenStudyExtrasPrompt) private var hasSeenStudyExtrasPrompt: Bool = false
+    @AppStorage(AppStorageKeys.lastProPromptDate) private var lastProPromptDate: String = ""
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasEverAddedWord) private var hasEverAddedWord: Bool = false
     @AppStorage(AppStorageKeys.hasSeenStreakPaywall) private var hasSeenStreakPaywall: Bool = false
@@ -43,6 +45,10 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.dailyLessonDoneDismissedDay) private var dailyLessonDoneDismissedDay: String = ""
 
     @State private var showFirstWords = false
+    @State private var showStudyExtrasPrompt = false
+    @State private var studyExtrasPromptQueued = false
+    @State private var showProInvite = false
+    @State private var proInviteQueued = false
     @State private var showSuggestedIntro = false
     @State private var showMotivationalPaywall = false
     @State private var pendingStreakPaywall = false
@@ -134,7 +140,7 @@ struct HomeView: View {
         }
         .tint(themeStore.mainAccentColor)
         .background(themeStore.appBg.ignoresSafeArea())
-        .tabBarMinimizeBehavior(store.words.isEmpty ? .never : .automatic)
+        .tabBarMinimizeBehavior(.never)
         .environmentObject(suggested)
         .environmentObject(tabBarVisibility)
         .onAppear {
@@ -175,6 +181,7 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showAddWordView, onDismiss: {
             sharedWord = ""
             checkSuggestionTrigger()
+            considerStudyExtrasPrompt()
         }) {
             AddWordView(initialWord: sharedWord, store: store)
                 .environmentObject(store)
@@ -185,6 +192,7 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showScanFromShare, onDismiss: {
             sharedExtractText = ""
+            considerStudyExtrasPrompt()
         }) {
             ScanWordsView(store: store, initialText: sharedExtractText)
                 .environmentObject(themeStore)
@@ -199,7 +207,9 @@ struct HomeView: View {
                 .environmentObject(languageStore)
                 .tint(themeStore.mainAccentColor)
         }
-        .fullScreenCover(isPresented: $showWordPacks) {
+        .fullScreenCover(isPresented: $showWordPacks, onDismiss: {
+            considerStudyExtrasPrompt()
+        }) {
             WordPacksDetailView()
                 .environmentObject(themeStore)
                 .environmentObject(languageStore)
@@ -248,7 +258,7 @@ struct HomeView: View {
                         StreakCalendarView()
                         DetailedStatsView(embedded: true)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, DesignSpacing.screenInset)
                     .padding(.bottom, 32)
                 }
                 .background(themeStore.appBg.ignoresSafeArea())
@@ -401,6 +411,7 @@ struct HomeView: View {
             }
 
             presentPendingBadgeCelebrationIfNeeded()
+            considerStudyExtrasPrompt()
         }
     }
 
@@ -444,6 +455,27 @@ struct HomeView: View {
             .environmentObject(themeStore)
             .environmentObject(store)
             .environmentObject(languageStore)
+        }
+        .fullScreenCover(isPresented: $showStudyExtrasPrompt) {
+            StudyExtrasPromptPage {
+                showStudyExtrasPrompt = false
+                hasSeenStudyExtrasPrompt = true
+            }
+            .environmentObject(themeStore)
+        }
+        .fullScreenCover(isPresented: $showProInvite) {
+            ProInvitePage(
+                onSeePro: {
+                    markProPromptSeen()
+                    showProInvite = false
+                    showPremiumFromLimit = true
+                },
+                onLater: {
+                    markProPromptSeen()
+                    showProInvite = false
+                }
+            )
+            .environmentObject(themeStore)
         }
         .overlay(alignment: .top) {
             if let toast = enrichmentToast {
@@ -699,20 +731,23 @@ struct HomeView: View {
                 }
             }
 
-            let currentStreak = WordsStore.computeCurrentStreak(from: store.words)
-            let streakMilestones = [7, 30, 100, 365]
-            for m in streakMilestones {
-                if currentStreak >= m, lastCelebratedStreak < m {
-                    lastCelebratedStreak = m
-                    if [7, 30, 100].contains(m) {
-                        badgeStore.markCelebrated(ids: ["streak.\(m)"])
+            if FeatureGates.streakEnabled {
+                let currentStreak = WordsStore.computeCurrentStreak(from: store.words)
+                let streakMilestones = [7, 30, 100, 365]
+                for m in streakMilestones {
+                    if currentStreak >= m, lastCelebratedStreak < m {
+                        lastCelebratedStreak = m
+                        if [7, 30, 100].contains(m) {
+                            badgeStore.markCelebrated(ids: ["streak.\(m)"])
+                        }
+                        activeMilestone = .streak(m)
+                        break
                     }
-                    activeMilestone = .streak(m)
-                    break
                 }
             }
 
             presentPendingBadgeCelebrationIfNeeded()
+            considerProInvite()
         }
         .onChange(of: store.revision) { _, _ in refreshCachedWordData() }
         .onChange(of: badgeStore.quizCompletions) { _, _ in presentPendingBadgeCelebrationIfNeeded() }
@@ -721,6 +756,8 @@ struct HomeView: View {
         .onChange(of: activeMilestone) { _, newValue in
             if newValue == nil {
                 presentPendingBadgeCelebrationIfNeeded()
+                considerStudyExtrasPrompt()
+                considerProInvite()
             }
         }
         }
@@ -778,6 +815,75 @@ struct HomeView: View {
 
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
+    }
+
+    private func considerStudyExtrasPrompt() {
+        guard !hasSeenStudyExtrasPrompt, !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
+        guard store.words.count >= StudyExtrasPrompt.wordThreshold else { return }
+        guard StudyExtrasPrompt.hasDisabledExtra else { return }
+        guard !studyExtrasCoverBlocked else { return }
+        studyExtrasPromptQueued = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.45))
+            studyExtrasPromptQueued = false
+            guard !hasSeenStudyExtrasPrompt, !showStudyExtrasPrompt else { return }
+            guard store.words.count >= StudyExtrasPrompt.wordThreshold else { return }
+            guard StudyExtrasPrompt.hasDisabledExtra else { return }
+            guard !studyExtrasCoverBlocked else { return }
+            showStudyExtrasPrompt = true
+        }
+    }
+
+    private func considerProInvite() {
+        guard !isPremium, !showProInvite, !proInviteQueued else { return }
+        guard hasSeenFirstWords || !store.words.isEmpty else { return }
+        guard hasSeenCoachMarks || !hasSeenFirstWords else { return }
+        guard !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
+        guard !studyExtrasStillDue else { return }
+        guard ProInvite.isDue(firstUse: UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? "", lastPrompt: lastProPromptDate) else { return }
+        guard !studyExtrasCoverBlocked else { return }
+        proInviteQueued = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.6))
+            proInviteQueued = false
+            guard !isPremium, !showProInvite else { return }
+            guard hasSeenFirstWords || !store.words.isEmpty else { return }
+            guard hasSeenCoachMarks || !hasSeenFirstWords else { return }
+            guard !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
+            guard !studyExtrasStillDue else { return }
+            guard ProInvite.isDue(firstUse: UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? "", lastPrompt: lastProPromptDate) else { return }
+            guard !studyExtrasCoverBlocked else { return }
+            showProInvite = true
+        }
+    }
+
+    private var studyExtrasStillDue: Bool {
+        !hasSeenStudyExtrasPrompt
+            && store.words.count >= StudyExtrasPrompt.wordThreshold
+            && StudyExtrasPrompt.hasDisabledExtra
+    }
+
+    private func markProPromptSeen() {
+        lastProPromptDate = DateFormatting.todayString
+    }
+
+    private var studyExtrasCoverBlocked: Bool {
+        showAddWordView
+            || showScanFromShare
+            || showWordPacks
+            || showDailyLesson
+            || showFirstWords
+            || showSuggestedIntro
+            || showCoachMarks
+            || showMotivationalPaywall
+            || showPremiumFromLimit
+            || showChallenges
+            || showStory
+            || showStreakCalendar
+            || showProInvite
+            || showStudyExtrasPrompt
+            || chatSceneTarget != nil
+            || activeMilestone != nil
     }
 
     private func checkSuggestionTrigger() {
@@ -867,18 +973,6 @@ private enum TabBarSlideFlag {
 }
 
 private final class SlidingTabBar: UITabBar {
-    private static var baseContentHeight: CGFloat?
-
-    override func sizeThatFits(_ size: CGSize) -> CGSize {
-        var fitted = super.sizeThatFits(size)
-        let inset = safeAreaInsets.bottom
-        let content = max(0, fitted.height - inset)
-        let base = max(Self.baseContentHeight ?? content, content)
-        Self.baseContentHeight = base
-        fitted.height = max(44, base - 10) + inset
-        return fitted
-    }
-
     static func installIcons(on bar: UITabBar) {
         guard let items = bar.items else { return }
         let tabs: [HomeView.Tab] = [.home, .list, .practice, .add]

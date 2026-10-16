@@ -113,6 +113,12 @@ Feedback colors: Practice correct/wrong use `successStrong` / `errorStrong` = th
 
 Empty Practice / not-enough / locked lesson use `PracticeEmptyContent` with a strong **Add a word** CTA (`NotificationCenter.openAddWord`).
 
+Practice results (`QuizCompletionView` via `PracticeView.showingResults`) hide the tab bar (`TabBarVisibility.hide`); closing or starting another round shows it again.
+
+### Dictionary tags and reactions
+
+`TagsView` on Dictionary shows tag chips, then circular chips for every `StoredWord.reaction` in use. Tap a reaction to filter; search also matches `reaction` (and `tag`). Sort / edit / add controls are the same height as tags (`DesignChip.circle`) but stay circular. Card-corner reactions use the same `DesignChip` diameter and emoji size. Glass shapes include `.circle`.
+
 ### Capture / Scan
 
 - **Scan toolbar**: camera / library (`ScanWordsView`).
@@ -126,12 +132,13 @@ Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSc
 
 ### Story
 
-`generateStory` / `/story` — short story from a handful of dictionary words (`ClaudeStory.swift`). Gated by `DailyLimitsManager.canGenerateStory`.
+`generateStory` / `/story` — short story from a handful of dictionary words (`ClaudeStory.swift`). The worker asks for 2 of the offered words and retries once if fewer land. Today's story is kept (`StoryArchive`) and shown again until New story. Tapping a highlighted word, including an inflected form, shows its dictionary translation and can play it. Each highlighted word gets a meaning question in turn. After the last answer, correct pairs sit above the missed ones, in the same rows as Practice results. A right answer pulls an introduced card's review to tomorrow when it was further out, a miss brings it back in about 10 minutes. Gated by `DailyLimitsManager.canGenerateStory` (2/day free).
 
 ### Streaks, badges, challenges
 
-`DayStreak` (+ Pro streak freeze), `DailyChallengeManager`.  
-Home shows `MilestoneCelebrationView` for word-count / streak / daily-goal milestones as a full page, same layout as `SuggestedWordsIntroView`, not a dialog card. Adding every word from a scan or word pack opens `WordsAddedPage`. Feature Flags pushes these pages, plus alerts and onboarding screens.  
+`DayStreak` (+ Pro streak freeze: up to 2 missed days in a rolling 7-day window, only when the gap sits between study days), `DailyChallengeManager`.  
+**Release hide:** `FeatureGates.streakEnabled` is `false`. Day streak, freeze, the fire badge, streak badges, streak notifications, and the streak stats stay in code and stay off screen. The Home week strip is back and opens the calendar: studied days only, no streak count and no freeze. Quiz combo streaks are separate and still show.  
+Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts and onboarding screens.  
 `BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
 ### CSV / dictionary settings
@@ -178,12 +185,12 @@ Free checks are always `isPremium || DailyLimitsManager.can…`.
 | Feature | Free | Pro / active trial |
 |---------|------|--------------------|
 | AI translations | **10/day** first 7 days after install, then **5/day** | Unlimited |
-| TTS | **10/day** | Unlimited |
+| TTS | **10/day**. Replaying the same text the same day does not spend another play | Unlimited |
 | Suggestion fetches | **4/day** | Unlimited |
-| Photo / text scan | **1/day** | Unlimited |
+| Photo / text scan | **3/day** | Unlimited |
 | Story / chat scene | Daily caps via `canGenerateStory` / `canStartScene` | Unlimited |
 | New words into lesson | **12/day** (all users) | same |
-| Themes / seasonal / streak freeze | Default theme only | Unlocked |
+| Themes / seasonal / streak freeze | Default theme only | Themes and seasonal unlocked. Streak freeze stays hidden while `FeatureGates.streakEnabled` is false |
 
 Optional **7-day PRO trial** (button on paywall) sets `isPremium` via `hasUsedTrial` + `trialStartDate` (+ Keychain). That is separate from the soft translation ramp above.
 
@@ -196,7 +203,7 @@ Worker IP limits in `guard.ts` are abuse protection only — not the product pay
 ## UI / design conventions
 
 - Fonts: bundled **Poppins** (registered in `DrowordApp`).
-- Spacing / radius: `Helpers/DesignTokens.swift` (`DesignSpacing`, `DesignRadius`).
+- Spacing / radius: `Helpers/DesignTokens.swift` (`DesignSpacing`, `DesignRadius`, `DesignChip` for tag-row circles / reaction emoji size).
 - Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor`, `cleanCard(themeStore:)`, `modernSheet()`.
 - Theme-aware radii: `themeStore.cardRadius` (blocks), `controlRadius` (primary buttons), `chipRadius` (tags/chips). Prefer these over hard-coded `DesignRadius.*` on content cards.
 - Buttons: `duo3DStyle` / `duo3DSecondaryStyle` + `Duo3DButtonStyle` (`Helpers/DuoButtonStyle.swift`) for primary/secondary CTAs; tags via `TagBadge` / `TagsView` Duo chips. `PressableButtonStyle` only where Duo chrome does not apply.
@@ -231,7 +238,7 @@ Picker flags are drawn illustrations (`LanguageFlagView`), used by `LanguageCube
 
 ### App icons
 
-`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, face-style quote variants (`hearts`, `glasses`, `dizzy`, `sleepy`), or the Poppins `Droword` wordmark (`word*` cases); keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height; do not shrink it repeatedly in `sizeThatFits`. The rest of the app uses SF Symbols.
+`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, or the Poppins `Droword` wordmark (`word*` cases). Face-style variants (`hearts`, `glasses`, `dizzy`, `sleepy`) stay in the enum for artwork fallback and are not shown in the customization row. Keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height: `.tabBarMinimizeBehavior(.never)` and do not shrink height in `SlidingTabBar.sizeThatFits`. The rest of the app uses SF Symbols.
 
 ### Page indicators and theme picker
 
@@ -272,8 +279,9 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
 14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar artwork lives in `MenuBarIcons`.
 15. **PRO sparkle** — static. No bounce or pulse. Home keeps the plain blue sparkle. Only the paywall plaque is themed (accent, Duo lip, glass on Liquid Glass).
-16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales translate that Russian, including the short and odd lines. Do not put back English slang that says something else.
+16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales (en, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant) translate that Russian, including the short and odd lines. Streak notification pool only when `FeatureGates.streakEnabled`. Do not put back English slang that says something else.
 17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
+18. **Dictionary reactions** — used card reactions appear as circular filter chips after tags; searching an emoji finds those cards.
 
 ---
 
@@ -323,4 +331,5 @@ cd droword-worker && npm run deploy                # after wrangler secrets
 - When adding user-facing strings, update `Localizable.xcstrings` (or use `String(localized:)` consistently).
 - Commit only when the user asks; never force-push or rewrite git history.
 - Before a push the user asked for: update this file and `README.md` if behavior or the map changed, remove code comments from the diff, then push. Do not push with comments left in source. XML comments in `Droword.entitlements` that keep iCloud off for a Personal Team stay.
+- After substantive edits, follow `.cursor/rules/self-review.mdc`: re-read the diff, fix issues, and for larger changes spawn a review agent. Bugbot only when the user asks.
 - If unsure where a feature lives, search `Droword/` and this map before creating new top-level folders.

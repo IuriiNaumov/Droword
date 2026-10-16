@@ -64,17 +64,27 @@ struct ScanWordsView: View {
                 if isExtracting {
                     extractingSection
                 } else if extractedWords.isEmpty {
-                    ScrollView(showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("Scan words")
-                                .sheetTitle()
-                                .accessibilityLabel(Text("Scan words from photo"))
+                    VStack(spacing: 0) {
+                        ScrollView(showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 20) {
+                                Text("Scan words")
+                                    .sheetTitle()
+                                    .accessibilityLabel(Text("Scan words from photo"))
 
-                            photoSelectionSection
+                                photoSelectionSection
+                            }
+                            .padding(.horizontal, DesignSpacing.screenInset)
+                            .padding(.bottom, 12)
+                            .iPadContentWidth(600)
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 20)
-                        .iPadContentWidth(600)
+
+                        Text("Photos are sent to servers for scanning. Words are not stored on the server after scanning.")
+                            .font(themeStore.regular(11))
+                            .foregroundStyle(themeStore.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, DesignSpacing.screenInset)
+                            .padding(.bottom, 12)
+                            .iPadContentWidth(600)
                     }
                 } else if visibleWords.isEmpty && addedCount > 0 {
                     WordsAddedPage(count: addedCount) {
@@ -83,7 +93,7 @@ struct ScanWordsView: View {
                 } else {
                     ScrollView(showsIndicators: false) {
                         resultsSection
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, DesignSpacing.screenInset)
                             .padding(.bottom, 20)
                             .iPadContentWidth(600)
                     }
@@ -145,35 +155,31 @@ struct ScanWordsView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 20)
 
-            Button {
-                Haptics.lightImpact()
-                startScan(camera: true)
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "camera")
-                    Text("Take a photo")
+            VStack(spacing: DesignSpacing.buttonGap) {
+                Button {
+                    Haptics.lightImpact()
+                    startScan(camera: true)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "camera")
+                        Text("Take a photo")
+                    }
+                    .duo3DStyle(themeStore.mainAccentColor)
                 }
-                .duo3DStyle(themeStore.mainAccentColor)
-            }
-            .buttonStyle(Duo3DButtonStyle())
+                .buttonStyle(Duo3DButtonStyle())
 
-            Button {
-                Haptics.lightImpact()
-                startScan(camera: false)
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "photo.on.rectangle")
-                    Text("Choose from library")
+                Button {
+                    Haptics.lightImpact()
+                    startScan(camera: false)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "photo.on.rectangle")
+                        Text("Choose from library")
+                    }
+                    .duo3DSecondaryStyle()
                 }
-                .duo3DSecondaryStyle()
+                .buttonStyle(Duo3DButtonStyle())
             }
-            .buttonStyle(Duo3DButtonStyle())
-
-            Text("Photos are sent to servers for scanning. Words are not stored on the server after scanning.")
-                .font(themeStore.regular(13))
-                .foregroundStyle(themeStore.secondaryText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 12)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -275,7 +281,7 @@ struct ScanWordsView: View {
                 }
                 .font(themeStore.bold(17))
                 .foregroundStyle(themeStore.accentBlue)
-                .padding(.vertical, 16)
+                .padding(.vertical, DesignSpacing.buttonVertical)
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)

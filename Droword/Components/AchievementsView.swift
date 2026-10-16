@@ -13,8 +13,12 @@ struct AchievementsView: View {
         GridItem(.flexible(), spacing: 12)
     ]
 
+    private var visibleBadges: [BadgeDefinition] {
+        BadgeStore.allBadges.filter { FeatureGates.streakEnabled || $0.category != .streak }
+    }
+
     private var unlockedCount: Int {
-        BadgeStore.allBadges.filter {
+        visibleBadges.filter {
             badgeStore.isUnlocked($0, totalWords: store.totalWordsAdded, currentStreak: currentStreak)
         }.count
     }
@@ -26,7 +30,7 @@ struct AchievementsView: View {
                     .sheetTitle()
 
                 VStack(spacing: 6) {
-                    Text("\(unlockedCount)/\(BadgeStore.allBadges.count)")
+                    Text("\(unlockedCount)/\(visibleBadges.count)")
                         .font(themeStore.bold(32))
                         .foregroundStyle(themeStore.mainText)
 
@@ -35,14 +39,14 @@ struct AchievementsView: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
 
-                ForEach(BadgeCategory.allCases, id: \.rawValue) { category in
+                ForEach(BadgeCategory.allCases.filter { FeatureGates.streakEnabled || $0 != .streak }, id: \.rawValue) { category in
                     let badges = BadgeStore.allBadges.filter { $0.category == category }
                     if !badges.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category.title)
                                 .font(themeStore.bold(18))
                                 .foregroundStyle(.primary)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, DesignSpacing.screenInset)
 
                             LazyVGrid(columns: columns, spacing: 12) {
                                 ForEach(badges) { badge in
@@ -53,7 +57,7 @@ struct AchievementsView: View {
                                     )
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, DesignSpacing.screenInset)
                         }
                     }
                 }

@@ -55,7 +55,7 @@ struct PremiumView: View {
         let pro: LocalizedStringKey
     }
 
-    private static let featureRows: [FeatureRow] = [
+    private static let baseFeatureRows: [FeatureRow] = [
         FeatureRow(id: 0, title: "AI translations", free: "\(DailyLimitsManager.maxFreeTranslations) / day", pro: "Unlimited"),
         FeatureRow(id: 1, title: "Voice pronunciation", free: "\(DailyLimitsManager.maxFreeTTS) / day", pro: "Unlimited"),
         FeatureRow(id: 2, title: "Word suggestions", free: "\(DailyLimitsManager.maxFreeSuggestionFetches) / day", pro: "Unlimited"),
@@ -64,8 +64,12 @@ struct PremiumView: View {
         FeatureRow(id: 5, title: "Photo scans", free: "\(DailyLimitsManager.maxFreePhotoScans) / day", pro: "Unlimited"),
         FeatureRow(id: 6, title: "Themes", free: "Default only", pro: "All themes"),
         FeatureRow(id: 7, title: "Seasonal effects", free: "—", pro: "All effects"),
-        FeatureRow(id: 8, title: "Streak freeze", free: "—", pro: "1 / week"),
+        FeatureRow(id: 8, title: "Streak freeze", free: "—", pro: "2 / week"),
     ]
+
+    private var featureRows: [FeatureRow] {
+        Self.baseFeatureRows.filter { FeatureGates.streakEnabled || $0.id != 8 }
+    }
 
     var body: some View {
         Group {
@@ -186,12 +190,12 @@ struct PremiumView: View {
                     .scaleEffect(appeared ? 1.0 : 0.92)
                     .opacity(appeared ? 1.0 : 0)
 
-                Text("Learn without limits")
+                Text("Add without a daily cap")
                     .font(themeStore.bold(28))
                     .foregroundStyle(themeStore.mainText)
                     .multilineTextAlignment(.center)
 
-                Text("Unlimited AI translations, voice, stories, and more")
+                Text("Unlimited AI cards, scans, voice, and stories")
                     .font(themeStore.regular(15))
                     .foregroundStyle(themeStore.secondaryText)
                     .multilineTextAlignment(.center)
@@ -212,13 +216,13 @@ struct PremiumView: View {
                     .frame(width: 80)
                 Text("PRO")
                     .font(themeStore.bold(13))
-                    .foregroundStyle(themeStore.accentBlue)
+                    .foregroundStyle(themeStore.mainAccentColor)
                     .frame(width: 80)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 12)
 
-            ForEach(Self.featureRows) { row in
+            ForEach(featureRows) { row in
                 VStack(spacing: 0) {
                     Divider()
                     HStack {
@@ -234,7 +238,7 @@ struct PremiumView: View {
 
                         Text(row.pro)
                             .font(themeStore.medium(13))
-                            .foregroundStyle(themeStore.accentBlue)
+                            .foregroundStyle(themeStore.mainAccentColor)
                             .frame(width: 80)
                     }
                     .padding(.vertical, 12)
@@ -242,6 +246,13 @@ struct PremiumView: View {
                 }
             }
         }
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.mainAccentColor.opacity(0.10))
+        )
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .padding(.horizontal, 16)
         .opacity(appeared ? 1.0 : 0)
         .offset(y: appeared ? 0 : 12)
     }
@@ -354,13 +365,13 @@ struct PremiumView: View {
             HStack {
                 ZStack {
                     Circle()
-                        .fill(selectedPlan == plan ? themeStore.accentBlue : Color(.separator).opacity(0.35))
+                        .fill(selectedPlan == plan ? themeStore.mainAccentColor : Color(.separator).opacity(0.35))
                         .frame(width: 22, height: 22)
 
                     if selectedPlan == plan {
                         Circle()
-                            .fill(themeStore.accentBlue)
-                            .frame(width: 14, height: 14)
+                            .fill(themeStore.appBg)
+                            .frame(width: 8, height: 8)
                     }
                 }
 
@@ -373,10 +384,10 @@ struct PremiumView: View {
                         if let badge {
                             Text(badge)
                                 .font(themeStore.bold(10))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(themeStore.appBg)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Capsule().fill(Color("AccentGreen")))
+                                .background(Capsule().fill(themeStore.mainAccentColor))
                         }
                     }
                     Text(detail)
@@ -395,7 +406,7 @@ struct PremiumView: View {
                 RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous)
                     .fill(
                         selectedPlan == plan
-                            ? themeStore.accentBlue.opacity(0.12)
+                            ? themeStore.mainAccentColor.opacity(0.14)
                             : themeStore.cardBg.opacity(0.85)
                     )
             )
@@ -421,7 +432,7 @@ struct PremiumView: View {
                         .font(.system(size: 16, weight: .semibold))
                     Text("Start 7-Day Free Trial")
                 }
-                .duo3DStyle(themeStore.accentGold)
+                .duo3DStyle(themeStore.mainAccentColor)
             }
             .buttonStyle(Duo3DButtonStyle())
             .accessibilityLabel(Text("Start 7-day free trial"))
@@ -451,7 +462,7 @@ struct PremiumView: View {
                         Text("Subscribe")
                     }
                 }
-                .duo3DStyle(themeStore.accentBlue, isDisabled: storeKit.isLoading)
+                .duo3DStyle(themeStore.mainAccentColor, isDisabled: storeKit.isLoading)
             }
             .buttonStyle(Duo3DButtonStyle())
             .disabled(storeKit.isLoading)

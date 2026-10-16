@@ -14,6 +14,26 @@ enum DesignSpacing {
     static let lg: CGFloat = 20
     static let xl: CGFloat = 24
     static let section: CGFloat = 28
+    static let screenInset: CGFloat = 24
+    static let titleTop: CGFloat = 12
+    static let titleBottom: CGFloat = 12
+    static let buttonGap: CGFloat = 8
+    static let buttonVertical: CGFloat = 16
+}
+
+enum DesignChip {
+    static let circle: CGFloat = 40
+    static let circleCompact: CGFloat = 34
+    static let emoji: CGFloat = 20
+    static let emojiCompact: CGFloat = 17
+
+    static func circleSize(compact: Bool) -> CGFloat {
+        compact ? circleCompact : circle
+    }
+
+    static func emojiSize(compact: Bool) -> CGFloat {
+        compact ? emojiCompact : emoji
+    }
 }
 
 enum DesignMotion {

@@ -32,8 +32,8 @@ struct WhatsNewView: View {
         ),
         WhatsNewFeature(
             icon: "trophy",
-            title: "Achievements & Streaks",
-            description: "Track your progress with badges, daily challenges and streak calendar."
+            title: "Achievements",
+            description: "Track your progress with badges and daily challenges."
         ),
         WhatsNewFeature(
             icon: "rectangle.stack",
@@ -58,7 +58,7 @@ struct WhatsNewView: View {
                         featureRow(feature)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSpacing.screenInset)
             }
             .padding(.bottom, 40)
             .iPadContentWidth(600)
