@@ -443,6 +443,7 @@ struct NotificationPreferencesForm: View {
 
 struct OnboardingNotificationsPage: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @AppStorage(AppStorageKeys.notifGlobalEnabled) private var globalEnabled: Bool = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -466,6 +467,14 @@ struct OnboardingNotificationsPage: View {
                 }
                 .padding(.top, 54)
                 .padding(.bottom, 12)
+        }
+        .onAppear {
+            UNUserNotificationCenter.current().getNotificationSettings { settings in
+                guard settings.authorizationStatus == .notDetermined else { return }
+                DispatchQueue.main.async {
+                    globalEnabled = false
+                }
+            }
         }
     }
 }

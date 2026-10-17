@@ -193,11 +193,17 @@ struct DrowordApp: App {
         let migrated = d.bool(forKey: "notifSettingsMigratedV2")
         guard !migrated else { return }
 
-        let oldDailyReminders = d.object(forKey: AppStorageKeys.notifDailyReminders) as? Bool ?? true
-        let oldStreakMilestones = d.object(forKey: AppStorageKeys.notifStreakMilestones) as? Bool ?? true
+        if d.object(forKey: AppStorageKeys.notifDailyReminders) != nil {
+            let oldDailyReminders = d.bool(forKey: AppStorageKeys.notifDailyReminders)
+            let oldStreakMilestones = d.object(forKey: AppStorageKeys.notifStreakMilestones) as? Bool ?? true
+            d.set(oldDailyReminders, forKey: AppStorageKeys.notifGlobalEnabled)
+            d.set(oldDailyReminders, forKey: AppStorageKeys.notifDailyReminderEnabled)
+            d.set(oldStreakMilestones, forKey: AppStorageKeys.notifStreakMilestones)
+        } else {
+            d.set(false, forKey: AppStorageKeys.notifGlobalEnabled)
+            d.set(true, forKey: AppStorageKeys.notifDailyReminderEnabled)
+        }
 
-        d.set(oldDailyReminders, forKey: AppStorageKeys.notifGlobalEnabled)
-        d.set(oldDailyReminders, forKey: AppStorageKeys.notifDailyReminderEnabled)
         d.set(12, forKey: AppStorageKeys.notifDailyReminderHour)
         d.set(0, forKey: AppStorageKeys.notifDailyReminderMinute)
         d.set(false, forKey: AppStorageKeys.notifVocabEnabled)
@@ -209,7 +215,6 @@ struct DrowordApp: App {
         d.set(0, forKey: AppStorageKeys.notifVocabStartMinute)
         d.set(18, forKey: AppStorageKeys.notifVocabEndHour)
         d.set(0, forKey: AppStorageKeys.notifVocabEndMinute)
-        d.set(oldStreakMilestones, forKey: AppStorageKeys.notifStreakMilestones)
 
         d.set(true, forKey: "notifSettingsMigratedV2")
     }

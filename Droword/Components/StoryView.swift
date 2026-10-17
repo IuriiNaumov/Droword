@@ -47,6 +47,7 @@ struct StoryView: View {
     @State private var isLoading = false
     @State private var loadingLine = DuoChaosCopy.storyWriting()
     @State private var errorMessage: String?
+    @State private var errorCanRetry = true
     @State private var showTranslation = false
     @State private var showPremiumWall = false
     @State private var storySeeds: [StorySeed] = []
@@ -413,13 +414,15 @@ struct StoryView: View {
                 .font(themeStore.regular(15))
                 .foregroundStyle(themeStore.secondaryText)
                 .multilineTextAlignment(.center)
-            Button {
-                Task { await load() }
-            } label: {
-                Text(DuoChaosCopy.storyTryAgain())
-                    .duo3DStyle(themeStore.mainAccentColor)
+            if errorCanRetry {
+                Button {
+                    Task { await load() }
+                } label: {
+                    Text(DuoChaosCopy.storyTryAgain())
+                        .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
             }
-            .buttonStyle(Duo3DButtonStyle())
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -499,17 +502,20 @@ struct StoryView: View {
             preferredTags: LearningProfileStore.shared.preferredTagNames
         )
         guard seeds.count >= 3 else {
-            errorMessage = String(localized: "Add a few more words first, then I can write you a story.")
+            errorCanRetry = false
+            errorMessage = String(localized: "Add a few more words first to make a story.")
             return
         }
         guard isPremium || DailyLimitsManager.canGenerateStory else {
             showPremiumWall = true
             if story == nil {
+                errorCanRetry = true
                 errorMessage = String(localized: "You've used today's free stories. Upgrade to PRO for unlimited.")
             }
             return
         }
         errorMessage = nil
+        errorCanRetry = true
         showTranslation = false
         withAnimation { isLoading = true }
         do {
@@ -529,6 +535,7 @@ struct StoryView: View {
             }
         } catch {
             withAnimation { isLoading = false }
+            errorCanRetry = true
             let isOffline = !NetworkMonitor.shared.isConnected
                 || (error as? APIError).map { if case .noConnection = $0 { return true }; return false } ?? false
             if isOffline {
