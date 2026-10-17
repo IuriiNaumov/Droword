@@ -273,12 +273,15 @@ struct AppCustomizationView: View {
                 Text("Mode")
                     .font(themeStore.regular(17))
                     .foregroundStyle(themeStore.mainText)
+                    .lineLimit(1)
 
-                Spacer()
+                Spacer(minLength: 8)
 
                 Text(appearance.title)
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 DisclosureChevron()
             }
@@ -305,16 +308,22 @@ struct AppCustomizationView: View {
                     Text(title)
                         .font(themeStore.regular(17))
                         .foregroundStyle(themeStore.mainText)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .layoutPriority(1)
                     if showsPro {
                         ProPillBadge()
                     }
                 }
 
-                Spacer()
+                Spacer(minLength: 8)
 
                 Text(value)
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .layoutPriority(0)
 
                 DisclosureChevron()
             }

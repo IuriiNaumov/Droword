@@ -17,9 +17,9 @@ final class ThemeStore: ObservableObject {
 
         var title: String {
             switch self {
-            case .colorful: return "Droword"
-            case .duolingo: return "Green Owl"
-            case .glass: return "Liquid Glass"
+            case .colorful: return String(localized: "Droword")
+            case .duolingo: return String(localized: "Green Owl")
+            case .glass: return String(localized: "Liquid Glass")
             case .custom: return String(localized: "Custom")
             }
         }

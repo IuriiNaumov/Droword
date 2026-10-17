@@ -60,7 +60,7 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .sun: return String(localized: "Sun")
         case .ocean: return String(localized: "Ocean")
         case .forest: return String(localized: "Forest")
-        case .glass: return "Liquid Glass"
+        case .glass: return String(localized: "Liquid Glass")
         case .pride: return "Pride"
         case .wordInk: return String(localized: "Ink")
         case .wordPaper: return String(localized: "Paper")

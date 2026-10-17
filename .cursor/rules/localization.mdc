@@ -26,11 +26,24 @@ If the string depends on a count (`%lld`, `%d`, “N words”, days, badges, etc
 
 Look at existing plural keys in `Localizable.xcstrings` (e.g. `"%lld new words"`) and mirror that shape.
 
+## Line breaks and non-breaking spaces
+
+UI labels wrap by spaces. Avoid orphan letters and ugly mid-phrase breaks:
+
+- Put a **non-breaking space** (`\u{00A0}`, NBSP) between words that must stay on one line: number + unit (`7\u{00A0}días`, `%lld\u{00A0}words`), short title pairs (`Font\u{00A0}size`, `Efectos\u{00A0}estacionales`), name + short word (`App\u{00A0}customization`).
+- Prefer a shorter translation for narrow trailing values (On/Off → `Sí`/`No`, `Вкл`/`Выкл`) instead of long words that wrap to a single letter (`Desactivad` / `o`).
+- Compact chrome buttons (`Done`, `Select`, `Skip`, `Finish`, `Got it`, chip CTAs): keep labels short in every locale. Prefer `OK` / `Listo` / `Fatto` / `Fertig` / `Готово` over long forms like French `Terminé` or German `Überspringen` when the control is a small chip.
+- On settings rows with a trailing value, keep `lineLimit(1)` (and light `minimumScaleFactor` if needed) on the value; let the title wrap or shrink first.
+- Soft hyphen (`\u{00AD}`) only when a long single word must break mid-word on purpose — prefer shorter copy first.
+
+In Swift string literals: `"Font\u{00A0}size"`. In the string catalog JSON the same Unicode character is fine.
+
 ## Do not
 
 - Ship a new `Text("…")` / `LocalizedStringKey` without catalog entries for every locale.
 - Reuse an old key whose English meaning changed without updating all locales.
 - Skip plural variants and rely on English “word/words” only.
 - Translate worker API prompts or code comments as product UI (UI only).
+- Leave long On/Off-style labels that orphan one letter on the next line in Romance languages.
 
 Share extension `.lproj` files: update them when the string is also shown in the Share extension.

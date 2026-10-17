@@ -103,34 +103,15 @@ struct SuggestedWordsView: View {
                                             suggested.skip(word)
                                         }
                                     } label: {
-                                        HStack(spacing: 6) {
-                                            Image(systemName: "checkmark.circle")
-                                            Text("Already know")
-                                        }
-                                        .font(themeStore.regular(13))
-                                        .foregroundStyle(accent)
-                                        .padding(.vertical, themeStore.isDuolingo && !themeStore.isGlass ? 7 : 0)
-                                        .padding(.horizontal, themeStore.isDuolingo && !themeStore.isGlass ? 14 : 0)
-                                        .background {
-                                            if themeStore.isDuolingo && !themeStore.isGlass {
-                                                ZStack {
-                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                        .fill(Color(hex: "#AFAFAF").opacity(0.45))
-                                                        .offset(y: 3)
-                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                        .fill(themeStore.controlFace)
-                                                }
-                                            }
-                                        }
-                                        .overlay {
-                                            if themeStore.isDuolingo && !themeStore.isGlass {
-                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                    .strokeBorder(themeStore.dividerColor, lineWidth: 2)
-                                            }
-                                        }
-                                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 3 : 0)
+                                        Text("Already know")
+                                            .font(themeStore.medium(13))
+                                            .foregroundStyle(themeStore.mainText)
+                                            .padding(.vertical, 6)
+                                            .padding(.horizontal, 12)
+                                            .background(themeStore.secondaryButtonBg)
+                                            .clipShape(Capsule())
                                     }
-                                    .buttonStyle(Duo3DButtonStyle())
+                                    .buttonStyle(.plain)
                                 }
                                 .padding(.top, 10)
                             }

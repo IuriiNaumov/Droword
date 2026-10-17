@@ -138,7 +138,7 @@ Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSc
 
 `DayStreak` (+ Pro streak freeze: up to 2 missed days in a rolling 7-day window, only when the gap sits between study days), `DailyChallengeManager`.  
 **Release hide:** `FeatureGates.streakEnabled` is `false`. Day streak, freeze, the fire badge, streak badges, streak notifications, and the streak stats stay in code and stay off screen. The Home week strip is back and opens the calendar: studied days only, no streak count and no freeze. Quiz combo streaks are separate and still show.  
-Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts and onboarding screens.  
+Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts and onboarding screens.  
 `BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
 ### CSV / dictionary settings
@@ -204,7 +204,7 @@ Worker IP limits in `guard.ts` are abuse protection only — not the product pay
 
 - Fonts: bundled **Poppins** (registered in `DrowordApp`).
 - Spacing / radius: `Helpers/DesignTokens.swift` (`DesignSpacing`, `DesignRadius`, `DesignChip` for tag-row circles / reaction emoji size).
-- Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor` for CTAs. Large empty/soft-cover heroes use `themeStore.iconAccent` (Droword `#6A3AC4`, Green Owl blue, Glass purple, Custom purple). Small settings/menu icons stay `mainText` or the rainbow `iconBlue` / `iconGreen` / … tokens. Soft-cover pages: content vertically centered, CTAs pinned to the bottom. `cleanCard(themeStore:)`, `modernSheet()`.
+- Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor` for CTAs. Palette titles (`Droword`, `Green Owl`, `Liquid Glass`, `Custom`) and subtitles are localized via `String(localized:)` — brand name **Droword** stays Droword in every locale. Large empty/soft-cover heroes use `themeStore.iconAccent` (Droword `#6A3AC4`, Green Owl blue, Glass purple, Custom purple). Small settings/menu icons stay `mainText` or the rainbow `iconBlue` / `iconGreen` / … tokens. Soft-cover pages: content vertically centered, CTAs pinned to the bottom. `cleanCard(themeStore:)`, `modernSheet()`.
 - Theme-aware radii: `themeStore.cardRadius` (blocks), `controlRadius` (primary buttons), `chipRadius` (tags/chips). Prefer these over hard-coded `DesignRadius.*` on content cards.
 - Buttons: `duo3DStyle` / `duo3DSecondaryStyle` + `Duo3DButtonStyle` (`Helpers/DuoButtonStyle.swift`) for primary/secondary CTAs; tags via `TagBadge` / `TagsView` Duo chips. `PressableButtonStyle` only where Duo chrome does not apply.
 - Empty states: `EmptyListView` / `PracticeEmptyContent` — include tip + **Add** CTA when the user can fix emptiness by adding words.
@@ -307,6 +307,8 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 | Settings / flags | `SettingsView`, `FeatureFlagsView`, `AppStorageKeys` |
 | Notifications | `NotificationManager`, `NotificationCopy`, `DrowordApp` |
 | Themes / Duo chrome | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |
+| Home soft covers | `HomeSoftCover`, `HomeView` queue (`enqueueSoftCover`) |
+| Haptics copy | `HapticFeel`, `HapticSettingsView`, `Localizable.xcstrings` |
 | Language pair / flags | `LanguageCatalog`, `LanguageFlagView`, `LanguageCube` |
 | App icons | `AppIconStyle.customizationCases`, `AppCustomizationView` |
 | Seasonal | `SeasonalOverlayView`, season components |

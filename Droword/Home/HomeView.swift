@@ -44,18 +44,12 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
     @AppStorage(AppStorageKeys.dailyLessonDoneDismissedDay) private var dailyLessonDoneDismissedDay: String = ""
 
-    @State private var showFirstWords = false
-    @State private var showStudyExtrasPrompt = false
-    @State private var studyExtrasPromptQueued = false
-    @State private var showProInvite = false
-    @State private var proInviteQueued = false
-    @State private var showSuggestedIntro = false
-    @State private var showMotivationalPaywall = false
+    @State private var softCoverQueue: [HomeSoftCover] = []
+    @State private var presentedSoftCover: HomeSoftCover?
     @State private var pendingStreakPaywall = false
     @State private var showChallenges = false
     @State private var showWordPacks = false
     @State private var showPremiumFromLimit = false
-    @State private var showCoachMarks = false
     @State private var enrichmentToast: String?
     @State private var copiedToast = false
     @State private var copiedToastToken = 0
@@ -182,6 +176,7 @@ struct HomeView: View {
             sharedWord = ""
             checkSuggestionTrigger()
             considerStudyExtrasPrompt()
+            presentNextSoftCoverIfNeeded()
         }) {
             AddWordView(initialWord: sharedWord, store: store)
                 .environmentObject(store)
@@ -193,6 +188,7 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showScanFromShare, onDismiss: {
             sharedExtractText = ""
             considerStudyExtrasPrompt()
+            presentNextSoftCoverIfNeeded()
         }) {
             ScanWordsView(store: store, initialText: sharedExtractText)
                 .environmentObject(themeStore)
@@ -209,6 +205,7 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showWordPacks, onDismiss: {
             considerStudyExtrasPrompt()
+            presentNextSoftCoverIfNeeded()
         }) {
             WordPacksDetailView()
                 .environmentObject(themeStore)
@@ -216,18 +213,16 @@ struct HomeView: View {
                 .environmentObject(store)
                 .tint(themeStore.mainAccentColor)
         }
-        .fullScreenCover(isPresented: $showPremiumFromLimit) {
-            PremiumView(asWall: true)
-                .environmentObject(themeStore)
-                .tint(themeStore.mainAccentColor)
-        }
-        .fullScreenCover(isPresented: $showMotivationalPaywall) {
+        .fullScreenCover(isPresented: $showPremiumFromLimit, onDismiss: {
+            presentNextSoftCoverIfNeeded()
+        }) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
                 .tint(themeStore.mainAccentColor)
         }
         .fullScreenCover(isPresented: $showDailyLesson, onDismiss: {
             refreshCachedWordData()
+            presentNextSoftCoverIfNeeded()
         }) {
             DailyLessonSessionView(
                 plan: DailyLessonBuilder.plan(
@@ -365,7 +360,7 @@ struct HomeView: View {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(2))
                 hasSeenPerfectQuizPaywall = true
-                showMotivationalPaywall = true
+                enqueueSoftCover(.motivationalPaywall)
             }
         }
         .onChange(of: pendingStreakPaywall) { _, pending in
@@ -374,18 +369,13 @@ struct HomeView: View {
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(0.5))
                 hasSeenStreakPaywall = true
-                showMotivationalPaywall = true
+                enqueueSoftCover(.motivationalPaywall)
             }
         }
         .onChange(of: suggested.suggestedWords.count) { _, newCount in
             guard newCount > 0, !hasSeenSuggestedIntro else { return }
             hasSeenSuggestedIntro = true
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(0.5))
-                withAnimation(.easeOut(duration: 0.3)) {
-                    showSuggestedIntro = true
-                }
-            }
+            enqueueSoftCover(.suggestedIntro)
         }
         .onChange(of: store.words.count) { oldValue, newValue in
             guard newValue > oldValue else { return }
@@ -435,51 +425,12 @@ struct HomeView: View {
                 if wasStreak && !isPremium && !hasSeenStreakPaywall {
                     pendingStreakPaywall = true
                 }
+                presentNextSoftCoverIfNeeded()
             }
             .environmentObject(themeStore)
         }
-        .fullScreenCover(isPresented: $showSuggestedIntro) {
-            SuggestedWordsIntroView {
-                showSuggestedIntro = false
-            }
-            .environmentObject(themeStore)
-        }
-        .fullScreenCover(isPresented: $showCoachMarks) {
-            CoachMarkView(steps: coachMarkSteps) {
-                showCoachMarks = false
-                hasSeenCoachMarks = true
-            }
-            .environmentObject(themeStore)
-        }
-        .fullScreenCover(isPresented: $showFirstWords) {
-            FirstWordsView {
-                showFirstWords = false
-                hasSeenFirstWords = true
-            }
-            .environmentObject(themeStore)
-            .environmentObject(store)
-            .environmentObject(languageStore)
-        }
-        .fullScreenCover(isPresented: $showStudyExtrasPrompt) {
-            StudyExtrasPromptPage {
-                showStudyExtrasPrompt = false
-                hasSeenStudyExtrasPrompt = true
-            }
-            .environmentObject(themeStore)
-        }
-        .fullScreenCover(isPresented: $showProInvite) {
-            ProInvitePage(
-                onSeePro: {
-                    markProPromptSeen()
-                    showProInvite = false
-                    showPremiumFromLimit = true
-                },
-                onLater: {
-                    markProPromptSeen()
-                    showProInvite = false
-                }
-            )
-            .environmentObject(themeStore)
+        .fullScreenCover(item: $presentedSoftCover) { cover in
+            softCoverContent(cover)
         }
         .overlay(alignment: .top) {
             if let toast = enrichmentToast {
@@ -720,19 +671,9 @@ struct HomeView: View {
 
             if !showAddWordView && !hasSeenFirstWords && store.words.isEmpty,
                StarterWordBank.words(learning: languageStore.learningLanguage, native: languageStore.nativeLanguage) != nil {
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(0.6))
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        showFirstWords = true
-                    }
-                }
+                enqueueSoftCover(.firstWords)
             } else if !hasSeenCoachMarks && hasSeenFirstWords {
-                Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(0.8))
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        showCoachMarks = true
-                    }
-                }
+                enqueueSoftCover(.coachMarks)
             }
 
             if FeatureGates.streakEnabled {
@@ -768,7 +709,7 @@ struct HomeView: View {
     }
 
     private func presentPendingBadgeCelebrationIfNeeded() {
-        guard activeMilestone == nil else { return }
+        guard activeMilestone == nil, presentedSoftCover == nil, !hardCoverBlocking else { return }
         let streak = WordsStore.computeCurrentStreak(from: store.words)
         badgeStore.checkForNewUnlocks(totalWords: store.totalWordsAdded, currentStreak: streak)
         guard let badge = badgeStore.pendingCelebration else { return }
@@ -822,43 +763,21 @@ struct HomeView: View {
     }
 
     private func considerStudyExtrasPrompt() {
-        guard !hasSeenStudyExtrasPrompt, !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
+        guard !hasSeenStudyExtrasPrompt else { return }
+        guard !softCoverQueuedOrPresented(.studyExtras) else { return }
         guard store.words.count >= StudyExtrasPrompt.wordThreshold else { return }
         guard StudyExtrasPrompt.hasDisabledExtra else { return }
-        guard !studyExtrasCoverBlocked else { return }
-        studyExtrasPromptQueued = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.45))
-            studyExtrasPromptQueued = false
-            guard !hasSeenStudyExtrasPrompt, !showStudyExtrasPrompt else { return }
-            guard store.words.count >= StudyExtrasPrompt.wordThreshold else { return }
-            guard StudyExtrasPrompt.hasDisabledExtra else { return }
-            guard !studyExtrasCoverBlocked else { return }
-            showStudyExtrasPrompt = true
-        }
+        enqueueSoftCover(.studyExtras)
     }
 
     private func considerProInvite() {
-        guard !isPremium, !showProInvite, !proInviteQueued else { return }
+        guard !isPremium else { return }
+        guard !softCoverQueuedOrPresented(.proInvite) else { return }
         guard hasSeenFirstWords || !store.words.isEmpty else { return }
         guard hasSeenCoachMarks || !hasSeenFirstWords else { return }
-        guard !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
         guard !studyExtrasStillDue else { return }
         guard ProInvite.isDue(firstUse: UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? "", lastPrompt: lastProPromptDate) else { return }
-        guard !studyExtrasCoverBlocked else { return }
-        proInviteQueued = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.6))
-            proInviteQueued = false
-            guard !isPremium, !showProInvite else { return }
-            guard hasSeenFirstWords || !store.words.isEmpty else { return }
-            guard hasSeenCoachMarks || !hasSeenFirstWords else { return }
-            guard !showStudyExtrasPrompt, !studyExtrasPromptQueued else { return }
-            guard !studyExtrasStillDue else { return }
-            guard ProInvite.isDue(firstUse: UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? "", lastPrompt: lastProPromptDate) else { return }
-            guard !studyExtrasCoverBlocked else { return }
-            showProInvite = true
-        }
+        enqueueSoftCover(.proInvite)
     }
 
     private var studyExtrasStillDue: Bool {
@@ -871,23 +790,116 @@ struct HomeView: View {
         lastProPromptDate = DateFormatting.todayString
     }
 
-    private var studyExtrasCoverBlocked: Bool {
+    private var hardCoverBlocking: Bool {
         showAddWordView
             || showScanFromShare
             || showWordPacks
             || showDailyLesson
-            || showFirstWords
-            || showSuggestedIntro
-            || showCoachMarks
-            || showMotivationalPaywall
             || showPremiumFromLimit
             || showChallenges
             || showStory
             || showStreakCalendar
-            || showProInvite
-            || showStudyExtrasPrompt
             || chatSceneTarget != nil
-            || activeMilestone != nil
+    }
+
+    private func softCoverQueuedOrPresented(_ cover: HomeSoftCover) -> Bool {
+        presentedSoftCover == cover || softCoverQueue.contains(cover)
+    }
+
+    private func enqueueSoftCover(_ cover: HomeSoftCover) {
+        guard !softCoverQueuedOrPresented(cover) else { return }
+        softCoverQueue.append(cover)
+        softCoverQueue.sort { $0.priority < $1.priority }
+        presentNextSoftCoverIfNeeded()
+    }
+
+    private func presentNextSoftCoverIfNeeded() {
+        guard presentedSoftCover == nil else { return }
+        guard activeMilestone == nil else { return }
+        guard !hardCoverBlocking else { return }
+        guard let next = softCoverQueue.first else { return }
+        softCoverQueue.removeFirst()
+        presentedSoftCover = next
+    }
+
+    private func finishSoftCover(_ cover: HomeSoftCover) {
+        switch cover {
+        case .firstWords:
+            hasSeenFirstWords = true
+        case .coachMarks:
+            hasSeenCoachMarks = true
+        case .studyExtras:
+            hasSeenStudyExtrasPrompt = true
+        case .suggestedIntro:
+            break
+        case .proInvite:
+            markProPromptSeen()
+        case .motivationalPaywall:
+            break
+        }
+        if presentedSoftCover == cover {
+            presentedSoftCover = nil
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
+            presentPendingBadgeCelebrationIfNeeded()
+            if cover == .firstWords, !hasSeenCoachMarks {
+                enqueueSoftCover(.coachMarks)
+            }
+            considerStudyExtrasPrompt()
+            considerProInvite()
+            presentNextSoftCoverIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private func softCoverContent(_ cover: HomeSoftCover) -> some View {
+        switch cover {
+        case .firstWords:
+            FirstWordsView {
+                finishSoftCover(.firstWords)
+            }
+            .environmentObject(themeStore)
+            .environmentObject(store)
+            .environmentObject(languageStore)
+        case .coachMarks:
+            CoachMarkView(steps: coachMarkSteps) {
+                finishSoftCover(.coachMarks)
+            }
+            .environmentObject(themeStore)
+        case .studyExtras:
+            StudyExtrasPromptPage {
+                finishSoftCover(.studyExtras)
+            }
+            .environmentObject(themeStore)
+        case .suggestedIntro:
+            SuggestedWordsIntroView {
+                finishSoftCover(.suggestedIntro)
+            }
+            .environmentObject(themeStore)
+        case .proInvite:
+            ProInvitePage(
+                onSeePro: {
+                    markProPromptSeen()
+                    presentedSoftCover = nil
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(400))
+                        showPremiumFromLimit = true
+                    }
+                },
+                onLater: {
+                    finishSoftCover(.proInvite)
+                }
+            )
+            .environmentObject(themeStore)
+        case .motivationalPaywall:
+            PremiumView(asWall: true)
+                .environmentObject(themeStore)
+                .tint(themeStore.mainAccentColor)
+                .onDisappear {
+                    finishSoftCover(.motivationalPaywall)
+                }
+        }
     }
 
     private func checkSuggestionTrigger() {
