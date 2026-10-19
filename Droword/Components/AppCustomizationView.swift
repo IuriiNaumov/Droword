@@ -338,8 +338,7 @@ struct AppCustomizationView: View {
     private var availablePalettes: [ThemeStore.Palette] {
         ThemeStore.Palette.pickerOrder.filter { palette in
             if palette.requiresIOS26 {
-                if #available(iOS 26, *) { return true }
-                return false
+                return ThemeStore.glassAPIAvailable
             }
             return true
         }

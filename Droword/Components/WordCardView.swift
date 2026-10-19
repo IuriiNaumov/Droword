@@ -693,7 +693,7 @@ private struct WordCardFocusOverlay: View {
             menuRow(title: "Delete", systemImage: "trash", destructive: true, action: onDelete)
         }
         .clipShape(RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous))
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: DesignRadius.small))
+        .drowordGlassEffect(in: .roundedRect(DesignRadius.small), interactive: true)
         .shadow(color: Color.black.opacity(0.14), radius: 20, y: 10)
     }
 
@@ -787,7 +787,7 @@ private struct ReactionPickerBar: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .clipShape(Capsule())
-        .glassEffect(.regular.interactive(), in: .capsule)
+        .drowordGlassEffect(in: .capsule, interactive: true)
         .onAppear { appeared = true }
     }
 

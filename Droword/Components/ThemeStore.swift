@@ -77,7 +77,9 @@ final class ThemeStore: ObservableObject {
 
     static func rememberedPalette() -> Palette {
         let raw = UserDefaults.standard.string(forKey: storageKey) ?? Palette.colorful.rawValue
-        return Palette(rawValue: raw) ?? .colorful
+        let palette = Palette(rawValue: raw) ?? .colorful
+        if palette == .glass, !glassAPIAvailable { return .colorful }
+        return palette
     }
 
     private struct Colors {
@@ -259,8 +261,9 @@ final class ThemeStore: ObservableObject {
             raw = Palette.colorful.rawValue
             UserDefaults.standard.set(raw, forKey: Self.storageKey)
         }
-        if raw == "glass" {
-            if #available(iOS 26, *) { } else { raw = "colorful" }
+        if raw == "glass", !Self.glassAPIAvailable {
+            raw = Palette.colorful.rawValue
+            UserDefaults.standard.set(raw, forKey: Self.storageKey)
         }
         let storedHex = UserDefaults.standard.string(forKey: AppStorageKeys.customThemeAccentHex)
             ?? Self.defaultCustomAccentHex
@@ -275,9 +278,14 @@ final class ThemeStore: ObservableObject {
     }
 
     var isDuolingo: Bool { palette == .duolingo }
-    var isGlass: Bool { palette == .glass }
+    var isGlass: Bool { palette == .glass && Self.glassAPIAvailable }
     var isCustom: Bool { palette == .custom }
     var title: String { palette.title }
+
+    static var glassAPIAvailable: Bool {
+        if #available(iOS 26.0, *) { return true }
+        return false
+    }
 
     var accentBlue: Color { cached.accentBlue }
     var accentGreen: Color { cached.accentGreen }
@@ -446,7 +454,13 @@ final class ThemeStore: ObservableObject {
         return Color(hex: hex)
     }
 
-    func set(_ newPalette: Palette) { palette = newPalette }
+    func set(_ newPalette: Palette) {
+        if newPalette.requiresIOS26, !Self.glassAPIAvailable {
+            palette = .colorful
+            return
+        }
+        palette = newPalette
+    }
 
     struct PreviewColors {
         let accentBlue: Color
@@ -494,7 +508,7 @@ final class ThemeStore: ObservableObject {
             mainText: c.mainText,
             secondaryText: c.secondaryText,
             buttonShadow: c.buttonShadow,
-            isGlass: palette == .glass,
+            isGlass: palette == .glass && Self.glassAPIAvailable,
             isDuolingo: palette == .duolingo
         )
     }
@@ -532,25 +546,35 @@ struct GlassCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         if isGlass {
-            if #available(iOS 26, *) {
-                switch shape {
-                case .roundedRect(let radius):
-                    content.glassEffect(glass, in: .rect(cornerRadius: radius))
-                case .capsule:
-                    content.glassEffect(glass, in: .capsule)
-                case .circle:
-                    content.glassEffect(glass, in: .circle)
-                }
-            } else {
-                content
-            }
+            content.drowordGlassEffect(in: shape, interactive: interactive)
         } else {
             content
         }
     }
+}
 
-    @available(iOS 26, *)
-    private var glass: Glass {
-        interactive ? .regular.interactive() : .regular
+extension View {
+    @ViewBuilder
+    func drowordGlassEffect(in shape: GlassShapeStyle, interactive: Bool = true) -> some View {
+        if #available(iOS 26.0, *) {
+            let glass: Glass = interactive ? .regular.interactive() : .regular
+            switch shape {
+            case .roundedRect(let radius):
+                self.glassEffect(glass, in: .rect(cornerRadius: radius))
+            case .capsule:
+                self.glassEffect(glass, in: .capsule)
+            case .circle:
+                self.glassEffect(glass, in: .circle)
+            }
+        } else {
+            switch shape {
+            case .roundedRect(let radius):
+                self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            case .capsule:
+                self.background(.ultraThinMaterial, in: Capsule(style: .continuous))
+            case .circle:
+                self.background(.ultraThinMaterial, in: Circle())
+            }
+        }
     }
 }
