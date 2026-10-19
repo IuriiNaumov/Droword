@@ -68,8 +68,8 @@ struct StoryView: View {
                                 .padding(.horizontal, DesignSpacing.screenInset)
                                 .padding(.top, 24)
                                 .padding(.bottom, 12)
-                                .iPadContentWidth(600)
-                                .frame(maxWidth: .infinity)
+                                .frame(maxWidth: 600, alignment: .leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         storyActions
                     }
@@ -102,22 +102,22 @@ struct StoryView: View {
     }
 
     private func storyContent(_ story: StoryResult) -> some View {
-        VStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .leading, spacing: 16) {
             Text(Self.plainText(story.title, words: story.usedWords))
                 .font(themeStore.bold(24))
                 .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, DesignSpacing.titleTop)
                 .padding(.bottom, DesignSpacing.titleBottom)
 
             Text(highlightedStory(story.story, words: story.usedWords))
                 .font(themeStore.regular(19))
                 .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
                 .lineSpacing(6)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .environment(\.openURL, OpenURLAction { url in
                     guard url.scheme == "droword-word",
                           let host = url.host,
@@ -135,10 +135,10 @@ struct StoryView: View {
                 Text(Self.plainText(story.translation, words: story.usedWords))
                     .font(themeStore.regular(16))
                     .foregroundStyle(themeStore.secondaryText)
-                    .multilineTextAlignment(.center)
+                    .multilineTextAlignment(.leading)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
@@ -157,11 +157,11 @@ struct StoryView: View {
             }
 
             if !story.usedWords.isEmpty {
-                VStack(spacing: 6) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Slipped into the story")
                         .font(themeStore.medium(13))
                         .foregroundStyle(themeStore.secondaryText)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     HStack(spacing: 8) {
                         ForEach(usedSeeds(in: story)) { seed in
                             Button {
@@ -179,8 +179,9 @@ struct StoryView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                        Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.top, 4)
             }
@@ -191,7 +192,7 @@ struct StoryView: View {
                 quizSummary(usedSeeds(in: story))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var storyActions: some View {
@@ -200,7 +201,7 @@ struct StoryView: View {
                 Text("\(DailyLimitsManager.storiesRemaining) free stories left today")
                     .font(themeStore.regular(13))
                     .foregroundStyle(themeStore.secondaryText)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Button {
@@ -224,22 +225,26 @@ struct StoryView: View {
             }
             .buttonStyle(Duo3DButtonStyle())
         }
-        .frame(maxWidth: 600)
+        .frame(maxWidth: 600, alignment: .leading)
         .padding(.horizontal, DesignSpacing.screenInset)
         .padding(.bottom, 12)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func wordGloss(_ seed: StorySeed) -> some View {
-        VStack(spacing: 8) {
-            Text(seed.word)
-                .font(themeStore.medium(16))
-                .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.center)
-            Text(seed.translation)
-                .font(themeStore.regular(14))
-                .foregroundStyle(themeStore.secondaryText)
-                .multilineTextAlignment(.center)
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(seed.word)
+                    .font(themeStore.medium(16))
+                    .foregroundStyle(themeStore.mainText)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(seed.translation)
+                    .font(themeStore.regular(14))
+                    .foregroundStyle(themeStore.secondaryText)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             Button {
                 TTSPlayer.play(
                     word: seed.word,
@@ -256,22 +261,22 @@ struct StoryView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Play pronunciation"))
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
     }
 
     private func meaningQuiz(_ seed: StorySeed) -> some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("What does this word mean?")
                 .font(themeStore.medium(15))
                 .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Text(seed.word)
                 .font(themeStore.bold(18))
                 .foregroundStyle(Color("AccentGold"))
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
             ForEach(quizChoices, id: \.self) { choice in
                 Button {
                     answerQuiz(choice, seed: seed)
@@ -279,8 +284,8 @@ struct StoryView: View {
                     Text(choice)
                         .font(themeStore.medium(15))
                         .foregroundStyle(themeStore.mainText)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 12)
                         .padding(.horizontal, 14)
                         .background(
@@ -291,13 +296,14 @@ struct StoryView: View {
                 .buttonStyle(.plain)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 8)
     }
 
     private func quizSummary(_ seeds: [StorySeed]) -> some View {
         let remembered = seeds.filter { quizAnswers[$0.id] == true }
         let missed = seeds.filter { quizAnswers[$0.id] == false }
-        return VStack(spacing: 16) {
+        return VStack(alignment: .leading, spacing: 16) {
             if !remembered.isEmpty {
                 quizRows(remembered, tint: themeStore.successStrong)
             }
@@ -305,11 +311,12 @@ struct StoryView: View {
                 quizRows(missed, tint: themeStore.errorStrong)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 8)
     }
 
     private func quizRows(_ seeds: [StorySeed], tint: Color) -> some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
             ForEach(seeds) { seed in
                 HStack(spacing: 8) {
                     Text(seed.word)
@@ -318,8 +325,9 @@ struct StoryView: View {
                     Text(seed.translation)
                         .font(themeStore.regular(15))
                         .foregroundStyle(themeStore.secondaryText)
+                    Spacer(minLength: 0)
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 10)
                 .padding(.horizontal, 14)
                 .background(
@@ -328,6 +336,7 @@ struct StoryView: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func answerQuiz(_ choice: String, seed: StorySeed) {

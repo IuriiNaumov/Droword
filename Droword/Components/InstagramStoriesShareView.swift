@@ -3,117 +3,92 @@ import UIKit
 
 struct InstagramStoriesTemplateView: View {
     let word: StoredWord
-    let themeStore: ThemeStore
+    @ObservedObject var themeStore: ThemeStore
 
     static func gradientTop(_ themeStore: ThemeStore) -> Color {
-        switch themeStore.palette {
-        case .colorful:   return Color(red: 0.29, green: 0.50, blue: 0.77)
-        case .duolingo:   return Color(red: 0.345, green: 0.800, blue: 0.008)
-        case .glass:      return Color(red: 0.0, green: 0.48, blue: 1.0)
-        case .custom:     return themeStore.mainAccentColor
-        }
+        ShareWordPosterView.gradientTop(themeStore)
     }
 
     static func gradientBottom(_ themeStore: ThemeStore) -> Color {
-        switch themeStore.palette {
-        case .colorful:   return Color(red: 0.76, green: 0.37, blue: 0.51)
-        case .duolingo:   return Color(red: 0.10, green: 0.54, blue: 0.43)
-        case .glass:      return Color(red: 0.69, green: 0.32, blue: 0.87)
-        case .custom:     return themeStore.accentPink
-        }
+        ShareWordPosterView.gradientBottom(themeStore)
     }
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Self.gradientTop(themeStore), Self.gradientBottom(themeStore)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 100)
-
-                VStack(spacing: 4) {
-                    Text("Droword")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Text("Word of the day")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-
-                Spacer()
-                    .frame(height: 36)
-
-                ShareWordCardView(
-                    word: word,
-                    backgroundColor: Color(.secondarySystemBackground),
-                    cardWidth: 310
-                )
-
-                Spacer()
-
-                Text("Learn vocabulary smarter")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .padding(.bottom, 80)
-            }
-        }
-        .frame(width: 360, height: 640)
+        ShareWordPosterView(
+            word: word,
+            themeStore: themeStore,
+            width: 360,
+            height: 640,
+            useThemeGradient: true,
+            showsBrand: true
+        )
+        .environmentObject(themeStore)
     }
 }
 
 struct ShareStreakTemplateView: View {
     let streak: Int
     let word: StoredWord?
-    let themeStore: ThemeStore
+    @ObservedObject var themeStore: ThemeStore
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             LinearGradient(
-                colors: [InstagramStoriesTemplateView.gradientTop(themeStore), InstagramStoriesTemplateView.gradientBottom(themeStore)],
+                colors: [
+                    ShareWordPosterView.gradientTop(themeStore),
+                    ShareWordPosterView.gradientBottom(themeStore)
+                ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            VStack(spacing: 0) {
-                Spacer().frame(height: 88)
-
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Droword")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 88)
 
-                Spacer().frame(height: 28)
-
-                VStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("\(streak)")
                         .font(.system(size: 72, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     Text("day streak")
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.8))
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .padding(.top, 28)
 
                 if let word {
-                    Spacer().frame(height: 36)
                     ShareWordCardView(
                         word: word,
-                        backgroundColor: Color(.secondarySystemBackground),
+                        themeStore: themeStore,
                         cardWidth: 310
                     )
+                    .padding(.top, 36)
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
 
                 Text("Still showing up.")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.6))
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.bottom, 80)
             }
+            .padding(.leading, 16)
+            .padding(.trailing, 34)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(width: 360, height: 640)
+        .frame(width: 360, height: 640, alignment: .topLeading)
+        .environmentObject(themeStore)
     }
 }
 
@@ -126,6 +101,7 @@ enum InstagramStoriesShare {
 
     static func renderStoriesImage(for word: StoredWord, themeStore: ThemeStore) -> UIImage? {
         let view = InstagramStoriesTemplateView(word: word, themeStore: themeStore)
+            .environmentObject(themeStore)
 
         let controller = UIHostingController(rootView: view)
         controller.view.backgroundColor = .clear
@@ -133,6 +109,7 @@ enum InstagramStoriesShare {
 
         let size = CGSize(width: 360, height: 640)
         controller.view.bounds = CGRect(origin: .zero, size: size)
+        controller.view.insetsLayoutMarginsFromSafeArea = false
         controller.view.layoutIfNeeded()
 
         let format = UIGraphicsImageRendererFormat()
@@ -188,6 +165,7 @@ enum InstagramStoriesShare {
 
     static func renderStreakImage(streak: Int, word: StoredWord?, themeStore: ThemeStore) -> UIImage? {
         let view = ShareStreakTemplateView(streak: streak, word: word, themeStore: themeStore)
+            .environmentObject(themeStore)
         let controller = UIHostingController(rootView: view)
         controller.view.backgroundColor = .clear
         controller.safeAreaRegions = SafeAreaRegions()
@@ -238,30 +216,39 @@ enum InstagramStoriesShare {
 }
 
 #Preview("Word") {
-    InstagramStoriesTemplateView(
+    let theme = ThemeStore()
+    return InstagramStoriesTemplateView(
         word: StoredWord(
-        word: "hola",
-        type: "interjection",
-        translation: "hello",
-        example: "¡Hola! ¿Cómo estás?",
-        fromLanguage: "Español",
-        toLanguage: "English"
-    ),
-        themeStore: ThemeStore()
+            word: "hola",
+            type: "interjection",
+            translation: "hello",
+            example: "¡Hola! ¿Cómo estás?",
+            transcription: "ˈola",
+            tag: "Travel",
+            fromLanguage: "Español",
+            toLanguage: "English",
+            reaction: "🔥"
+        ),
+        themeStore: theme
     )
+    .environmentObject(theme)
 }
 
 #Preview("Streak") {
-    ShareStreakTemplateView(
+    let theme = ThemeStore()
+    return ShareStreakTemplateView(
         streak: 12,
         word: StoredWord(
-        word: "hola",
-        type: "interjection",
-        translation: "hello",
-        example: "¡Hola! ¿Cómo estás?",
-        fromLanguage: "Español",
-        toLanguage: "English"
-    ),
-        themeStore: ThemeStore()
+            word: "hola",
+            type: "interjection",
+            translation: "hello",
+            example: "¡Hola! ¿Cómo estás?",
+            tag: "Travel",
+            fromLanguage: "Español",
+            toLanguage: "English",
+            reaction: "🔥"
+        ),
+        themeStore: theme
     )
+    .environmentObject(theme)
 }

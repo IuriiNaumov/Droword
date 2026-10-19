@@ -309,6 +309,8 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 | Themes / Duo chrome | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |
 | Home soft covers | `HomeSoftCover`, `HomeView` queue (`enqueueSoftCover`) |
 | Haptics copy | `HapticFeel`, `HapticSettingsView`, `Localizable.xcstrings` |
+| Share word image | `ShareWordCardView` / `ShareWordPosterView` (looks like expanded dictionary card; Stories left-pinned on gradient) |
+| Reading story | `StoryView` — title, body, quiz left-aligned |
 | Language pair / flags | `LanguageCatalog`, `LanguageFlagView`, `LanguageCube` |
 | App icons | `AppIconStyle.customizationCases`, `AppCustomizationView` |
 | Seasonal | `SeasonalOverlayView`, season components |
