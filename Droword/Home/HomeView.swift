@@ -134,7 +134,7 @@ struct HomeView: View {
         }
         .tint(themeStore.mainAccentColor)
         .background(themeStore.appBg.ignoresSafeArea())
-        .tabBarMinimizeBehavior(.never)
+        .drowordTabBarMinimizeNever()
         .environmentObject(suggested)
         .environmentObject(tabBarVisibility)
         .onAppear {
@@ -980,6 +980,17 @@ private struct TabBarSlideInstaller: UIViewControllerRepresentable {
             } else {
                 updates()
             }
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func drowordTabBarMinimizeNever() -> some View {
+        if #available(iOS 26.0, *) {
+            self.tabBarMinimizeBehavior(.never)
+        } else {
+            self
         }
     }
 }
