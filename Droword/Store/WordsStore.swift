@@ -188,6 +188,7 @@ final class WordsStore: ObservableObject {
         words.append(w)
         totalWordsAdded += 1
         UserDefaults.standard.set(true, forKey: AppStorageKeys.hasEverAddedWord)
+        TTSPlayer.prefetch(w.word)
     }
 
     func remove(_ word: StoredWord) {

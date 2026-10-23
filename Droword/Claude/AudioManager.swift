@@ -120,6 +120,19 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         return try await fetchAudioData(for: text)
     }
 
+    func hasCachedAudio(for text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        return TTSCache.shared.cachedData(for: trimmed, voice: currentVoice) != nil
+    }
+
+    func prefetch(text: String) async {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        guard !hasCachedAudio(for: trimmed) else { return }
+        _ = try? await fetchAudioData(for: trimmed)
+    }
+
     func stopPlayback() {
         player?.stop()
         player = nil

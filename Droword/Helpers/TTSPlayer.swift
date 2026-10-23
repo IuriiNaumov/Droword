@@ -4,6 +4,14 @@ enum TTSPlayer {
     private static var activeTask: Task<Void, Never>?
     private static var holdGeneration = 0
 
+    static func prefetch(_ word: String) {
+        let text = word.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, NetworkMonitor.shared.isConnected else { return }
+        Task {
+            await AudioManager.shared.prefetch(text: text)
+        }
+    }
+
     static func play(
         word: String,
         isPremium: Bool,

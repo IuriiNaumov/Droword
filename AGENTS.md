@@ -174,7 +174,7 @@ Wrappers:
 | `ClaudeScene` | `POST /scene` | Chat scene turns |
 | `ClaudeExtractWords` | `POST /extract-words` | Words from photo and/or pasted text |
 | `fetchWordForms` (`ClaudeTranslate.swift`) | `POST /forms` | Inflected forms of one headword that appear in its example / collocations |
-| `AudioManager` | `POST /tts` | OpenAI TTS audio |
+| `AudioManager` | `POST /tts` | OpenAI TTS audio (`TTSCache` on disk by text+voice; replay is instant) |
 
 Prompts and CEFR/script rules live in **`droword-worker/src/index.ts`**. Rate limits / body size / key check in `guard.ts`. Worker README: `droword-worker/README.md`.
 
@@ -186,7 +186,7 @@ Free checks are always `isPremium || DailyLimitsManager.can…`.
 | Feature | Free | Pro / active trial |
 |---------|------|--------------------|
 | AI translations | **10/day** first 7 days after install, then **5/day** | Unlimited |
-| TTS | **10/day**. Replaying the same text the same day does not spend another play | Unlimited |
+| TTS | **10/day**. Replaying the same text the same day does not spend another play. `WordsStore.add` calls `TTSPlayer.prefetch` (fetch+cache, no play, no quota) so the first tap is usually instant | Unlimited |
 | Suggestion fetches | **4/day** | Unlimited |
 | Photo / text scan | **3/day** | Unlimited |
 | Story / chat scene | Daily caps via `canGenerateStory` / `canStartScene` | Unlimited |
