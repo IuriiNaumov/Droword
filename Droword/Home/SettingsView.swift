@@ -202,8 +202,6 @@ struct SettingsView: View {
                     AchievementsView()
                 case .theme:
                     ThemePickerView(initialPalette: themeStore.palette)
-                case .appIcon:
-                    AppIconPickerView()
                 case .fontSize:
                     FontSizePickerView()
                 case .appearance:

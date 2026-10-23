@@ -137,7 +137,8 @@ Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSc
 ### Streaks, badges, challenges
 
 `DayStreak` (+ Pro streak freeze: up to 2 missed days in a rolling 7-day window, only when the gap sits between study days), `DailyChallengeManager`.  
-**Release hide:** `FeatureGates.streakEnabled` is `false`. Day streak, freeze, the fire badge, streak badges, streak notifications, and the streak stats stay in code and stay off screen. The Home week strip is back and opens the calendar: studied days only, no streak count and no freeze. Quiz combo streaks are separate and still show.  
+`FeatureGates.streakEnabled` is `false`: day streak, freeze, fire badge, streak badges, streak notifications, streak stats, and streak milestones stay in code and stay off screen. The Home week strip opens the calendar (studied days only, no streak count and no freeze). Quiz combo streaks are separate and still show.  
+`FeatureGates.homeChatEnabled` stays `false` until Home chat is ready to ship; scene/chat code remains.  
 Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts and onboarding screens.  
 `BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
@@ -150,7 +151,7 @@ Import/export in `DictionarySettingsView` (includes SRS fields). Clear dictionar
 - Container `iCloud.com.droword`, file `Documents/words.json`.
 - Pull-if-newer on reload; push after local save when enabled + signed into iCloud.
 - Still local-first: App Group file is source of truth on device.
-- **Signing note:** iCloud entitlement keys in `Droword/Droword.entitlements` may be **XML-commented** so Personal Team can run on device. Re-enable after paid Apple Developer Program + App ID iCloud capability. Do not delete the sync code when commenting entitlements.
+- **Signing:** iCloud keys are **active** in `Droword/Droword.entitlements` (`iCloud.com.droword`, CloudDocuments). Requires paid Apple Developer Program + iCloud capability on the App ID. Do not delete `WordsICloudSync` if you temporarily comment entitlements for a Personal Team device run.
 
 ---
 
@@ -238,7 +239,7 @@ Picker flags are drawn illustrations (`LanguageFlagView`), used by `LanguageCube
 
 ### App icons
 
-`AppIconStyle.customizationCases` is what App Customization and the icon picker show. It excludes every language/flag case (English through Hungarian, including the later country flags). Those cases and their `Info.plist` alternate-icon entries can stay for artwork fallback, but do not put flag icons back in the customization row. Customization alternates use original patterned artwork with a bold `D`, the quote mark, or the Poppins `Droword` wordmark (`word*` cases). Face-style variants (`hearts`, `glasses`, `dizzy`, `sleepy`) stay in the enum for artwork fallback and are not shown in the customization row. Keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height: `.tabBarMinimizeBehavior(.never)` and do not shrink height in `SlidingTabBar.sizeThatFits`. The rest of the app uses SF Symbols.
+`AppIconStyle.customizationCases` is what App Customization and the icon picker show. Language/flag and face-style alternate icons are gone (no enum cases, no `Info.plist` entries, no PNGs). Customization alternates use original patterned artwork with a bold `D`, the quote mark, or the Poppins `Droword` wordmark (`word*` cases). Keep `Main` aligned with the primary App Store icon. The tab bar uses the custom monoline artwork in `MenuBarIcons` (home, page for dictionary, lightbulb for practice, plus), with thicker selected strokes and `themeStore.mainAccentColor` tint. Keep the system bar height: `.tabBarMinimizeBehavior(.never)` and do not shrink height in `SlidingTabBar.sizeThatFits`. The rest of the app uses SF Symbols.
 
 ### Page indicators and theme picker
 
@@ -273,11 +274,11 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 7. **Don’t rewrite worker prompts** casually — they encode CEFR + Japanese/Chinese/Korean script rules.
 8. **node_modules** under `droword-worker/` — ignore; not app source.
 9. **Capture** — Share long text opens extract (`ScanWordsView`, `/extract-words` text). Short Share still opens Add. Photo scan on Scan. Dedup against existing dictionary words. No clipboard-paste extract UI.
-10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; still local-first App Group file. Personal Team cannot ship iCloud entitlements — comment them in entitlements, keep Swift code.
+10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; entitlements are on; still local-first App Group file.
 11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson). Home is `text.badge.plus`. Dictionary is `HaloIcon` `textformat` in `accentBlue`. Practice is `HaloIcon` `bolt` in `accentGreen`. An empty tag filter is `tag`. Do not swap these for custom drawings.
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
-14. **App icon picker** — `customizationCases` only. No language/flag icons in App Customization. Tab bar artwork lives in `MenuBarIcons`.
+14. **App icon picker** — `customizationCases` only. No language/flag app icons in the product. Tab bar artwork lives in `MenuBarIcons`.
 15. **PRO sparkle** — static. No bounce or pulse. Home keeps the plain blue sparkle. Only the paywall plaque is themed (accent, Duo lip, glass on Liquid Glass).
 16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales (en, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant) translate that Russian, including the short and odd lines. Streak notification pool only when `FeatureGates.streakEnabled`. Do not put back English slang that says something else. Onboarding notifications start **off** (`notifGlobalEnabled` false for new installs); the iOS permission prompt fires only when the user turns Enable notifications on.
 17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
@@ -322,7 +323,7 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 
 ```bash
 # iOS: open Droword.xcodeproj in Xcode, run the Droword scheme
-# Personal Team: keep iCloud keys commented in Droword.entitlements
+# Signing: paid Apple Developer team; iCloud.com.droword on App ID + entitlements
 
 cd droword-worker && npm install && npm run dev    # http://localhost:8787
 cd droword-worker && npm run deploy                # after wrangler secrets
@@ -336,6 +337,6 @@ cd droword-worker && npm run deploy                # after wrangler secrets
 - Prefer existing helpers/stores over new parallel state.
 - When adding user-facing strings, update `Localizable.xcstrings` for every locale and plural form (see `.cursor/rules/localization.mdc`).
 - Commit only when the user asks; never force-push or rewrite git history.
-- Before a push the user asked for: update this file and `README.md` if behavior or the map changed, remove code comments from the diff, then push. Do not push with comments left in source. XML comments in `Droword.entitlements` that keep iCloud off for a Personal Team stay.
+- Before a push the user asked for: update this file and `README.md` if behavior or the map changed, remove code comments from the diff, then push. Do not push with comments left in source. Keep iCloud entitlement keys in `Droword.entitlements` (do not re-comment them for Personal Team unless the user asks).
 - After substantive edits, follow `.cursor/rules/self-review.mdc`: re-read the diff, fix issues, and for larger changes spawn a review agent. Bugbot only when the user asks.
 - If unsure where a feature lives, search `Droword/` and this map before creating new top-level folders.

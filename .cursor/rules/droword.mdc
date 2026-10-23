@@ -12,7 +12,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - App: `Droword/` (SwiftUI). Entry: `DrowordApp` → `ContentView` → onboarding or `HomeView`.
 - API: `droword-worker/` → `https://droword-api.droword.workers.dev` (`X-App-Key`).
 - Shared data: App Group `group.com.droword.shared` (`WordsStore`, `LanguageStore`).
-- Optional sync: `WordsICloudSync` → `iCloud.com.droword` (entitlements may be commented for Personal Team).
+- Optional sync: `WordsICloudSync` → `iCloud.com.droword` (entitlements active; paid Apple team + App ID iCloud).
 
 ## Where to edit
 
@@ -43,7 +43,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Empty states: tip + strong Add CTA (`EmptyListView` / `PracticeEmptyContent`).
 - Scan: photo only; long Share → extract-words. Dedup against dictionary. No clipboard-paste extract on Add.
 - Language picker flags are illustrated (`LanguageFlagView`). Page dots are `PageCapsules`.
-- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
+- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons — those are removed from the product). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
 - Opening the app clears the icon badge (`NotificationManager.clearBadge` on scene `.active`).
 - Dictionary: reaction emoji chips after tags filter cards; search matches reactions. Circles use `DesignChip` (same size on cards).
 - Practice results hide the tab bar; restore on close / new round.
@@ -58,9 +58,10 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Commit secrets (`.dev.vars`, API keys).
 - Dump Practice quiz UI or a second review CTA onto Home.
 - Apply Duo gray card surfaces to non-`.duolingo` themes.
-- Delete `WordsICloudSync` when disabling iCloud — comment entitlements only for Personal Team.
+- Delete `WordsICloudSync` when disabling iCloud — keep entitlements on; only comment them temporarily if the user asks for a Personal Team device run.
+- Flip `FeatureGates.streakEnabled` or `homeChatEnabled` on unless the user asks.
 - Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
-- Put language/flag app icons back in App Customization, or replace tab-bar symbols with custom art unless asked.
+- Bring language/flag app icons back, or replace tab-bar symbols with custom art unless asked.
 - Shrink the tab bar in `sizeThatFits` or turn minimize back on.
 - Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static). Home PRO stays a plain `accentBlue` sparkle. Only the paywall plaque is themed.
 - Open the theme picker on the first palette. It stays on the saved theme (`showPager` after the selection is set).

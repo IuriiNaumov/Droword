@@ -6,7 +6,6 @@ enum SettingsDestination: Hashable {
     case language
     case appearance
     case theme
-    case appIcon
     case fontSize
     case voiceAndSpeech
     case haptics

@@ -12,9 +12,9 @@
 - **Учёба** — один daily lesson на Home (due + новые в одной очереди), Practice-квизы (на итогах без tab bar), недельный календарь без серии и заморозки, бейджи с celebration  
 - **Уведомления** — тексты на 12 локалях; напоминание о повторении ставит число на иконке; при входе в приложение число сбрасывается  
 - **Tab bar** — обычная системная высота, без minimize и без урезания в `sizeThatFits`  
-- **Завершения** — «слова добавлены», цель дня, удаление и другие подтверждения открываются одной и той же мягкой страницей, у каждой свой цвет. Soft-cover на Home (первые слова, тур, extras, suggested, Pro, paywall) идут одной очередью и не накладываются друг на друга. Серия и заморозка спрятаны до релиза (`FeatureGates.streakEnabled`); на Home остаётся неделя, она открывает календарь без серии. После 5 слов, если история, задания дня или паки ещё выключены, один раз открывается страница с этими переключателями. Без PRO раз в 4 дня, начиная со второго дня, открывается приглашение к подписке.  
-- **Синк** — optional iCloud (`words.json`); иначе local-first App Group  
-- **Кастомизация** — темы (Droword / Зелёная сова / Жидкое стекло / Свой — названия локализованы), иконки, голоса, вибрации (часть — PRO)  
+- **Завершения** — «слова добавлены», цель дня, удаление и другие подтверждения открываются одной и той же мягкой страницей, у каждой свой цвет. Soft-cover на Home (первые слова, тур, extras, suggested, Pro, paywall) идут одной очередью и не накладываются друг на друга. Серия и заморозка спрятаны (`FeatureGates.streakEnabled`); Home-чат выключен (`homeChatEnabled`). После 5 слов, если история, задания дня или паки ещё выключены, один раз открывается страница с этими переключателями. Без PRO раз в 4 дня, начиная со второго дня, открывается приглашение к подписке.  
+- **Синк** — optional iCloud (`words.json`, entitlements включены); иначе local-first App Group  
+- **Кастомизация** — темы (Droword / Зелёная сова / Жидкое стекло / Свой — названия локализованы), иконки (паттерны + wordmark, без флагов и face-вариантов), голоса, вибрации (часть — PRO)  
 - **CSV** — import/export со SRS-полями  
 
 Bundle IDs: `com.droword` · Share `com.droword.share` · Widget `com.droword.widget`  
@@ -67,11 +67,12 @@ Support: `hello@droword.app`
 ## Быстрый старт
 
 1. Открой `Droword.xcodeproj` → схема **Droword**.  
-2. **Personal Team:** iCloud-ключи в `Droword/Droword.entitlements` закомментированы — иначе signing error. После оплаты Developer Program — раскомментировать + включить iCloud на App ID.  
+2. **Signing:** платная команда Apple Developer; в App ID включи iCloud (`iCloud.com.droword`). Ключи уже активны в `Droword/Droword.entitlements`.  
 3. Worker (опционально): `cd droword-worker && npm install && npm run dev`
 
-## Релиз
+## Релиз / TestFlight
 
 - Листинг: [marketing/app-store/LISTING.md](./marketing/app-store/LISTING.md)  
 - Юр. страницы: [docs/index.html](./docs/index.html)  
-- Нужен платный Apple Developer Program для TestFlight / iCloud / кастомных capabilities  
+- Платный Apple Developer Program: Archive → Upload в App Store Connect → TestFlight. Перед заливкой поднимай **Build** (`CURRENT_PROJECT_VERSION`) выше прошлого.  
+- Фичегейты: `FeatureGates.streakEnabled` = off (серия и заморозка спрятаны); `homeChatEnabled` = off до готовности Home-чата.

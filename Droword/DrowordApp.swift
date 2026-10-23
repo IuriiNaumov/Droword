@@ -106,8 +106,10 @@ struct DrowordApp: App {
                         enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()
                         checkTrialPeriod()
-                        if UserDefaults.standard.string(forKey: AppIconStyle.storageKey) == "anime" {
-                            AppIconChanger.apply(.classic) { _ in }
+                        let storedIcon = UserDefaults.standard.string(forKey: AppIconStyle.storageKey) ?? AppIconStyle.classic.rawValue
+                        let resolvedIcon = AppIconStyle.resolved(storedIcon)
+                        if resolvedIcon.rawValue != storedIcon {
+                            AppIconChanger.apply(resolvedIcon) { _ in }
                         }
                         if !isPremium && themeStore.palette != .colorful {
                             themeStore.set(.colorful)

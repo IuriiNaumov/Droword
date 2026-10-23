@@ -10,4 +10,4 @@ Do not add comments in code you write or edit.
 - No `//` line comments, no `///` docs, no `/* */` blocks.
 - This applies to Swift, TypeScript, Python, and scripts.
 - Do not leave comments in code. If one is already in a file you touch, delete it. Explain the choice in the chat reply.
-- Leave the XML comments in `Droword.entitlements` that keep iCloud off for a Personal Team. Leave shebangs and `#Preview` strings.
+- Do not wrap iCloud keys in `Droword.entitlements` in XML comments unless the user asks. Leave shebangs and `#Preview` strings.

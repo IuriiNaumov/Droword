@@ -40,7 +40,6 @@ struct StoryView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
     @EnvironmentObject private var themeStore: ThemeStore
-    @Environment(\.dismiss) private var dismiss
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
 
     @State private var story: StoryResult?
@@ -127,10 +126,6 @@ struct StoryView: View {
                     return .handled
                 })
 
-            if let seed = storySeeds.first(where: { $0.id == selectedSeedID }) {
-                wordGloss(seed)
-            }
-
             if showTranslation {
                 Text(Self.plainText(story.translation, words: story.usedWords))
                     .font(themeStore.regular(16))
@@ -151,7 +146,7 @@ struct StoryView: View {
                         Text("Show translation")
                     }
                     .font(themeStore.medium(15))
-                    .foregroundStyle(themeStore.mainAccentColor)
+                    .foregroundStyle(themeStore.secondaryText)
                 }
                 .buttonStyle(.plain)
             }
@@ -159,8 +154,9 @@ struct StoryView: View {
             if !story.usedWords.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Slipped into the story")
-                        .font(themeStore.medium(13))
-                        .foregroundStyle(themeStore.secondaryText)
+                        .font(themeStore.medium(15))
+                        .foregroundStyle(themeStore.mainText)
+                        .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     HStack(spacing: 8) {
                         ForEach(usedSeeds(in: story)) { seed in
@@ -184,6 +180,10 @@ struct StoryView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .padding(.top, 4)
+            }
+
+            if let seed = storySeeds.first(where: { $0.id == selectedSeedID }) {
+                wordGloss(seed)
             }
 
             if let seed = pendingQuizSeed(in: story), quizChoices.count >= 2 {
@@ -215,15 +215,6 @@ struct StoryView: View {
                 .duo3DStyle(themeStore.mainAccentColor)
             }
             .buttonStyle(Duo3DButtonStyle())
-
-            Button {
-                Haptics.softTap()
-                dismiss()
-            } label: {
-                Text("Close")
-                    .duo3DSecondaryStyle()
-            }
-            .buttonStyle(Duo3DButtonStyle())
         }
         .frame(maxWidth: 600, alignment: .leading)
         .padding(.horizontal, DesignSpacing.screenInset)
@@ -253,10 +244,9 @@ struct StoryView: View {
                     onPlayingChanged: { speakingID = $0 ? seed.id : nil }
                 )
             } label: {
-                Image(systemName: speakingID == seed.id ? "speaker.wave.2.fill" : "speaker.wave.2")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(themeStore.mainAccentColor)
-                    .frame(width: 36, height: 36)
+                SoundWavesView(isPlaying: speakingID == seed.id)
+                    .frame(width: 28, height: 28)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel(Text("Play pronunciation"))
