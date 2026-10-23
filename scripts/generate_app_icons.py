@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Droword alternate app icons (1024 / @2x 120 / @3x 180).
-
-2025–26 trends: light→dark depth, soft liquid orbs, top specular rim,
-sharp quote mark on top (no heavy glass blur over the glyph).
-"""
+"""Generate Droword alternate app icons (1024 / @2x 120 / @3x 180 / @2x~ipad 152)."""
 
 from __future__ import annotations
 
@@ -366,6 +362,9 @@ def save(name: str, img: Image.Image) -> None:
     )
     flat.resize((180, 180), Image.Resampling.LANCZOS).save(
         ROOT / f"{name}@3x.png", "PNG", optimize=True
+    )
+    flat.resize((152, 152), Image.Resampling.LANCZOS).save(
+        ROOT / f"{name}@2x~ipad.png", "PNG", optimize=True
     )
     print("wrote", name)
 
