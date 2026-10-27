@@ -97,10 +97,7 @@ struct SuggestedWordsIntroView: View {
 
     private func bulletRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(darkerShade(of: bulletAccent, by: 0.3))
-                .frame(width: 28)
+            StickerSymbol(systemName: icon, size: 28, color: darkerShade(of: bulletAccent, by: 0.3))
 
             Text(text)
                 .font(themeStore.regular(14))

@@ -28,7 +28,7 @@ struct FormTextField: View {
     private var fillColor: Color {
         switch status {
         case .normal:
-            return themeStore.dividerColor.opacity(0.55)
+            return themeStore.isPixel ? themeStore.cardBg : themeStore.dividerColor.opacity(0.55)
         case .correct:
             return themeStore.successStrong.opacity(0.12)
         case .almost:
@@ -49,6 +49,7 @@ struct FormTextField: View {
                 RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
                     .fill(fillColor)
             )
+            .pixelFrame(themeStore)
             .disabled(isDisabled)
             .opacity(isDisabled && status == .normal ? 0.85 : 1)
     }

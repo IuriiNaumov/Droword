@@ -210,14 +210,20 @@ struct ThemePickerView: View {
     }
 
     private func glassMiniCard(_ c: ThemeStore.PreviewColors) -> some View {
-        let radius: CGFloat = c.isDuolingo ? 16 : DesignRadius.large
+        let radius: CGFloat = c.isPixel ? 0 : (c.isDuolingo ? 16 : DesignRadius.large)
         return Color.clear
             .frame(height: 64)
             .background {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(c.isGlass ? Color.clear : c.cardBg.opacity(c.isDuolingo ? 1 : 0.72))
+                    .fill(c.isGlass ? Color.clear : c.cardBg.opacity(c.isDuolingo || c.isPixel ? 1 : 0.72))
             }
             .modifier(GlassCardModifier(isGlass: c.isGlass, cornerRadius: radius))
+            .overlay {
+                if c.isPixel {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(c.mainText, lineWidth: 2)
+                }
+            }
             .overlay(alignment: .leading) {
                 VStack(alignment: .leading, spacing: 6) {
                     Capsule().fill(c.mainText.opacity(0.28)).frame(width: 40, height: 6)
@@ -228,14 +234,20 @@ struct ThemePickerView: View {
     }
 
     private func glassPlate(_ c: ThemeStore.PreviewColors) -> some View {
-        let radius: CGFloat = c.isDuolingo ? 16 : DesignRadius.large
+        let radius: CGFloat = c.isPixel ? 0 : (c.isDuolingo ? 16 : DesignRadius.large)
         return RoundedRectangle(cornerRadius: radius, style: .continuous)
-            .fill(c.isGlass ? Color.clear : c.cardBg.opacity(c.isDuolingo ? 1 : 0.55))
+            .fill(c.isGlass ? Color.clear : c.cardBg.opacity(c.isDuolingo || c.isPixel ? 1 : 0.55))
             .modifier(GlassCardModifier(isGlass: c.isGlass, cornerRadius: radius))
+            .overlay {
+                if c.isPixel {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(c.mainText, lineWidth: 2)
+                }
+            }
     }
 
     private func wordPreviewCard(_ c: ThemeStore.PreviewColors, muted: Bool = false) -> some View {
-        let radius: CGFloat = c.isDuolingo ? 16 : 22
+        let radius: CGFloat = c.isPixel ? 0 : (c.isDuolingo ? 16 : 22)
         return VStack(alignment: .leading, spacing: 8) {
             Capsule()
                 .fill(c.mainAccentColor.opacity(muted ? 0.25 : 0.45))
@@ -254,6 +266,12 @@ struct ThemePickerView: View {
                 .fill(c.isGlass ? Color.clear : c.cardBg.opacity(muted ? 0.85 : 1))
         )
         .modifier(GlassCardModifier(isGlass: c.isGlass, cornerRadius: radius))
+        .overlay {
+            if c.isPixel {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .strokeBorder(c.mainText, lineWidth: 2)
+            }
+        }
     }
 
     private var setButton: some View {
@@ -264,6 +282,7 @@ struct ThemePickerView: View {
             customHex: selectedPalette == .custom ? themeStore.customAccentHex : ThemeStore.defaultCustomAccentHex
         )
         let useDuoChrome = selectedPalette == .duolingo
+        let usePixelChrome = selectedPalette == .pixel
         let accent = isCurrent ? Color(hex: "#E5E5E5") : c.mainAccentColor
 
         return Button(action: applySelection) {
@@ -272,6 +291,7 @@ struct ThemePickerView: View {
                     accent: accent,
                     isCurrent: isCurrent,
                     useDuoChrome: useDuoChrome,
+                    usePixelChrome: usePixelChrome,
                     useGlass: selectedPalette == .glass,
                     labelColor: colorScheme == .dark ? .white : .black
                 ))
@@ -327,6 +347,7 @@ private struct SetButtonChrome: ViewModifier {
     let accent: Color
     let isCurrent: Bool
     let useDuoChrome: Bool
+    let usePixelChrome: Bool
     let useGlass: Bool
     let labelColor: Color
 
@@ -358,6 +379,27 @@ private struct SetButtonChrome: ViewModifier {
                     }
                 }
                 .padding(.bottom, 4)
+        } else if usePixelChrome {
+            content
+                .font(themeStore.bold(17))
+                .foregroundStyle(isCurrent ? themeStore.secondaryText : .white)
+                .padding(.vertical, DesignSpacing.buttonVertical)
+                .frame(maxWidth: .infinity)
+                .background {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(isCurrent ? themeStore.secondaryText.opacity(0.45) : Color(light: "#1C140C", dark: "#000000"))
+                            .offset(x: 4, y: 4)
+                        RoundedRectangle(cornerRadius: 0)
+                            .fill(isCurrent ? Color(hex: "#E5E5E5") : accent)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 0)
+                                    .strokeBorder(Color(light: "#1C140C", dark: "#F4EBD4"), lineWidth: 2)
+                            }
+                    }
+                }
+                .padding(.bottom, 4)
+                .padding(.trailing, 4)
         } else {
             content
                 .font(themeStore.bold(17))

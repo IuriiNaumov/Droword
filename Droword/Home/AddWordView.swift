@@ -267,8 +267,9 @@ struct AddWordView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                    .fill(themeStore.dividerColor.opacity(0.55))
+                    .fill(themeStore.isPixel ? themeStore.cardBg : themeStore.dividerColor.opacity(0.55))
             )
+            .pixelFrame(themeStore)
         }
     }
 
@@ -342,6 +343,7 @@ struct AddWordView: View {
             return
         }
 
+        TTSPlayer.prefetch(trimmedWord)
         isAdding = true
 
         do {
@@ -401,6 +403,7 @@ struct AddWordView: View {
             languageStore.switchLearning(to: language)
             isAdding = true
         }
+        TTSPlayer.prefetch(trimmedWord)
         do {
             let result = try await translateWithClaude(word: trimmedWord, languageStore: languageStore)
             if !isPremium && !alreadyTranslated {

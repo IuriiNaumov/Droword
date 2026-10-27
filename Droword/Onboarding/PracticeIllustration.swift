@@ -8,18 +8,20 @@ struct PracticeIllustration: View {
 
     var body: some View {
         ZStack {
-            HaloIcon(symbol: "bolt", color: accent, size: size * 0.88)
+            StickerBulb(size: size * 0.68, showsAccents: false)
                 .offset(x: px * 0.08, y: py * 0.06)
 
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: size * 0.09, weight: .semibold))
-                .foregroundStyle(accent)
-                .offset(x: -size * 0.30 + px * 0.1, y: size * 0.18 + py * 0.05)
+            StickerCheck(size: size * 0.3)
+                .offset(x: size * 0.30 + px * 0.12, y: size * 0.22 + py * 0.06)
 
-            Image(systemName: "waveform")
-                .font(.system(size: size * 0.09, weight: .semibold))
-                .foregroundStyle(accent)
-                .offset(x: size * 0.32 + px * 0.08, y: -size * 0.20 + py * 0.04)
+            StickerStar(tone: .pink, size: size * 0.15)
+                .offset(x: size * 0.30 + px * 0.1, y: -size * 0.28 + py * 0.05)
+
+            StickerStar(tone: .blue, size: size * 0.11)
+                .offset(x: -size * 0.32 + px * 0.06, y: -size * 0.18 + py * 0.04)
+
+            StickerStar(tone: .gold, size: size * 0.09)
+                .offset(x: -size * 0.30 + px * 0.05, y: size * 0.26 + py * 0.03)
         }
         .frame(width: size, height: size)
         .allowsHitTesting(false)
@@ -27,5 +29,5 @@ struct PracticeIllustration: View {
 }
 
 #Preview {
-    PracticeIllustration(accent: .green, size: 220, px: 0, py: 0)
+    PracticeIllustration(accent: .green, size: 260, px: 0, py: 0)
 }

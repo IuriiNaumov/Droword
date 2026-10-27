@@ -208,6 +208,7 @@ struct ShareWordPosterView: View {
         switch themeStore.palette {
         case .colorful: return Color(red: 0.29, green: 0.50, blue: 0.77)
         case .duolingo: return Color(red: 0.345, green: 0.800, blue: 0.008)
+        case .pixel: return Color(red: 0.839, green: 0.157, blue: 0.157)
         case .glass: return Color(red: 0.0, green: 0.48, blue: 1.0)
         case .custom: return themeStore.mainAccentColor
         }
@@ -217,6 +218,7 @@ struct ShareWordPosterView: View {
         switch themeStore.palette {
         case .colorful: return Color(red: 0.76, green: 0.37, blue: 0.51)
         case .duolingo: return Color(red: 0.10, green: 0.54, blue: 0.43)
+        case .pixel: return Color(red: 0.055, green: 0.071, blue: 0.141)
         case .glass: return Color(red: 0.69, green: 0.32, blue: 0.87)
         case .custom: return themeStore.accentPink
         }

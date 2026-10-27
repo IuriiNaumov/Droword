@@ -136,6 +136,9 @@ enum InstagramStoriesShare {
         case .duolingo:
             topHex = "#45B800"
             bottomHex = "#1A8A6E"
+        case .pixel:
+            topHex = "#D62828"
+            bottomHex = "#0E1224"
         case .glass:
             topHex = "#007AFF"
             bottomHex = "#AF52DE"

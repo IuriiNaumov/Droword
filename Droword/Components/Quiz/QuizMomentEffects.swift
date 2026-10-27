@@ -127,9 +127,7 @@ struct PracticeFinishBurstView: View {
     private var finishSparkles: some View {
         ZStack {
             ForEach(FinishSparkle.samples) { sparkle in
-                Image(systemName: sparkle.symbol)
-                    .font(.system(size: sparkle.size, weight: .semibold))
-                    .foregroundStyle(.white)
+                StickerStar(tone: sparkle.tone, size: sparkle.size)
                     .rotationEffect(.degrees(sparkle.turn))
                     .scaleEffect(sparkle.id < litSparkles ? 1 : 0.15)
                     .opacity(sparkle.id < litSparkles ? 1 : 0)
@@ -191,7 +189,7 @@ struct PracticeFinishBurstView: View {
 
 private struct FinishSparkle: Identifiable {
     let id: Int
-    let symbol: String
+    let tone: StickerTone
     let x: CGFloat
     let y: CGFloat
     let size: CGFloat
@@ -199,12 +197,12 @@ private struct FinishSparkle: Identifiable {
     let turn: Double
 
     static let samples: [FinishSparkle] = [
-        FinishSparkle(id: 0, symbol: "sparkle", x: -132, y: -46, size: 16, delay: 0.0, turn: -18),
-        FinishSparkle(id: 1, symbol: "star.fill", x: -156, y: 22, size: 8, delay: 0.08, turn: 12),
-        FinishSparkle(id: 2, symbol: "sparkle", x: 8, y: -54, size: 12, delay: 0.14, turn: 8),
-        FinishSparkle(id: 3, symbol: "sparkle", x: 138, y: -38, size: 18, delay: 0.04, turn: 16),
-        FinishSparkle(id: 4, symbol: "star.fill", x: 158, y: 18, size: 9, delay: 0.16, turn: -10),
-        FinishSparkle(id: 5, symbol: "sparkle", x: -36, y: 50, size: 10, delay: 0.22, turn: 20),
-        FinishSparkle(id: 6, symbol: "sparkle", x: 96, y: 48, size: 13, delay: 0.1, turn: -14)
+        FinishSparkle(id: 0, tone: .gold, x: -132, y: -46, size: 22, delay: 0.0, turn: -12),
+        FinishSparkle(id: 1, tone: .pink, x: -156, y: 22, size: 12, delay: 0.08, turn: 10),
+        FinishSparkle(id: 2, tone: .blue, x: 8, y: -56, size: 17, delay: 0.14, turn: 6),
+        FinishSparkle(id: 3, tone: .gold, x: 138, y: -40, size: 24, delay: 0.04, turn: 12),
+        FinishSparkle(id: 4, tone: .green, x: 158, y: 18, size: 12, delay: 0.16, turn: -8),
+        FinishSparkle(id: 5, tone: .pink, x: -36, y: 52, size: 14, delay: 0.22, turn: 14),
+        FinishSparkle(id: 6, tone: .blue, x: 96, y: 50, size: 18, delay: 0.1, turn: -10)
     ]
 }

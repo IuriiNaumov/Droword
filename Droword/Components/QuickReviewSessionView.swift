@@ -286,15 +286,16 @@ struct QuickReviewSessionView: View {
 
     @ViewBuilder
     private func soundWaves(for word: StoredWord) -> some View {
+        let canSpeak = TTSPlayer.canPlay(word: word.word, online: network.isConnected)
         SoundWavesView(isPlaying: isPlaying)
             .frame(width: 40, height: 40)
             .contentShape(Rectangle())
-            .opacity(network.isConnected ? 1 : 0.35)
-            .allowsHitTesting(network.isConnected)
+            .opacity(canSpeak ? 1 : 0.35)
+            .allowsHitTesting(canSpeak)
             .highPriorityGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in
-                        guard network.isConnected else { return }
+                        guard canSpeak else { return }
                         guard !isHoldingAudio else { return }
                         holdStartedAt = Date()
                         isHoldingAudio = true
@@ -318,7 +319,7 @@ struct QuickReviewSessionView: View {
             )
             .accessibilityLabel(Text("Pronunciation"))
             .accessibilityHint(
-                Text(network.isConnected
+                Text(canSpeak
                      ? "Tap to play, or hold to hear while pressed"
                      : "Needs an internet connection")
             )
@@ -487,7 +488,7 @@ struct QuickReviewSessionView: View {
     }
 
     private func playAudio(for word: StoredWord) {
-        guard network.isConnected else { return }
+        guard TTSPlayer.canPlay(word: word.word, online: network.isConnected) else { return }
         TTSPlayer.play(
             word: word.word,
             isPremium: isPremium,

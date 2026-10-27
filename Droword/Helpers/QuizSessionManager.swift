@@ -144,18 +144,18 @@ final class QuizSessionManager: ObservableObject {
         }
 
         let swappable = queue.indices.filter { exerciseTypes[queue[$0].id] != .matching }.shuffled()
-        if NetworkMonitor.shared.isConnected, queue.count >= 4, let idx = swappable.first {
-            if learningStyle == .listening || learningStyle == .speaking || learningStyle == .mixed {
-                exerciseTypes[queue[idx].id] = .listening
-            }
+        if queue.count >= 4,
+           learningStyle == .listening || learningStyle == .speaking || learningStyle == .mixed,
+           let idx = swappable.first(where: { canAssignListening(queue[$0].word) }) {
+            exerciseTypes[queue[idx].id] = .listening
         }
 
-        if learningStyle == .listening, NetworkMonitor.shared.isConnected {
+        if learningStyle == .listening {
             let more = queue.indices.filter {
                 let t = exerciseTypes[queue[$0].id]
                 return t == .multipleChoice || t == .typing
             }.shuffled()
-            if let idx = more.first {
+            if let idx = more.first(where: { canAssignListening(queue[$0].word) }) {
                 exerciseTypes[queue[idx].id] = .listening
             }
         }
@@ -243,10 +243,9 @@ final class QuizSessionManager: ObservableObject {
             let type = exerciseTypes[queue[$0].id]
             return type != .matching && $0 > 0
         }.shuffled()
-        if NetworkMonitor.shared.isConnected, !swappable.isEmpty {
-            if learningStyle == .listening || learningStyle == .speaking || learningStyle == .mixed {
-                exerciseTypes[queue[swappable[0]].id] = .listening
-            }
+        if learningStyle == .listening || learningStyle == .speaking || learningStyle == .mixed,
+           let idx = swappable.first(where: { canAssignListening(queue[$0].word) }) {
+            exerciseTypes[queue[idx].id] = .listening
         }
 
         let directionExcluded: Set<ExerciseType> = [.cloze, .listening, .sentenceBuilding]
@@ -313,6 +312,10 @@ final class QuizSessionManager: ObservableObject {
         }
 
         return Array(pool.shuffled().prefix(count))
+    }
+
+    private func canAssignListening(_ word: String) -> Bool {
+        TTSPlayer.canPlay(word: word, online: NetworkMonitor.shared.isConnected)
     }
 
     private func pickExerciseType(

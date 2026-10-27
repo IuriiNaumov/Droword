@@ -130,7 +130,7 @@ struct QuizCompletionView: View {
     private var streakRow: some View {
         HStack(spacing: 24) {
             VStack(spacing: 4) {
-                BurningFlameIcon(size: 20)
+                StickerIcon(art: .flame, size: 26)
                 Text("\(bestStreak)")
                     .font(themeStore.bold(18))
                     .foregroundStyle(StreakFireStyle.red)
@@ -277,9 +277,7 @@ struct QuizCompletionView: View {
 
     private func statBubble(icon: String, value: String, label: LocalizedStringKey, color: Color) -> some View {
         VStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundStyle(color)
+            StickerSymbol(systemName: icon, size: 26, color: color)
             Text(value)
                 .font(themeStore.bold(18))
                 .foregroundStyle(themeStore.mainText)

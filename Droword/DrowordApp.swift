@@ -53,6 +53,10 @@ struct DrowordApp: App {
             _ = UIFont(name: "Poppins-SemiBold", size: 14)
             _ = UIFont(name: "Poppins-Bold", size: 14)
             _ = UIFont(name: "Poppins-Black", size: 14)
+            _ = UIFont(name: "PixelifySans-Regular", size: 14)
+            _ = UIFont(name: "PixelifySans-Medium", size: 14)
+            _ = UIFont(name: "PixelifySans-SemiBold", size: 14)
+            _ = UIFont(name: "PixelifySans-Bold", size: 14)
         }
     }
 
@@ -62,7 +66,11 @@ struct DrowordApp: App {
             "Poppins-Medium",
             "Poppins-SemiBold",
             "Poppins-Bold",
-            "Poppins-Black"
+            "Poppins-Black",
+            "PixelifySans-Regular",
+            "PixelifySans-Medium",
+            "PixelifySans-SemiBold",
+            "PixelifySans-Bold"
         ]
         for name in files {
             guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else {
@@ -87,6 +95,7 @@ struct DrowordApp: App {
                 .preferredColorScheme(appearance.colorScheme)
                 .tint(themeStore.mainAccentColor)
                 .animation(.easeInOut(duration: 0.4), value: themeStore.palette)
+                .environment(\.stickerStyle, themeStore.stickerStyle)
                 .environmentObject(store)
                 .environmentObject(suggested)
                 .environmentObject(languageStore)
@@ -154,6 +163,8 @@ struct DrowordApp: App {
         switch paletteRaw {
         case "duolingo":
             tintColor = UIColor(red: 0.345, green: 0.8, blue: 0.008, alpha: 1)
+        case "pixel":
+            tintColor = UIColor(red: 0.839, green: 0.157, blue: 0.157, alpha: 1)
         case "glass":
             tintColor = UIColor.systemBlue
         case "custom":

@@ -38,6 +38,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Put new `@AppStorage` keys in `AppStorageKeys`.
 - Leave worker CEFR/script prompt rules intact unless the task is explicitly about them.
 - Home: one lesson hero (`DailyLessonCard`); due reviews live inside the lesson queue.
+- Splash: `DrowordWordmark` blurs in as a single word, and the seven twinkling `StickerStar`s spring out around it. Do not bring back the letter wave, bursts, or rings.
 - Green Owl only: white pages (`appBg`), gray blocks (`cardBg` `#F7F7F7`), `duo3DStyle` CTAs, `cardRadius`/`chipRadius`. No gray stroke borders on Duo cards.
 - Practice correct/wrong = toast greens/reds (`successStrong` / `errorStrong` → `accentGreen` / `accentRed`).
 - Empty states: tip + strong Add CTA (`EmptyListView` / `PracticeEmptyContent`).
@@ -50,7 +51,8 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Tab bar: system height (`.tabBarMinimizeBehavior(.never)`, no `sizeThatFits` shrink).
 - Before a push: update `AGENTS.md` and `README.md` if behavior or the map changed, delete code comments, then push.
 - New UI copy: translate into all catalog locales in `Localizable.xcstrings`; plurals need correct number/declension (see `localization.mdc`).
-- Large soft-cover / empty-state heroes use `themeStore.iconAccent`. Small settings/menu icons keep `mainText` or rainbow `icon*` tokens. Soft-cover: centered content, bottom CTAs. CTAs stay `mainAccentColor`; delete stays red; Home PRO sparkle stays `accentBlue`.
+- One `View` per file, with a `#Preview`. Shared functions and shared controls live in `Helpers/` or `Domain/` (see `swiftui-structure.mdc`).
+- Large soft-cover / empty-state heroes are stickers (`StickerSymbol` / `StickerTone`); they follow the theme via `\.stickerStyle`. SF fallbacks use `themeStore.iconAccent`. Small settings/menu icons keep `mainText` or rainbow `icon*` tokens. Soft-cover: centered content, bottom CTAs. CTAs stay `mainAccentColor`; delete stays red; Home PRO sparkle stays `accentBlue`.
 
 ## Don't
 
@@ -63,8 +65,8 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
 - Bring language/flag app icons back, or replace tab-bar symbols with custom art unless asked.
 - Shrink the tab bar in `sizeThatFits` or turn minimize back on.
-- Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static). Home PRO stays a plain `accentBlue` sparkle. Only the paywall plaque is themed.
+- Add a zero-distance drag on language cards (it blocks scroll) or pulse the PRO sparkle (`ProPillBadge`, `ProPlusMark` stay static). Home PRO stays a plain `accentBlue` sparkle. The paywall plaque is `StickerProBadge`.
 - Open the theme picker on the first palette. It stays on the saved theme (`showPager` after the selection is set).
-- Replace empty-state halos (`text.badge.plus`, dictionary `textformat`, practice `bolt`, tag `tag`) with custom drawings.
+- Swap the sticker art (`StickerQuestion` empty dictionary, `StickerBulb` practice, `StickerTag` empty tag, `StickerStar` splash, onboarding stickers, soft-cover modal heroes via `StickerSymbol`) back to SF Symbols. New stickers reuse `StickerShape` + `StickerTone`.
 - Rewrite `NotificationCopy` from old English slang. Russian is the source of meaning.
 - Highlight irregular forms outside the example sentence. `forms` / `POST /forms` feed `HighlightedExample` only.

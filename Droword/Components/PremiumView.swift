@@ -158,8 +158,7 @@ struct PremiumView: View {
     }
 
     private var proBadge: some View {
-        ProPillBadge(prominent: true)
-            .accessibilityElement(children: .combine)
+        StickerProBadge(height: isPremium ? 40 : 52)
             .accessibilityLabel(Text("Droword PRO"))
     }
 

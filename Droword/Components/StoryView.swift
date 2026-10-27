@@ -51,8 +51,8 @@ struct StoryView: View {
     @State private var showPremiumWall = false
     @State private var storySeeds: [StorySeed] = []
     @State private var selectedSeedID: UUID?
-    @State private var quizChoices: [String] = []
     @State private var quizAnswers: [UUID: Bool] = [:]
+    @State private var showReview = false
     @State private var speakingID: UUID?
 
     var body: some View {
@@ -98,6 +98,23 @@ struct StoryView: View {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
         }
+        .fullScreenCover(isPresented: $showReview) {
+            if let story {
+                StoryReviewSession(
+                    seeds: reviewSeeds(in: story),
+                    answers: [:],
+                    choices: { choices(for: $0) },
+                    onAnswer: { seed, remembered in
+                        answerQuiz(seed, remembered: remembered)
+                    },
+                    onFinished: {
+                        showReview = false
+                        Task { await load() }
+                    }
+                )
+                .environmentObject(themeStore)
+            }
+        }
     }
 
     private func storyContent(_ story: StoryResult) -> some View {
@@ -105,8 +122,8 @@ struct StoryView: View {
             Text(Self.plainText(story.title, words: story.usedWords))
                 .font(themeStore.bold(24))
                 .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, DesignSpacing.titleTop)
                 .padding(.bottom, DesignSpacing.titleBottom)
 
@@ -185,12 +202,6 @@ struct StoryView: View {
             if let seed = storySeeds.first(where: { $0.id == selectedSeedID }) {
                 wordGloss(seed)
             }
-
-            if let seed = pendingQuizSeed(in: story), quizChoices.count >= 2 {
-                meaningQuiz(seed)
-            } else if pendingQuizSeed(in: story) == nil, !quizAnswers.isEmpty {
-                quizSummary(usedSeeds(in: story))
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -205,8 +216,8 @@ struct StoryView: View {
             }
 
             Button {
-                Haptics.lightImpact()
-                Task { await load() }
+                Haptics.buttonPress()
+                beginNewStory()
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.triangle.2.circlepath")
@@ -220,6 +231,14 @@ struct StoryView: View {
         .padding(.horizontal, DesignSpacing.screenInset)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func beginNewStory() {
+        if let story, !reviewSeeds(in: story).isEmpty {
+            showReview = true
+            return
+        }
+        Task { await load() }
     }
 
     private func wordGloss(_ seed: StorySeed) -> some View {
@@ -256,99 +275,15 @@ struct StoryView: View {
         .cleanCard(themeStore: themeStore, cornerRadius: themeStore.cardRadius)
     }
 
-    private func meaningQuiz(_ seed: StorySeed) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("What does this word mean?")
-                .font(themeStore.medium(15))
-                .foregroundStyle(themeStore.mainText)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Text(seed.word)
-                .font(themeStore.bold(18))
-                .foregroundStyle(Color("AccentGold"))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            ForEach(quizChoices, id: \.self) { choice in
-                Button {
-                    answerQuiz(choice, seed: seed)
-                } label: {
-                    Text(choice)
-                        .font(themeStore.medium(15))
-                        .foregroundStyle(themeStore.mainText)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 12)
-                        .padding(.horizontal, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
-                                .fill(themeStore.cardBg)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 8)
-    }
-
-    private func quizSummary(_ seeds: [StorySeed]) -> some View {
-        let remembered = seeds.filter { quizAnswers[$0.id] == true }
-        let missed = seeds.filter { quizAnswers[$0.id] == false }
-        return VStack(alignment: .leading, spacing: 16) {
-            if !remembered.isEmpty {
-                quizRows(remembered, tint: themeStore.successStrong)
-            }
-            if !missed.isEmpty {
-                quizRows(missed, tint: themeStore.errorStrong)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 8)
-    }
-
-    private func quizRows(_ seeds: [StorySeed], tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(seeds) { seed in
-                HStack(spacing: 8) {
-                    Text(seed.word)
-                        .font(themeStore.medium(15))
-                        .foregroundStyle(themeStore.mainText)
-                    Text(seed.translation)
-                        .font(themeStore.regular(15))
-                        .foregroundStyle(themeStore.secondaryText)
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
-                        .fill(tint.opacity(0.1))
-                )
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func answerQuiz(_ choice: String, seed: StorySeed) {
+    private func answerQuiz(_ seed: StorySeed, remembered: Bool) {
         guard quizAnswers[seed.id] == nil else { return }
-        let remembered = Self.folded(choice) == Self.folded(seed.translation)
         quizAnswers[seed.id] = remembered
-        if remembered {
-            Haptics.success()
-        } else {
-            Haptics.warning()
-        }
         store.bringStoryReviewCloser(id: seed.id, remembered: remembered)
-        if let story, let next = pendingQuizSeed(in: story) {
-            quizChoices = choices(for: next)
-        } else {
-            quizChoices = []
-        }
         saveProgress()
     }
 
-    private func pendingQuizSeed(in story: StoryResult) -> StorySeed? {
-        usedSeeds(in: story).first { quizAnswers[$0.id] == nil && !choices(for: $0).isEmpty }
+    private func reviewSeeds(in story: StoryResult) -> [StorySeed] {
+        usedSeeds(in: story).filter { !choices(for: $0).isEmpty }
     }
 
     private func choices(for seed: StorySeed) -> [String] {
@@ -516,6 +451,7 @@ struct StoryView: View {
         errorMessage = nil
         errorCanRetry = true
         showTranslation = false
+        showReview = false
         withAnimation { isLoading = true }
         do {
             let profile = LearningProfileStore.shared
@@ -551,11 +487,6 @@ struct StoryView: View {
         speakingID = nil
         quizAnswers = Dictionary(uniqueKeysWithValues: answers.map { ($0.id, $0.remembered) })
         story = result
-        if let next = pendingQuizSeed(in: result) {
-            quizChoices = choices(for: next)
-        } else {
-            quizChoices = []
-        }
         isLoading = false
     }
 
@@ -568,6 +499,205 @@ struct StoryView: View {
             seeds: storySeeds,
             answers: answers
         ))
+    }
+
+    private static func folded(_ text: String) -> String {
+        text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+    }
+}
+
+private struct StoryReviewSession: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var themeStore: ThemeStore
+
+    let seeds: [StorySeed]
+    let answers: [UUID: Bool]
+    let choices: (StorySeed) -> [String]
+    let onAnswer: (StorySeed, Bool) -> Void
+    let onFinished: () -> Void
+
+    @State private var index = 0
+    @State private var localAnswers: [UUID: Bool] = [:]
+    @State private var options: [String] = []
+    @State private var selected: String?
+    @State private var hasAnswered = false
+    @State private var isCorrect = false
+    @State private var showingResults = false
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if showingResults {
+                    results
+                } else if let seed = currentSeed {
+                    question(seed)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(themeStore.appBg.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    CloseButton()
+                }
+            }
+        }
+        .onAppear(perform: start)
+    }
+
+    private var currentSeed: StorySeed? {
+        seeds.indices.contains(index) ? seeds[index] : nil
+    }
+
+    private func question(_ seed: StorySeed) -> some View {
+        VStack(spacing: 0) {
+            Text("\(index + 1)/\(seeds.count)")
+                .font(themeStore.medium(13))
+                .foregroundStyle(themeStore.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+
+            QuizMultipleChoiceExercise(
+                item: QuizSessionManager.QuizItem(
+                    id: seed.id,
+                    word: seed.word,
+                    translation: seed.translation,
+                    transcription: nil,
+                    tag: nil,
+                    example: nil
+                ),
+                hasAnswered: hasAnswered,
+                isCorrect: isCorrect,
+                isReversed: false,
+                options: options,
+                selectedOption: selected,
+                shakeOffset: 0,
+                onSelect: { choose($0, seed: seed) }
+            )
+
+            if hasAnswered {
+                Button {
+                    Haptics.lightImpact()
+                    advance()
+                } label: {
+                    Text("Continue")
+                        .duo3DStyle(themeStore.mainAccentColor)
+                }
+                .buttonStyle(Duo3DButtonStyle())
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+            }
+        }
+    }
+
+    private var results: some View {
+        let remembered = seeds.filter { localAnswers[$0.id] == true }
+        let missed = seeds.filter { localAnswers[$0.id] == false }
+        return VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if !remembered.isEmpty {
+                        resultRows(remembered, tint: themeStore.successStrong)
+                    }
+                    if !missed.isEmpty {
+                        resultRows(missed, tint: themeStore.errorStrong)
+                    }
+                }
+                .padding(.horizontal, DesignSpacing.screenInset)
+                .padding(.top, 24)
+                .padding(.bottom, 12)
+            }
+            Button {
+                Haptics.buttonPress()
+                onFinished()
+                dismiss()
+            } label: {
+                Text("Done")
+                    .duo3DStyle(themeStore.mainAccentColor)
+            }
+            .buttonStyle(Duo3DButtonStyle())
+            .padding(.horizontal, DesignSpacing.screenInset)
+            .padding(.bottom, 12)
+        }
+    }
+
+    private func resultRows(_ seeds: [StorySeed], tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(seeds) { seed in
+                HStack(spacing: 8) {
+                    Text(seed.word)
+                        .font(themeStore.medium(15))
+                        .foregroundStyle(themeStore.mainText)
+                    Text(seed.translation)
+                        .font(themeStore.regular(15))
+                        .foregroundStyle(themeStore.secondaryText)
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                        .fill(tint.opacity(0.1))
+                )
+            }
+        }
+    }
+
+    private func start() {
+        localAnswers = answers
+        if let first = seeds.firstIndex(where: { answers[$0.id] == nil }) {
+            index = first
+            prepare(first)
+            showingResults = false
+        } else {
+            showingResults = true
+        }
+    }
+
+    private func prepare(_ next: Int) {
+        guard seeds.indices.contains(next) else {
+            showingResults = true
+            return
+        }
+        let made = choices(seeds[next])
+        if made.isEmpty {
+            advance(from: next)
+            return
+        }
+        index = next
+        options = made
+        selected = nil
+        hasAnswered = false
+        isCorrect = false
+    }
+
+    private func choose(_ choice: String, seed: StorySeed) {
+        guard !hasAnswered, localAnswers[seed.id] == nil else { return }
+        let remembered = Self.folded(choice) == Self.folded(seed.translation)
+        selected = choice
+        isCorrect = remembered
+        hasAnswered = true
+        localAnswers[seed.id] = remembered
+        if remembered {
+            Haptics.success()
+        } else {
+            Haptics.warning()
+        }
+        onAnswer(seed, remembered)
+    }
+
+    private func advance() {
+        advance(from: index)
+    }
+
+    private func advance(from current: Int) {
+        if let next = seeds.indices.first(where: { $0 > current && localAnswers[seeds[$0].id] == nil }) {
+            prepare(next)
+        } else {
+            showingResults = true
+        }
     }
 
     private static func folded(_ text: String) -> String {

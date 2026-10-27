@@ -6,19 +6,21 @@ final class ThemeStore: ObservableObject {
     enum Palette: String, CaseIterable, Identifiable {
         case colorful
         case duolingo
+        case pixel
         case glass
         case custom
 
         var id: String { rawValue }
 
         static var pickerOrder: [Palette] {
-            [.colorful, .duolingo, .glass, .custom]
+            [.colorful, .duolingo, .pixel, .glass, .custom]
         }
 
         var title: String {
             switch self {
             case .colorful: return String(localized: "Droword")
             case .duolingo: return String(localized: "Green Owl")
+            case .pixel: return String(localized: "8-bit")
             case .glass: return String(localized: "Liquid Glass")
             case .custom: return String(localized: "Custom")
             }
@@ -28,6 +30,7 @@ final class ThemeStore: ObservableObject {
             switch self {
             case .colorful: return String(localized: "Warm and vibrant")
             case .duolingo: return String(localized: "White pages, gray cards, 3D buttons")
+            case .pixel: return String(localized: "Old console, loud colors")
             case .glass: return String(localized: "Apple glass aesthetic")
             case .custom: return String(localized: "Pick your accent color")
             }
@@ -39,6 +42,7 @@ final class ThemeStore: ObservableObject {
             switch self {
             case .colorful: return [Color(hex: "#F6F7FF"), Color(hex: "#DDE4FA")]
             case .duolingo: return [Color(hex: "#FFFFFF"), Color(hex: "#F7F7F7"), Color(hex: "#58CC02")]
+            case .pixel: return [Color(hex: "#F7F1DE"), Color(hex: "#D62828"), Color(hex: "#1C140C")]
             case .glass: return [Color(hex: "#E8F1FF"), Color(hex: "#9BB7E8")]
             case .custom: return [Color(hex: "#F5F5F7"), Color(hex: "#C7C7CC")]
             }
@@ -48,6 +52,7 @@ final class ThemeStore: ObservableObject {
             switch self {
             case .colorful: return Color(hex: "#5B9BD5")
             case .duolingo: return Color(hex: "#58CC02")
+            case .pixel: return Color(hex: "#D62828")
             case .glass: return Color(hex: "#007AFF")
             case .custom: return Color(hex: "#5B9BD5")
             }
@@ -159,6 +164,28 @@ final class ThemeStore: ObservableObject {
                 iconPurple: Color(hex: "#CE82FF"),
                 iconPink: Color(hex: "#FF4B4B"),
                 iconBlue: Color(hex: "#1CB0F6")
+            )
+        case .pixel:
+            return Colors(
+                accentBlue: Color(light: "#1D4ED8", dark: "#4C9AFF"),
+                accentGreen: Color(light: "#2A9D3A", dark: "#3DDC54"),
+                accentPurple: Color(light: "#6D28D9", dark: "#C084FC"),
+                accentPink: Color(light: "#DB2777", dark: "#FF6B9A"),
+                accentGold: Color(light: "#D4A017", dark: "#FFD23F"),
+                accentRed: Color(light: "#D62828", dark: "#FF4B3E"),
+                mainAccentColor: Color(light: "#D62828", dark: "#FF4B3E"),
+                appBg: Color(light: "#F7F1DE", dark: "#0E1224"),
+                cardBg: Color(light: "#FFFDF6", dark: "#1A2140"),
+                mainText: Color(light: "#1C140C", dark: "#F4EBD4"),
+                secondaryText: Color(light: "#5C5346", dark: "#C8BBA4"),
+                dividerColor: Color(light: "#1C140C", dark: "#F4EBD4"),
+                tabTint: Color(light: "#D62828", dark: "#FF4B3E"),
+                buttonShadow: Color(light: "#1C140C", dark: "#000000"),
+                iconGreen: Color(light: "#2A9D3A", dark: "#3DDC54"),
+                iconGold: Color(light: "#D4A017", dark: "#FFD23F"),
+                iconPurple: Color(light: "#6D28D9", dark: "#C084FC"),
+                iconPink: Color(light: "#DB2777", dark: "#FF6B9A"),
+                iconBlue: Color(light: "#1D4ED8", dark: "#4C9AFF")
             )
         case .glass:
             return Colors(
@@ -278,9 +305,17 @@ final class ThemeStore: ObservableObject {
     }
 
     var isDuolingo: Bool { palette == .duolingo }
+    var isPixel: Bool { palette == .pixel }
     var isGlass: Bool { palette == .glass && Self.glassAPIAvailable }
     var isCustom: Bool { palette == .custom }
     var title: String { palette.title }
+
+    var stickerStyle: StickerStyle {
+        if isDuolingo { return .duo }
+        if isPixel { return .pixel }
+        if isGlass { return .glass }
+        return .droword
+    }
 
     static var glassAPIAvailable: Bool {
         if #available(iOS 26.0, *) { return true }
@@ -339,6 +374,7 @@ final class ThemeStore: ObservableObject {
         switch palette {
         case .colorful: return Color(hex: "#6A3AC4")
         case .duolingo: return accentBlue
+        case .pixel: return accentGold
         case .glass: return accentPurple
         case .custom: return accentPurple
         }
@@ -359,6 +395,7 @@ final class ThemeStore: ObservableObject {
         switch palette {
         case .colorful: return Color(light: "#E3E8FA", dark: "#262B47")
         case .duolingo: return Color(light: "#D7FFB8", dark: "#243819")
+        case .pixel: return Color(light: "#FFFDF6", dark: "#1A2140")
         case .glass: return Color(light: "#E3F0FF", dark: "#1C2A3D")
         case .custom: return mainAccentColor.opacity(0.14)
         }
@@ -366,11 +403,23 @@ final class ThemeStore: ObservableObject {
 
     var toastText: Color { accentGreen }
 
-    var controlRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+    var pixelInk: Color { mainText }
+    var pixelShadow: Color { buttonShadow }
 
-    var cardRadius: CGFloat { isDuolingo ? 16 : DesignRadius.large }
+    var controlRadius: CGFloat {
+        if isPixel { return 0 }
+        return isDuolingo ? 16 : DesignRadius.large
+    }
 
-    var chipRadius: CGFloat { isDuolingo ? 12 : DesignRadius.small }
+    var cardRadius: CGFloat {
+        if isPixel { return 0 }
+        return isDuolingo ? 16 : DesignRadius.large
+    }
+
+    var chipRadius: CGFloat {
+        if isPixel { return 0 }
+        return isDuolingo ? 12 : DesignRadius.small
+    }
 
     var successSoft: Color {
         isDuolingo ? Color(light: "#D7FFB8", dark: "#243819") : accentGreen.opacity(0.18)
@@ -395,11 +444,11 @@ final class ThemeStore: ObservableObject {
         return Color("MonoMedium")
     }
 
-    var fontBold: String { "Poppins-Bold" }
-    var fontMedium: String { "Poppins-Medium" }
-    var fontRegular: String { "Poppins-Regular" }
-    var fontDisplay: String { "Poppins-Black" }
-    var fontSemiBold: String { "Poppins-SemiBold" }
+    var fontBold: String { isPixel ? "PixelifySans-Bold" : "Poppins-Bold" }
+    var fontMedium: String { isPixel ? "PixelifySans-Medium" : "Poppins-Medium" }
+    var fontRegular: String { isPixel ? "PixelifySans-Regular" : "Poppins-Regular" }
+    var fontDisplay: String { isPixel ? "PixelifySans-Bold" : "Poppins-Black" }
+    var fontSemiBold: String { isPixel ? "PixelifySans-SemiBold" : "Poppins-SemiBold" }
 
     func bold(_ size: CGFloat) -> Font {
         customFont(name: fontBold, size: size)
@@ -475,21 +524,26 @@ final class ThemeStore: ObservableObject {
         let buttonShadow: Color
         let isGlass: Bool
         let isDuolingo: Bool
+        let isPixel: Bool
+        let fontBold: String
+        let fontMedium: String
+        let fontRegular: String
+        let fontDisplay: String
 
         func bold(_ size: CGFloat) -> Font {
-            .custom("Poppins-Bold", size: size)
+            .custom(fontBold, size: size)
         }
 
         func medium(_ size: CGFloat) -> Font {
-            .custom("Poppins-Medium", size: size)
+            .custom(fontMedium, size: size)
         }
 
         func regular(_ size: CGFloat) -> Font {
-            .custom("Poppins-Regular", size: size)
+            .custom(fontRegular, size: size)
         }
 
         func display(_ size: CGFloat) -> Font {
-            .custom("Poppins-Black", size: size)
+            .custom(fontDisplay, size: size)
         }
     }
 
@@ -509,7 +563,12 @@ final class ThemeStore: ObservableObject {
             secondaryText: c.secondaryText,
             buttonShadow: c.buttonShadow,
             isGlass: palette == .glass && Self.glassAPIAvailable,
-            isDuolingo: palette == .duolingo
+            isDuolingo: palette == .duolingo,
+            isPixel: palette == .pixel,
+            fontBold: palette == .pixel ? "PixelifySans-Bold" : "Poppins-Bold",
+            fontMedium: palette == .pixel ? "PixelifySans-Medium" : "Poppins-Medium",
+            fontRegular: palette == .pixel ? "PixelifySans-Regular" : "Poppins-Regular",
+            fontDisplay: palette == .pixel ? "PixelifySans-Bold" : "Poppins-Black"
         )
     }
 }

@@ -22,7 +22,7 @@ enum CoachMarkCatalog {
             CoachMarkStep(
                 title: "Practice",
                 message: "Want another round? Practice is extra. Home is just the lesson.",
-                icon: "brain.head.profile"
+                icon: "lightbulb"
             ),
             CoachMarkStep(
                 title: "Your week",
@@ -63,7 +63,7 @@ struct CoachMarkView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.spring(response: 0.45, dampingFraction: 0.9), value: currentStep)
-                .frame(height: 220)
+                .frame(height: 236)
             } footer: {
                 VStack(spacing: 16) {
                     PageCapsules(count: steps.count, selection: currentStep)

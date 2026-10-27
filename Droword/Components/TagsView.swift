@@ -175,7 +175,8 @@ struct TagsView: View {
             .padding(.horizontal, compact ? 24 : 28)
             .background { tagBackground(isSelected: isSelected, baseColor: baseColor, dimmed: dimmed) }
             .overlay { tagBorder(isSelected: isSelected) }
-            .padding(.bottom, duo ? 3 : 0)
+            .padding(.bottom, duo || themeStore.isPixel ? 4 : 0)
+            .padding(.trailing, themeStore.isPixel ? 4 : 0)
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
             .opacity(dimmed ? 0.45 : 1.0)
         }
@@ -273,6 +274,23 @@ struct TagsView: View {
                     .offset(y: 3)
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(face)
+            }
+        } else if themeStore.isPixel {
+            let face: Color = {
+                if dimmed { return themeStore.cardBg }
+                if isSelected { return baseColor }
+                return themeStore.cardBg
+            }()
+            ZStack {
+                Rectangle()
+                    .fill(themeStore.pixelShadow)
+                    .offset(x: 4, y: 4)
+                Rectangle()
+                    .fill(face)
+                    .overlay {
+                        Rectangle()
+                            .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                    }
             }
         } else {
             Capsule(style: .continuous)
@@ -377,6 +395,10 @@ struct TagsView: View {
             return isSelected ? themeStore.mainText : baseColor
         }
         if duo {
+            if isSelected { return .white }
+            return themeStore.mainText
+        }
+        if themeStore.isPixel {
             if isSelected { return .white }
             return themeStore.mainText
         }

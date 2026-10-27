@@ -10,8 +10,9 @@ struct Duo3DStyle: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
 
     private var use3D: Bool { (force3D || themeStore.isDuolingo) && !themeStore.isGlass }
-    private var radius: CGFloat { use3D ? 16 : themeStore.controlRadius }
-    private var lip: CGFloat { use3D ? 4 : 0 }
+    private var usePixel: Bool { themeStore.isPixel }
+    private var radius: CGFloat { usePixel ? 0 : (use3D ? 16 : themeStore.controlRadius) }
+    private var lip: CGFloat { use3D || usePixel ? 4 : 0 }
 
     private var primaryLabelColor: Color {
         if isDisabled {
@@ -50,6 +51,16 @@ struct Duo3DStyle: ViewModifier {
                             .fill(isDisabled
                                   ? themeStore.secondaryText.opacity(0.25)
                                   : bgColor.opacity(0.28))
+                    } else if usePixel {
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(themeStore.pixelShadow)
+                            .offset(x: 4, y: 4)
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(faceColor)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                    .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                            }
                     } else if use3D {
                         RoundedRectangle(cornerRadius: radius, style: .continuous)
                             .fill(lipColor)
@@ -67,6 +78,7 @@ struct Duo3DStyle: ViewModifier {
                 }
             )
             .padding(.bottom, lip)
+            .padding(.trailing, usePixel ? 4 : 0)
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass && !isDisabled, cornerRadius: radius))
     }
 }
@@ -75,7 +87,8 @@ struct Duo3DSecondaryStyle: ViewModifier {
     @EnvironmentObject private var themeStore: ThemeStore
 
     private var use3D: Bool { themeStore.isDuolingo && !themeStore.isGlass }
-    private var radius: CGFloat { use3D ? 16 : themeStore.controlRadius }
+    private var usePixel: Bool { themeStore.isPixel }
+    private var radius: CGFloat { usePixel ? 0 : (use3D ? 16 : themeStore.controlRadius) }
 
     func body(content: Content) -> some View {
         content
@@ -83,10 +96,26 @@ struct Duo3DSecondaryStyle: ViewModifier {
             .foregroundStyle(themeStore.mainText)
             .padding(.vertical, DesignSpacing.buttonVertical)
             .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(themeStore.secondaryButtonBg)
-            )
+            .background {
+                if usePixel {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(themeStore.pixelShadow)
+                            .offset(x: 4, y: 4)
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(themeStore.cardBg)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                    .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                            }
+                    }
+                } else {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .fill(themeStore.secondaryButtonBg)
+                }
+            }
+            .padding(.bottom, usePixel ? 4 : 0)
+            .padding(.trailing, usePixel ? 4 : 0)
     }
 }
 
@@ -99,13 +128,18 @@ struct Duo3DChipModifier: ViewModifier {
     var lipDepth: CGFloat = 3
 
     private var use3D: Bool { themeStore.isDuolingo && !themeStore.isGlass }
-    private var resolvedRadius: CGFloat { cornerRadius }
+    private var usePixel: Bool { themeStore.isPixel }
+    private var resolvedRadius: CGFloat { usePixel ? 0 : cornerRadius }
 
     func body(content: Content) -> some View {
         content
             .background(
                 ZStack {
-                    if use3D {
+                    if usePixel {
+                        RoundedRectangle(cornerRadius: resolvedRadius, style: .continuous)
+                            .fill(themeStore.pixelShadow)
+                            .offset(x: 3, y: 3)
+                    } else if use3D {
                         RoundedRectangle(cornerRadius: resolvedRadius, style: .continuous)
                             .fill(lip)
                             .offset(y: lipDepth)
@@ -115,12 +149,13 @@ struct Duo3DChipModifier: ViewModifier {
                 }
             )
             .overlay {
-                if let border, use3D {
+                if let border, use3D || usePixel {
                     RoundedRectangle(cornerRadius: resolvedRadius, style: .continuous)
                         .strokeBorder(border, lineWidth: 2)
                 }
             }
-            .padding(.bottom, use3D ? lipDepth : 0)
+            .padding(.bottom, usePixel ? 3 : (use3D ? lipDepth : 0))
+            .padding(.trailing, usePixel ? 3 : 0)
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: resolvedRadius))
     }
 }
@@ -130,9 +165,13 @@ struct Duo3DButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let use3D = themeStore.isDuolingo && !themeStore.isGlass
+        let usePixel = themeStore.isPixel
         return configuration.label
-            .offset(y: use3D && configuration.isPressed ? 4 : 0)
-            .scaleEffect(use3D ? 1.0 : (configuration.isPressed ? 0.97 : 1.0))
+            .offset(
+                x: usePixel && configuration.isPressed ? 4 : 0,
+                y: (use3D || usePixel) && configuration.isPressed ? 4 : 0
+            )
+            .scaleEffect((use3D || usePixel) ? 1.0 : (configuration.isPressed ? 0.97 : 1.0))
             .opacity(configuration.isPressed ? (use3D ? 0.95 : 0.85) : 1.0)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
@@ -167,10 +206,11 @@ private struct Duo3DChipOutlinedModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         let use3D = themeStore.isDuolingo && !themeStore.isGlass
+        let usePixel = themeStore.isPixel
         content.modifier(Duo3DChipModifier(
             face: themeStore.controlFace,
             lip: use3D ? Color(hex: "#AFAFAF").opacity(0.45) : .clear,
-            border: use3D ? themeStore.dividerColor : nil,
+            border: use3D ? themeStore.dividerColor : (usePixel ? themeStore.pixelInk : nil),
             cornerRadius: cornerRadius
         ))
     }

@@ -37,9 +37,8 @@ struct QuizMatchingExercise: View {
                 HStack(spacing: 4) {
                     let remaining = maxAttempts - wrongAttempts
                     ForEach(0..<maxAttempts, id: \.self) { i in
-                        Image(systemName: i < remaining ? "heart.fill" : "heart")
-                            .font(.system(size: 14))
-                            .foregroundStyle(i < remaining ? themeStore.errorStrong : themeStore.secondaryText.opacity(0.3))
+                        StickerHeart(tone: i < remaining ? .red : .ash, size: 22)
+                            .scaleEffect(i < remaining ? 1 : 0.82)
                     }
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: wrongAttempts)
@@ -102,6 +101,7 @@ struct QuizMatchingExercise: View {
         }
 
         let duo = themeStore.isDuolingo && !themeStore.isGlass
+        let pixel = themeStore.isPixel
 
         return Button {
             handleTap(pairID: pair.id, isWord: isWord)
@@ -116,7 +116,15 @@ struct QuizMatchingExercise: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
                 .background {
-                    if duo {
+                    if pixel {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                .fill(themeStore.pixelShadow)
+                                .offset(x: 3, y: 3)
+                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                .fill(bgColor)
+                        }
+                    } else if duo {
                         ZStack {
                             RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
                                 .fill(Color(hex: "#AFAFAF").opacity(0.45))
@@ -130,12 +138,13 @@ struct QuizMatchingExercise: View {
                     }
                 }
                 .overlay {
-                    if duo, !isMatched, !isSelected, !isWrong {
+                    if pixel || (duo && !isMatched && !isSelected && !isWrong) {
                         RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
                             .strokeBorder(themeStore.dividerColor, lineWidth: 2)
                     }
                 }
-                .padding(.bottom, duo ? 3 : 0)
+                .padding(.bottom, pixel ? 3 : (duo ? 3 : 0))
+                .padding(.trailing, pixel ? 3 : 0)
                 .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
         }
         .buttonStyle(Duo3DButtonStyle())

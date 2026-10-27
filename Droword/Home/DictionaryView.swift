@@ -279,7 +279,7 @@ struct DictionaryView: View {
     private var dictionaryEmptyFilter: some View {
         if let tag = selectedTag, !tag.isEmpty {
             EmptyListView(
-                icon: "tag",
+                illustration: AnyView(StickerTag(size: 150)),
                 title: DuoChaosCopy.dictionaryEmpty(tag: tag).title,
                 subtitle: DuoChaosCopy.dictionaryEmpty(tag: tag).subtitle
             )
@@ -516,7 +516,7 @@ private struct DictionarySearchBar: View {
         .padding(.vertical, 19)
         .background(
             RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.dividerColor.opacity(0.55))
+                .fill(themeStore.isPixel ? themeStore.cardBg : themeStore.dividerColor.opacity(0.55))
         )
         .padding(.horizontal, 20)
     }

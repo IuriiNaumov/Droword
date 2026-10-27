@@ -458,6 +458,7 @@ struct WordCardView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .pixelFrame(themeStore)
     }
 
     private var headerRow: some View {
@@ -465,7 +466,7 @@ struct WordCardView: View {
 
             Text(word)
                 .font(themeStore.medium(24))
-                .tracking(-0.2)
+                .tracking(themeStore.isPixel ? 0 : -0.2)
                 .foregroundStyle(primaryTextColor)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -474,12 +475,12 @@ struct WordCardView: View {
             SoundWavesView(isPlaying: isPlaying)
                 .frame(width: 28, height: 28)
                 .contentShape(Rectangle())
-                .opacity(network.isConnected ? 1 : 0.35)
-                .allowsHitTesting(network.isConnected)
+                .opacity(canSpeakWord ? 1 : 0.35)
+                .allowsHitTesting(canSpeakWord)
                 .highPriorityGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { _ in
-                            guard network.isConnected else { return }
+                            guard canSpeakWord else { return }
                             guard !isHoldingAudio else { return }
                             ignoreCardTapUntil = Date().addingTimeInterval(0.45)
                             holdStartedAt = Date()
@@ -505,7 +506,7 @@ struct WordCardView: View {
                 )
                 .accessibilityLabel(Text("Pronunciation"))
                 .accessibilityHint(
-                    Text(network.isConnected
+                    Text(canSpeakWord
                          ? "Tap to play, or hold to hear while pressed"
                          : "Needs an internet connection")
                 )
@@ -513,8 +514,12 @@ struct WordCardView: View {
         .frame(maxWidth: .infinity)
     }
 
+    private var canSpeakWord: Bool {
+        TTSPlayer.canPlay(word: word, online: network.isConnected)
+    }
+
     private func playAudio() {
-        guard network.isConnected else { return }
+        guard canSpeakWord else { return }
         TTSPlayer.play(
             word: word,
             isPremium: isPremium,
@@ -639,7 +644,7 @@ private struct WordCardFocusOverlay: View {
 
             Text(word)
                 .font(themeStore.medium(24))
-                .tracking(-0.2)
+                .tracking(themeStore.isPixel ? 0 : -0.2)
                 .foregroundStyle(themeStore.mainText)
                 .lineLimit(2)
 
@@ -664,7 +669,8 @@ private struct WordCardFocusOverlay: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
-        .shadow(color: .black.opacity(0.16), radius: 20, y: 10)
+        .pixelFrame(themeStore)
+        .shadow(color: themeStore.isPixel ? .clear : .black.opacity(0.16), radius: themeStore.isPixel ? 0 : 20, y: themeStore.isPixel ? 0 : 10)
     }
 
     private var actionMenu: some View {

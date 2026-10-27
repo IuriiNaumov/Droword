@@ -83,6 +83,7 @@ struct QuizMultipleChoiceExercise: View {
         let isSelected = selectedOption == option
         let isIrrelevant = hasAnswered && !isThisCorrect && !isSelected
         let duo = themeStore.isDuolingo && !themeStore.isGlass
+        let pixel = themeStore.isPixel
         let radius = themeStore.controlRadius
 
         let bgColor: Color = {
@@ -105,10 +106,10 @@ struct QuizMultipleChoiceExercise: View {
         }()
 
         let borderColor: Color? = {
-            guard duo else { return nil }
+            guard duo || pixel else { return nil }
             if hasAnswered, isThisCorrect { return themeStore.successStrong }
             if hasAnswered, isSelected && !isThisCorrect { return themeStore.errorStrong }
-            return themeStore.dividerColor
+            return pixel ? themeStore.pixelInk : themeStore.dividerColor
         }()
 
         return Button {
@@ -138,7 +139,11 @@ struct QuizMultipleChoiceExercise: View {
             .padding(.horizontal, 20)
             .background(
                 ZStack {
-                    if duo {
+                    if pixel {
+                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                            .fill(themeStore.pixelShadow)
+                            .offset(x: 4, y: 4)
+                    } else if duo {
                         RoundedRectangle(cornerRadius: radius, style: .continuous)
                             .fill(Color(hex: "#AFAFAF").opacity(0.45))
                             .offset(y: 3)
@@ -154,7 +159,8 @@ struct QuizMultipleChoiceExercise: View {
                 }
             }
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: radius))
-            .padding(.bottom, duo ? 3 : 0)
+            .padding(.bottom, pixel ? 4 : (duo ? 3 : 0))
+            .padding(.trailing, pixel ? 4 : 0)
         }
         .buttonStyle(Duo3DButtonStyle())
         .disabled(hasAnswered)

@@ -9,8 +9,7 @@ struct BadgeCardView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Text(badge.emoji)
-                .font(.system(size: 32))
+            badgeIcon
                 .grayscale(isUnlocked ? 0 : 1.0)
                 .opacity(isUnlocked ? 1.0 : 0.4)
                 .scaleEffect(appeared ? 1.0 : 0.6)
@@ -60,6 +59,16 @@ struct BadgeCardView: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7).delay(Double.random(in: 0...0.3))) {
                 appeared = true
             }
+        }
+    }
+
+    @ViewBuilder
+    private var badgeIcon: some View {
+        if let art = StickerArt(badgeEmoji: badge.emoji) {
+            StickerIcon(art: art, size: 44)
+        } else {
+            Text(badge.emoji)
+                .font(.system(size: 32))
         }
     }
 }

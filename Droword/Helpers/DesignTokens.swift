@@ -55,10 +55,11 @@ struct PressableButtonStyle: ButtonStyle {
 }
 
 struct CardDepthModifier: ViewModifier {
+    @EnvironmentObject private var themeStore: ThemeStore
     var cornerRadius: CGFloat = DesignRadius.card
 
     func body(content: Content) -> some View {
-        content
+        content.pixelFrame(themeStore, radius: cornerRadius)
     }
 }
 
@@ -67,6 +68,8 @@ struct CleanCardModifier: ViewModifier {
     let cardBg: Color
     var cornerRadius: CGFloat = DesignRadius.large
     var borderColor: Color? = nil
+    var pixelInk: Color? = nil
+    var pixelShadow: Color? = nil
 
     func body(content: Content) -> some View {
         content
@@ -81,6 +84,31 @@ struct CleanCardModifier: ViewModifier {
                 }
             }
             .modifier(GlassCardModifier(isGlass: isGlass, cornerRadius: cornerRadius))
+            .pixelFrame(active: pixelInk != nil, ink: pixelInk ?? .black, shadow: pixelShadow ?? .black, radius: cornerRadius)
+    }
+}
+
+struct PixelFrameModifier: ViewModifier {
+    var active: Bool
+    var ink: Color
+    var shadow: Color
+    var radius: CGFloat
+
+    func body(content: Content) -> some View {
+        if active {
+            content
+                .overlay {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .strokeBorder(ink, lineWidth: 2)
+                }
+                .background {
+                    RoundedRectangle(cornerRadius: radius, style: .continuous)
+                        .fill(shadow)
+                        .offset(x: 4, y: 4)
+                }
+        } else {
+            content
+        }
     }
 }
 
@@ -93,13 +121,17 @@ extension View {
         isGlass: Bool,
         cardBg: Color,
         cornerRadius: CGFloat = DesignRadius.large,
-        borderColor: Color? = nil
+        borderColor: Color? = nil,
+        pixelInk: Color? = nil,
+        pixelShadow: Color? = nil
     ) -> some View {
         modifier(CleanCardModifier(
             isGlass: isGlass,
             cardBg: cardBg,
             cornerRadius: cornerRadius,
-            borderColor: borderColor
+            borderColor: borderColor,
+            pixelInk: pixelInk,
+            pixelShadow: pixelShadow
         ))
     }
 
@@ -109,7 +141,22 @@ extension View {
             isGlass: themeStore.isGlass,
             cardBg: themeStore.cardBg,
             cornerRadius: radius,
-            borderColor: nil
+            borderColor: nil,
+            pixelInk: themeStore.isPixel ? themeStore.pixelInk : nil,
+            pixelShadow: themeStore.isPixel ? themeStore.pixelShadow : nil
+        )
+    }
+
+    func pixelFrame(active: Bool, ink: Color, shadow: Color, radius: CGFloat) -> some View {
+        modifier(PixelFrameModifier(active: active, ink: ink, shadow: shadow, radius: radius))
+    }
+
+    func pixelFrame(_ themeStore: ThemeStore, radius: CGFloat? = nil) -> some View {
+        pixelFrame(
+            active: themeStore.isPixel,
+            ink: themeStore.pixelInk,
+            shadow: themeStore.pixelShadow,
+            radius: radius ?? themeStore.cardRadius
         )
     }
 
@@ -125,7 +172,7 @@ private struct ModernSheetModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .presentationDragIndicator(.visible)
-            .presentationCornerRadius(DesignRadius.dialog)
+            .presentationCornerRadius(themeStore.isPixel ? 0 : DesignRadius.dialog)
             .presentationBackground(themeStore.sheetBg)
             .preferredColorScheme(sheetScheme)
     }

@@ -114,10 +114,7 @@ struct ProInvitePage: View {
 
     private func row(_ benefit: ProInviteBenefit) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: benefit.icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(themeStore.mainAccentColor)
-                .frame(width: 28)
+            StickerSymbol(systemName: benefit.icon, size: 28, color: themeStore.mainAccentColor)
 
             Text(benefit.text)
                 .font(themeStore.regular(14))

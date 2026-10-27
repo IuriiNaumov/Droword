@@ -84,14 +84,26 @@ struct QuizSentenceBuildingExercise: View {
                             Text(chip.text)
                                 .font(themeStore.medium(15))
                                 .foregroundStyle(
-                                    themeStore.isDuolingo && !themeStore.isGlass
+                                    themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass)
                                         ? Color.white
                                         : themeStore.mainText
                                 )
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background {
-                                    if themeStore.isDuolingo && !themeStore.isGlass {
+                                    if themeStore.isPixel {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                                .fill(themeStore.pixelShadow)
+                                                .offset(x: 3, y: 3)
+                                            RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                                .fill(themeStore.mainAccentColor)
+                                                .overlay {
+                                                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                                        .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                                                }
+                                        }
+                                    } else if themeStore.isDuolingo && !themeStore.isGlass {
                                         let face = themeStore.mainAccentColor
                                         ZStack {
                                             RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
@@ -109,7 +121,8 @@ struct QuizSentenceBuildingExercise: View {
                                             )
                                     }
                                 }
-                                .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
+                                .padding(.bottom, themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass) ? 3 : 0)
+                                .padding(.trailing, themeStore.isPixel ? 3 : 0)
                                 .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
                         }
                         .buttonStyle(Duo3DButtonStyle())
@@ -164,7 +177,15 @@ struct QuizSentenceBuildingExercise: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background {
-                            if themeStore.isDuolingo && !themeStore.isGlass {
+                            if themeStore.isPixel {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                        .fill(themeStore.pixelShadow)
+                                        .offset(x: 3, y: 3)
+                                    RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
+                                        .fill(themeStore.cardBg)
+                                }
+                            } else if themeStore.isDuolingo && !themeStore.isGlass {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
                                         .fill(Color(hex: "#AFAFAF").opacity(0.45))
@@ -178,12 +199,13 @@ struct QuizSentenceBuildingExercise: View {
                             }
                         }
                         .overlay {
-                            if themeStore.isDuolingo && !themeStore.isGlass {
+                            if themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass) {
                                 RoundedRectangle(cornerRadius: themeStore.chipRadius, style: .continuous)
-                                    .strokeBorder(themeStore.dividerColor, lineWidth: 2)
+                                    .strokeBorder(themeStore.isPixel ? themeStore.pixelInk : themeStore.dividerColor, lineWidth: 2)
                             }
                         }
-                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
+                        .padding(.bottom, themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass) ? 3 : 0)
+                        .padding(.trailing, themeStore.isPixel ? 3 : 0)
                         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.chipRadius))
                 }
                 .buttonStyle(Duo3DButtonStyle())

@@ -22,6 +22,8 @@ struct PracticeEmptyContent: View {
             Group {
                 if let illustration {
                     illustration
+                } else if let art = StickerArt(systemName: icon) {
+                    StickerIcon(art: art, size: 150)
                 } else {
                     HaloIcon(symbol: icon, color: themeStore.iconAccent, size: 168)
                 }

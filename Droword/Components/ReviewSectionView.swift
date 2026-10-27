@@ -94,11 +94,11 @@ struct ReviewSectionView: View {
                 .tint(primaryText)
         }
         .buttonStyle(.plain)
-        .opacity(network.isConnected ? 1 : 0.35)
-        .disabled(!network.isConnected)
+        .opacity(canSpeakCard ? 1 : 0.35)
+        .disabled(!canSpeakCard)
         .accessibilityLabel(Text("Play pronunciation"))
         .accessibilityHint(
-            Text(network.isConnected
+            Text(canSpeakCard
                  ? "Plays the word out loud"
                  : "Needs an internet connection")
         )
@@ -578,8 +578,12 @@ struct ReviewSectionView: View {
         }
     }
 
+    private var canSpeakCard: Bool {
+        TTSPlayer.canPlay(word: card.word, online: network.isConnected)
+    }
+
     private func playAudio() {
-        guard network.isConnected else { return }
+        guard canSpeakCard else { return }
         TTSPlayer.play(
             word: card.word,
             isPremium: isPremium,

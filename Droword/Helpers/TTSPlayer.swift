@@ -4,11 +4,15 @@ enum TTSPlayer {
     private static var activeTask: Task<Void, Never>?
     private static var holdGeneration = 0
 
+    static func canPlay(word: String, online: Bool) -> Bool {
+        online || AudioManager.shared.hasCachedAudio(for: word)
+    }
+
     static func prefetch(_ word: String) {
         let text = word.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty, NetworkMonitor.shared.isConnected else { return }
-        Task {
-            await AudioManager.shared.prefetch(text: text)
+        guard !text.isEmpty else { return }
+        Task { @MainActor in
+            AudioManager.shared.prefetch(text: text)
         }
     }
 
@@ -19,7 +23,7 @@ enum TTSPlayer {
         onNeedsNetwork: (() -> Void)? = nil,
         onPlayingChanged: @escaping (Bool) -> Void
     ) {
-        guard NetworkMonitor.shared.isConnected else {
+        guard canPlay(word: word, online: NetworkMonitor.shared.isConnected) else {
             onNeedsNetwork?()
             return
         }
@@ -65,7 +69,7 @@ enum TTSPlayer {
         onNeedsNetwork: (() -> Void)? = nil,
         onPlayingChanged: @escaping (Bool) -> Void
     ) {
-        guard NetworkMonitor.shared.isConnected else {
+        guard canPlay(word: word, online: NetworkMonitor.shared.isConnected) else {
             onNeedsNetwork?()
             return
         }

@@ -660,7 +660,7 @@ struct QuizMixedView: View {
                 }
                 prepareStateForItem(nextItem, exerciseType: nextType)
 
-                if nextType == .listening, NetworkMonitor.shared.isConnected {
+                if nextType == .listening, TTSPlayer.canPlay(word: nextItem.word, online: NetworkMonitor.shared.isConnected) {
                     Task { await AudioManager.shared.play(word: nextItem.word) }
                 }
             }

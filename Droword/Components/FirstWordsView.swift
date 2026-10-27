@@ -26,9 +26,7 @@ struct FirstWordsView: View {
 
             SoftCoverCentered {
                 VStack(spacing: 0) {
-                    Image(systemName: "textformat")
-                        .font(.system(size: 42, weight: .semibold))
-                        .foregroundStyle(themeStore.iconAccent)
+                    StickerIcon(art: .letters, size: 64)
                         .scaleEffect(iconScale)
 
                     VStack(spacing: 8) {

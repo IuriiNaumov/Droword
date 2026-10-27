@@ -1,56 +1,47 @@
 # App Store posters — copy & layout
 
-Layout lock: **text top / device bottom**  
-Headline: **3–5 words**, one benefit per frame.
+Layout: **headline on a color field, phone below, sticker accents.**  
+Size: **1320 × 2868** (iPhone 6.9"). Also works as 6.7" (1290 × 2796) if you scale.
+
+Headline: **3–6 words**, one benefit per frame. Gold (or purple on yellow) marks the punch word.
 
 ## English (primary listing)
 
-| # | File | Headline | Screen to shoot |
-|---|------|----------|-----------------|
-| 1 | `poster-01-hero.png` | Words that stick | Home — daily lesson + recent words |
-| 2 | `poster-02-dictionary.png` | Build your dictionary | Dictionary or open word card |
-| 3 | `poster-03-practice.png` | Smart spaced reviews | Practice / quiz mid-session |
-| 4 | `poster-04-ai.png` | AI fills the card | Add word result / enriched card |
-| 5 | `poster-05-yours.png` | Make it yours | Icon / theme picker |
+| # | File | Headline | Screen |
+|---|------|----------|--------|
+| 1 | `poster-01-en.png` | Words that actually **stick** | Home — daily lesson |
+| 2 | `poster-02-en.png` | **5 minutes.** One lesson. Every day. | Today's lesson quiz |
+| 3 | `poster-03-en.png` | AI fills **the whole card** | Dictionary + zoomed card |
+| 4 | `poster-04-en.png` | Snap a page. **Keep the words.** | Scan words |
+| 5 | `poster-05-en.png` | Practice that **feels like a game** | Practice quiz |
+| 6 | `poster-06-en.png` | Make it **yours** | Home in Green Owl / Glass / 8-bit |
 
-## Русский (локализация листинга)
+## Русский
 
-| # | Headline |
-|---|----------|
-| 1 | Слова, которые остаются |
-| 2 | Свой словарь |
-| 3 | Умные повторения |
-| 4 | ИИ собирает карточку |
-| 5 | Под себя |
+| # | File | Headline |
+|---|------|----------|
+| 1 | `poster-01-ru.png` | Слова, которые **остаются** |
+| 2 | `poster-02-ru.png` | **5 минут.** Один урок. Каждый день. |
+| 3 | `poster-03-ru.png` | ИИ заполнит **всю карточку** |
+| 4 | `poster-04-ru.png` | Сфоткай страницу — **слова в словаре** |
+| 5 | `poster-05-ru.png` | Практика, **как игра** |
+| 6 | `poster-06-ru.png` | Сделай **под себя** |
 
-Alt (ещё короче):  
-1. Запоминай слова · 2. Твой словарь · 3. Повторяй умно · 4. Карточка с ИИ · 5. Как тебе нравится
+## Colors (Droword stickers)
 
-## Shoot checklist (симулятор / устройство)
+Purple `#5452E6` · Pink `#E8457A` · Blue `#2E6BF2` · Gold `#FFB82E` · Green `#2DB46A` · Ink `#1E1A3C`
 
-1. iPhone 15 Pro / 16 Pro, light mode, colorful theme.
-2. Onboarding done, 8–12 sample words, streak ≥ 3 if possible.
-3. Hide coach marks / paywalls / debug banners.
-4. Capture **portrait** full screen (no status-bar clutter if possible).
-5. Export PNG → drop into `marketing/app-store/raw/` as:
-   - `01-home.png`
-   - `02-dictionary.png`
-   - `03-practice.png`
-   - `04-ai-card.png`
-   - `05-themes.png`
+Stickers are rendered from `Components/Stickers/` (star, sparkles, heart, bulb, check, book, tag, trophy, target).
 
-Then run:
+## How to rebuild
+
+1. Seed demo words and capture portrait screens into `marketing/app-store/raw/en/` and `raw/ru/` (`home`, `lesson`, `dictionary`, `scan`, `practice`, `home-duolingo`, `home-glass`, `home-pixel`).
+2. Sticker PNGs live in `raw/stickers/` (from the Mac render harness).
+3. Run:
 
 ```bash
-python3 marketing/app-store/compose.py          # EN → out/
+python3 marketing/app-store/compose.py
 python3 marketing/app-store/compose.py --lang ru
 ```
 
-Concept mocks (AI UI, not real screenshots) live next to this file:
-`poster-01-…png` (EN) and `poster-01-…-ru.png` (RU).  
-Final Connect uploads should come from `out/` after you drop real captures into `raw/`.
-
-## Target export size
-
-- iPhone 6.7": **1290 × 2796**
-- iPhone 6.9": **1320 × 2868** (preferred if available)
+Upload `out/poster-0N-en.png` (and `-ru.png` for the Russian listing) in App Store Connect.

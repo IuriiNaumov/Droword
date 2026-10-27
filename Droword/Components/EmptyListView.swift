@@ -24,6 +24,8 @@ struct EmptyListView: View {
                 Group {
                     if let illustration {
                         illustration
+                    } else if let icon, let art = StickerArt(systemName: icon) {
+                        StickerIcon(art: art, size: 150)
                     } else if let icon {
                         HaloIcon(symbol: icon, color: themeStore.iconAccent, size: 168)
                     }

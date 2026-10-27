@@ -1,0 +1,24 @@
+---
+description: One SwiftUI view per file, a Preview on every view, shared logic in Helpers
+alwaysApply: true
+---
+
+# SwiftUI structure
+
+## One view per file
+
+A component file holds one `View` struct. A second screen, card, or row is its own file next to it.
+
+Computed properties and small `@ViewBuilder` helpers inside that same struct are fine. A private `struct SomethingElse: View` in the same file is not.
+
+## Preview
+
+Every `View` has a `#Preview` in its file. Pass the environment objects and bindings the body reads (`ThemeStore`, `WordsStore`, and so on).
+
+## Shared logic
+
+Reuse goes in `Helpers/` or `Domain/`, not copied into the view.
+
+- Formatting, matching, scheduling, and other pure functions live next to the existing helper that owns that job.
+- A control used by two screens (`pixelFrame`, `duo3DStyle`, `FormTextField`) lives in `Helpers/` or `Components/`, and the screens call it.
+- Do not add a second copy of a button, chip, or text style inside a screen.

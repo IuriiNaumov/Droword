@@ -39,11 +39,25 @@ struct DailyLessonCard: View {
                     if !plan.isDone, plan.canStart {
                         Text("~\(plan.minutes) min")
                             .font(themeStore.bold(13))
-                            .foregroundStyle(themeStore.isDuolingo && !themeStore.isGlass ? Color.white : themeStore.mainAccentColor)
+                            .foregroundStyle(themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass) ? Color.white : themeStore.mainAccentColor)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 7)
                             .background {
-                                if themeStore.isDuolingo && !themeStore.isGlass {
+                                if themeStore.isPixel {
+                                    let face = themeStore.mainAccentColor
+                                    let radius = themeStore.chipRadius
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(themeStore.pixelShadow)
+                                            .offset(x: 2, y: 2)
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(face)
+                                            .overlay {
+                                                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                                    .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                                            }
+                                    }
+                                } else if themeStore.isDuolingo && !themeStore.isGlass {
                                     let face = themeStore.mainAccentColor
                                     let radius = themeStore.chipRadius
                                     ZStack {
@@ -58,7 +72,8 @@ struct DailyLessonCard: View {
                                         .fill(themeStore.mainAccentColor.opacity(0.14))
                                 }
                             }
-                            .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 2 : 0)
+                            .padding(.bottom, themeStore.isPixel || (themeStore.isDuolingo && !themeStore.isGlass) ? 2 : 0)
+                            .padding(.trailing, themeStore.isPixel ? 2 : 0)
                     }
 
                     if plan.isDone {
@@ -89,11 +104,24 @@ struct DailyLessonCard: View {
                     ForEach(plan.topicLabels, id: \.self) { label in
                         Text(label)
                             .font(themeStore.medium(12))
-                            .foregroundStyle(themeStore.isDuolingo ? Color.white : themeStore.mainText)
+                            .foregroundStyle(themeStore.isPixel ? themeStore.mainText : (themeStore.isDuolingo ? Color.white : themeStore.mainText))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
                             .background {
-                                if themeStore.isDuolingo && !themeStore.isGlass {
+                                if themeStore.isPixel {
+                                    let radius = themeStore.chipRadius
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(themeStore.pixelShadow)
+                                            .offset(x: 2, y: 2)
+                                        RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                            .fill(themeStore.cardBg)
+                                            .overlay {
+                                                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                                                    .strokeBorder(themeStore.pixelInk, lineWidth: 2)
+                                            }
+                                    }
+                                } else if themeStore.isDuolingo && !themeStore.isGlass {
                                     let face = themeStore.mainAccentColor
                                     let radius = themeStore.chipRadius
                                     ZStack {
@@ -108,7 +136,8 @@ struct DailyLessonCard: View {
                                         .fill(themeStore.dividerColor.opacity(0.55))
                                 }
                             }
-                            .padding(.bottom, themeStore.isDuolingo ? 2 : 0)
+                            .padding(.bottom, themeStore.isPixel || themeStore.isDuolingo ? 2 : 0)
+                            .padding(.trailing, themeStore.isPixel ? 2 : 0)
                     }
                 }
             }
@@ -140,6 +169,7 @@ struct DailyLessonCard: View {
                 .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
         .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .pixelFrame(themeStore)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text(plan.subtitle.isEmpty ? plan.title : "\(plan.title). \(plan.subtitle)"))
     }

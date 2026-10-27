@@ -7,9 +7,7 @@ struct PerfectLessonBadge: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "medal")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(themeStore.accentGold)
+            StickerIcon(art: .medal, size: 26)
             Text("Perfect lesson!")
                 .font(themeStore.bold(16))
                 .foregroundStyle(themeStore.mainText)

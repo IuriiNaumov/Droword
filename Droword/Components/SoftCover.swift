@@ -22,12 +22,8 @@ struct SoftCoverHero: View {
     var iconScale: CGFloat = 1
 
     var body: some View {
-        Image(systemName: systemName)
-            .font(.system(size: 52, weight: .semibold))
-            .foregroundStyle(color)
+        StickerSymbol(systemName: systemName, size: 76, color: color)
             .scaleEffect(iconScale)
-            .frame(height: 64)
-            .accessibilityHidden(true)
     }
 }
 

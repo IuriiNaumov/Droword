@@ -143,9 +143,7 @@ struct ScanWordsView: View {
 
     private var photoSelectionSection: some View {
         VStack(spacing: 20) {
-            Image(systemName: "doc.text.viewfinder")
-                .font(.system(size: 72, weight: .light))
-                .foregroundStyle(themeStore.accentBlue)
+            StickerIcon(art: .scan, size: 112)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
 

@@ -33,6 +33,8 @@ enum AppStorageKeys {
     static let notifVocabEndMinute = "notifVocabEndMinute"
     static let ttsVoice = "ttsVoice"
     static let ttsRate = "ttsRate"
+    static let ttsPrefetchPending = "ttsPrefetchPending"
+    static let ttsPrefetchLater = "ttsPrefetchLater"
     static let seasonalEffectsEnabled = "seasonalEffectsEnabled"
     static let seasonalAnimationEnabled = "seasonalAnimationEnabled"
     static let seasonalEffectsSelection = "seasonalEffectsSelection"

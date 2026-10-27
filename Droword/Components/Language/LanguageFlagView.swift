@@ -14,27 +14,21 @@ struct LanguageFlagView: View {
         language.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var stickerShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+    }
+
+    private var lineWidth: CGFloat {
+        min(2, max(1, height * 0.045))
+    }
+
     var body: some View {
-        ZStack {
-            flagGraphics
-                .frame(width: width, height: height)
-                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-                .overlay {
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.18), Color.clear],
-                        startPoint: .top,
-                        endPoint: .center
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-                    .allowsHitTesting(false)
-                }
-                .overlay {
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .strokeBorder(Color.black.opacity(0.12), lineWidth: 0.8)
-                }
-        }
-        .frame(width: width, height: height)
-        .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
+        flagGraphics
+            .frame(width: width, height: height)
+            .clipShape(stickerShape)
+            .overlay {
+                stickerShape.strokeBorder(StickerTone.flagLine, lineWidth: lineWidth)
+            }
     }
 
     @ViewBuilder

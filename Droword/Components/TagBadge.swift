@@ -11,7 +11,7 @@ struct TagBadge: View {
     var body: some View {
         Text(BuiltInTag.displayName(text))
             .font(themeStore.medium(11))
-            .foregroundStyle(duo ? Color.white : (themeStore.isGlass ? themeStore.mainText : tagColor))
+            .foregroundStyle(duo || themeStore.isPixel ? Color.white : (themeStore.isGlass ? themeStore.mainText : tagColor))
             .padding(.vertical, 4)
             .padding(.horizontal, 10)
             .background {
@@ -23,6 +23,9 @@ struct TagBadge: View {
                         RoundedRectangle(cornerRadius: radius, style: .continuous)
                             .fill(tagColor)
                     }
+                } else if themeStore.isPixel {
+                    Rectangle()
+                        .fill(tagColor)
                 } else {
                     Capsule(style: .continuous)
                         .fill(
@@ -32,7 +35,9 @@ struct TagBadge: View {
                         )
                 }
             }
-            .padding(.bottom, duo ? 2 : 0)
+            .pixelFrame(themeStore)
+            .padding(.bottom, duo ? 2 : (themeStore.isPixel ? 4 : 0))
+            .padding(.trailing, themeStore.isPixel ? 4 : 0)
             .modifier(GlassCardModifier(isGlass: themeStore.isGlass, shape: .capsule))
     }
 }
