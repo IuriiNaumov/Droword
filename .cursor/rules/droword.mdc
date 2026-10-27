@@ -44,7 +44,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Empty states: tip + strong Add CTA (`EmptyListView` / `PracticeEmptyContent`).
 - Scan: photo only; long Share → extract-words. Dedup against dictionary. No clipboard-paste extract on Add.
 - Language picker flags are illustrated (`LanguageFlagView`). Page dots are `PageCapsules`.
-- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons — those are removed from the product). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
+- App Customization icons come from `AppIconStyle.customizationCases` (no language/flag icons — those are removed from the product). Theme quote icons: `pixel` (8-bit), `owl` (Green Owl), `crystal` (liquid glass). Tab bar artwork lives in `MenuBarIcons`; the rest of the app uses SF Symbols.
 - Opening the app clears the icon badge (`NotificationManager.clearBadge` on scene `.active`).
 - Dictionary: reaction emoji chips after tags filter cards; search matches reactions. Circles use `DesignChip` (same size on cards).
 - Practice results hide the tab bar; restore on close / new round.

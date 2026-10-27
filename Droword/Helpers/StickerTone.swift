@@ -11,6 +11,7 @@ nonisolated struct StickerTone: Sendable {
         case wood
         case ash
         case paper
+        case slate
     }
 
     let kind: Kind
@@ -29,6 +30,7 @@ nonisolated struct StickerTone: Sendable {
     static let wood = StickerTone(kind: .wood)
     static let ash = StickerTone(kind: .ash)
     static let paper = StickerTone(kind: .paper)
+    static let slate = StickerTone(kind: .slate)
     static let flagLine = StickerColors.rgb(0x2E2A4F)
 }
 

@@ -15,12 +15,6 @@ struct SeasonalEffectsSettingsView: View {
                 Text("Seasonal effects")
                     .sheetTitle()
 
-                Text("Decorative elements that change with the season — cherry blossoms in spring, snowflakes in winter, and more.")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 8)
-
                 VStack(spacing: 0) {
                     toggleRow(
                         icon: "sparkles",

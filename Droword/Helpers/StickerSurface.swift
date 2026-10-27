@@ -19,7 +19,7 @@ struct StickerSurface<S: Shape>: View {
             case .duo:
                 shape.fill(colors.side).offset(y: 5 * step)
                 shape.fill(colors.face)
-                if tone.kind == .paper {
+                if tone.kind == .paper || tone.kind == .slate {
                     shape.stroke(colors.side, style: StrokeStyle(lineWidth: 2.5 * step, lineJoin: .round))
                 }
             case .glass:

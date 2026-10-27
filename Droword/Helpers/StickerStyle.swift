@@ -62,6 +62,7 @@ nonisolated enum StickerPalette {
         case .wood: StickerColors(0xC98A55, 0x9C6234, 0xE4B184, 0x7A4A24)
         case .ash: StickerColors(0xE2E1EA, 0xC6C4D3, 0xF4F3F8, 0xA9A6BA)
         case .paper: StickerColors(0xFFFDF6, 0xE4DDF5, 0xFFFFFF, 0x3534A8)
+        case .slate: StickerColors(0x2A2840, 0x1C1A2C, 0x4A4660, 0x8B7AC8)
         }
     }
 
@@ -76,6 +77,7 @@ nonisolated enum StickerPalette {
         case .wood: StickerColors(0xB87A4B, 0x8E5A33, 0xD9A983, 0x8E5A33)
         case .ash: StickerColors(0xE5E5E5, 0xCECECE, 0xF2F2F2, 0xCECECE)
         case .paper: StickerColors(0xFFFFFF, 0xDADADA, 0xFFFFFF, 0xDADADA)
+        case .slate: StickerColors(0x202F36, 0x152028, 0x2A3D46, 0x3D5260)
         }
     }
 
@@ -91,6 +93,7 @@ nonisolated enum StickerPalette {
         case .wood: StickerColors(face: 0xA2845E, side: 0x7F6545, highlight: 0xD3BFA4, line: rim)
         case .ash: StickerColors(face: 0xC7C7CC, side: 0xAEAEB2, highlight: 0xE9E9ED, line: rim)
         case .paper: StickerColors(face: 0xF7F7FA, side: 0xD1D1D6, highlight: 0xFFFFFF, line: rim)
+        case .slate: StickerColors(face: 0x1C1C1E, side: 0x000000, highlight: 0x3A3A3C, line: rim)
         }
     }
 
@@ -106,6 +109,7 @@ nonisolated enum StickerPalette {
         case .wood: StickerColors(0x9A6233, ink, 0xCB9C6E, ink)
         case .ash: StickerColors(0xBDB5A6, ink, 0xDDD6C8, ink)
         case .paper: StickerColors(0xFFFDF6, ink, 0xFFFFFF, ink)
+        case .slate: StickerColors(0x1A2140, ink, 0x2A3458, ink)
         }
     }
 }

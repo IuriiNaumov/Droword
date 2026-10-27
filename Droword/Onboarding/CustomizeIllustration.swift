@@ -6,7 +6,7 @@ struct CustomizeIllustration: View {
     let px: CGFloat
     let py: CGFloat
 
-    private let previewStyles: [AppIconStyle] = [.night, .classic, .wordLime]
+    private let previewStyles: [AppIconStyle] = [.pixel, .classic, .wordLime]
     private var iconSize: CGFloat { size * 0.24 }
 
     var body: some View {

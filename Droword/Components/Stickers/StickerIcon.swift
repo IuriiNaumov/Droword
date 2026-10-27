@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StickerIcon: View {
+    @Environment(\.colorScheme) private var colorScheme
     let art: StickerArt
     var size: CGFloat = 72
 
@@ -154,7 +155,7 @@ struct StickerIcon: View {
 
     private var addWord: some View {
         ZStack {
-            solid(.wordCard, .paper)
+            solid(.wordCard, colorScheme == .dark ? .slate : .paper)
             shine(.wordCardTitle, StickerTone.blue.face, width: 8)
             shine(.wordCardLines, StickerTone.blue.highlight, width: 5)
             solid(.cornerBadge, .purple)

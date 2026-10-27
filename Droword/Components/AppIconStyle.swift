@@ -11,6 +11,9 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
     case ocean
     case forest
     case glass
+    case owl
+    case pixel
+    case crystal
     case pride
     case wordInk
     case wordPaper
@@ -31,6 +34,9 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .ocean: return String(localized: "Ocean")
         case .forest: return String(localized: "Forest")
         case .glass: return String(localized: "Liquid Glass")
+        case .owl: return String(localized: "Green Owl")
+        case .pixel: return String(localized: "8-bit")
+        case .crystal: return String(localized: "Crystal")
         case .pride: return "Pride"
         case .wordInk: return String(localized: "Ink")
         case .wordPaper: return String(localized: "Paper")
@@ -51,6 +57,9 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .ocean: return "AppIconOcean"
         case .forest: return "AppIconForest"
         case .glass: return "AppIconGlass"
+        case .owl: return "AppIconOwl"
+        case .pixel: return "AppIconPixel"
+        case .crystal: return "AppIconCrystal"
         case .pride: return "AppIconPride"
         case .wordInk: return "AppIconWordInk"
         case .wordPaper: return "AppIconWordPaper"
@@ -73,6 +82,9 @@ enum AppIconStyle: String, CaseIterable, Identifiable {
         case .ocean: return Color(hex: "#2EC4B6")
         case .forest: return Color(hex: "#58CC02")
         case .glass: return Color(hex: "#007AFF")
+        case .owl: return Color(hex: "#58CC02")
+        case .pixel: return Color(hex: "#E03131")
+        case .crystal: return Color(hex: "#7B6CFF")
         case .pride: return Color(hex: "#E40303")
         case .wordInk: return Color(hex: "#1C1C1E")
         case .wordPaper: return Color(hex: "#B9A98A")
@@ -201,8 +213,9 @@ enum AppIconChanger {
 #Preview {
     HStack(spacing: 16) {
         AppIconArtwork(style: .classic, size: 72)
-        AppIconArtwork(style: .pride, size: 72)
-        AppIconArtwork(style: .ocean, size: 72)
+        AppIconArtwork(style: .owl, size: 72)
+        AppIconArtwork(style: .pixel, size: 72)
+        AppIconArtwork(style: .crystal, size: 72)
     }
     .padding()
 }
