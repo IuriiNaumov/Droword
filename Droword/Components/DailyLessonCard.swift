@@ -152,8 +152,12 @@ struct DailyLessonCard: View {
                     }
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: plan.canStart ? "bolt.fill" : "plus")
-                            .font(.system(size: 14, weight: .bold))
+                        if plan.canStart {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 14, weight: .bold))
+                        } else {
+                            AddPlusIcon()
+                        }
                         Text(ctaTitle)
                             .font(themeStore.bold(16))
                     }

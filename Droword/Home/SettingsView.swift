@@ -181,6 +181,7 @@ struct SettingsView: View {
                     LearningPreferencesView()
                 case .voiceAndSpeech:
                     VoiceAndSpeechSettingsView()
+                        .environmentObject(languageStore)
                 case .haptics:
                     HapticSettingsView()
                 case .notifications:

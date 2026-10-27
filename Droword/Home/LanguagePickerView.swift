@@ -37,6 +37,10 @@ struct LanguageSelectionView: View {
         }
     }
 
+    private var pendingAlertMessage: LocalizedStringKey {
+        "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary."
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
@@ -88,7 +92,7 @@ struct LanguageSelectionView: View {
                 icon: "arrow.left.arrow.right",
                 iconColor: themeStore.accentPurple,
                 title: LocalizedStringKey(pendingAlertTitle),
-                message: "You have \(store.words.count) words in \(languageStore.learningLanguage). They will stay in your dictionary.",
+                message: pendingAlertMessage,
                 primaryButton: .init(title: "Switch", style: .primary) {
                     applyPending()
                 },

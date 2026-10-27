@@ -115,10 +115,13 @@ struct StoredWord: Identifiable, Codable, Equatable {
         dueDate = try container.decodeIfPresent(Date.self, forKey: .dueDate)
         needsEnrichment = try container.decodeIfPresent(Bool.self, forKey: .needsEnrichment) ?? false
         let decoded = try container.decodeIfPresent([String].self, forKey: .examples) ?? []
-        if decoded.isEmpty, let ex = example {
+        if let ex = example, !ex.isEmpty {
             examples = [ex]
+        } else if let first = decoded.first(where: { !$0.isEmpty }) {
+            example = first
+            examples = [first]
         } else {
-            examples = decoded
+            examples = []
         }
         collocations = try container.decodeIfPresent([String].self, forKey: .collocations) ?? []
         synonyms = try container.decodeIfPresent([String].self, forKey: .synonyms) ?? []
@@ -426,7 +429,7 @@ final class WordsStore: ObservableObject {
         words[idx] = w
     }
 
-    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil, forms: [String] = [], formsResolved: Bool = false) {
+    func enrichWord(id: UUID, translation: String, example: String, type: String, explanation: String?, breakdown: String?, transcription: String?, collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic: String? = nil, forms: [String] = [], formsResolved: Bool = false) {
         guard let idx = words.firstIndex(where: { $0.id == id }) else { return }
         var w = words[idx]
         w.translation = translation
@@ -442,11 +445,7 @@ final class WordsStore: ObservableObject {
         w.forms = forms
         w.formsResolved = formsResolved
         w.needsEnrichment = false
-        if examples.isEmpty {
-            w.examples = [example]
-        } else {
-            w.examples = examples
-        }
+        w.examples = example.isEmpty ? [] : [example]
         words[idx] = w
     }
 

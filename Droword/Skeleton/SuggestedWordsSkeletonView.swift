@@ -14,4 +14,5 @@ struct SuggestedWordsSkeletonView: View {
 #Preview("Suggested Skeleton") {
     SuggestedWordsSkeletonView()
         .background(Color(.systemGroupedBackground))
+        .environmentObject(ThemeStore())
 }

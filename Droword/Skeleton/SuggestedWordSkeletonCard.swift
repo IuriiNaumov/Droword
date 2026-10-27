@@ -3,56 +3,59 @@ import SwiftUI
 struct SuggestedWordSkeletonCard: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
-    private var accent: Color { themeStore.accentBlue }
-    private var softAccent: Color { themeStore.accentBlue.opacity(0.25) }
-    private var warmAccent: Color { themeStore.accentBlue.opacity(0.12) }
-
     @State private var shimmerPhase: CGFloat = -1.0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.7))
-                .frame(width: 110, height: 26)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(themeStore.mainText.opacity(0.12))
+                    .frame(width: 110, height: 26)
+                    .suggestedShimmer(phase: shimmerPhase)
+                Spacer()
+                Circle()
+                    .fill(themeStore.mainText.opacity(0.12))
+                    .frame(width: 24, height: 24)
+                    .suggestedShimmer(phase: shimmerPhase)
+            }
+
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(themeStore.mainText.opacity(0.1))
+                .frame(width: 70, height: 16)
                 .suggestedShimmer(phase: shimmerPhase)
 
-            RoundedRectangle(cornerRadius: 7)
-                .fill(Color.white.opacity(0.6))
-                .frame(width: 90, height: 18)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(themeStore.mainText.opacity(0.1))
+                .frame(width: 140, height: 18)
                 .suggestedShimmer(phase: shimmerPhase)
 
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color.white.opacity(0.5))
-                .frame(width: 240, height: 16)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(themeStore.mainText.opacity(0.08))
+                .frame(width: 220, height: 16)
                 .suggestedShimmer(phase: shimmerPhase)
 
             HStack {
-                RoundedRectangle(cornerRadius: 30)
-                    .fill(Color.white.opacity(0.4))
-                    .frame(width: 90, height: 28)
+                Capsule()
+                    .fill(themeStore.mainText.opacity(0.1))
+                    .frame(width: 72, height: 28)
                     .suggestedShimmer(phase: shimmerPhase)
-
                 Spacer()
-
-                RoundedRectangle(cornerRadius: themeStore.cardRadius)
-                    .fill(Color.white.opacity(0.35))
-                    .frame(width: 92, height: 24)
+                Capsule()
+                    .fill(themeStore.mainText.opacity(0.08))
+                    .frame(width: 64, height: 28)
                     .suggestedShimmer(phase: shimmerPhase)
             }
             .padding(.top, 8)
         }
-        .padding(20)
+        .padding(DesignSpacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: themeStore.cardRadius)
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [softAccent, accent.opacity(0.15), warmAccent]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
+                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
         )
+        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
+        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
+        .pixelFrame(themeStore)
         .onAppear {
             withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
                 shimmerPhase = 2.0
@@ -69,7 +72,7 @@ extension View {
                     gradient: Gradient(colors: [
                         .clear,
                         Color.white.opacity(0.5),
-                        Color.accentBlue.opacity(0.3),
+                        themeAccentShimmer,
                         Color.white.opacity(0.5),
                         .clear
                     ]),
@@ -86,6 +89,10 @@ extension View {
         )
         .animation(.linear(duration: 1.1).repeatForever(autoreverses: false), value: phase)
     }
+}
+
+private var themeAccentShimmer: Color {
+    Color.accentBlue.opacity(0.3)
 }
 
 #Preview {

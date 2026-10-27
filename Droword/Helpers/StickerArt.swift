@@ -32,6 +32,7 @@ enum StickerArt: String, CaseIterable, Identifiable {
     case wrong
     case scan
     case addWord
+    case cards
     case palette
     case appIcon
     case sprout
@@ -96,8 +97,10 @@ enum StickerArt: String, CaseIterable, Identifiable {
         case "xmark.circle", "xmark.circle.fill": self = .wrong
         case "doc.text.viewfinder", "text.viewfinder": self = .scan
         case "text.badge.plus": self = .addWord
+        case "square.stack.3d.up", "square.stack.3d.up.fill": self = .cards
         case "paintpalette", "paintpalette.fill": self = .palette
-        case "app", "app.badge": self = .appIcon        default: return nil
+        case "app", "app.badge": self = .appIcon
+        default: return nil
         }
     }
 }

@@ -21,7 +21,7 @@ Tone: friendly tutor, Duolingo-adjacent energy (`DuoChaosCopy`, soft chaos), not
 | `Droword/` | Main SwiftUI app |
 | `Droword.xcodeproj/` | Xcode project |
 | `droword-worker/` | Cloudflare Worker API (`src/index.ts`, `src/guard.ts`) |
-| `DrowordShare/` | Share extension → short text = Add; long text = extract |
+| `DrowordShare/` | Share extension → photo = scan; short text = Add; long text = extract |
 | `Droword​Widget/` | Widgets: **Add a new word** (plus → `droword://add`; home small + lock circular), **Recent words** (last 3 → dictionary), **Today's lesson** (home small/medium + lock rectangular) |
 | `docs/` | Privacy / terms / support HTML |
 | `marketing/app-store/` | Listing copy, EN/RU posters in `out/`, `compose.py` |
@@ -37,7 +37,7 @@ iCloud container: `iCloud.com.droword` (optional sync of `words.json`).
 
 ### Entry
 
-- `DrowordApp.swift` — wires stores, appearance, trial, notifications, enrichment retry, study-time session, Share deep links (`pendingSharedWord` / `pendingSharedText` → extract).
+- `DrowordApp.swift` — wires stores, appearance, trial, notifications, enrichment retry, study-time session, Share deep links (`pendingSharedWord` / `pendingSharedText` → extract; photo → `droword://scan` + `SharedScanInbox`).
 - `ContentView` — splash → onboarding **or** `HomeView`.
 - Splash: `SplashView` resolves the `DrowordWordmark` out of a blur in one motion (blur + slight scale + fade, `.smooth`). Seven `StickerStar`s (purple / pink / gold / blue) spring out around it and twinkle, then everything fades. No letter-by-letter animation, bursts, or rings. Reduce Motion shows the wordmark with no stars and no blur.
 
@@ -79,7 +79,7 @@ Home hero = **`DailyLessonCard` only** (no separate due-review / next-review car
 
 ### `StoredWord` (`WordsStore.swift`)
 
-Identity + copy: `word`, `type`, `translation`, `example`/`examples`, `explanation`, `breakdown`, `transcription`, `comment`, `tag`, languages, dates.  
+Identity + copy: `word`, `type`, `translation`, `example` (one sentence on the card — no extra examples / More examples), `explanation`, `breakdown`, `transcription`, `comment`, `tag`, languages, dates.  
 SRS: `easeFactor`, `intervalDays`, `repetitions`, `lapses`, `dueDate`, `introduced`.  
 Enrichment extras: `collocations`, `synonyms`, `antonyms`, `mnemonic`, `reaction`, `needsEnrichment`.
 
@@ -108,7 +108,7 @@ Do **not** reintroduce separate Home due-review / quick-review CTAs next to the 
 
 ### Practice / quiz
 
-Directions L1↔L2. Modes include typing, matching, multiple choice, listening, cloze, sentence building (`QuizSessionManager` + `Components/Quiz/`). Results feed SRS + learning score. Skipping listening must not count as a correct SRS grade.
+Directions L1↔L2. Modes include typing, matching, multiple choice, listening, cloze, sentence building (`QuizSessionManager` + `Components/Quiz/`). Results feed SRS + learning score. Skipping listening must not count as a correct SRS grade. Listening does not auto-play — only the wave control starts TTS.
 
 Feedback colors: Practice correct/wrong use `successStrong` / `errorStrong` = theme `accentGreen` / `accentRed` (same as word toasts «Красава» / errors). Duo soft pastel fills stay Green Owl only.
 
@@ -123,7 +123,7 @@ Practice results (`QuizCompletionView` via `PracticeView.showingResults`) hide t
 ### Capture / Scan
 
 - **Scan toolbar**: camera / library (`ScanWordsView`).
-- Share: short → Add; long / `pendingSharedText` → extract (`droword://extract`, `/extract-words` text).
+- Share: photo → `droword://scan` + App Group JPEG (`SharedScanInbox`) → `ScanWordsView` extract; short → Add; long / `pendingSharedText` → extract (`droword://extract`, `/extract-words` text).
 - Dedup: words already in the dictionary are not re-added; UI shows them as **Saved**.
 - No in-app clipboard paste → extract (removed).
 
@@ -140,7 +140,7 @@ Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSc
 `DayStreak` (+ Pro streak freeze: up to 2 missed days in a rolling 7-day window, only when the gap sits between study days), `DailyChallengeManager`.  
 `FeatureGates.streakEnabled` is `false`: day streak, freeze, fire badge, streak badges, streak notifications, streak stats, and streak milestones stay in code and stay off screen. The Home week strip opens the calendar (studied days only, no streak count and no freeze). Quiz combo streaks are separate and still show.  
 `FeatureGates.homeChatEnabled` stays `false` until Home chat is ready to ship; scene/chat code remains.  
-Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts and onboarding screens.  
+Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts, onboarding screens, and an Achievements preview with every badge unlocked.  
 `BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
 ### CSV / dictionary settings
@@ -173,9 +173,9 @@ Wrappers:
 | `ClaudeSuggestedWord` | `POST /suggest` | Suggested vocabulary |
 | `ClaudeStory` | `POST /story` | Story from words |
 | `ClaudeScene` | `POST /scene` | Chat scene turns |
-| `ClaudeExtractWords` | `POST /extract-words` | Words from photo and/or pasted text |
+| `ClaudeExtractWords` | `POST /extract-words` | Words from photo and/or pasted text — full dictionary cards (example, explanation, forms, collocations…) |
 | `fetchWordForms` (`ClaudeTranslate.swift`) | `POST /forms` | Inflected forms of one headword that appear in its example / collocations |
-| `AudioManager` | `POST /tts` | OpenAI TTS audio (`TTSCache` on disk by text+voice; replay is instant) |
+| `AudioManager` | `POST /tts` | OpenAI TTS audio (`TTSCache` on disk by text+voice; replay is instant). Voice picker preview uses the native language, not the learning language |
 
 Prompts and CEFR/script rules live in **`droword-worker/src/index.ts`**. Rate limits / body size / key check in `guard.ts`. Worker README: `droword-worker/README.md`.
 
@@ -204,6 +204,7 @@ Worker IP limits in `guard.ts` are abuse protection only — not the product pay
 
 ## UI / design conventions
 
+- Type and icons: **`.cursor/rules/type-and-icons.mdc`** — check on every UI edit (title/subtitle size + color, icon color). Soft-cover title is `display(32)` / `mainText`; subtitle `regular(16)` / `secondaryText`. Row and toggle SF Symbols are `mainText`, not a tinted purple/blue.
 - Fonts: bundled **Poppins** (registered in `DrowordApp`).
 - Spacing / radius: `Helpers/DesignTokens.swift` (`DesignSpacing`, `DesignRadius`, `DesignChip` for tag-row circles / reaction emoji size).
 - Themes: `ThemeStore` palettes; prefer `themeStore.mainAccentColor` for CTAs. Palette titles (`Droword`, `Green Owl`, `Liquid Glass`, `Custom`) and subtitles are localized via `String(localized:)` — brand name **Droword** stays Droword in every locale. **Liquid Glass** (`requiresIOS26`) only appears in the picker when `ThemeStore.glassAPIAvailable` (iOS 26+); on older OS it falls back to Droword and `glassEffect` goes through `drowordGlassEffect` / `GlassCardModifier` with a material fallback. Large empty/soft-cover heroes are stickers (`StickerTone`). Stickers follow the theme through `\.stickerStyle` (set at the app root from `ThemeStore.stickerStyle`): `.droword` (Droword + Custom: side block, thin outline, shine), `.duo` (Green Owl: Duo colors, flat face + bottom lip, no outline; white parts get a light gray outline), `.glass` (Liquid Glass: Apple system colors, translucent gradient, white top sheen + rim, blurred soft shadow — not `.shadow`, which draws a box on iOS), `.pixel` (8-bit: ink outline + hard ink shadow, then `StickerPixelFrame` renders the sticker small with `ImageRenderer` and scales it up with `.interpolation(.none)`). Colors come from `StickerPalette`; `StickerTone.face/side/highlight/line` are `StickerPaint` shape styles that resolve against the environment. Every root sticker view wraps its art in `StickerPixelFrame`. No Metal shader: the Metal toolchain is not installed. `StickerProBadge` is not pixelated, so the PRO text stays readable. Only a hero that falls back to an SF Symbol uses `themeStore.iconAccent` (Droword `#6A3AC4`, Green Owl blue, Glass purple, Custom purple). Small settings/menu icons stay `mainText` or the rainbow `iconBlue` / `iconGreen` / … tokens. Soft-cover pages: content vertically centered, CTAs pinned to the bottom. `cleanCard(themeStore:)`, `modernSheet()`.
@@ -267,16 +268,16 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 ## Important behaviors to preserve
 
 1. **Local-first** — dictionary must work offline; AI features degrade with clear copy (`SceneOfflineCopy`, network monitor). Saving a word must still work when the free AI quota is spent.
-2. **Enrichment** — `WordEnrichmentService` retries `needsEnrichment` words when online. Scan/import should not force enrichment if a translation already exists.
+2. **Enrichment** — `WordEnrichmentService` retries `needsEnrichment` words when online. Scan marks enrichment only when translation, example, or explanation is missing (old thin extract still fills in). Import should not force enrichment if a translation already exists.
 3. **App Group** — word/language changes must remain visible to Share/Widget.
 4. **Home vs Practice** — Home = one daily lesson hero; don’t dump quiz UI or a second review CTA onto Home.
 5. **Non-Pro theme lock** — on active scene, non-premium forced back to `.colorful`.
 6. **Secrets** — never commit real `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `APP_KEY`; local worker uses `.dev.vars`.
 7. **Don’t rewrite worker prompts** casually — they encode CEFR + Japanese/Chinese/Korean script rules.
 8. **node_modules** under `droword-worker/` — ignore; not app source.
-9. **Capture** — Share long text opens extract (`ScanWordsView`, `/extract-words` text). Short Share still opens Add. Photo scan on Scan. Dedup against existing dictionary words. No clipboard-paste extract UI.
+9. **Capture** — Share a photo from Photos (or elsewhere) opens Droword and runs scan (`droword://scan`, `SharedScanInbox`). Share long text opens extract (`ScanWordsView`, `/extract-words` text). Short Share still opens Add. In-app photo scan on Scan. Extract returns full dictionary cards (same fields as translate/suggest). Dedup against existing dictionary words. No clipboard-paste extract UI. Scan results, word packs, and suggested words all use `SelectableWordCard` → `WordCardView` (same header, waves, expand, `TTSPlayer.prefetch` on appear). Page chrome matches packs (count + Add all, Skip capsule). Already-saved words stay hidden, like packs.
 10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; entitlements are on; still local-first App Group file.
-11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson). Home is the `addWord` sticker (word card + plus; dark mode uses `StickerTone.slate` so the card is not paper-white). The empty dictionary is `StickerQuestion`, Practice and the locked lesson are `StickerBulb`, an empty tag filter is `StickerTag`. Stickers live in `Components/Stickers/`, drawn from `StickerShape` + `StickerTone` (`Helpers/`): Droword style is a soft 3D fill and thin outline; Green Owl, Liquid Glass, and 8-bit restyle through `StickerStyle`. The splash sparkles are `StickerStar`. Onboarding pages use the same stickers (book + tag, bulb + check, stars around the app icons). Soft-cover modals (coach marks, first words, suggested words, Words added, Study extras, PRO invite, celebrations, alerts) draw their hero through `SoftCoverHero` → `StickerSymbol`, which maps the SF Symbol name to a sticker via `StickerArt(systemName:)` and falls back to the SF Symbol for unknown names. Row icons in those pages use `StickerSymbol` at 28pt. Also stickers: the Home empty state (`text.badge.plus` → `addWord`; `EmptyListView` / `PracticeEmptyContent` use a sticker whenever `StickerArt(systemName:)` knows the icon, otherwise `HaloIcon`), the Scan words hero (`scan`), the Practice matching lives (`StickerHeart`: `.red` left, `.ash` lost), Achievements badge cards (`BadgeCardView` → `StickerArt(badgeEmoji:)`: sprout, herb, tree, trophy, crown, diamond, target, notepad, bulb, flame, bolt, sparkles; glyphs in `StickerGlyph+Badges.swift`; locked = grayscale + faded; unknown emoji falls back to the emoji), Well done (colored `StickerStar` sparkles on the finish splash, correct / missed / best-streak / Perfect lesson icons). A new modal icon gets a `StickerArt` case + glyphs in `StickerGlyph+Modals.swift`. Do not put SF Symbols back in those spots.
+11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson). Home is the `addWord` sticker (word card; dark mode uses `StickerTone.slate` so the card is not paper-white). The empty dictionary is `cards` (three stacked word cards). Practice and the locked lesson are `StickerBulb`, an empty tag filter is `StickerTag`. Stickers live in `Components/Stickers/`, drawn from `StickerShape` + `StickerTone` (`Helpers/`): Droword style is a soft 3D fill and thin outline; Green Owl, Liquid Glass, and 8-bit restyle through `StickerStyle`. The splash sparkles are `StickerStar`. Onboarding pages use the same stickers (book + tag, bulb + check, stars around the app icons). Soft-cover modals (coach marks, first words, suggested words, Words added, Study extras, PRO invite, celebrations, alerts) draw their hero through `SoftCoverHero` → `StickerSymbol`, which maps the SF Symbol name to a sticker via `StickerArt(systemName:)` and falls back to the SF Symbol for unknown names. Row icons on Nice work and Suggested words stay SF Symbols; other soft-cover rows use `StickerSymbol` at 28pt. Also stickers: the Home empty state (`text.badge.plus` → `addWord`) and empty dictionary (`square.stack.3d.up` → `cards`; `EmptyListView` / `PracticeEmptyContent` use a sticker whenever `StickerArt(systemName:)` knows the icon, otherwise `HaloIcon`), the Scan words hero (`scan`), the Practice matching lives (`StickerHeart`: `.red` left, `.ash` lost), Achievements badge cards (`BadgeCardView` → `StickerArt(badgeEmoji:)`: sprout, herb, tree, trophy, crown, diamond, target, notepad, bulb, flame, bolt, sparkles; glyphs in `StickerGlyph+Badges.swift`; locked = grayscale + faded; unknown emoji falls back to the emoji), Well done (colored `StickerStar` sparkles on the finish splash, correct / missed / best-streak / Perfect lesson icons). A new modal icon gets a `StickerArt` case + glyphs in `StickerGlyph+Modals.swift`. Do not put SF Symbols back in those spots.
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
 14. **App icon picker** — `customizationCases` only. No language/flag app icons in the product. Tab bar artwork lives in `MenuBarIcons`.
@@ -285,7 +286,7 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
 18. **Dictionary reactions** — used card reactions appear as circular filter chips after tags; searching an emoji finds those cards.
 19. **Widgets** — **Add a new word** is plus-only (`droword://add`): home-screen `systemSmall` and lock-screen `accessoryCircular`. Recent words shows the last 3 as mini dictionary cards (small = stack, medium = three tiles; `droword://dictionary`). **Today’s lesson** is small/medium + lock-screen `accessoryRectangular` only (no circular). Lesson widget has no streak copy while streak is gated off. Gallery copy lives in `Droword​Widget/Localizable.xcstrings`. Edit the live target in `Droword​Widget/` (ZWSP folder), not `DrowordWidget/`.
-20. **Word packs** — pack word cards use normal `cardBg` (no tinted pack colors). Adding a word tags it Basics / Food / Travel / Shopping / Daily life and `ensureTag`s custom ones into `TagStore` (Travel stays built-in). Skip matches Cancel: `secondaryButtonBg` + `mainText`, no icon.
+20. **Word packs** — pack / scan / suggested cards are `WordCardView` via `SelectableWordCard` (dictionary look + waves + TTS cache). Adding a pack word tags it Basics / Food / Travel / Shopping / Daily life and `ensureTag`s custom ones into `TagStore` (Travel stays built-in). Skip matches Cancel: `secondaryButtonBg` + `mainText`, no icon.
 
 ---
 
@@ -297,8 +298,8 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 | SRS / due logic | `SRSScheduler`, `WordDue`, `WordsStore` |
 | Daily lesson (Home hero) | `DailyLessonBuilder`, `DailyLessonSessionView`, `DailyLessonCard` |
 | Quiz / Practice | `PracticeView`, `QuizSessionManager`, `Components/Quiz/*` |
-| Empty / Add CTAs | `EmptyListView`, `PracticeEmptyContent`, `QuizNotEnoughView` |
-| Scan / capture / dedup | `ScanWordsView`, `ClaudeExtractWords`, Share extension, `DrowordApp` deep links |
+| Empty / Add CTAs | `EmptyListView`, `PracticeEmptyContent`, `QuizNotEnoughView`. Add / Add all plus is `AddPlusIcon` (SF `plus`, 14 bold) — do not let the label font restyle it |
+| Scan / capture / dedup | `ScanWordsView`, `ClaudeExtractWords`, Share extension, `SharedScanInbox`, `DrowordApp` deep links |
 | iCloud sync | `WordsICloudSync`, `DictionarySettingsView`, `Droword.entitlements` |
 | CSV import/export | `DictionarySettingsView` |
 | Badges / celebrations | `BadgeStore`, `HomeView`, `MilestoneCelebrationView`, `AchievementsView` |
@@ -307,9 +308,11 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 | Paywall / limits | `PremiumView`, `DailyLimitsManager`, `StoreKitManager` |
 | Onboarding | `Onboarding/*` |
 | Settings / flags | `SettingsView`, `FeatureFlagsView`, `AppStorageKeys` |
+| Voice preview | `VoicePickerView` + `VoicePreviewCopy` — all four voices speak a line in the saved native language |
 | Notifications | `NotificationManager`, `NotificationCopy`, `DrowordApp` |
 | Themes / Duo chrome | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |
 | Home soft covers | `HomeSoftCover`, `HomeView` queue (`enqueueSoftCover`) |
+| First words starters | `StarterWordBank`, `FirstWordsView` — list still shows word + transcription + translation; add writes a full dictionary card |
 | Haptics copy | `HapticFeel`, `HapticSettingsView`, `Localizable.xcstrings` |
 | Share word image | `ShareWordCardView` / `ShareWordPosterView` (looks like expanded dictionary card; Stories left-pinned on gradient) |
 | Reading story | `StoryView` — title, body, quiz left-aligned |

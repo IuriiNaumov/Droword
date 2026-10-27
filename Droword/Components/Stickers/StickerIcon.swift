@@ -49,6 +49,7 @@ struct StickerIcon: View {
         case .wrong: markBadge(.badgeCross, .red)
         case .scan: scan
         case .addWord: addWord
+        case .cards: cards
         case .palette: palette
         case .appIcon: appIcon
         case .sprout: plant(stem: .sproutStem, leaves: .sproutLeaves)
@@ -158,8 +159,17 @@ struct StickerIcon: View {
             solid(.wordCard, colorScheme == .dark ? .slate : .paper)
             shine(.wordCardTitle, StickerTone.blue.face, width: 8)
             shine(.wordCardLines, StickerTone.blue.highlight, width: 5)
-            solid(.cornerBadge, .purple)
-            shine(.cornerPlus, StickerTone.paper.face, width: 7)
+        }
+    }
+
+    private var cards: some View {
+        let paper = colorScheme == .dark ? StickerTone.slate : StickerTone.paper
+        return ZStack {
+            solid(.cardsBack, .pink, depth: 0.6)
+            solid(.cardsMiddle, .gold, depth: 0.6)
+            solid(.cardsFront, paper)
+            shine(.cardsTitle, StickerTone.blue.face, width: 8)
+            shine(.cardsLines, StickerTone.blue.highlight, width: 5)
         }
     }
 

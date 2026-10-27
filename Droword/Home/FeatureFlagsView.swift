@@ -5,6 +5,7 @@ private enum FlagScreen: Hashable {
     case wordsAdded
     case studyExtras
     case proInvite
+    case achievements
     case onboarding(OnboardingModalPreview)
     case alert(CustomAlertPreviewCase)
     case milestone(MilestonePreview)
@@ -38,6 +39,7 @@ struct FeatureFlagsView: View {
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var languageStore: LanguageStore
+    @EnvironmentObject private var badgeStore: BadgeStore
 
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.debugPremiumOverride) private var debugOverride: Bool = false
@@ -187,6 +189,19 @@ struct FeatureFlagsView: View {
                         }
                     }
 
+                    Text("Achievements")
+                        .font(themeStore.bold(18))
+                        .foregroundStyle(themeStore.mainText)
+                        .padding(.top, 4)
+
+                    Text("Achievements with every badge unlocked.")
+                        .font(themeStore.regular(13))
+                        .foregroundStyle(themeStore.secondaryText)
+
+                    flagGroup {
+                        flagLink(.achievements, icon: "trophy", title: "All unlocked")
+                    }
+
                     Text("Alerts")
                         .font(themeStore.bold(18))
                         .foregroundStyle(themeStore.mainText)
@@ -219,6 +234,7 @@ struct FeatureFlagsView: View {
                 .environmentObject(themeStore)
                 .environmentObject(store)
                 .environmentObject(languageStore)
+                .environmentObject(badgeStore)
         }
     }
 
@@ -253,13 +269,21 @@ private struct FlagScreenPage: View {
     let screen: FlagScreen
 
     var body: some View {
-        content
-            .toolbar(.hidden, for: .navigationBar)
+        Group {
+            if case .achievements = screen {
+                AchievementsView(previewAllUnlocked: true)
+            } else {
+                content
+                    .toolbar(.hidden, for: .navigationBar)
+            }
+        }
     }
 
     @ViewBuilder
     private var content: some View {
         switch screen {
+        case .achievements:
+            EmptyView()
         case .wellDone:
             QuizCompletionView(
                 correct: 8,
@@ -311,4 +335,5 @@ private struct FlagScreenPage: View {
     .environmentObject(ThemeStore())
     .environmentObject(WordsStore())
     .environmentObject(LanguageStore())
+    .environmentObject(BadgeStore())
 }

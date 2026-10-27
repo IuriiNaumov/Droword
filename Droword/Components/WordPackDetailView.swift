@@ -62,7 +62,7 @@ struct WordPackDetailView: View {
                                 addAllWords()
                             } label: {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "plus")
+                                    AddPlusIcon()
                                     Text("Add all")
                                 }
                                 .duo3DStyle(themeStore.mainAccentColor)
@@ -71,8 +71,26 @@ struct WordPackDetailView: View {
                         }
 
                         ForEach(visibleWords, id: \.word) { word in
-                            wordCard(word)
-                                .transition(.scale.combined(with: .opacity))
+                            SelectableWordCard(
+                                word: word.word,
+                                translation: word.translation,
+                                type: word.type,
+                                transcription: word.transcription,
+                                example: word.example,
+                                explanation: word.explanation,
+                                breakdown: word.breakdown,
+                                collocations: word.collocations,
+                                synonyms: word.synonyms,
+                                antonyms: word.antonyms,
+                                forms: word.forms,
+                                tag: packTag,
+                                onAdd: { addWord(word) },
+                                onSkip: {
+                                    skippedWordIDs.insert(word.word)
+                                    checkCompletion()
+                                }
+                            )
+                            .transition(.scale.combined(with: .opacity))
                         }
                     }
 
@@ -99,106 +117,6 @@ struct WordPackDetailView: View {
         .onAppear {
             detectAlreadyAdded()
         }
-    }
-
-    private func wordCard(_ word: StarterWord) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let packTag {
-                TagBadge(text: packTag)
-            }
-
-            Text(word.word)
-                .font(themeStore.bold(22))
-                .foregroundStyle(themeStore.mainText)
-
-            Text(word.translation)
-                .font(themeStore.regular(16))
-                .foregroundStyle(themeStore.secondaryText)
-
-            if let transcription = word.transcription, !transcription.isEmpty {
-                Text("[\(transcription)]")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
-            }
-
-            Text(word.type)
-                .font(themeStore.regular(13))
-                .foregroundStyle(themeStore.secondaryText.opacity(0.6))
-
-            if let example = word.example, !example.isEmpty {
-                Text(HighlightedExample.make(
-                    example: example,
-                    word: word.word,
-                    baseColor: UIColor(themeStore.secondaryText),
-                    highlightColor: UIColor(themeStore.accentGold),
-                    baseFont: themeStore.uiFont(size: 16, weight: .regular),
-                    highlightFont: themeStore.uiFont(size: 16, weight: .bold)
-                ))
-                .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if let explanation = word.explanation, !explanation.isEmpty {
-                Text(explanation)
-                    .font(themeStore.regular(15))
-                    .foregroundStyle(themeStore.mainText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            if !word.collocations.isEmpty {
-                factLine("Common phrases", word.collocations.joined(separator: "  ·  "))
-            }
-            if !word.synonyms.isEmpty {
-                factLine("Synonyms", word.synonyms.joined(separator: "  ·  "))
-            }
-            if !word.antonyms.isEmpty {
-                factLine("Opposites", word.antonyms.joined(separator: "  ·  "))
-            }
-
-            HStack {
-                Button {
-                    withAnimation(.spring()) {
-                        addWord(word)
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                        Text("Add")
-                    }
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(themeStore.mainAccentColor)
-                    .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                Button {
-                    withAnimation(.easeInOut) {
-                        skippedWordIDs.insert(word.word)
-                        checkCompletion()
-                    }
-                } label: {
-                    Text("Skip")
-                        .font(themeStore.medium(13))
-                        .foregroundStyle(themeStore.mainText)
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(themeStore.secondaryButtonBg)
-                        .clipShape(Capsule())
-                }
-            }
-            .padding(.top, 10)
-        }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.isGlass ? Color.clear : themeStore.cardBg)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
-        .modifier(GlassCardModifier(isGlass: themeStore.isGlass, cornerRadius: themeStore.cardRadius))
     }
 
     private var completionView: some View {
@@ -239,48 +157,23 @@ struct WordPackDetailView: View {
         .padding(.vertical, 24)
     }
 
-    private func factLine(_ title: LocalizedStringKey, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(themeStore.medium(13))
-                .foregroundStyle(themeStore.secondaryText)
-            Text(value)
-                .font(themeStore.regular(15))
-                .foregroundStyle(themeStore.mainText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private var packTag: String? {
         WordPacksData.tagName(for: pack.id)
     }
 
     private func addWord(_ word: StarterWord) {
-        let hasCard = !(word.example ?? "").isEmpty && !(word.explanation ?? "").isEmpty
         if let packTag {
             WordPacksData.ensureTag(packTag)
         }
-        let newWord = StoredWord(
-            word: word.word,
-            type: word.type,
-            translation: word.translation,
-            example: word.example,
-            explanation: word.explanation,
-            transcription: word.transcription,
-            tag: packTag,
+        let newWord = word.asStoredWord(
             fromLanguage: languageStore.learningLanguage,
             toLanguage: languageStore.nativeLanguage,
-            needsEnrichment: !hasCard,
-            examples: word.example.map { [$0] } ?? [],
-            collocations: word.collocations,
-            synonyms: word.synonyms,
-            antonyms: word.antonyms
+            tag: packTag
         )
         store.add(newWord)
         addedWordIDs.insert(word.word)
         addedCount += 1
-        if !hasCard {
+        if newWord.needsEnrichment {
             NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
         }
         checkCompletion()

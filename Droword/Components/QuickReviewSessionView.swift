@@ -171,15 +171,6 @@ struct QuickReviewSessionView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    if word.examples.count > 1 {
-                        ForEach(Array(word.examples.dropFirst().enumerated()), id: \.offset) { _, extra in
-                            Text(extra)
-                                .font(themeStore.regular(16))
-                                .foregroundStyle(themeStore.mainText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-
                     if let explanation = word.explanation, !explanation.isEmpty {
                         Text(explanation)
                             .font(themeStore.regular(16))

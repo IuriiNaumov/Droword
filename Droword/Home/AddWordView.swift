@@ -134,6 +134,7 @@ struct AddWordView: View {
                 ScanWordsView(store: store)
                     .environmentObject(themeStore)
                     .environmentObject(languageStore)
+                    .environmentObject(store)
                     .tint(themeStore.mainAccentColor)
                     .transaction { $0.disablesAnimations = true }
             }
@@ -231,8 +232,7 @@ struct AddWordView: View {
 
     private var addWordLabel: some View {
         HStack(spacing: 8) {
-            Image(systemName: "plus")
-                .font(.system(size: 14, weight: .bold))
+            AddPlusIcon()
             Text("Add")
                 .font(themeStore.bold(17))
         }
@@ -434,7 +434,6 @@ struct AddWordView: View {
     }
 
     private func saveTranslated(_ result: TranslationResult, word trimmedWord: String) {
-        let examplesArray = result.examples ?? [result.example]
         let newWord = StoredWord(
             word: trimmedWord,
             type: result.type.lowercased(),
@@ -447,7 +446,7 @@ struct AddWordView: View {
             tag: selectedTag,
             fromLanguage: languageStore.learningLanguage,
             toLanguage: languageStore.nativeLanguage,
-            examples: examplesArray,
+            examples: result.example.isEmpty ? [] : [result.example],
             collocations: result.collocations ?? [],
             synonyms: result.synonyms ?? [],
             antonyms: result.antonyms ?? [],

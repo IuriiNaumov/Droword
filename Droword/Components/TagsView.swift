@@ -116,16 +116,12 @@ struct TagsView: View {
             }
             Haptics.menuTap()
         } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 13, weight: .bold))
-                Text("Done")
-                    .font(themeStore.bold(15))
-            }
-            .foregroundStyle(textColor)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
+            Text("Done")
+                .font(themeStore.bold(15))
+                .foregroundStyle(textColor)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
         }
         .buttonStyle(Duo3DButtonStyle())
     }

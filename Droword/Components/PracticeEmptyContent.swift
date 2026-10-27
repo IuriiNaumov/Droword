@@ -66,8 +66,7 @@ struct PracticeEmptyContent: View {
                     onCTA()
                 } label: {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
+                        AddPlusIcon()
                         Text(ctaTitle)
                     }
                     .duo3DStyle(themeStore.mainAccentColor)

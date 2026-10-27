@@ -75,13 +75,7 @@ struct EditWordView: View {
         updated.translation = translation.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         let trimmedExample = example.trimmingCharacters(in: .whitespacesAndNewlines)
         updated.example = trimmedExample.nilIfEmpty
-        if !trimmedExample.isEmpty {
-            if updated.examples.isEmpty {
-                updated.examples = [trimmedExample]
-            } else {
-                updated.examples[0] = trimmedExample
-            }
-        }
+        updated.examples = trimmedExample.isEmpty ? [] : [trimmedExample]
         updated.comment = comment.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         updated.type = type.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? "word"

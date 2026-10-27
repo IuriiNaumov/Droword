@@ -21,14 +21,17 @@ struct WordCardView: View {
     let explanation: String?
     let breakdown: String?
     let tag: String?
-    let examples: [String]
     let collocations: [String]
     let synonyms: [String]
     let antonyms: [String]
     let reaction: String?
     let storedWord: StoredWord?
-    let onDelete: () -> Void
+    let forms: [String]
+    let isAdding: Bool
+    let onDelete: (() -> Void)?
     let onReaction: ((String?) -> Void)?
+    let onAdd: (() -> Void)?
+    let onSkip: (() -> Void)?
     var expanded: Binding<Bool>?
 
     static let availableReactions = ["❤️", "👍", "🔥", "⭐️", "🤔", "😅"]
@@ -36,7 +39,7 @@ struct WordCardView: View {
     private static let revealTransition: AnyTransition =
         .opacity.combined(with: .offset(y: -8))
 
-    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, examples: [String] = [], collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic _: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, onDelete: @escaping () -> Void, onReaction: ((String?) -> Void)? = nil, expanded: Binding<Bool>? = nil) {
+    init(word: String, translation: String?, type: String?, example: String?, transcription: String?, comment: String?, explanation: String?, breakdown: String?, tag: String?, collocations: [String] = [], synonyms: [String] = [], antonyms: [String] = [], mnemonic _: String? = nil, reaction: String? = nil, storedWord: StoredWord? = nil, forms: [String] = [], isAdding: Bool = false, onDelete: (() -> Void)? = nil, onReaction: ((String?) -> Void)? = nil, onAdd: (() -> Void)? = nil, onSkip: (() -> Void)? = nil, expanded: Binding<Bool>? = nil) {
         self.word = word
         self.translation = translation
         self.type = type
@@ -46,15 +49,22 @@ struct WordCardView: View {
         self.explanation = explanation
         self.breakdown = breakdown
         self.tag = tag
-        self.examples = examples
         self.collocations = collocations
         self.synonyms = synonyms
         self.antonyms = antonyms
         self.reaction = reaction
         self.storedWord = storedWord
+        self.forms = forms
+        self.isAdding = isAdding
         self.onDelete = onDelete
         self.onReaction = onReaction
+        self.onAdd = onAdd
+        self.onSkip = onSkip
         self.expanded = expanded
+    }
+
+    private var allowsFocusActions: Bool {
+        storedWord != nil || onReaction != nil
     }
 
     @State private var cardID = UUID()
@@ -68,7 +78,6 @@ struct WordCardView: View {
     @State private var holdStartedAt: Date?
     @State private var ignoreCardTapUntil: Date?
     @State private var showPremiumWall = false
-    @State private var showAllExamples = false
     @State private var showReactionPicker = false
     @State private var showEmojiKeyboard = false
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
@@ -76,8 +85,6 @@ struct WordCardView: View {
     @State private var shareImage: UIImage?
     @State private var showEditWord = false
     @ObservedObject private var network = NetworkMonitor.shared
-
-    private var isSuggested: Bool { tag == "Suggested" }
 
     private var backgroundColor: Color {
         themeStore.cardBg
@@ -133,6 +140,7 @@ struct WordCardView: View {
         .simultaneousGesture(
             LongPressGesture(minimumDuration: 0.22, maximumDistance: 12)
                 .onEnded { _ in
+                    guard allowsFocusActions else { return }
                     openReactionPicker(strongHaptic: true)
                 }
         )
@@ -180,6 +188,9 @@ struct WordCardView: View {
             showReactionPicker = false
             showEmojiKeyboard = false
         }
+        .onAppear {
+            TTSPlayer.prefetch(word)
+        }
         .task(id: storedWord?.id) {
             guard let id = storedWord?.id else { return }
             store.scheduleFormLookup(id: id)
@@ -199,6 +210,7 @@ struct WordCardView: View {
                 currentReaction: reaction,
                 canEdit: storedWord != nil,
                 canShare: storedWord != nil,
+                canDelete: onDelete != nil,
                 allowsReactions: onReaction != nil,
                 onReaction: { emoji in
                     if reaction == emoji {
@@ -250,7 +262,7 @@ struct WordCardView: View {
                 onDelete: {
                     closeReactionPicker()
                     Haptics.warning()
-                    onDelete()
+                    onDelete?()
                 },
                 onDismiss: {
                     closeReactionPicker()
@@ -347,33 +359,6 @@ struct WordCardView: View {
                     Text(highlightedSentence(example))
                         .fixedSize(horizontal: false, vertical: true)
                         .transition(Self.revealTransition)
-
-                    if examples.count > 1 {
-                        if showAllExamples {
-                            ForEach(Array(examples.dropFirst().enumerated()), id: \.offset) { _, sentence in
-                                Text(highlightedSentence(sentence))
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .transition(Self.revealTransition)
-                            }
-                        }
-
-                        Button {
-                            Haptics.softTap()
-                            withAnimation(.interpolatingSpring(stiffness: 100, damping: 12)) {
-                                showAllExamples.toggle()
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(showAllExamples ? "Hide examples" : "More examples")
-                                    .font(themeStore.medium(13))
-                                Image(systemName: showAllExamples ? "chevron.up" : "chevron.down")
-                                    .font(.system(size: 11, weight: .semibold))
-                            }
-                            .foregroundStyle(themeStore.mainAccentColor)
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity)
-                    }
                 }
 
                 if let explanation = explanation {
@@ -448,6 +433,57 @@ struct WordCardView: View {
                     .padding(.top, 4)
                     .transition(Self.revealTransition)
                 }
+            }
+
+            if let onAdd {
+                HStack {
+                    Button {
+                        ignoreCardTapUntil = Date().addingTimeInterval(0.45)
+                        withAnimation(.spring()) {
+                            onAdd()
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            if isAdding {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.white)
+                            } else {
+                                AddPlusIcon()
+                                Text("Add")
+                            }
+                        }
+                        .font(themeStore.medium(13))
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 12)
+                        .background(themeStore.mainAccentColor)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isAdding)
+
+                    Spacer()
+
+                    if let onSkip {
+                        Button {
+                            ignoreCardTapUntil = Date().addingTimeInterval(0.45)
+                            withAnimation(.easeInOut) {
+                                onSkip()
+                            }
+                        } label: {
+                            Text("Skip")
+                                .font(themeStore.medium(13))
+                                .foregroundStyle(themeStore.mainText)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(themeStore.secondaryButtonBg)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.top, 10)
             }
         }
         .padding(DesignSpacing.md)
@@ -554,7 +590,10 @@ struct WordCardView: View {
            let live = store.words.first(where: { $0.id == id }) {
             return live.forms
         }
-        return storedWord?.forms ?? []
+        if let stored = storedWord, !stored.forms.isEmpty {
+            return stored.forms
+        }
+        return forms
     }
 
     private func highlightedSentence(_ sentence: String) -> AttributedString {
@@ -582,6 +621,7 @@ private struct WordCardFocusOverlay: View {
     let currentReaction: String?
     let canEdit: Bool
     let canShare: Bool
+    let canDelete: Bool
     let allowsReactions: Bool
 
     let onReaction: (String) -> Void
@@ -695,8 +735,10 @@ private struct WordCardFocusOverlay: View {
                 menuRow(title: "Edit", systemImage: "square.and.pencil", action: onEdit)
             }
 
-            menuDivider
-            menuRow(title: "Delete", systemImage: "trash", destructive: true, action: onDelete)
+            if canDelete {
+                menuDivider
+                menuRow(title: "Delete", systemImage: "trash", destructive: true, action: onDelete)
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: DesignRadius.small, style: .continuous))
         .drowordGlassEffect(in: .roundedRect(DesignRadius.small), interactive: true)
@@ -848,4 +890,6 @@ private struct ReactionPickerBar: View {
 
     }
     .padding()
+    .environmentObject(ThemeStore())
+    .environmentObject(WordsStore())
 }

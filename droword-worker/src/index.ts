@@ -40,6 +40,22 @@ function ttsLanguageName(language: string): string {
     "日本語": "Japanese",
     "العربية": "Arabic",
     "हिन्दी": "Hindi",
+    "Українська": "Ukrainian",
+    "Türkçe": "Turkish",
+    "Ελληνικά": "Greek",
+    Nederlands: "Dutch",
+    Polski: "Polish",
+    Svenska: "Swedish",
+    Norsk: "Norwegian",
+    Dansk: "Danish",
+    Suomi: "Finnish",
+    "Tiếng Việt": "Vietnamese",
+    "Bahasa Indonesia": "Indonesian",
+    "ไทย": "Thai",
+    "עברית": "Hebrew",
+    "Čeština": "Czech",
+    "Română": "Romanian",
+    Magyar: "Hungarian",
   };
   return map[language] || language;
 }
@@ -539,10 +555,12 @@ async function handleExtractWords(request: Request, env: Env): Promise<Response>
     text?: string;
     learningLanguage: string;
     nativeLanguage: string;
+    level?: string;
   }>();
 
   const learningLanguage = clipText(raw.learningLanguage, 48);
   const nativeLanguage = clipText(raw.nativeLanguage, 48);
+  const level = clipText(raw.level, 8) ?? "";
   const pastedText = clipText(raw.text ?? "", 12000);
   const hasImage = typeof raw.image === "string" && raw.image.length > 0 && !imageTooLarge(raw.image);
 
@@ -553,6 +571,8 @@ async function handleExtractWords(request: Request, env: Env): Promise<Response>
     );
   }
 
+  const lvl = levelGuideline(learningLanguage, level || "");
+
   const sourceHint = hasImage
     ? "Look at the image carefully. It may be a vocabulary list, a textbook or workbook page, a screenshot, or handwritten notes."
     : "Read the pasted text carefully. It may be an article excerpt, chat message, subtitle block, textbook paragraph, or a list of words.";
@@ -561,25 +581,60 @@ async function handleExtractWords(request: Request, env: Env): Promise<Response>
 
 ${sourceHint}
 
-TASK: Extract vocabulary items in ${learningLanguage} together with a ${nativeLanguage} translation.
+Learning language: ${learningLanguage}
+Native language: ${nativeLanguage}
+Learner's level: ${lvl.label}
+
+TASK: Extract vocabulary items in ${learningLanguage} and fill a complete dictionary card for each one.
 
 For every distinct ${learningLanguage} word or short phrase worth learning, provide:
 - word: the ${learningLanguage} word or phrase exactly as written (keep the original script; if it is shown in romaji/pinyin, keep that form). Fix only obvious OCR artifacts (broken or merged characters) using your knowledge of ${learningLanguage}.
 - translation: a natural translation in ${nativeLanguage}. If a translation is already shown but in another language, translate it into ${nativeLanguage} yourself.
-- type: part of speech in ${nativeLanguage} (noun, verb, adjective, …), or null if unclear.
-- transcription: a pronunciation guide suited to the language — IPA in /…/ for Latin-script languages, or romaji / pinyin / romanization for Japanese, Chinese, Korean, etc. Use null if it adds nothing.
+- type: part of speech, only ${nativeLanguage}.
+- explanation: 1–2 short sentences in ${nativeLanguage}. Write like you're explaining to a friend — casual, clear, helpful. Focus on when and how the word is used, not a dictionary definition. Adapt to ${lvl.label} level.
+- breakdown: only ${nativeLanguage} or null. Brief etymology or word structure if helpful.
+- example: only ${learningLanguage}. One sentence. MUST match the ${lvl.label} level. ${lvl.guideline} Capitalize only the first letter of each sentence (and proper nouns). Do NOT capitalize the headword mid-sentence. Use a natural inflection or conjugation of the headword when that is how a native would say it.
+- forms: array of every conjugated or inflected surface form of the headword that appears in "example" or "collocations", copied exactly from that text, including accents. The form may share no letters with the headword. Examples: saber → supe, supo, sé; ser → soy, fue; ir → voy, fui; ver → vi; go → went; être → suis. Do not include synonyms or unrelated words. Return [] only when no inflected form appears.
+- collocations: an array of 2–4 short, very common collocations or set phrases built with the headword, ONLY in ${learningLanguage} (no translation). Return [] if none are natural.
+- synonyms: an array of 0–3 common synonyms of the headword, ONLY in ${learningLanguage}. Return [] if there are no close synonyms.
+- antonyms: an array of 0–2 common antonyms, ONLY in ${learningLanguage}. Return [] if the word has no natural opposite.
+- mnemonic: one short, vivid memory hook in ${nativeLanguage}, a single sentence, or null.
+- transcription: phonetic transcription that helps the learner pronounce the word correctly.
+  For ${learningLanguage}, use the most practical transcription system:
+  • Japanese → if the word contains kanji, show hiragana reading (e.g. "たべる" for 食べる). If the word is already in hiragana or katakana, show romaji
+  • Chinese → use pinyin with tones (e.g. "chī fàn")
+  • Korean → use romanization (e.g. "meo-gda")
+  • Arabic → use simplified transliteration
+  • For European languages (English, French, Spanish, German, Italian, Portuguese, etc.) → use IPA in slashes
+  • Hindi → use IAST or simplified transliteration
+  Return null if not applicable.
 
 RULES:
 - Read in natural reading order and keep multi-word expressions together as a single item.
 - Extract ONLY genuine ${learningLanguage} vocabulary. Skip page numbers, exercise numbers, headers, instructions, URLs, and any text that is actually in ${nativeLanguage}.
 - Prefer concrete, useful words and short phrases over function words alone.
 - Never repeat the same word twice.
-- Return at most 60 items, prioritising the clearest, most useful vocabulary.
+- Return at most 20 items, prioritising the clearest, most useful vocabulary.
+- Do not mix languages inside fields.
+- Capitalization: for scripts that have letter case (Latin, Cyrillic, Greek, etc.), always start "word" and "translation" with an uppercase letter. Do not Title Case every word. Scripts without case stay as-is.
 - Return ONLY valid JSON in exactly this shape, with no commentary:
 
 {
   "words": [
-    { "word": "...", "translation": "...", "type": "...", "transcription": "..." }
+    {
+      "word": "...",
+      "translation": "...",
+      "type": "...",
+      "example": "...",
+      "explanation": "...",
+      "breakdown": null,
+      "transcription": "...",
+      "collocations": ["..."],
+      "synonyms": ["..."],
+      "antonyms": ["..."],
+      "mnemonic": null,
+      "forms": ["..."]
+    }
   ]
 }
 
@@ -614,7 +669,7 @@ If you find no vocabulary, return { "words": [] }.`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: "You always return strictly valid JSON without explanations.",
       messages: [
         {
@@ -809,7 +864,9 @@ async function handleTTS(request: Request, env: Env): Promise<Response> {
 
   if (language) {
     const name = ttsLanguageName(language);
-    ttsBody.instructions = `Read the text in ${name} using natural, native ${name} pronunciation, accent, and intonation. Do not read it with an English or American accent.`;
+    ttsBody.instructions = name === "English"
+      ? "Read the text in English using natural, native English pronunciation, accent, and intonation."
+      : `Read the text in ${name} using natural, native ${name} pronunciation, accent, and intonation. Do not read it with an English or American accent.`;
   }
 
   const openaiResponse = await fetch("https://api.openai.com/v1/audio/speech", {

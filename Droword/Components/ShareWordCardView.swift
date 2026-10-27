@@ -9,17 +9,9 @@ struct ShareWordCardView: View {
     private var primaryTextColor: Color { themeStore.mainText }
     private var secondaryTextColor: Color { themeStore.mainText.opacity(0.8) }
 
-    private var shareExamples: [String] {
-        var list: [String] = []
-        if let example = word.example, !example.isEmpty {
-            list.append(example)
-        }
-        for sentence in word.examples where !sentence.isEmpty {
-            if list.contains(sentence) { continue }
-            list.append(sentence)
-            if list.count >= 3 { break }
-        }
-        return list
+    private var shareExample: String? {
+        guard let example = word.example, !example.isEmpty else { return nil }
+        return example
     }
 
     var body: some View {
@@ -63,8 +55,8 @@ struct ShareWordCardView: View {
                 leadingText(translation, font: themeStore.regular(16), color: primaryTextColor)
             }
 
-            ForEach(Array(shareExamples.enumerated()), id: \.offset) { _, sentence in
-                Text(highlightedSentence(sentence))
+            if let shareExample {
+                Text(highlightedSentence(shareExample))
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)

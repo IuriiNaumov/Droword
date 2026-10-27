@@ -46,6 +46,7 @@ struct DrowordApp: App {
         configureNavigationBarTint()
         setupNotifications()
         checkTrialPeriod()
+        SharedScanInbox.startListening()
         Self.registerBundledFonts()
         Task.detached(priority: .background) {
             _ = UIFont(name: "Poppins-Regular", size: 14)
@@ -112,6 +113,12 @@ struct DrowordApp: App {
                     case .active:
                         NotificationManager.shared.clearBadge()
                         store.reloadFromDisk()
+                        if SharedScanInbox.hasPending {
+                            SplashGate.skip = true
+                            SplashGate.pendingScan = true
+                            NotificationCenter.default.post(name: .skipSplash, object: nil)
+                            NotificationCenter.default.post(name: .openScan, object: nil)
+                        }
                         enrichmentService?.retryEnrichment()
                         scheduleSmartNotifications()
                         checkTrialPeriod()
@@ -266,6 +273,7 @@ struct DrowordApp: App {
         guard url.scheme == "droword" else { return }
         let host = url.host ?? ""
         if host == "extract" {
+            SharedScanInbox.clear()
             let defaults = UserDefaults(suiteName: "group.com.droword.shared")
             let text = defaults?.string(forKey: "pendingSharedText") ?? ""
             defaults?.removeObject(forKey: "pendingSharedText")
@@ -276,7 +284,15 @@ struct DrowordApp: App {
             )
             return
         }
+        if host == "scan" {
+            SplashGate.skip = true
+            SplashGate.pendingScan = true
+            NotificationCenter.default.post(name: .skipSplash, object: nil)
+            NotificationCenter.default.post(name: .openScan, object: nil)
+            return
+        }
         if host == "add" {
+            SharedScanInbox.clear()
             let word = URLComponents(url: url, resolvingAgainstBaseURL: false)?
                 .queryItems?.first(where: { $0.name == "word" })?.value ?? ""
             let defaults = UserDefaults(suiteName: "group.com.droword.shared")
@@ -322,10 +338,12 @@ struct DrowordApp: App {
 extension Notification.Name {
     static let sharedWordReceived = Notification.Name("sharedWordReceived")
     static let sharedTextReceived = Notification.Name("sharedTextReceived")
+    static let sharedImageReceived = Notification.Name("sharedImageReceived")
     static let copiedToClipboard = Notification.Name("copiedToClipboard")
     static let perfectQuizCompleted = Notification.Name("perfectQuizCompleted")
     static let openFromWidget = Notification.Name("openFromWidget")
     static let openAddWord = Notification.Name("openAddWord")
+    static let openScan = Notification.Name("openScan")
     static let openChatScene = Notification.Name("openChatScene")
     static let skipSplash = Notification.Name("skipSplash")
 }
@@ -333,4 +351,5 @@ extension Notification.Name {
 enum SplashGate {
     static var skip = false
     static var pendingAddWord: String?
+    static var pendingScan = false
 }

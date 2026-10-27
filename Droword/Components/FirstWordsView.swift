@@ -111,16 +111,13 @@ struct FirstWordsView: View {
                 _ = withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     addedWords.insert(index)
                 }
-                let storedWord = StoredWord(
-                    word: starter.word,
-                    type: starter.type,
-                    translation: starter.translation,
-                    example: nil,
-                    transcription: starter.transcription,
-                    fromLanguage: languageStore.learningLanguage,
-                    toLanguage: languageStore.nativeLanguage
+                store.add(
+                    starter.asStoredWord(
+                        fromLanguage: languageStore.learningLanguage,
+                        toLanguage: languageStore.nativeLanguage,
+                        lockForms: true
+                    )
                 )
-                store.add(storedWord)
             } label: {
                 Image(systemName: isAdded ? "checkmark.circle" : "plus")
                     .font(.system(size: 26, weight: .semibold))

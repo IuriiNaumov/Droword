@@ -67,4 +67,5 @@ struct VoiceAndSpeechSettingsView: View {
         VoiceAndSpeechSettingsView()
     }
     .environmentObject(ThemeStore())
+    .environmentObject(LanguageStore())
 }

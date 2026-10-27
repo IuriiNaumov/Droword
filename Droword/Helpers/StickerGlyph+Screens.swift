@@ -23,17 +23,20 @@ nonisolated extension StickerGlyph {
     }
     static let scanBeam = StickerGlyph { c in c.line([(24, 60), (96, 60)]) }
 
-    static let wordCard = StickerGlyph { c in c.roundedBox(12, 14, 80, 90, 15) }
-    static let wordCardTitle = StickerGlyph { c in c.line([(28, 38), (66, 38)]) }
+    static let wordCard = StickerGlyph { c in c.roundedBox(16, 12, 88, 94, 16) }
+    static let wordCardTitle = StickerGlyph { c in c.line([(34, 38), (80, 38)]) }
     static let wordCardLines = StickerGlyph { c in
-        var p = c.line([(28, 58), (62, 58)])
-        p.addPath(c.line([(28, 74), (50, 74)]))
+        var p = c.line([(34, 58), (72, 58)])
+        p.addPath(c.line([(34, 76), (58, 76)]))
         return p
     }
-    static let cornerBadge = StickerGlyph { c in c.circle(86, 86, 24) }
-    static let cornerPlus = StickerGlyph { c in
-        var p = c.line([(86, 75), (86, 97)])
-        p.addPath(c.line([(75, 86), (97, 86)]))
+    static let cardsBack = StickerGlyph { c in c.roundedBox(36, 8, 62, 72, 13) }
+    static let cardsMiddle = StickerGlyph { c in c.roundedBox(22, 16, 64, 76, 13) }
+    static let cardsFront = StickerGlyph { c in c.roundedBox(8, 26, 66, 80, 14) }
+    static let cardsTitle = StickerGlyph { c in c.line([(24, 48), (58, 48)]) }
+    static let cardsLines = StickerGlyph { c in
+        var p = c.line([(24, 64), (52, 64)])
+        p.addPath(c.line([(24, 78), (44, 78)]))
         return p
     }
 

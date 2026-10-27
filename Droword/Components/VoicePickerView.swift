@@ -14,6 +14,7 @@ struct VoiceOption: Identifiable, Equatable {
 
 struct VoicePickerView: View {
     @EnvironmentObject private var themeStore: ThemeStore
+    @EnvironmentObject private var languageStore: LanguageStore
     @Binding var selectedKey: String
     var options: [VoiceOption]
     @State private var previewingKey: String? = nil
@@ -79,19 +80,12 @@ struct VoicePickerView: View {
         UserDefaults.standard.set(selectedKey, forKey: AppStorageKeys.ttsVoice)
     }
 
-    private let previewPhrases: [String] = [
-        "Hey, how are you doing today?",
-        "Nice to hear from you!",
-        "Hope you're having a great day!",
-        "Hello there, what's new?",
-        "It's great to talk with you!"
-    ]
-
     private func preview(_ option: VoiceOption) {
-        let phrase = previewPhrases.randomElement() ?? "Hey, how are you doing today?"
+        let native = languageStore.nativeLanguage
+        let phrase = VoicePreviewCopy.phrase(for: native)
         Task {
             previewingKey = option.key
-            await AudioManager.shared.play(text: phrase, voiceKey: option.key)
+            await AudioManager.shared.play(text: phrase, voiceKey: option.key, language: native)
             try? await Task.sleep(nanoseconds: 1_200_000_000)
             if previewingKey == option.key { previewingKey = nil }
         }
@@ -114,4 +108,6 @@ struct VoicePickerView: View {
         }
     }
     return Demo()
+        .environmentObject(ThemeStore())
+        .environmentObject(LanguageStore())
 }

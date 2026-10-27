@@ -7,9 +7,6 @@ struct SuggestedWordsView: View {
     @EnvironmentObject private var badgeStore: BadgeStore
     @EnvironmentObject private var languageStore: LanguageStore
 
-    private var accent: Color { themeStore.accentBlue }
-
-    @State private var cachedExamples: [String: AttributedString] = [:]
     @State private var addingWordID: UUID?
 
     var body: some View {
@@ -38,90 +35,33 @@ struct SuggestedWordsView: View {
                 } else {
                     VStack(spacing: 16) {
                         ForEach(suggested.suggestedWords) { word in
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(word.word.displayCapitalized)
-                                    .font(themeStore.medium(24))
-                                    .foregroundStyle(themeStore.mainText)
-
-                                Text(word.translation.displayCapitalized)
-                                    .font(themeStore.regular(16))
-                                    .foregroundStyle(themeStore.secondaryText)
-
-                                if let _ = word.example,
-                                   let attributed = cachedExamples[word.id.uuidString] {
-                                    Text(attributed)
-                                        .font(themeStore.regular(16))
-                                        .foregroundStyle(themeStore.mainText)
-                                }
-
-                                HStack {
-                                    Button {
-                                        guard addingWordID == nil else { return }
-                                        Haptics.softTap()
-                                        addingWordID = word.id
-                                        Task {
-                                            await suggested.accept(word, store: store, languageStore: languageStore)
-                                            badgeStore.recordSuggestedWordAccepted()
-                                            addingWordID = nil
-                                        }
-                                    } label: {
-                                        HStack(spacing: 6) {
-                                            if addingWordID == word.id {
-                                                ProgressView()
-                                                    .controlSize(.small)
-                                                    .tint(.white)
-                                            } else {
-                                                Image(systemName: "plus")
-                                                Text("Add")
-                                            }
-                                        }
-                                        .font(themeStore.medium(13))
-                                        .foregroundStyle(.white)
-                                        .padding(.vertical, 7)
-                                        .padding(.horizontal, 14)
-                                        .background {
-                                            if themeStore.isDuolingo && !themeStore.isGlass {
-                                                ZStack {
-                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                        .fill(darkerShade(of: accent, by: 0.16))
-                                                        .offset(y: 3)
-                                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                        .fill(accent)
-                                                }
-                                            } else {
-                                                Capsule().fill(accent)
-                                            }
-                                        }
-                                        .padding(.bottom, themeStore.isDuolingo && !themeStore.isGlass ? 3 : 0)
+                            SelectableWordCard(
+                                word: word.word.displayCapitalized,
+                                translation: word.translation.displayCapitalized,
+                                type: word.type,
+                                transcription: word.transcription,
+                                example: word.example,
+                                explanation: word.explanation,
+                                breakdown: word.breakdown,
+                                collocations: word.collocations,
+                                synonyms: word.synonyms,
+                                antonyms: word.antonyms,
+                                forms: word.forms,
+                                isAdding: addingWordID == word.id,
+                                onAdd: {
+                                    guard addingWordID == nil else { return }
+                                    Haptics.softTap()
+                                    addingWordID = word.id
+                                    Task {
+                                        await suggested.accept(word, store: store, languageStore: languageStore)
+                                        badgeStore.recordSuggestedWordAccepted()
+                                        addingWordID = nil
                                     }
-                                    .buttonStyle(Duo3DButtonStyle())
-
-                                    Spacer()
-
-                                    Button {
-                                        withAnimation(.easeInOut) {
-                                            suggested.skip(word)
-                                        }
-                                    } label: {
-                                        Text("Already know")
-                                            .font(themeStore.medium(13))
-                                            .foregroundStyle(themeStore.mainText)
-                                            .padding(.vertical, 6)
-                                            .padding(.horizontal, 12)
-                                            .background(themeStore.secondaryButtonBg)
-                                            .clipShape(Capsule())
-                                    }
-                                    .buttonStyle(.plain)
+                                },
+                                onSkip: {
+                                    suggested.skip(word)
                                 }
-                                .padding(.top, 10)
-                            }
-                            .padding(20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                                    .fill(accent.opacity(0.15))
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                             .transition(.scale.combined(with: .opacity))
                         }
                     }
@@ -130,26 +70,7 @@ struct SuggestedWordsView: View {
             .padding(.bottom, 8)
             .animation(.easeInOut(duration: 0.3), value: suggested.isLoading)
             .transition(.opacity.combined(with: .slide))
-            .onAppear { rebuildExampleCache() }
-            .onChange(of: suggested.suggestedWords.count) { rebuildExampleCache() }
         }
-    }
-
-    private func rebuildExampleCache() {
-        var cache: [String: AttributedString] = [:]
-        for word in suggested.suggestedWords {
-            guard let example = word.example else { continue }
-            cache[word.id.uuidString] = HighlightedExample.make(
-                example: example,
-                word: word.word,
-                forms: word.forms,
-                baseColor: UIColor(themeStore.mainText),
-                highlightColor: UIColor(themeStore.accentGold),
-                baseFont: themeStore.uiFont(size: 16, weight: .regular),
-                highlightFont: themeStore.uiFont(size: 16, weight: .bold)
-            )
-        }
-        cachedExamples = cache
     }
 }
 
@@ -215,6 +136,8 @@ extension Color {
                 .environmentObject(mockStore)
                 .environmentObject(suggested)
                 .environmentObject(LanguageStore())
+                .environmentObject(ThemeStore())
+                .environmentObject(BadgeStore())
                 .padding(.horizontal, 20)
         }
         .padding(.vertical, 40)

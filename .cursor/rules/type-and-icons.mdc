@@ -1,0 +1,48 @@
+---
+description: Icon colors plus title and subtitle size/color — check on every UI edit
+alwaysApply: true
+---
+
+# Type and icons
+
+On every UI change, match the neighbor screen, then check this table. Use `ThemeStore` fonts and colors. Do not invent hex, `Color.primary`, or a one-off purple/blue for row icons.
+
+## Titles
+
+| Surface | Font | Color |
+|---|---|---|
+| Soft-cover, onboarding, alerts, celebrations | `display(32)` + `.tracking(-0.4)` | `mainText` |
+| Sheet chrome | `sheetTitle()` → `display(24)` | `mainText` |
+| In-page section (`Suggestions`, …) | `display(24)` | `mainText` |
+| Empty state | `display(22)` + `.tracking(-0.4)` | `mainText` |
+| Settings group header | `bold(18)` | `mainText` |
+| Settings / form row title | `regular(16)` or `regular(17)` | `mainText` |
+
+## Subtitles
+
+| Surface | Font | Color |
+|---|---|---|
+| Soft-cover, coach, Nice work, Suggested words, First words | `regular(16)` | `secondaryText` |
+| Onboarding page line | `regular(16)` | `mainText.opacity(0.75)` |
+| Empty state | `regular(15)` | `secondaryText` |
+| Row body / bullet | `regular(14)` | `mainText` or `mainText.opacity(0.85)` |
+| Caption / footer / hint | `regular(13)` | `secondaryText` |
+| Settings trailing value | `regular(15)` + `lineLimit(1)` | `secondaryText` |
+
+## Icons
+
+| Kind | What |
+|---|---|
+| Soft-cover / empty hero | Sticker. SF fallback only: `iconAccent` |
+| Row, toggle, settings, menu | SF Symbol via `MenuSymbol` (18 / frame 28) or the same metrics. Color: `mainText` |
+| Nice work / Suggested words rows | SF Symbols, `mainText`, not a sticker, not `accentPurple` |
+| Rainbow row (`iconBlue`, `iconGreen`, …) | Only where that settings row already uses it |
+| Delete | `accentRed` |
+| CTA | `mainAccentColor`. Home PRO sparkle: `accentBlue` |
+| Add / Add all plus | `AddPlusIcon` — SF `plus`, 14pt bold. Do not inherit the button’s Poppins font |
+
+Do not tint row icons to match the hero. Do not darken `accentPurple` / `accentBlue` for bullets.
+
+## Before done (UI)
+
+Re-read the diff: every new `Text` / `Image(systemName:)` / `StickerSymbol` uses a row from this table. If a screen already has a title + subtitle pair, copy that pair — do not mix `display(32)` with a 13-pt gray subtitle or a purple row icon.

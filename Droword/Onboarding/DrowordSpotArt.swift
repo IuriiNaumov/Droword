@@ -139,7 +139,7 @@ struct HaloIcon: View {
 
 struct EmptyDictionaryArt: View {
     var body: some View {
-        StickerQuestion(size: 150)
+        StickerIcon(art: .cards, size: 150)
     }
 }
 

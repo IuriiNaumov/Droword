@@ -11,7 +11,6 @@ struct SuggestedWordsIntroView: View {
     @State private var buttonOpacity: Double = 0
 
     private var heroColor: Color { themeStore.iconAccent }
-    private var bulletAccent: Color { themeStore.accentPurple }
 
     var body: some View {
         ZStack {
@@ -97,7 +96,10 @@ struct SuggestedWordsIntroView: View {
 
     private func bulletRow(icon: String, text: LocalizedStringKey) -> some View {
         HStack(spacing: 12) {
-            StickerSymbol(systemName: icon, size: 28, color: darkerShade(of: bulletAccent, by: 0.3))
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(themeStore.mainText)
+                .frame(width: 28, height: 28)
 
             Text(text)
                 .font(themeStore.regular(14))

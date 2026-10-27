@@ -83,8 +83,7 @@ struct AddTagView: View {
 
                 Button(action: { saveTag() }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .bold))
+                        AddPlusIcon()
                         Text(isSaving ? "Adding..." : "Add")
                     }
                     .duo3DStyle(themeStore.mainAccentColor, isDisabled: isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

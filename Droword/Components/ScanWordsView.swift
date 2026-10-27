@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import UIKit
 
 struct ScanWordsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -8,6 +9,7 @@ struct ScanWordsView: View {
     @ObservedObject var store: WordsStore
 
     var initialText: String = ""
+    var initialImage: UIImage? = nil
 
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
 
@@ -38,24 +40,6 @@ struct ScanWordsView: View {
                 && !skippedWordIDs.contains($0.id)
                 && !alreadyInDictionary.contains($0.word.lowercased())
         }
-    }
-
-    private var duplicateWords: [ExtractedWord] {
-        extractedWords.filter {
-            alreadyInDictionary.contains($0.word.lowercased())
-                && !addedWordIDs.contains($0.id)
-                && !skippedWordIDs.contains($0.id)
-        }
-    }
-
-    private var newWordsCountLine: String {
-        let n = visibleWords.count
-        return String(localized: "\(n) new words")
-    }
-
-    private var alreadyInDictionaryLine: String {
-        let n = duplicateWords.count
-        return String(localized: "\(n) words are already in the dictionary")
     }
 
     var body: some View {
@@ -103,16 +87,26 @@ struct ScanWordsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    CloseButton()
+                    if !(visibleWords.isEmpty && addedCount > 0 && !extractedWords.isEmpty) {
+                        CloseButton()
+                    }
                 }
             }
             .onAppear {
+                guard extractedWords.isEmpty, !isExtracting else { return }
+                if let initialImage {
+                    selectedImage = initialImage
+                    SharedScanInbox.clear()
+                    Task { await extractWords() }
+                    return
+                }
                 let seed = initialText.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !seed.isEmpty, extractedWords.isEmpty, !isExtracting else { return }
+                guard !seed.isEmpty else { return }
                 pastedText = seed
                 Task { await extractFromPastedText() }
             }
         }
+        .environmentObject(store)
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)
                 .environmentObject(themeStore)
@@ -211,173 +205,92 @@ struct ScanWordsView: View {
     }
 
     private var resultsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("New words")
+        VStack(alignment: .leading, spacing: 24) {
+            Text("Scan words")
                 .sheetTitle()
 
-            VStack(alignment: .leading, spacing: 6) {
-                if visibleWords.count > 0 {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(newWordsCountLine)
-                            .font(themeStore.regular(15))
-                            .foregroundStyle(themeStore.secondaryText)
+            if !visibleWords.isEmpty {
+                HStack {
+                    Text("\(visibleWords.count) words")
+                        .font(themeStore.bold(20))
+                        .foregroundStyle(themeStore.mainText)
 
-                        Spacer(minLength: 8)
+                    Spacer()
 
-                        if addedCount > 0 {
-                            Text("\(addedCount) added")
-                                .font(themeStore.regular(13))
-                                .foregroundStyle(themeStore.accentGreen)
+                    if addedCount > 0 {
+                        Text("\(addedCount) added")
+                            .font(themeStore.regular(13))
+                            .foregroundStyle(themeStore.accentBlue)
+                    }
+                }
+
+                if visibleWords.count > 1 {
+                    Button {
+                        Haptics.lightImpact()
+                        addAllWords()
+                    } label: {
+                        HStack(spacing: 6) {
+                            AddPlusIcon()
+                            Text("Add all")
                         }
+                        .duo3DStyle(themeStore.mainAccentColor)
                     }
+                    .buttonStyle(Duo3DButtonStyle())
                 }
 
-                if !duplicateWords.isEmpty {
-                    Text(alreadyInDictionaryLine)
-                        .font(themeStore.regular(13))
-                        .foregroundStyle(themeStore.secondaryText)
-                }
-            }
-
-            if visibleWords.count > 1 {
-                Button {
-                    Haptics.lightImpact()
-                    addAllWords()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                        Text("Add all")
-                    }
-                    .duo3DStyle(themeStore.mainAccentColor)
-                }
-                .buttonStyle(Duo3DButtonStyle())
-            }
-
-            ForEach(visibleWords) { word in
-                extractedWordCard(word)
+                ForEach(visibleWords) { word in
+                    SelectableWordCard(
+                        word: word.word,
+                        translation: word.translation,
+                        type: word.type,
+                        transcription: word.transcription,
+                        example: word.example,
+                        explanation: word.explanation,
+                        breakdown: word.breakdown,
+                        collocations: word.collocations,
+                        synonyms: word.synonyms,
+                        antonyms: word.antonyms,
+                        forms: word.forms,
+                        onAdd: { addWord(word) },
+                        onSkip: { _ = skippedWordIDs.insert(word.id) }
+                    )
                     .transition(.scale.combined(with: .opacity))
-            }
-
-            if !duplicateWords.isEmpty {
-                Text("Already in dictionary")
-                    .font(themeStore.medium(15))
-                    .foregroundStyle(themeStore.secondaryText)
-                    .padding(.top, visibleWords.isEmpty ? 0 : 4)
-
-                ForEach(duplicateWords) { word in
-                    duplicateWordCard(word)
                 }
+            } else if skippedWordIDs.isEmpty {
+                allAlreadySavedView
             }
 
             Button {
                 Haptics.lightImpact()
                 resetState()
             } label: {
-                HStack(spacing: 6) {
+                HStack(spacing: 10) {
                     Image(systemName: "camera")
                     Text("Scan another photo")
                 }
-                .font(themeStore.bold(17))
-                .foregroundStyle(themeStore.accentBlue)
-                .padding(.vertical, DesignSpacing.buttonVertical)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                        .fill(themeStore.mainAccentColor.opacity(0.12))
-                )
+                .duo3DSecondaryStyle()
             }
             .buttonStyle(Duo3DButtonStyle())
         }
     }
 
-    private func extractedWordCard(_ word: ExtractedWord) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(word.word)
-                .font(themeStore.medium(22))
+    private var allAlreadySavedView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 40))
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(themeStore.accentBlue)
+
+            Text("All done!")
+                .font(themeStore.bold(18))
                 .foregroundStyle(themeStore.mainText)
 
-            Text(word.translation)
-                .font(themeStore.regular(16))
+            Text("All words already in your dictionary")
+                .font(themeStore.regular(14))
                 .foregroundStyle(themeStore.secondaryText)
-
-            if let transcription = word.transcription, !transcription.isEmpty {
-                Text("[\(transcription)]")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
-            }
-
-            HStack {
-                Button {
-                    withAnimation(.spring()) {
-                        addWord(word)
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                        Text("Add")
-                    }
-                    .font(themeStore.medium(13))
-                    .foregroundStyle(.white)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(themeStore.mainAccentColor)
-                    .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                Button {
-                    withAnimation(.easeInOut) {
-                        _ = skippedWordIDs.insert(word.id)
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "xmark.circle")
-                        Text("Skip")
-                    }
-                    .font(themeStore.regular(13))
-                    .foregroundStyle(themeStore.mainAccentColor)
-                }
-            }
-            .padding(.top, 10)
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.accentBlue.opacity(0.15) as Color)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
-    }
-
-    private func duplicateWordCard(_ word: ExtractedWord) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(word.word)
-                    .font(themeStore.medium(18))
-                    .foregroundStyle(themeStore.secondaryText)
-                Text(word.translation)
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.8))
-            }
-            Spacer(minLength: 0)
-            Text("Added")
-                .font(themeStore.bold(12))
-                .foregroundStyle(themeStore.accentGreen)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(themeStore.accentGreen.opacity(0.14))
-                )
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous)
-                .fill(themeStore.cardBg)
-        )
-        .opacity(0.85)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
     }
 
     private func startScan(camera: Bool) {
@@ -494,21 +407,14 @@ struct ScanWordsView: View {
             alreadyInDictionary.insert(key)
             return
         }
-        let hasTranslation = !(word.translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        let newWord = StoredWord(
-            word: word.word,
-            type: word.type ?? "",
-            translation: word.translation,
-            example: nil,
-            transcription: word.transcription,
+        let newWord = word.asStoredWord(
             fromLanguage: languageStore.learningLanguage,
-            toLanguage: languageStore.nativeLanguage,
-            needsEnrichment: !hasTranslation
+            toLanguage: languageStore.nativeLanguage
         )
         store.add(newWord)
         addedWordIDs.insert(word.id)
         addedCount += 1
-        if !hasTranslation {
+        if newWord.needsEnrichment {
             NotificationCenter.default.post(name: .triggerEnrichment, object: nil)
         }
     }
@@ -534,7 +440,9 @@ struct ScanWordsView: View {
 }
 
 #Preview {
-    ScanWordsView(store: WordsStore())
+    let store = WordsStore()
+    ScanWordsView(store: store)
         .environmentObject(ThemeStore())
         .environmentObject(LanguageStore())
+        .environmentObject(store)
 }

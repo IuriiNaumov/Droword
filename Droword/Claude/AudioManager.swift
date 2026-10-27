@@ -119,9 +119,9 @@ final class AudioManager: NSObject, AVAudioPlayerDelegate {
         }
     }
 
-    func play(text: String, voiceKey: String) async {
+    func play(text: String, voiceKey: String, language: String? = nil) async {
         do {
-            let data = try await fetchAudioData(for: text, voice: voiceKey)
+            let data = try await fetchAudioData(for: text, voice: voiceKey, language: language)
             try await playAudio(data: data)
         } catch {
             #if DEBUG

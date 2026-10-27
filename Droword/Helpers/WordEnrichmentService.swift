@@ -91,7 +91,6 @@ final class WordEnrichmentService {
                     explanation: result.explanation,
                     breakdown: result.breakdown,
                     transcription: result.transcription,
-                    examples: result.examples ?? [result.example],
                     collocations: result.collocations ?? [],
                     synonyms: result.synonyms ?? [],
                     antonyms: result.antonyms ?? [],

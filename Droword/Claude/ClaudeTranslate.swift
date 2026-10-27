@@ -48,7 +48,7 @@ func translateWithClaude(
             HighlightedExample.relevantForms(
                 $0,
                 headword: word,
-                texts: [result.example] + (result.examples ?? []) + (result.collocations ?? [])
+                texts: [result.example] + (result.collocations ?? [])
             )
         },
         detectedLanguage: result.detectedLanguage

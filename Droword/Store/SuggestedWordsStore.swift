@@ -92,7 +92,7 @@ final class SuggestedWordsStore: ObservableObject {
                 fromLanguage: languageStore.learningLanguage,
                 toLanguage: languageStore.nativeLanguage,
                 needsEnrichment: false,
-                examples: result.examples ?? (example.isEmpty ? [] : [example]),
+                examples: example.isEmpty ? [] : [example],
                 collocations: result.collocations ?? [],
                 synonyms: result.synonyms ?? [],
                 antonyms: result.antonyms ?? [],

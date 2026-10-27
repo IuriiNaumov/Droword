@@ -40,9 +40,9 @@ struct QuizListeningExercise: View {
                          : "Needs an internet connection")
                 )
 
-                Text(canSpeakWord ? "Tap to hear it again" : "Needs an internet connection")
-                    .font(themeStore.regular(14))
-                    .foregroundStyle(themeStore.secondaryText.opacity(0.7))
+                Text(canSpeakWord ? "Tap to hear" : "Needs an internet connection")
+                    .font(themeStore.regular(15))
+                    .foregroundStyle(themeStore.secondaryText)
             }
             .padding(.bottom, 32)
 

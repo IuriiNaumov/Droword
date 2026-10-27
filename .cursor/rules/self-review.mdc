@@ -10,7 +10,7 @@ After any substantive edit (new behavior, multi-file, UI, SRS, worker, or store)
 ## Always (same turn)
 
 1. Re-read the diff and every call site you touched.
-2. Match project rules: no code comments, existing stores/tokens/patterns, AGENTS.md map.
+2. Match project rules: no code comments, existing stores/tokens/patterns, AGENTS.md map. If the diff touches UI, also check `.cursor/rules/type-and-icons.mdc` (icon color, title size/color, subtitle size/color).
 3. Fix what you find yourself (compile breaks, missing bindings, wrong empty states, leftover comments).
 4. Prefer `ReadLints` on edited files when the tool is available.
 

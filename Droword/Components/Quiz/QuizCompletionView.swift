@@ -28,10 +28,6 @@ struct QuizCompletionView: View {
         }
     }
 
-    private var encouragementText: String {
-        DuoChaosCopy.quizDone(percentage: percentage).title
-    }
-
     var body: some View {
         Group {
             if showFinishSplash {
@@ -99,7 +95,7 @@ struct QuizCompletionView: View {
     }
 
     private var titleBlock: some View {
-        Text(isLesson ? String(localized: "Lesson done") : encouragementText)
+        Text(isLesson ? String(localized: "Lesson done") : String(localized: "Results"))
             .sheetTitle()
             .multilineTextAlignment(.center)
             .padding(.horizontal, DesignSpacing.screenInset)

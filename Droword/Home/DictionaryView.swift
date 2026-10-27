@@ -96,7 +96,7 @@ struct DictionaryView: View {
                 .padding(.bottom, 8)
 
             EmptyListView(
-                illustration: AnyView(CryingEmptyIllustration()),
+                icon: "square.stack.3d.up",
                 title: DuoChaosCopy.dictionaryGarden().title,
                 subtitle: DuoChaosCopy.dictionaryGarden().subtitle,
                 ctaTitle: "Add a word",
@@ -189,16 +189,12 @@ struct DictionaryView: View {
         } label: {
             Group {
                 if isSelectMode && !disabled {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .bold))
-                        Text(label)
-                            .font(themeStore.bold(15))
-                    }
-                    .foregroundStyle(textColor)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
+                    Text(label)
+                        .font(themeStore.bold(15))
+                        .foregroundStyle(textColor)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .duo3DChipFilled(themeStore.mainAccentColor, cornerRadius: themeStore.controlRadius)
                 } else {
                     Text(label)
                         .font(themeStore.bold(15))
@@ -560,7 +556,6 @@ private struct DictionaryWordRow: View {
                     explanation: word.explanation,
                     breakdown: word.breakdown,
                     tag: word.tag,
-                    examples: word.examples,
                     collocations: word.collocations,
                     synonyms: word.synonyms,
                     antonyms: word.antonyms,

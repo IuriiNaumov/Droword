@@ -20,6 +20,7 @@ struct HomeView: View {
     @State private var sharedWord: String = ""
     @State private var showScanFromShare = false
     @State private var sharedExtractText: String = ""
+    @State private var sharedScanImage: UIImage?
     @State private var selectedTab: Tab = .home
     @StateObject private var tabBarVisibility = TabBarVisibility()
     @State private var activeMilestone: MilestoneType?
@@ -187,12 +188,15 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showScanFromShare, onDismiss: {
             sharedExtractText = ""
+            sharedScanImage = nil
+            SharedScanInbox.clear()
             considerStudyExtrasPrompt()
             presentNextSoftCoverIfNeeded()
         }) {
-            ScanWordsView(store: store, initialText: sharedExtractText)
+            ScanWordsView(store: store, initialText: sharedExtractText, initialImage: sharedScanImage)
                 .environmentObject(themeStore)
                 .environmentObject(languageStore)
+                .environmentObject(store)
                 .tint(themeStore.mainAccentColor)
                 .transaction { $0.disablesAnimations = true }
         }
@@ -292,8 +296,16 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .sharedTextReceived)) { notification in
             let text = (notification.userInfo?["text"] as? String) ?? ""
             sharedExtractText = text
+            sharedScanImage = nil
             selectedTab = .home
             showScanFromShare = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .sharedImageReceived)) { _ in
+            openScanPage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openScan)) { _ in
+            SplashGate.pendingScan = false
+            openScanPage()
         }
         .onReceive(NotificationCenter.default.publisher(for: .openChatScene)) { notification in
             _ = ChatSceneLaunch.takePending()
@@ -304,6 +316,10 @@ struct HomeView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .openFromWidget)) { notification in
             let host = notification.userInfo?["host"] as? String ?? "open"
+            if host == "scan" {
+                openScanPage()
+                return
+            }
             if host == "practice" {
                 selectedTab = .practice
                 return
@@ -595,7 +611,6 @@ struct HomeView: View {
                                 explanation: word.explanation,
                                 breakdown: word.breakdown,
                                 tag: word.tag,
-                                examples: word.examples,
                                 collocations: word.collocations,
                                 synonyms: word.synonyms,
                                 antonyms: word.antonyms,
@@ -658,6 +673,12 @@ struct HomeView: View {
                 sharedWord = pending
                 selectedTab = .home
                 showAddWordView = true
+            }
+            if SplashGate.pendingScan {
+                SplashGate.pendingScan = false
+                openScanPage()
+            } else {
+                openSharedScanImage()
             }
             if !homeQuietedV1 {
                 showDailyChallengesSection = false
@@ -743,6 +764,30 @@ struct HomeView: View {
         let str = UserDefaults.standard.string(forKey: AppStorageKeys.firstUseDate) ?? ""
         guard let start = DateFormatting.dayFormatter.date(from: str) else { return 1 }
         return max(1, Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 1)
+    }
+
+    private func openSharedScanImage() {
+        guard SharedScanInbox.hasPending else { return }
+        openScanPage()
+    }
+
+    private func openScanPage() {
+        if let image = SharedScanInbox.peekImage() {
+            sharedScanImage = image
+        } else {
+            sharedScanImage = nil
+        }
+        sharedExtractText = ""
+        selectedTab = .home
+        showAddWordView = false
+        if showScanFromShare {
+            showScanFromShare = false
+            DispatchQueue.main.async {
+                showScanFromShare = true
+            }
+        } else {
+            showScanFromShare = true
+        }
     }
 
     private func openChatScene(wordId: String?, word: String?) {

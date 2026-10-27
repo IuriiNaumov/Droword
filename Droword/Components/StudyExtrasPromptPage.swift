@@ -184,7 +184,10 @@ struct StudyExtrasPromptPage: View {
             }
         } label: {
             HStack(alignment: .top, spacing: 12) {
-                StickerSymbol(systemName: extra.icon, size: 28, color: themeStore.mainText)
+                Image(systemName: extra.icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(themeStore.mainText)
+                    .frame(width: 28, height: 28)
                     .scaleEffect(popped == extra ? 1.12 : 1)
                     .padding(.top, 2)
 
