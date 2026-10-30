@@ -15,7 +15,7 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        ChatSceneLaunch.consumeNotification(response.notification)
+        _ = response
     }
 }
 
@@ -215,10 +215,8 @@ struct DrowordApp: App {
 
         if d.object(forKey: AppStorageKeys.notifDailyReminders) != nil {
             let oldDailyReminders = d.bool(forKey: AppStorageKeys.notifDailyReminders)
-            let oldStreakMilestones = d.object(forKey: AppStorageKeys.notifStreakMilestones) as? Bool ?? true
             d.set(oldDailyReminders, forKey: AppStorageKeys.notifGlobalEnabled)
             d.set(oldDailyReminders, forKey: AppStorageKeys.notifDailyReminderEnabled)
-            d.set(oldStreakMilestones, forKey: AppStorageKeys.notifStreakMilestones)
         } else {
             d.set(false, forKey: AppStorageKeys.notifGlobalEnabled)
             d.set(true, forKey: AppStorageKeys.notifDailyReminderEnabled)
@@ -253,12 +251,7 @@ struct DrowordApp: App {
         let daysSinceStart = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
         if daysSinceStart > 7 && isPremium {
             let hasPurchased = UserDefaults.standard.bool(forKey: "hasRealPurchase")
-            #if DEBUG
-            let debugOverride = UserDefaults.standard.bool(forKey: AppStorageKeys.debugPremiumOverride)
-            #else
-            let debugOverride = false
-            #endif
-            if !hasPurchased && !debugOverride {
+            if !hasPurchased {
                 isPremium = false
                 UserDefaults.standard.set(false, forKey: AppStorageKeys.seasonalEffectsEnabled)
                 if let savedPalette = UserDefaults.standard.string(forKey: "appThemePalette"),
@@ -315,18 +308,6 @@ struct DrowordApp: App {
             }
             return
         }
-        if host == "chat" {
-            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
-            let wordId = items?.first(where: { $0.name == "id" })?.value
-            let word = items?.first(where: { $0.name == "word" })?.value
-            ChatSceneLaunch.store(wordId: wordId, word: word)
-            NotificationCenter.default.post(
-                name: .openChatScene,
-                object: nil,
-                userInfo: ["wordId": wordId as Any, "word": word as Any]
-            )
-            return
-        }
         NotificationCenter.default.post(
             name: .openFromWidget,
             object: nil,
@@ -344,7 +325,6 @@ extension Notification.Name {
     static let openFromWidget = Notification.Name("openFromWidget")
     static let openAddWord = Notification.Name("openAddWord")
     static let openScan = Notification.Name("openScan")
-    static let openChatScene = Notification.Name("openChatScene")
     static let skipSplash = Notification.Name("skipSplash")
 }
 

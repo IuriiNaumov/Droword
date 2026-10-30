@@ -28,11 +28,11 @@ Save words you actually meet. Get AI translations, examples, and pronunciation. 
 • Add words by typing, Share Sheet, or photo scan  
 • AI-enriched cards: translation, examples, transcription  
 • Daily lesson + quizzes (multiple choice, typing, matching, and more)  
-• Stories and tiny chat scenes with your own words  
-• Streaks, challenges, themes, and custom app icons  
+• Stories with your own words  
+• Daily challenges, themes, and custom app icons  
 • Free daily limits (generous starter week, then a soft cap); Droword PRO unlocks more
 
-Local-first: your dictionary lives on your device. AI features need a network connection.
+Local-first: your dictionary lives on your device and can sync through iCloud. AI features need a network connection.
 
 **Keywords** (100 chars max, comma-separated, no spaces after commas preferred):  
 vocabulary,dictionary,language,learn,flashcards,SRS,translate,words,study,AI,quiz,spanish,japanese
@@ -59,11 +59,11 @@ Droword — личный словарь для языков, а не беско�
 • Добавление вручную, через Share и со скана фото  
 • Карточки с переводом, примерами и транскрипцией  
 • Урок дня и квизы (выбор, ввод, матчинг и др.)  
-• Истории и мини-диалоги на твоих словах  
-• Стрики, челленджи, темы и иконки  
+• Истории на твоих словах  
+• Задания дня, темы и иконки  
 • Бесплатные дневные лимиты (мягче в первую неделю); PRO открывает больше
 
-Словарь хранится на устройстве. Для ИИ нужен интернет.
+Словарь хранится на устройстве и может синхронизироваться через iCloud. Для ИИ нужен интернет.
 
 **Ключевые слова:**  
 словарь,слова,язык,учить,карточки,перевод,повторение,квиз,ИИ,испанский,японский,английский
@@ -75,8 +75,11 @@ Droword — личный словарь для языков, а не беско�
 
 ## Connect checklist (you)
 
-- [ ] Create App IDs: `com.droword`, `com.droword.share`, `com.droword.widget` + App Group `group.com.droword.shared`
-- [ ] Host `docs/` (GitHub Pages) and paste URLs
+- [ ] Create App IDs: `com.droword`, `com.droword.share`, `com.droword.widget` + App Group `group.com.droword.shared` + iCloud `iCloud.com.droword`
+- [ ] Accept Paid Apps / Paid Applications agreement and the latest PLA
+- [ ] Host `docs/` (GitHub Pages) and paste URLs (privacy now mentions iCloud)
 - [ ] Create IAP `com.droword.pro.monthly` / `com.droword.pro.yearly`
-- [ ] Drop real screenshots into `marketing/app-store/raw/` → run `compose.py`
+- [ ] Upload posters from `marketing/app-store/out/` (6.7" required; also 6.5" / iPad if those sizes are listed)
+- [ ] App Privacy: User Content + Photos for app functionality; iCloud sync of the dictionary; no tracking
 - [ ] Confirm support email inbox for `hello@droword.app` (or replace everywhere)
+- [ ] Do not advertise day streaks or chat — they are not in the app

@@ -24,7 +24,7 @@ struct TermsOfUseView: View {
 
                     section(
                         title: "2. The service",
-                        body: "Droword is a personal dictionary and study tool. It provides spaced repetition, quizzes, and optional online features: translation, examples, stories, dialogue, word suggestions, pronunciation, and photo scan.\n\nText and audio produced by those features are generated automatically. They may be wrong, incomplete, or unsuitable. They are not a certified translation and they are not professional, medical, legal, or educational advice. You are responsible for how you rely on them."
+                        body: "Droword is a personal dictionary and study tool. It provides spaced repetition, quizzes, and optional online features: translation, examples, stories, word suggestions, pronunciation, and photo scan.\n\nText and audio produced by those features are generated automatically. They may be wrong, incomplete, or unsuitable. They are not a certified translation and they are not professional, medical, legal, or educational advice. You are responsible for how you rely on them."
                     )
 
                     section(

@@ -23,10 +23,6 @@ struct SettingsView: View {
     @State private var showPersonalDetailsSheet = false
     @State private var path = NavigationPath()
     @State private var showOnboarding = false
-    #if DEBUG
-    @State private var devTapCount = 0
-    @State private var showFeatureFlags = false
-    #endif
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: storedAppearance) ?? .system
@@ -79,12 +75,6 @@ struct SettingsView: View {
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity, alignment: .center)
-                            #if DEBUG
-                            .onTapGesture(count: 5) {
-                                showFeatureFlags.toggle()
-                                Haptics.menuTap()
-                            }
-                            #endif
 
                         Text("\(usageDurationString()) with Droword")
                             .font(themeStore.regular(14))
@@ -119,16 +109,6 @@ struct SettingsView: View {
                             if item.title == "Haptics" { path.append(SettingsDestination.haptics) }
                             if item.title == "Achievements" { path.append(SettingsDestination.achievements) }
                         }
-
-                        #if DEBUG
-                        if showFeatureFlags {
-                            groupedSettingsSection([
-                                SettingItem(icon: "flag", title: "Feature Flags", value: nil)
-                            ]) { item in
-                                path.append(SettingsDestination.featureFlags)
-                            }
-                        }
-                        #endif
 
                         groupedSettingsSection([
                             SettingItem(icon: "globe", title: "App Language")
@@ -189,10 +169,6 @@ struct SettingsView: View {
                         .environmentObject(store)
                 case .dictionary:
                     DictionarySettingsView()
-                        .environmentObject(store)
-                        .environmentObject(languageStore)
-                case .featureFlags:
-                    FeatureFlagsView()
                         .environmentObject(store)
                         .environmentObject(languageStore)
                 case .privacyPolicy:

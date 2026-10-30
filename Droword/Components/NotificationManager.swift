@@ -18,11 +18,6 @@ struct NotificationPreferences {
     let vocabEndHour: Int
     let vocabEndMinute: Int
 
-    let streakMilestonesEnabled: Bool
-    let eveningChatEnabled: Bool
-    let eveningChatHour: Int
-    let eveningChatMinute: Int
-
     static func fromDefaults() -> NotificationPreferences {
         let d = UserDefaults.standard
         return NotificationPreferences(
@@ -38,11 +33,7 @@ struct NotificationPreferences {
             vocabStartHour: d.object(forKey: AppStorageKeys.notifVocabStartHour) as? Int ?? 9,
             vocabStartMinute: d.object(forKey: AppStorageKeys.notifVocabStartMinute) as? Int ?? 0,
             vocabEndHour: d.object(forKey: AppStorageKeys.notifVocabEndHour) as? Int ?? 18,
-            vocabEndMinute: d.object(forKey: AppStorageKeys.notifVocabEndMinute) as? Int ?? 0,
-            streakMilestonesEnabled: d.bool(forKey: AppStorageKeys.notifStreakMilestones),
-            eveningChatEnabled: d.object(forKey: AppStorageKeys.notifEveningChatEnabled) as? Bool ?? true,
-            eveningChatHour: d.object(forKey: AppStorageKeys.notifEveningChatHour) as? Int ?? 21,
-            eveningChatMinute: d.object(forKey: AppStorageKeys.notifEveningChatMinute) as? Int ?? 0
+            vocabEndMinute: d.object(forKey: AppStorageKeys.notifVocabEndMinute) as? Int ?? 0
         )
     }
 }
@@ -69,9 +60,7 @@ final class NotificationManager {
 
     private enum IDs {
         static let dailyReminder = "notif.daily.reminder"
-        static let eveningChat = "notif.evening.chat"
         static let vocabPrefix = "notif.vocab."
-        static let streakPrefix = "streak.milestone"
         static let dailyGoal = "daily.goal.done"
         static let inactivityPrefix = "inactive"
     }
@@ -106,7 +95,6 @@ final class NotificationManager {
         guard prefs.globalEnabled else { return }
 
         scheduleDailyReminder(prefs: prefs, allWords: allWords)
-        scheduleEveningChat(prefs: prefs, allWords: allWords)
         scheduleVocabNotifications(prefs: prefs, allWords: allWords)
         scheduleReviewDueNotifications(allWords: allWords)
 
@@ -134,35 +122,6 @@ final class NotificationManager {
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
         let request = UNNotificationRequest(identifier: IDs.dailyReminder, content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
-    }
-
-    private func scheduleEveningChat(prefs: NotificationPreferences, allWords: [StoredWord]) {
-        guard prefs.eveningChatEnabled else { return }
-        let candidates = allWords.filter { $0.translation?.isEmpty == false }
-        guard let word = pickWordsAvoidingRepetition(candidates: candidates, count: 1).first else { return }
-
-        let copy = NotificationCopy.pickEveningChat(
-            word: word.word,
-            translation: word.translation ?? ""
-        )
-        let content = UNMutableNotificationContent()
-        content.title = copy.title
-        content.body = copy.body
-        content.sound = .default
-        content.categoryIdentifier = "evening.chat"
-        content.userInfo = [
-            "type": "eveningChat",
-            "wordId": word.id.uuidString,
-            "word": word.word
-        ]
-
-        var components = DateComponents()
-        components.hour = prefs.eveningChatHour
-        components.minute = prefs.eveningChatMinute
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        let request = UNNotificationRequest(identifier: IDs.eveningChat, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
-        saveRecentlyUsedWordIDs([word.id])
     }
 
     private func scheduleVocabNotifications(prefs: NotificationPreferences, allWords: [StoredWord]) {
@@ -400,26 +359,6 @@ final class NotificationManager {
             )
             center.add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))
         }
-    }
-
-    func scheduleStreakMilestone(streak: Int) {
-        guard FeatureGates.streakEnabled else { return }
-        let milestones = [7, 30, 100, 365]
-        guard milestones.contains(streak) else { return }
-        guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifGlobalEnabled) else { return }
-        guard UserDefaults.standard.bool(forKey: AppStorageKeys.notifStreakMilestones) else { return }
-
-        let copy = NotificationCopy.streakMilestone(for: streak)
-        let content = UNMutableNotificationContent()
-        content.title = copy.title
-        content.body = copy.body
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-        let id = "\(IDs.streakPrefix).\(streak)"
-        UNUserNotificationCenter.current().add(
-            UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-        )
     }
 
     func scheduleDailyGoalCompletion() {

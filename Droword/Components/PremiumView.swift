@@ -63,11 +63,10 @@ struct PremiumView: View {
         FeatureRow(id: 4, title: "Photo scans", free: "\(DailyLimitsManager.maxFreePhotoScans) / day", pro: "Unlimited"),
         FeatureRow(id: 5, title: "Themes", free: "Default only", pro: "All themes"),
         FeatureRow(id: 6, title: "Seasonal effects", free: "—", pro: "All effects"),
-        FeatureRow(id: 7, title: "Streak freeze", free: "—", pro: "2 / week"),
     ]
 
     private var featureRows: [FeatureRow] {
-        Self.baseFeatureRows.filter { FeatureGates.streakEnabled || $0.id != 7 }
+        Self.baseFeatureRows
     }
 
     var body: some View {

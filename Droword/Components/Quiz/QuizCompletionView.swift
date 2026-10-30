@@ -9,7 +9,6 @@ struct QuizCompletionView: View {
     var missedWords: [(word: String, translation: String)] = []
     var moments: [StudyMoment] = []
     var isLesson: Bool = false
-    var onScene: (() -> Void)? = nil
     var onClose: (() -> Void)? = nil
     let onRestart: () -> Void
 
@@ -216,48 +215,19 @@ struct QuizCompletionView: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        if isLesson, let onScene {
-            VStack(spacing: DesignSpacing.buttonGap) {
-                Button {
-                    Haptics.buttonPress()
-                    onScene()
-                } label: {
-                    Text("Drop it in a chat")
-                        .duo3DStyle(themeStore.mainAccentColor)
-                }
-                .buttonStyle(Duo3DButtonStyle())
-
-                Button {
-                    Haptics.softTap()
-                    onRestart()
-                } label: {
-                    Text("Once more")
-                        .font(themeStore.medium(15))
-                        .foregroundStyle(themeStore.mainAccentColor)
-                }
-                .buttonStyle(.plain)
-
-                if let onClose {
-                    closeButton(onClose)
-                }
+        VStack(spacing: DesignSpacing.buttonGap) {
+            Button(action: { Haptics.buttonPress(); onRestart() }) {
+                Text(isLesson ? "Once more" : "Try Again")
+                    .duo3DStyle(themeStore.mainAccentColor)
             }
-            .padding(.horizontal, 40)
-            .padding(.top, 8)
-        } else {
-            VStack(spacing: DesignSpacing.buttonGap) {
-                Button(action: { Haptics.buttonPress(); onRestart() }) {
-                    Text(isLesson ? "Once more" : "Try Again")
-                        .duo3DStyle(themeStore.mainAccentColor)
-                }
-                .buttonStyle(Duo3DButtonStyle())
+            .buttonStyle(Duo3DButtonStyle())
 
-                if let onClose {
-                    closeButton(onClose)
-                }
+            if let onClose {
+                closeButton(onClose)
             }
-            .padding(.horizontal, 40)
-            .padding(.top, 8)
         }
+        .padding(.horizontal, 40)
+        .padding(.top, 8)
     }
 
     private func closeButton(_ action: @escaping () -> Void) -> some View {

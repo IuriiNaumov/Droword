@@ -12,7 +12,7 @@ struct DictionarySettingsView: View {
     @State private var importedCount: Int?
     @State private var importError: String?
     @State private var showClearConfirm = false
-    @AppStorage(AppStorageKeys.iCloudSyncEnabled) private var iCloudSyncEnabled = false
+    @AppStorage(AppStorageKeys.iCloudSyncEnabled) private var iCloudSyncEnabled = true
     @State private var iCloudStatusNote: String?
 
     var body: some View {

@@ -10,7 +10,7 @@ struct PrivacyPolicyView: View {
                 Text("Privacy Policy")
                     .sheetTitle()
 
-                Text("Last updated: 24 September 2026")
+                Text("Last updated: 30 October 2026")
                     .font(themeStore.regular(13))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
@@ -24,12 +24,12 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         title: "2. What stays on your device",
-                        body: "Your dictionary, saved translations, examples, tags, study progress, review schedule, settings, theme, profile image, and notification schedule are stored locally on your device, including in the shared store used by the share extension and the widget.\n\nThe App does not ask you to create an account. We do not keep a copy of your dictionary on our servers."
+                        body: "Your dictionary, saved translations, examples, tags, study progress, review schedule, settings, theme, profile image, and notification schedule are stored locally on your device, including in the shared store used by the share extension and the widget.\n\nIf iCloud Sync is on (it is on by default), the dictionary file is also stored in your Apple iCloud account so it can appear on your other devices. You can turn this off in Settings → Dictionary. We cannot read that file; it stays in your iCloud storage.\n\nThe App does not ask you to create an account. We do not keep a copy of your dictionary on our servers."
                     )
 
                     policySection(
                         title: "3. What is sent when you use an online feature",
-                        body: "Online features run only when you invoke them. The minimum content needed for that request is sent over HTTPS to our API, hosted on Cloudflare, and then to a processor:\n\n• Translation, explanations, examples, stories, dialogue, and word suggestions: the text you submit, together with the languages and level you selected, is sent to Anthropic to produce a response.\n• Pronunciation: the word or phrase is sent to OpenAI to generate audio.\n• Photo scan: the image you select is sent to our API and to Anthropic so that words can be read from it. We do not keep the image, or the words read from it, on our servers after the response is returned to the App.\n\nWe do not sell this information and we do not use it to build an advertising profile. We do not control how long Anthropic or OpenAI retain a request under their own terms. Do not submit information you are unwilling to send to those processors, including another person's personal data or confidential material."
+                        body: "Online features run only when you invoke them. The minimum content needed for that request is sent over HTTPS to our API, hosted on Cloudflare, and then to a processor:\n\n• Translation, explanations, examples, stories, and word suggestions: the text you submit, together with the languages and level you selected, is sent to Anthropic to produce a response.\n• Pronunciation: the word or phrase is sent to OpenAI to generate audio.\n• Photo scan: the image you select is sent to our API and to Anthropic so that words can be read from it. We do not keep the image, or the words read from it, on our servers after the response is returned to the App.\n\nWe do not sell this information and we do not use it to build an advertising profile. We do not control how long Anthropic or OpenAI retain a request under their own terms. Do not submit information you are unwilling to send to those processors, including another person's personal data or confidential material."
                     )
 
                     policySection(
@@ -47,12 +47,12 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         title: "6. Retention and deletion",
-                        body: "On-device data remains until you delete it. You may clear the dictionary in Settings → Dictionary → Clear dictionary. Uninstalling the App removes the local store, subject to any backup Apple keeps.\n\nA request to the API is processed to return a response. We do not maintain an account archive of your dictionary or of scan images, because the App has no user account."
+                        body: "On-device data remains until you delete it. You may clear the dictionary in Settings → Dictionary → Clear dictionary. Turning iCloud Sync off stops further uploads; a copy already in iCloud stays until you delete it from iCloud or uninstall with iCloud data. Uninstalling the App removes the local store, subject to any backup Apple keeps.\n\nA request to the API is processed to return a response. We do not maintain an account archive of your dictionary or of scan images, because the App has no user account."
                     )
 
                     policySection(
                         title: "7. Legal bases, if GDPR or UK GDPR applies",
-                        body: "Where the EU or UK General Data Protection Regulation applies, sending the text or image you submit in order to produce a translation, story, dialogue, suggestion, pronunciation, or scan is necessary to perform the feature you requested. Limiting the rate of API requests, in order to protect the service from abuse, is based on our legitimate interest and does not require an account.\n\nYou can avoid a transfer by not using that feature. Because we do not hold a server-side profile of you, you exercise access and erasure by deleting data on your device. You may also write to hello@droword.app. You may lodge a complaint with your data-protection authority. These rights do not depend on this Policy waiving them."
+                        body: "Where the EU or UK General Data Protection Regulation applies, sending the text or image you submit in order to produce a translation, story, suggestion, pronunciation, or scan is necessary to perform the feature you requested. Limiting the rate of API requests, in order to protect the service from abuse, is based on our legitimate interest and does not require an account.\n\nYou can avoid a transfer by not using that feature. Because we do not hold a server-side profile of you, you exercise access and erasure by deleting data on your device. You may also write to hello@droword.app. You may lodge a complaint with your data-protection authority. These rights do not depend on this Policy waiving them."
                     )
 
                     policySection(
@@ -62,7 +62,7 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         title: "9. Security and international transfers",
-                        body: "Local data is protected by the controls of your device. Requests to the API are sent over HTTPS. No method of storage or transmission is completely secure.\n\nOur API and the model providers may process a request outside your country, including in the United States. Where the law requires a transfer tool, the transfer relies on the provider's mechanism, such as standard contractual clauses. If you do not want a word or an image to leave your device, do not use the online features. The dictionary itself remains on the device."
+                        body: "Local data is protected by the controls of your device. Requests to the API are sent over HTTPS. No method of storage or transmission is completely secure.\n\nOur API and the model providers may process a request outside your country, including in the United States. Where the law requires a transfer tool, the transfer relies on the provider's mechanism, such as standard contractual clauses. If you do not want a word or an image to leave your device, do not use the online features. The dictionary remains on the device, and in your iCloud if sync is on."
                     )
 
                     policySection(

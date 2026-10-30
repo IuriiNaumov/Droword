@@ -4,7 +4,6 @@ import Combine
 
 enum BadgeCategory: String, CaseIterable {
     case wordCount
-    case streak
     case dailyGoal
     case quizMastery
     case suggestedWords
@@ -12,7 +11,6 @@ enum BadgeCategory: String, CaseIterable {
     var title: String {
         switch self {
         case .wordCount:       return String(localized: "Words")
-        case .streak:          return String(localized: "Streaks")
         case .dailyGoal:       return String(localized: "Daily Goals")
         case .quizMastery:     return String(localized: "Quizzes")
         case .suggestedWords:  return String(localized: "Suggested Words")
@@ -70,36 +68,34 @@ final class BadgeStore: ObservableObject {
         suggestedWordsAccepted += 1
     }
 
-    func progress(for badge: BadgeDefinition, totalWords: Int, currentStreak: Int) -> Int {
+    func progress(for badge: BadgeDefinition, totalWords: Int) -> Int {
         switch badge.category {
         case .wordCount:    return totalWords
-        case .streak:       return currentStreak
         case .dailyGoal:    return dailyGoalCompletions
         case .quizMastery:  return quizCompletions
         case .suggestedWords: return suggestedWordsAccepted
         }
     }
 
-    func isUnlocked(_ badge: BadgeDefinition, totalWords: Int, currentStreak: Int) -> Bool {
-        progress(for: badge, totalWords: totalWords, currentStreak: currentStreak) >= badge.requiredCount
+    func isUnlocked(_ badge: BadgeDefinition, totalWords: Int) -> Bool {
+        progress(for: badge, totalWords: totalWords) >= badge.requiredCount
     }
 
-    func seedCelebratedIfNeeded(totalWords: Int, currentStreak: Int) {
+    func seedCelebratedIfNeeded(totalWords: Int) {
         guard !UserDefaults.standard.bool(forKey: seededKey) else { return }
-        for badge in Self.allBadges where isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) {
+        for badge in Self.allBadges where isUnlocked(badge, totalWords: totalWords) {
             celebratedIDs.insert(badge.id)
         }
         persistCelebrated()
         UserDefaults.standard.set(true, forKey: seededKey)
     }
 
-    func checkForNewUnlocks(totalWords: Int, currentStreak: Int) {
+    func checkForNewUnlocks(totalWords: Int) {
         guard pendingCelebration == nil else { return }
-        seedCelebratedIfNeeded(totalWords: totalWords, currentStreak: currentStreak)
+        seedCelebratedIfNeeded(totalWords: totalWords)
 
         for badge in Self.allBadges {
-            if !FeatureGates.streakEnabled && badge.category == .streak { continue }
-            guard isUnlocked(badge, totalWords: totalWords, currentStreak: currentStreak) else { continue }
+            guard isUnlocked(badge, totalWords: totalWords) else { continue }
             guard !celebratedIDs.contains(badge.id) else { continue }
             celebratedIDs.insert(badge.id)
             persistCelebrated()
@@ -132,10 +128,6 @@ final class BadgeStore: ObservableObject {
         BadgeDefinition(id: "words.100", emoji: "🏆", title: String(localized: "Centurion"),      description: String(localized: "Add 100 words"),             category: .wordCount, requiredCount: 100),
         BadgeDefinition(id: "words.200", emoji: "👑", title: String(localized: "Royalty"),         description: String(localized: "Add 200 words"),             category: .wordCount, requiredCount: 200),
         BadgeDefinition(id: "words.500", emoji: "💎", title: String(localized: "Diamond"),         description: String(localized: "Add 500 words"),             category: .wordCount, requiredCount: 500),
-
-        BadgeDefinition(id: "streak.7",   emoji: "🔥", title: String(localized: "Week Warrior"),   description: String(localized: "7-day streak"),              category: .streak, requiredCount: 7),
-        BadgeDefinition(id: "streak.30",  emoji: "⚡", title: String(localized: "Monthly Master"),  description: String(localized: "30-day streak"),             category: .streak, requiredCount: 30),
-        BadgeDefinition(id: "streak.100", emoji: "🌟", title: String(localized: "Unstoppable"),    description: String(localized: "100-day streak"),            category: .streak, requiredCount: 100),
 
         BadgeDefinition(id: "goal.5",  emoji: "🎯", title: String(localized: "On Target"),     description: String(localized: "Complete 5 daily goals"),    category: .dailyGoal, requiredCount: 5),
         BadgeDefinition(id: "goal.10", emoji: "🎯", title: String(localized: "Sharpshooter"),  description: String(localized: "Complete 10 daily goals"),   category: .dailyGoal, requiredCount: 10),

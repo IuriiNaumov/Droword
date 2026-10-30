@@ -374,9 +374,7 @@ final class WordsStore: ObservableObject {
             shouldReloadWidget = false
         }
 
-        let streak = Self.computeCurrentStreak(from: copy)
         let widgetPayload = Self.makeWidgetSnapshot(from: copy)
-        let streakKey = AppStorageKeys.currentStreak
 
         Task.detached(priority: .utility) {
             if let data = try? JSONEncoder().encode(copy) {
@@ -392,9 +390,7 @@ final class WordsStore: ObservableObject {
                 defaults.set(snapshotData, forKey: "WordsStore.words")
             }
             defaults.set(total, forKey: totalKey)
-            defaults.set(streak, forKey: streakKey)
             await MainActor.run {
-                UserDefaults.standard.set(streak, forKey: streakKey)
                 StudyActivityStore.shared.writeToAppGroup()
             }
             if shouldReloadWidget {
@@ -511,56 +507,6 @@ final class WordsStore: ObservableObject {
     static func activityDays(from words: [StoredWord]) -> Set<Date> {
         StudyActivityStore.shared.ensureMigrated(from: words)
         return StudyActivityStore.shared.activityDates()
-    }
-
-    static func computeCurrentStreak(from words: [StoredWord]) -> Int {
-        DayStreak.current(activityDays: activityDays(from: words))
-    }
-
-    static func computeCurrentStreakWithFreeze(from words: [StoredWord]) -> (streak: Int, coveredDays: Set<Date>) {
-        let used = loadStreakFreezeDays()
-        let result = DayStreak.currentWithFreeze(
-            activityDays: activityDays(from: words),
-            usedFreezeDays: used
-        )
-        saveStreakFreezeDays(merging: result.newFreezes)
-        return (result.streak, result.coveredDays)
-    }
-
-    private static func loadStreakFreezeDays() -> Set<Date> {
-        var keys = UserDefaults.standard.stringArray(forKey: AppStorageKeys.streakFreezeDates) ?? []
-        let legacy = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
-        if !legacy.isEmpty {
-            keys.append(legacy)
-        }
-        let calendar = Calendar.current
-        return Set(keys.compactMap { DateFormatting.dayFormatter.date(from: $0) }.map { calendar.startOfDay(for: $0) })
-    }
-
-    private static func saveStreakFreezeDays(merging newDays: Set<Date>) {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let cutoff = calendar.date(byAdding: .day, value: -14, to: today) ?? today
-        let merged = loadStreakFreezeDays().union(newDays).filter { $0 >= cutoff }
-        let strings = merged.map { DateFormatting.dayFormatter.string(from: $0) }.sorted()
-        let existing = UserDefaults.standard.stringArray(forKey: AppStorageKeys.streakFreezeDates) ?? []
-        if existing != strings {
-            UserDefaults.standard.set(strings, forKey: AppStorageKeys.streakFreezeDates)
-        }
-        let latest = strings.last ?? ""
-        let legacy = UserDefaults.standard.string(forKey: AppStorageKeys.lastStreakFreezeDate) ?? ""
-        if legacy != latest {
-            UserDefaults.standard.set(latest, forKey: AppStorageKeys.lastStreakFreezeDate)
-        }
-    }
-
-    func syncStreakToAppGroup() {
-        let premium = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
-        let streak = premium
-            ? Self.computeCurrentStreakWithFreeze(from: words).streak
-            : Self.computeCurrentStreak(from: words)
-        sharedDefaults.set(streak, forKey: AppStorageKeys.currentStreak)
-        UserDefaults.standard.set(streak, forKey: AppStorageKeys.currentStreak)
     }
 
     var newWords: [StoredWord] {

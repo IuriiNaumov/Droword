@@ -11,7 +11,6 @@ enum SettingsDestination: Hashable {
     case haptics
     case notifications
     case dictionary
-    case featureFlags
     case privacyPolicy
     case termsOfUse
     case achievements

@@ -24,10 +24,7 @@ struct ProfileHeaderView: View {
     @AppStorage(AppStorageKeys.daysUsedCount) private var daysUsedCount: Int = 0
     @AppStorage(AppStorageKeys.lastActiveDay) private var lastActiveDay: String = ""
     @AppStorage(AppStorageKeys.firstUseDate) private var firstUseDate: String = ""
-    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
-
-    var onOpenStreak: (() -> Void)? = nil
 
     private var displayName: String {
         let name = storedUserName.trimmingCharacters(in: .whitespaces)
@@ -101,18 +98,6 @@ struct ProfileHeaderView: View {
                 }
 
                 Spacer()
-
-                if FeatureGates.streakEnabled {
-                    Button {
-                        Haptics.softTap()
-                        onOpenStreak?()
-                    } label: {
-                        StreakFireBadge(count: currentStreak)
-                    }
-                    .buttonStyle(.plain)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: currentStreak)
-                    .accessibilityHint(Text("Opens streak calendar and stats"))
-                }
             }
 
         }
@@ -122,20 +107,10 @@ struct ProfileHeaderView: View {
             let today = DateFormatting.todayString
             if firstUseDate.isEmpty { firstUseDate = today }
 
-            let isPremiumUser = UserDefaults.standard.bool(forKey: AppStorageKeys.isPremium)
-            if isPremiumUser {
-                currentStreak = WordsStore.computeCurrentStreakWithFreeze(from: store.words).streak
-            } else {
-                currentStreak = WordsStore.computeCurrentStreak(from: store.words)
-            }
-
             if lastActiveDay != today {
                 daysUsedCount += 1
                 lastActiveDay = today
-                NotificationManager.shared.scheduleStreakMilestone(streak: currentStreak)
             }
-
-            store.syncStreakToAppGroup()
 
             Task.detached(priority: .userInitiated) {
                 let loaded = self.loadAvatarFromDisk()

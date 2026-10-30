@@ -60,7 +60,6 @@ struct QuickReviewSessionView: View {
         .onChange(of: finished) { _, isFinished in
             guard isFinished, reviewedCount > 0 else { return }
             doneMoments = StudyActivityStore.shared.captureSession(results: sessionResults, seedingFrom: store.words)
-            store.syncStreakToAppGroup()
         }
         .fullScreenCover(isPresented: $showPremiumWall) {
             PremiumView(asWall: true)

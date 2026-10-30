@@ -35,19 +35,15 @@ struct HomeView: View {
     @AppStorage(AppStorageKeys.lastProPromptDate) private var lastProPromptDate: String = ""
     @AppStorage(AppStorageKeys.isPremium) private var isPremium: Bool = false
     @AppStorage(AppStorageKeys.hasEverAddedWord) private var hasEverAddedWord: Bool = false
-    @AppStorage(AppStorageKeys.hasSeenStreakPaywall) private var hasSeenStreakPaywall: Bool = false
     @AppStorage(AppStorageKeys.hasSeenPerfectQuizPaywall) private var hasSeenPerfectQuizPaywall: Bool = false
-    @AppStorage(AppStorageKeys.lastCelebratedStreak) private var lastCelebratedStreak: Int = 0
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacksSection: Bool = true
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallengesSection: Bool = false
     @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
-    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
     @AppStorage(AppStorageKeys.homeQuietedV1) private var homeQuietedV1: Bool = false
     @AppStorage(AppStorageKeys.dailyLessonDoneDismissedDay) private var dailyLessonDoneDismissedDay: String = ""
 
     @State private var softCoverQueue: [HomeSoftCover] = []
     @State private var presentedSoftCover: HomeSoftCover?
-    @State private var pendingStreakPaywall = false
     @State private var showChallenges = false
     @State private var showWordPacks = false
     @State private var showPremiumFromLimit = false
@@ -58,7 +54,6 @@ struct HomeView: View {
     @State private var showDailyLesson = false
     @State private var showStory = false
     @State private var showStreakCalendar = false
-    @State private var chatSceneTarget: ChatSceneTarget?
     @State private var recentCardAppeared: Set<UUID> = []
     @State private var lastSuggestionTodayCount: Int?
 
@@ -274,13 +269,6 @@ struct HomeView: View {
             .environmentObject(studyTimeTracker)
             .tint(themeStore.mainAccentColor)
         }
-        .fullScreenCover(item: $chatSceneTarget) { target in
-            ChatSceneView(target: target)
-                .environmentObject(store)
-                .environmentObject(languageStore)
-                .environmentObject(themeStore)
-                .tint(themeStore.mainAccentColor)
-        }
     }
 
     private func homeEvents<Content: View>(_ content: Content) -> some View {
@@ -306,13 +294,6 @@ struct HomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: .openScan)) { _ in
             SplashGate.pendingScan = false
             openScanPage()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .openChatScene)) { notification in
-            _ = ChatSceneLaunch.takePending()
-            openChatScene(
-                wordId: notification.userInfo?["wordId"] as? String,
-                word: notification.userInfo?["word"] as? String
-            )
         }
         .onReceive(NotificationCenter.default.publisher(for: .openFromWidget)) { notification in
             let host = notification.userInfo?["host"] as? String ?? "open"
@@ -379,15 +360,6 @@ struct HomeView: View {
                 enqueueSoftCover(.motivationalPaywall)
             }
         }
-        .onChange(of: pendingStreakPaywall) { _, pending in
-            guard pending else { return }
-            pendingStreakPaywall = false
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(0.5))
-                hasSeenStreakPaywall = true
-                enqueueSoftCover(.motivationalPaywall)
-            }
-        }
         .onChange(of: suggested.suggestedWords.count) { _, newCount in
             guard newCount > 0, !hasSeenSuggestedIntro else { return }
             hasSeenSuggestedIntro = true
@@ -433,14 +405,7 @@ struct HomeView: View {
                 wordsCount: store.words.count,
                 daysSinceStart: daysSinceStart
             ) {
-                let wasStreak: Bool = {
-                    if case .streak = milestone { return true }
-                    return false
-                }()
                 activeMilestone = nil
-                if wasStreak && !isPremium && !hasSeenStreakPaywall {
-                    pendingStreakPaywall = true
-                }
                 presentNextSoftCoverIfNeeded()
             }
             .environmentObject(themeStore)
@@ -488,12 +453,7 @@ struct HomeView: View {
         ScrollViewReader { _ in
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
-                ProfileHeaderView(
-                    onOpenStreak: {
-                        Haptics.softTap()
-                        showStreakCalendar = true
-                    }
-                )
+                ProfileHeaderView()
                     .padding(.bottom, 16)
 
                 TimelineView(.periodic(from: .now, by: 15)) { context in
@@ -686,30 +646,12 @@ struct HomeView: View {
             }
             refreshCachedWordData()
             challengeManager.refreshIfNeeded()
-            if let pending = ChatSceneLaunch.takePending() {
-                openChatScene(wordId: pending.wordId, word: pending.word)
-            }
 
             if !showAddWordView && !hasSeenFirstWords && store.words.isEmpty,
                StarterWordBank.words(learning: languageStore.learningLanguage, native: languageStore.nativeLanguage) != nil {
                 enqueueSoftCover(.firstWords)
             } else if !hasSeenCoachMarks && hasSeenFirstWords {
                 enqueueSoftCover(.coachMarks)
-            }
-
-            if FeatureGates.streakEnabled {
-                let currentStreak = WordsStore.computeCurrentStreak(from: store.words)
-                let streakMilestones = [7, 30, 100, 365]
-                for m in streakMilestones {
-                    if currentStreak >= m, lastCelebratedStreak < m {
-                        lastCelebratedStreak = m
-                        if [7, 30, 100].contains(m) {
-                            badgeStore.markCelebrated(ids: ["streak.\(m)"])
-                        }
-                        activeMilestone = .streak(m)
-                        break
-                    }
-                }
             }
 
             presentPendingBadgeCelebrationIfNeeded()
@@ -731,8 +673,7 @@ struct HomeView: View {
 
     private func presentPendingBadgeCelebrationIfNeeded() {
         guard activeMilestone == nil, presentedSoftCover == nil, !hardCoverBlocking else { return }
-        let streak = WordsStore.computeCurrentStreak(from: store.words)
-        badgeStore.checkForNewUnlocks(totalWords: store.totalWordsAdded, currentStreak: streak)
+        badgeStore.checkForNewUnlocks(totalWords: store.totalWordsAdded)
         guard let badge = badgeStore.pendingCelebration else { return }
         badgeStore.dismissPendingCelebration()
         activeMilestone = .badge(
@@ -790,19 +731,6 @@ struct HomeView: View {
         }
     }
 
-    private func openChatScene(wordId: String?, word: String?) {
-        guard FeatureGates.homeChatEnabled, showHomeChat else { return }
-        guard network.isConnected else { return }
-        guard let target = ChatScenePicker.from(
-            wordId: wordId,
-            word: word,
-            words: store.words,
-            learningLanguage: languageStore.learningLanguage
-        ) else { return }
-        selectedTab = .home
-        chatSceneTarget = target
-    }
-
     private func refreshCachedWordData() {
         cachedRecentWords = Array(store.words.sorted(by: { $0.dateAdded > $1.dateAdded }).prefix(3))
     }
@@ -844,7 +772,6 @@ struct HomeView: View {
             || showChallenges
             || showStory
             || showStreakCalendar
-            || chatSceneTarget != nil
     }
 
     private func softCoverQueuedOrPresented(_ cover: HomeSoftCover) -> Bool {

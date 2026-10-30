@@ -23,25 +23,8 @@ struct NotificationPreferencesForm: View {
     @AppStorage(AppStorageKeys.notifVocabStartMinute) private var vocabStartMinute: Int = 0
     @AppStorage(AppStorageKeys.notifVocabEndHour) private var vocabEndHour: Int = 18
     @AppStorage(AppStorageKeys.notifVocabEndMinute) private var vocabEndMinute: Int = 0
-    @AppStorage(AppStorageKeys.notifStreakMilestones) private var streakMilestones: Bool = true
-    @AppStorage(AppStorageKeys.notifEveningChatEnabled) private var eveningChatEnabled: Bool = true
-    @AppStorage(AppStorageKeys.notifEveningChatHour) private var eveningChatHour: Int = 21
-    @AppStorage(AppStorageKeys.notifEveningChatMinute) private var eveningChatMinute: Int = 0
 
     @State private var rescheduleTask: Task<Void, Never>?
-
-    private var eveningChatDate: Binding<Date> {
-        Binding<Date>(
-            get: {
-                Calendar.current.date(from: DateComponents(hour: eveningChatHour, minute: eveningChatMinute)) ?? Date()
-            },
-            set: { newDate in
-                let comps = Calendar.current.dateComponents([.hour, .minute], from: newDate)
-                eveningChatHour = comps.hour ?? 21
-                eveningChatMinute = comps.minute ?? 0
-            }
-        )
-    }
 
     private var dailyReminderDate: Binding<Date> {
         Binding<Date>(
@@ -134,26 +117,6 @@ struct NotificationPreferencesForm: View {
                 .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: dailyReminderEnabled)
 
-                sectionHeader("Evening chat")
-
-                VStack(spacing: 0) {
-                    toggleRow(
-                        icon: "moon.stars",
-                        title: "One word at night",
-                        isOn: $eveningChatEnabled
-                    )
-
-                    if eveningChatEnabled {
-                        timePickerRow(
-                            icon: "clock",
-                            title: "Chat time",
-                            date: eveningChatDate
-                        )
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
-                .animation(.easeInOut(duration: 0.25), value: eveningChatEnabled)
-
                 sectionHeader("Vocabulary")
 
                 if vocabEnabled {
@@ -219,24 +182,6 @@ struct NotificationPreferencesForm: View {
                 .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
                 .animation(.easeInOut(duration: 0.25), value: vocabEnabled)
 
-                if FeatureGates.streakEnabled {
-                    sectionHeader("Other")
-
-                    VStack(spacing: 0) {
-                        toggleRow(
-                            icon: "flame",
-                            title: "Streak milestones",
-                            isOn: $streakMilestones
-                        )
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: themeStore.cardRadius, style: .continuous))
-
-                    Text("Get notified when you reach 7, 30, 100 and 365 day streaks.")
-                        .font(themeStore.regular(12))
-                        .foregroundStyle(themeStore.secondaryText)
-                        .padding(.horizontal, 8)
-                }
-
                 if onboardingStyle {
                     Text("You can change these anytime in Settings.")
                         .font(themeStore.regular(13))
@@ -265,10 +210,6 @@ struct NotificationPreferencesForm: View {
         .onChange(of: vocabStartMinute) { _, _ in triggerReschedule() }
         .onChange(of: vocabEndHour) { _, _ in triggerReschedule() }
         .onChange(of: vocabEndMinute) { _, _ in triggerReschedule() }
-        .onChange(of: streakMilestones) { _, _ in triggerReschedule() }
-        .onChange(of: eveningChatEnabled) { _, _ in triggerReschedule() }
-        .onChange(of: eveningChatHour) { _, _ in triggerReschedule() }
-        .onChange(of: eveningChatMinute) { _, _ in triggerReschedule() }
         .onAppear {
             if requestAuthOnAppear, globalEnabled {
                 NotificationManager.shared.requestAuthorization { _ in }

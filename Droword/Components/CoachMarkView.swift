@@ -8,7 +8,7 @@ struct CoachMarkStep {
 
 enum CoachMarkCatalog {
     static var homeSteps: [CoachMarkStep] {
-        let steps = [
+        [
             CoachMarkStep(
                 title: "Add words",
                 message: "Tap + to add a word. I translate it, find examples, and make a card.",
@@ -26,14 +26,10 @@ enum CoachMarkCatalog {
             ),
             CoachMarkStep(
                 title: "Your week",
-                message: "The fire and the week dots are the same streak. Study keeps it alive.",
-                icon: "flame"
+                message: "Dots mark the days you studied. Tap to open the calendar.",
+                icon: "calendar"
             ),
         ]
-        guard FeatureGates.streakEnabled else {
-            return steps.filter { $0.icon != "flame" }
-        }
-        return steps
     }
 }
 

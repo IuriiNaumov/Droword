@@ -61,7 +61,6 @@ const PATH_LIMITS: Record<string, Window> = {
   "/tts": { max: 12, seconds: 60 },
   "/extract-words": { max: 6, seconds: 60 },
   "/story": { max: 8, seconds: 60 },
-  "/scene": { max: 20, seconds: 60 },
   "/forms": { max: 30, seconds: 60 },
 };
 
@@ -71,7 +70,6 @@ const DAY_LIMITS: Record<string, number> = {
   "/tts": 80,
   "/extract-words": 20,
   "/story": 30,
-  "/scene": 80,
   "/forms": 400,
 };
 

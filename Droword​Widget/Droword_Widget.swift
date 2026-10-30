@@ -24,7 +24,6 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let dueCount: Int
     let totalWords: Int
-    let currentStreak: Int
     let featuredWord: String?
     let featuredTranslation: String?
     let lessonDone: Bool
@@ -40,7 +39,6 @@ struct Provider: TimelineProvider {
             date: Date(),
             dueCount: 3,
             totalWords: 12,
-            currentStreak: 5,
             featuredWord: "serendipity",
             featuredTranslation: "счастливая случайность",
             lessonDone: false,
@@ -64,7 +62,6 @@ struct Provider: TimelineProvider {
                 date: Date(),
                 dueCount: 0,
                 totalWords: 0,
-                currentStreak: 0,
                 featuredWord: nil,
                 featuredTranslation: nil,
                 lessonDone: false,
@@ -72,7 +69,6 @@ struct Provider: TimelineProvider {
             )
         }
 
-        let streak = defaults.integer(forKey: "currentStreak")
         let words = Self.readWords(defaults: defaults)
         let now = Date()
         let dueWords = words.filter { w in
@@ -97,7 +93,6 @@ struct Provider: TimelineProvider {
             date: Date(),
             dueCount: dueCount,
             totalWords: words.count,
-            currentStreak: streak,
             featuredWord: picked?.word,
             featuredTranslation: picked?.translation,
             lessonDone: lessonDone,
@@ -689,13 +684,13 @@ private struct WidgetBackground: View {
 #Preview(as: .systemSmall) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42,
                 featuredWord: "serendipity", featuredTranslation: "счастливая случайность",
                 lessonDone: false, lessonScore: nil)
-    SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 42,
                 featuredWord: "ephemeral", featuredTranslation: "мимолётный",
                 lessonDone: true, lessonScore: "7/8")
-    SimpleEntry(date: .now, dueCount: 0, totalWords: 0, currentStreak: 0,
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 0,
                 featuredWord: nil, featuredTranslation: nil,
                 lessonDone: false, lessonScore: nil)
 }
@@ -703,10 +698,10 @@ private struct WidgetBackground: View {
 #Preview(as: .systemMedium) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 12,
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42,
                 featuredWord: "serendipity", featuredTranslation: "счастливая случайность",
                 lessonDone: false, lessonScore: nil)
-    SimpleEntry(date: .now, dueCount: 0, totalWords: 42, currentStreak: 3,
+    SimpleEntry(date: .now, dueCount: 0, totalWords: 42,
                 featuredWord: "ephemeral", featuredTranslation: "мимолётный",
                 lessonDone: true, lessonScore: "7/8")
 }
@@ -720,7 +715,7 @@ private struct WidgetBackground: View {
 #Preview(as: .accessoryRectangular) {
     Droword_Widget()
 } timeline: {
-    SimpleEntry(date: .now, dueCount: 5, totalWords: 42, currentStreak: 7,
+    SimpleEntry(date: .now, dueCount: 5, totalWords: 42,
                 featuredWord: nil, featuredTranslation: nil,
                 lessonDone: false, lessonScore: nil)
 }

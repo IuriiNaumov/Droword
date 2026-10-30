@@ -8,7 +8,6 @@ struct DetailedStatsView: View {
     @EnvironmentObject private var studyTimeTracker: StudyTimeTracker
     @ObservedObject private var studyActivity = StudyActivityStore.shared
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
 
     var embedded: Bool = false
 
@@ -138,13 +137,6 @@ struct DetailedStatsView: View {
                     label: String(localized: "Due today"),
                     tint: dueToday > 0 ? themeStore.accentGold : themeStore.secondaryText
                 )
-                if FeatureGates.streakEnabled {
-                    snapshotTile(
-                        value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
-                        label: String(localized: "Day streak"),
-                        tint: themeStore.accentPink
-                    )
-                }
             }
 
             if let level = cefrLine {
@@ -230,10 +222,7 @@ struct DetailedStatsView: View {
     }
 
     private var quietStudyDetail: String {
-        if FeatureGates.streakEnabled {
-            return String(localized: "Keep the streak with a short lesson")
-        }
-        return String(localized: "A short lesson keeps the words fresh")
+        String(localized: "A short lesson keeps the words fresh")
     }
 
     private var focusSection: some View {
@@ -287,12 +276,6 @@ struct DetailedStatsView: View {
         sectionCard(title: "Habit", subtitle: String(localized: "Consistency beats cramming")) {
             HStack(spacing: 12) {
                 studyTimeStat(value: "\(studiedThisWeek)/7", label: String(localized: "Days this week"))
-                if FeatureGates.streakEnabled {
-                    studyTimeStat(
-                        value: "\(max(currentStreak, WordsStore.computeCurrentStreak(from: store.words)))",
-                        label: String(localized: "Streak")
-                    )
-                }
                 studyTimeStat(value: studyTimeTracker.todayFormatted, label: String(localized: "Today"))
             }
         }

@@ -12,7 +12,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - App: `Droword/` (SwiftUI). Entry: `DrowordApp` → `ContentView` → onboarding or `HomeView`.
 - API: `droword-worker/` → `https://droword-api.droword.workers.dev` (`X-App-Key`).
 - Shared data: App Group `group.com.droword.shared` (`WordsStore`, `LanguageStore`).
-- Optional sync: `WordsICloudSync` → `iCloud.com.droword` (entitlements active; paid Apple team + App ID iCloud).
+- Optional sync: `WordsICloudSync` → `iCloud.com.droword` (on by default; entitlements active; paid Apple team + App ID iCloud). Toggle in Dictionary settings.
 
 ## Where to edit
 
@@ -61,7 +61,7 @@ Personal dictionary + SRS language app (SwiftUI). AI via Cloudflare Worker. Full
 - Dump Practice quiz UI or a second review CTA onto Home.
 - Apply Duo gray card surfaces to non-`.duolingo` themes.
 - Delete `WordsICloudSync` when disabling iCloud — keep entitlements on; only comment them temporarily if the user asks for a Personal Team device run.
-- Flip `FeatureGates.streakEnabled` or `homeChatEnabled` on unless the user asks.
+- Bring back day streak, chat scene, or Feature Flags unless the user asks (restore recipe is in README).
 - Touch `droword-worker/node_modules` or invent parallel persistence next to `WordsStore`.
 - Bring language/flag app icons back, or replace tab-bar symbols with custom art unless asked.
 - Shrink the tab bar in `sizeThatFits` or turn minimize back on.

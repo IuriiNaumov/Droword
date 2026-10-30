@@ -4,7 +4,6 @@ struct HomeExtrasToggleList: View {
     @EnvironmentObject private var themeStore: ThemeStore
 
     @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
-    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallenges: Bool = false
 
@@ -16,14 +15,6 @@ struct HomeExtrasToggleList: View {
                 subtitle: "A short story that hides a few of your words.",
                 isOn: $showHomeReading
             )
-            if FeatureGates.homeChatEnabled {
-                row(
-                    icon: "bubble.left.and.bubble.right",
-                    title: "Chat",
-                    subtitle: "Tiny role-play scenes to use a word in conversation.",
-                    isOn: $showHomeChat
-                )
-            }
             row(
                 icon: "rectangle.stack",
                 title: "Word Packs",

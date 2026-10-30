@@ -1,6 +1,6 @@
 # Droword — context for AI agents
 
-Language-learning iOS app: personal dictionary + SRS reviews + AI enrichment (translate, suggest, story, chat scene, photo/text extract, TTS). Local-first data; Claude/OpenAI go through a Cloudflare Worker.
+Language-learning iOS app: personal dictionary + SRS reviews + AI enrichment (translate, suggest, story, photo/text extract, TTS). Local-first data; Claude/OpenAI go through a Cloudflare Worker.
 
 Use this file as the default project map. Prefer reading real code over inventing architecture.
 
@@ -8,7 +8,7 @@ Use this file as the default project map. Prefer reading real code over inventin
 
 ## Product in one paragraph
 
-User picks native + learning language (CEFR A1–C2). Adds words (manual, Share, camera scan). AI fills translation, examples, transcription, etc. Home shows **one primary CTA**: today’s daily lesson (due reviews + new/weak words in one queue). Practice is optional extra quizzes. Progress: streaks, badges (+ celebration overlays), study time, daily challenges. Optional iCloud sync for the dictionary file. Monetization: free daily caps vs Pro (StoreKit).
+User picks native + learning language (CEFR A1–C2). Adds words (manual, Share, camera scan). AI fills translation, examples, transcription, etc. Home shows **one primary CTA**: today’s daily lesson (due reviews + new/weak words in one queue). Practice is optional extra quizzes. Progress: badges (+ celebration overlays), study time, daily challenges. iCloud sync for the dictionary file is on by default. Monetization: free daily caps vs Pro (StoreKit).
 
 Tone: friendly tutor, Duolingo-adjacent energy (`DuoChaosCopy`, soft chaos), not corporate.
 
@@ -29,7 +29,7 @@ Tone: friendly tutor, Duolingo-adjacent energy (`DuoChaosCopy`, soft chaos), not
 
 Bundle IDs: `com.droword`, share `com.droword.share`, widget `com.droword.widget`.  
 App Group: `group.com.droword.shared` (words + language prefs shared with extensions/widget).  
-iCloud container: `iCloud.com.droword` (optional sync of `words.json`).
+iCloud container: `iCloud.com.droword` (sync of `words.json`, on by default).
 
 ---
 
@@ -43,7 +43,7 @@ iCloud container: `iCloud.com.droword` (optional sync of `words.json`).
 
 ### Environment objects (injected from app root)
 
-- `WordsStore` — dictionary + SRS fields, persistence, widget reload, optional iCloud push/pull
+- `WordsStore` — dictionary + SRS fields, persistence, widget reload, iCloud push/pull when sync is on (default)
 - `SuggestedWordsStore` — AI word suggestions
 - `LanguageStore` — native/learning language, CEFR level, learning score / auto-level
 - `ThemeStore` — palettes (free = default colorful; Pro unlocks others / glass / Green Owl)
@@ -57,15 +57,14 @@ Other notable stores (often `.shared`): `LearningProfileStore`, `StudyActivitySt
 | Folder | What belongs here |
 |--------|-------------------|
 | `Home/` | Tabs shell, dictionary, settings, stats, add-word |
-| `Components/` | UI building blocks, practice, quiz, chat scene, premium, packs, empty states |
+| `Components/` | UI building blocks, practice, quiz, premium, packs, empty states |
 | `Components/Quiz/` | Multiple choice, typing, matching, listening, cloze, sentence building |
-| `Domain/` | Pure logic: SRS, due checks, streak, limits, scene models |
+| `Domain/` | Pure logic: SRS, due checks, limits |
 | `Store/` | Observable persistence / IAP / badges |
 | `Helpers/` | Keys, design tokens, builders, TTS, haptics, iCloud sync, notifications copy |
-| `Claude/` | API client wrappers (translate, suggest, scene, extract, TTS) |
+| `Claude/` | API client wrappers (translate, suggest, extract, TTS) |
 | `Droword/Claude/` | Story generation (`ClaudeStory.swift`) |
 | `Onboarding/` | First-run flow + illustrations |
-| `ViewModels/` | `ChatSceneViewModel` |
 | `Skeleton/` | Loading placeholders |
 
 ### Navigation / tabs (`HomeView`)
@@ -127,25 +126,19 @@ Practice results (`QuizCompletionView` via `PracticeView.showingResults`) hide t
 - Dedup: words already in the dictionary are not re-added; UI shows them as **Saved**.
 - No in-app clipboard paste → extract (removed).
 
-### Chat scene
-
-Role-play dialogue using user’s words (`ClaudeScene`, `ChatSceneView`, `ChatSceneViewModel`). Can launch from notifications (`ChatSceneLaunch`). Gated by `DailyLimitsManager.canStartScene`.
-
 ### Story
 
 `generateStory` / `/story` — short story from a handful of dictionary words (`ClaudeStory.swift`). The worker asks for 2 of the offered words and retries once if fewer land. Today's story is kept (`StoryArchive`) and shown again until New story. Tapping a highlighted word, including an inflected form, shows its dictionary translation and can play it. Each highlighted word gets a meaning question in turn. After the last answer, correct pairs sit above the missed ones, in the same rows as Practice results. A right answer pulls an introduced card's review to tomorrow when it was further out, a miss brings it back in about 10 minutes. Gated by `DailyLimitsManager.canGenerateStory` (2/day free). If fewer than 3 seed words are available, show copy only (no Try Again); retries stay for offline / generation failures.
 
-### Streaks, badges, challenges
+### Badges, challenges, week calendar
 
-`DayStreak` (+ Pro streak freeze: up to 2 missed days in a rolling 7-day window, only when the gap sits between study days), `DailyChallengeManager`.  
-`FeatureGates.streakEnabled` is `false`: day streak, freeze, fire badge, streak badges, streak notifications, streak stats, and streak milestones stay in code and stay off screen. The Home week strip opens the calendar (studied days only, no streak count and no freeze). Quiz combo streaks are separate and still show.  
-`FeatureGates.homeChatEnabled` stays `false` until Home chat is ready to ship; scene/chat code remains.  
-Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Streak milestones do not present while the gate is off. Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs, chat when enabled). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO. Feature Flags pushes these pages, plus alerts, onboarding screens, and an Achievements preview with every badge unlocked.  
-`BadgeStore.checkForNewUnlocks` celebrates **all** badge categories; word/streak milestone overlays call `markCelebrated` so they don’t double-fire with badge popups.
+`DailyChallengeManager`. Home week strip (`HomeStreakStrip`) opens the study calendar (`StreakCalendarView`) — studied days only, no day-streak count and no freeze. Quiz combo streaks in Practice are separate and still show.  
+Home shows `MilestoneCelebrationView` for word-count / daily-goal milestones as a full page in the same soft-wash layout as `StudyExtrasPromptPage` (each page keeps its own accent). Alerts (delete, copy, language switch, import) use that same layout. Adding every word from a scan or word pack opens `WordsAddedPage`. Soft covers on Home (first words, coach marks, study extras, suggested intro, Pro invite, motivational paywall) go through one queue (`HomeSoftCover` + `enqueueSoftCover` / `presentNextSoftCoverIfNeeded` in `HomeView`) so they do not stack. Once the dictionary reaches 5 words, `StudyExtrasPromptPage` offers any Home extras that are still off (reading, daily challenges, word packs). If every one of those is already on, the page stays hidden. `ProInvitePage` appears from day 2, then every 4 days, for people without PRO.  
+`BadgeStore.checkForNewUnlocks` celebrates badge categories; word / daily-goal overlays call `markCelebrated` so they don’t double-fire with badge popups.
 
 ### CSV / dictionary settings
 
-Import/export in `DictionarySettingsView` (includes SRS fields). Clear dictionary requires confirm. Optional **iCloud Sync** toggle.
+Import/export in `DictionarySettingsView` (includes SRS fields). Clear dictionary requires confirm. **iCloud Sync** is on by default (`WordsICloudSync.isEnabled` treats a missing key as true); the Dictionary settings toggle can turn it off.
 
 ### iCloud (`Helpers/WordsICloudSync.swift`)
 
@@ -172,7 +165,6 @@ Wrappers:
 | `ClaudeTranslate` | `POST /translate` | Word card enrichment |
 | `ClaudeSuggestedWord` | `POST /suggest` | Suggested vocabulary |
 | `ClaudeStory` | `POST /story` | Story from words |
-| `ClaudeScene` | `POST /scene` | Chat scene turns |
 | `ClaudeExtractWords` | `POST /extract-words` | Words from photo and/or pasted text — full dictionary cards (example, explanation, forms, collocations…) |
 | `fetchWordForms` (`ClaudeTranslate.swift`) | `POST /forms` | Inflected forms of one headword that appear in its example / collocations |
 | `AudioManager` | `POST /tts` | OpenAI TTS audio (`TTSCache` on disk by text+voice; replay is instant). Voice picker preview uses the native language, not the learning language |
@@ -190,9 +182,9 @@ Free checks are always `isPremium || DailyLimitsManager.can…`.
 | TTS | **10/day**. Replaying the same text the same day does not spend another play. `WordsStore.add` calls `TTSPlayer.prefetch` (fetch+cache, no play, no quota) so the first tap is usually instant | Unlimited |
 | Suggestion fetches | **4/day** | Unlimited |
 | Photo / text scan | **3/day** | Unlimited |
-| Story / chat scene | Daily caps via `canGenerateStory` / `canStartScene` | Unlimited |
+| Story | Daily cap via `canGenerateStory` | Unlimited |
 | New words into lesson | **12/day** (all users) | same |
-| Themes / seasonal / streak freeze | Default theme only | Themes and seasonal unlocked. Streak freeze stays hidden while `FeatureGates.streakEnabled` is false |
+| Themes / seasonal | Default theme only | Themes and seasonal unlocked |
 
 Optional **7-day PRO trial** (button on paywall) sets `isPremium` via `hasUsedTrial` + `trialStartDate` (+ Keychain). That is separate from the soft translation ramp above.
 
@@ -267,7 +259,7 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 
 ## Important behaviors to preserve
 
-1. **Local-first** — dictionary must work offline; AI features degrade with clear copy (`SceneOfflineCopy`, network monitor). Saving a word must still work when the free AI quota is spent.
+1. **Local-first** — dictionary must work offline; AI features degrade with clear copy (network monitor). Saving a word must still work when the free AI quota is spent.
 2. **Enrichment** — `WordEnrichmentService` retries `needsEnrichment` words when online. Scan marks enrichment only when translation, example, or explanation is missing (old thin extract still fills in). Import should not force enrichment if a translation already exists.
 3. **App Group** — word/language changes must remain visible to Share/Widget.
 4. **Home vs Practice** — Home = one daily lesson hero; don’t dump quiz UI or a second review CTA onto Home.
@@ -276,16 +268,16 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 7. **Don’t rewrite worker prompts** casually — they encode CEFR + Japanese/Chinese/Korean script rules.
 8. **node_modules** under `droword-worker/` — ignore; not app source.
 9. **Capture** — Share a photo from Photos (or elsewhere) opens Droword and runs scan (`droword://scan`, `SharedScanInbox`). Share long text opens extract (`ScanWordsView`, `/extract-words` text). Short Share still opens Add. In-app photo scan on Scan. Extract returns full dictionary cards (same fields as translate/suggest). Dedup against existing dictionary words. No clipboard-paste extract UI. Scan results, word packs, and suggested words all use `SelectableWordCard` → `WordCardView` (same header, waves, expand, `TTSPlayer.prefetch` on appear). Page chrome matches packs (count + Add all, Skip capsule). Already-saved words stay hidden, like packs.
-10. **iCloud** — optional via `WordsICloudSync` + Dictionary settings; entitlements are on; still local-first App Group file.
+10. **iCloud** — on by default via `WordsICloudSync` + Dictionary settings toggle; entitlements are on; still local-first App Group file.
 11. **Empty states** — prefer a strong Add CTA over text-only emptiness (Dictionary, Practice, filter/search, locked lesson). Home is the `addWord` sticker (word card; dark mode uses `StickerTone.slate` so the card is not paper-white). The empty dictionary is `cards` (three stacked word cards). Practice and the locked lesson are `StickerBulb`, an empty tag filter is `StickerTag`. Stickers live in `Components/Stickers/`, drawn from `StickerShape` + `StickerTone` (`Helpers/`): Droword style is a soft 3D fill and thin outline; Green Owl, Liquid Glass, and 8-bit restyle through `StickerStyle`. The splash sparkles are `StickerStar`. Onboarding pages use the same stickers (book + tag, bulb + check, stars around the app icons). Soft-cover modals (coach marks, first words, suggested words, Words added, Study extras, PRO invite, celebrations, alerts) draw their hero through `SoftCoverHero` → `StickerSymbol`, which maps the SF Symbol name to a sticker via `StickerArt(systemName:)` and falls back to the SF Symbol for unknown names. Row icons on Nice work and Suggested words stay SF Symbols; other soft-cover rows use `StickerSymbol` at 28pt. Also stickers: the Home empty state (`text.badge.plus` → `addWord`) and empty dictionary (`square.stack.3d.up` → `cards`; `EmptyListView` / `PracticeEmptyContent` use a sticker whenever `StickerArt(systemName:)` knows the icon, otherwise `HaloIcon`), the Scan words hero (`scan`), the Practice matching lives (`StickerHeart`: `.red` left, `.ash` lost), Achievements badge cards (`BadgeCardView` → `StickerArt(badgeEmoji:)`: sprout, herb, tree, trophy, crown, diamond, target, notepad, bulb, flame, bolt, sparkles; glyphs in `StickerGlyph+Badges.swift`; locked = grayscale + faded; unknown emoji falls back to the emoji), Well done (colored `StickerStar` sparkles on the finish splash, correct / missed / best-streak / Perfect lesson icons). A new modal icon gets a `StickerArt` case + glyphs in `StickerGlyph+Modals.swift`. Do not put SF Symbols back in those spots.
 12. **Badges** — unlocks should surface via Home celebration (`MilestoneCelebrationView` / `pendingCelebration`); don’t silently unlock without UX.
 13. **Language flags** — illustrated `LanguageFlagView` in the language picker; scrolling must work when the drag starts on a language card.
 14. **App icon picker** — `customizationCases` only. No language/flag app icons in the product. Tab bar artwork lives in `MenuBarIcons`.
 15. **PRO sparkle** — static. No bounce or pulse. Home keeps the plain blue sparkle. The paywall plaque is the sticker `StickerProBadge` (static, no animation).
-16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales (en, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant) translate that Russian, including the short and odd lines. Streak notification pool only when `FeatureGates.streakEnabled`. Do not put back English slang that says something else. Onboarding notifications start **off** (`notifGlobalEnabled` false for new installs); the iOS permission prompt fires only when the user turns Enable notifications on.
+16. **Notification voice** — Russian lines in `NotificationCopy` are the source of meaning. Other locales (en, de, es, fr, it, pt-PT, ja, ko, ar, zh-Hans, zh-Hant) translate that Russian, including the short and odd lines. Do not put back English slang that says something else. Onboarding notifications start **off** (`notifGlobalEnabled` false for new installs); the iOS permission prompt fires only when the user turns Enable notifications on.
 17. **Icon badge** — review-due notifications set `content.badge` to that day’s due count. Opening the app (`scenePhase` `.active`) calls `NotificationManager.clearBadge()`: badge `0` and delivered notifications removed. Pending future reminders stay.
 18. **Dictionary reactions** — used card reactions appear as circular filter chips after tags; searching an emoji finds those cards.
-19. **Widgets** — **Add a new word** is plus-only (`droword://add`): home-screen `systemSmall` and lock-screen `accessoryCircular`. Recent words shows the last 3 as mini dictionary cards (small = stack, medium = three tiles; `droword://dictionary`). **Today’s lesson** is small/medium + lock-screen `accessoryRectangular` only (no circular). Lesson widget has no streak copy while streak is gated off. Gallery copy lives in `Droword​Widget/Localizable.xcstrings`. Edit the live target in `Droword​Widget/` (ZWSP folder), not `DrowordWidget/`.
+19. **Widgets** — **Add a new word** is plus-only (`droword://add`): home-screen `systemSmall` and lock-screen `accessoryCircular`. Recent words shows the last 3 as mini dictionary cards (small = stack, medium = three tiles; `droword://dictionary`). **Today’s lesson** is small/medium + lock-screen `accessoryRectangular` only (no circular). Gallery copy lives in `Droword​Widget/Localizable.xcstrings`. Edit the live target in `Droword​Widget/` (ZWSP folder), not `DrowordWidget/`.
 20. **Word packs** — pack / scan / suggested cards are `WordCardView` via `SelectableWordCard` (dictionary look + waves + TTS cache). Adding a pack word tags it Basics / Food / Travel / Shopping / Daily life and `ensureTag`s custom ones into `TagStore` (Travel stays built-in). Skip matches Cancel: `secondaryButtonBg` + `mainText`, no icon.
 
 ---
@@ -304,10 +296,9 @@ Highlight conjugated/inflected forms only inside the example sentence. The worke
 | CSV import/export | `DictionarySettingsView` |
 | Badges / celebrations | `BadgeStore`, `HomeView`, `MilestoneCelebrationView`, `AchievementsView` |
 | AI translate/suggest | `Claude/*.swift` + worker handlers |
-| Chat scene | `ChatSceneView`, `ChatSceneViewModel`, `ClaudeScene` |
 | Paywall / limits | `PremiumView`, `DailyLimitsManager`, `StoreKitManager` |
 | Onboarding | `Onboarding/*` |
-| Settings / flags | `SettingsView`, `FeatureFlagsView`, `AppStorageKeys` |
+| Settings | `SettingsView`, `AppStorageKeys` |
 | Voice preview | `VoicePickerView` + `VoicePreviewCopy` — all four voices speak a line in the saved native language |
 | Notifications | `NotificationManager`, `NotificationCopy`, `DrowordApp` |
 | Themes / Duo chrome | `ThemeStore`, `ThemePickerView`, `PageCapsules`, `DuoButtonStyle`, `TagBadge`, `DesignTokens` |

@@ -59,9 +59,6 @@ struct QuizMixedView: View {
     @State private var showOnFireBurst = false
     @State private var onFireBurstID = 0
     @State private var completionMoments: [StudyMoment] = []
-    @State private var chatSceneTarget: ChatSceneTarget?
-    @ObservedObject private var network = NetworkMonitor.shared
-    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
 
     var body: some View {
         ZStack {
@@ -80,7 +77,6 @@ struct QuizMixedView: View {
                     },
                     moments: completionMoments,
                     isLesson: recordsLesson,
-                    onScene: recordsLesson && FeatureGates.homeChatEnabled && showHomeChat && network.isConnected ? { openLessonScene() } : nil,
                     onClose: {
                         if presetWords.isEmpty {
                             startSession()
@@ -262,13 +258,6 @@ struct QuizMixedView: View {
             hasEnoughWords = usable >= 4
             restoreOrStartSession()
             onCompleteChange?(session.isComplete)
-        }
-        .fullScreenCover(item: $chatSceneTarget) { target in
-            ChatSceneView(target: target)
-                .environmentObject(store)
-                .environmentObject(languageStore)
-                .environmentObject(themeStore)
-                .tint(themeStore.mainAccentColor)
         }
         .onChange(of: session.isComplete) { _, isComplete in
             onCompleteChange?(isComplete)
@@ -634,20 +623,6 @@ struct QuizMixedView: View {
         }
     }
 
-    private func openLessonScene() {
-        guard FeatureGates.homeChatEnabled, showHomeChat, network.isConnected else { return }
-        let items = session.queue.map { item in
-            (
-                id: item.id,
-                word: item.word,
-                translation: item.translation,
-                correct: session.answerResults[item.id] ?? false
-            )
-        }
-        chatSceneTarget = ChatScenePicker.fromLesson(items: items, words: store.words)
-            ?? ChatScenePicker.fallback(words: store.words, learningLanguage: languageStore.learningLanguage)
-    }
-
     private func goToNext() {
 
         let nextIndex = session.currentIndex + 1
@@ -688,7 +663,6 @@ struct QuizMixedView: View {
                     seedingFrom: store.words
                 )
             }
-            store.syncStreakToAppGroup()
         }
     }
 

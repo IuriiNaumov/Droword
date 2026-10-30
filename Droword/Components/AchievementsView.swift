@@ -4,9 +4,7 @@ struct AchievementsView: View {
     @EnvironmentObject private var store: WordsStore
     @EnvironmentObject private var themeStore: ThemeStore
     @EnvironmentObject private var badgeStore: BadgeStore
-    @AppStorage(AppStorageKeys.currentStreak) private var currentStreak: Int = 0
     @Environment(\.dismiss) private var dismiss
-    var previewAllUnlocked: Bool = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -15,13 +13,12 @@ struct AchievementsView: View {
     ]
 
     private var visibleBadges: [BadgeDefinition] {
-        BadgeStore.allBadges.filter { previewAllUnlocked || FeatureGates.streakEnabled || $0.category != .streak }
+        BadgeStore.allBadges
     }
 
     private var unlockedCount: Int {
-        if previewAllUnlocked { return visibleBadges.count }
-        return visibleBadges.filter {
-            badgeStore.isUnlocked($0, totalWords: store.totalWordsAdded, currentStreak: currentStreak)
+        visibleBadges.filter {
+            badgeStore.isUnlocked($0, totalWords: store.totalWordsAdded)
         }.count
     }
 
@@ -41,7 +38,7 @@ struct AchievementsView: View {
                         .foregroundStyle(themeStore.secondaryText)
                 }
 
-                ForEach(BadgeCategory.allCases.filter { previewAllUnlocked || FeatureGates.streakEnabled || $0 != .streak }, id: \.rawValue) { category in
+                ForEach(BadgeCategory.allCases, id: \.rawValue) { category in
                     let badges = BadgeStore.allBadges.filter { $0.category == category }
                     if !badges.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
@@ -54,11 +51,8 @@ struct AchievementsView: View {
                                 ForEach(badges) { badge in
                                     BadgeCardView(
                                         badge: badge,
-                                        currentProgress: previewAllUnlocked
-                                            ? badge.requiredCount
-                                            : badgeStore.progress(for: badge, totalWords: store.totalWordsAdded, currentStreak: currentStreak),
-                                        isUnlocked: previewAllUnlocked
-                                            || badgeStore.isUnlocked(badge, totalWords: store.totalWordsAdded, currentStreak: currentStreak)
+                                        currentProgress: badgeStore.progress(for: badge, totalWords: store.totalWordsAdded),
+                                        isUnlocked: badgeStore.isUnlocked(badge, totalWords: store.totalWordsAdded)
                                     )
                                 }
                             }

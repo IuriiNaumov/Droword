@@ -88,11 +88,6 @@ final class StoreKitManager: ObservableObject {
         let hasPurchase = !purchased.isEmpty
         UserDefaults.standard.set(hasPurchase, forKey: "hasRealPurchase")
 
-        #if DEBUG
-        let debugOverride = UserDefaults.standard.bool(forKey: AppStorageKeys.debugPremiumOverride)
-        if debugOverride { return }
-        #endif
-
         if hasPurchase {
             UserDefaults.standard.set(true, forKey: AppStorageKeys.isPremium)
         } else {

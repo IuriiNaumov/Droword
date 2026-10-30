@@ -2,24 +2,18 @@ import SwiftUI
 
 enum StudyExtra: String, CaseIterable, Identifiable {
     case reading
-    case chat
     case packs
     case challenges
 
     var id: String { rawValue }
 
     static var offered: [StudyExtra] {
-        var items: [StudyExtra] = [.reading, .packs, .challenges]
-        if FeatureGates.homeChatEnabled {
-            items.insert(.chat, at: 1)
-        }
-        return items
+        [.reading, .packs, .challenges]
     }
 
     var storageKey: String {
         switch self {
         case .reading: return AppStorageKeys.showHomeReading
-        case .chat: return AppStorageKeys.showHomeChat
         case .packs: return AppStorageKeys.showWordPacks
         case .challenges: return AppStorageKeys.showDailyChallenges
         }
@@ -38,7 +32,6 @@ enum StudyExtra: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .reading: return "book.pages"
-        case .chat: return "bubble.left.and.bubble.right"
         case .packs: return "rectangle.stack"
         case .challenges: return "dumbbell"
         }
@@ -47,7 +40,6 @@ enum StudyExtra: String, CaseIterable, Identifiable {
     var title: LocalizedStringKey {
         switch self {
         case .reading: return "Reading"
-        case .chat: return "Chat"
         case .packs: return "Word Packs"
         case .challenges: return "Daily Challenges"
         }
@@ -57,8 +49,6 @@ enum StudyExtra: String, CaseIterable, Identifiable {
         switch self {
         case .reading:
             return "Your words come back in a short story, so they stick."
-        case .chat:
-            return "Say a word in a tiny real scene, not just on a card."
         case .packs:
             return "Ready lists of words when you want to learn a topic."
         case .challenges:
@@ -83,7 +73,6 @@ struct StudyExtrasPromptPage: View {
     let onDismiss: () -> Void
 
     @AppStorage(AppStorageKeys.showHomeReading) private var showHomeReading: Bool = true
-    @AppStorage(AppStorageKeys.showHomeChat) private var showHomeChat: Bool = true
     @AppStorage(AppStorageKeys.showWordPacks) private var showWordPacks: Bool = true
     @AppStorage(AppStorageKeys.showDailyChallenges) private var showDailyChallenges: Bool = false
 
@@ -252,7 +241,6 @@ struct StudyExtrasPromptPage: View {
     private func isOn(_ extra: StudyExtra) -> Bool {
         switch extra {
         case .reading: return showHomeReading
-        case .chat: return showHomeChat
         case .packs: return showWordPacks
         case .challenges: return showDailyChallenges
         }
@@ -261,7 +249,6 @@ struct StudyExtrasPromptPage: View {
     private func set(_ extra: StudyExtra, _ value: Bool) {
         switch extra {
         case .reading: showHomeReading = value
-        case .chat: showHomeChat = value
         case .packs: showWordPacks = value
         case .challenges: showDailyChallenges = value
         }
@@ -270,7 +257,6 @@ struct StudyExtrasPromptPage: View {
     private func binding(for extra: StudyExtra) -> Binding<Bool> {
         switch extra {
         case .reading: return $showHomeReading
-        case .chat: return $showHomeChat
         case .packs: return $showWordPacks
         case .challenges: return $showDailyChallenges
         }
