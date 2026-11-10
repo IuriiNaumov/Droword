@@ -188,7 +188,7 @@ Free checks are always `isPremium || DailyLimitsManager.can…`.
 
 Optional **7-day PRO trial** (button on paywall) sets `isPremium` via `hasUsedTrial` + `trialStartDate` (+ Keychain). That is separate from the soft translation ramp above.
 
-IAP: `com.droword.pro.monthly`, `com.droword.pro.yearly`. Flag: `AppStorageKeys.isPremium`.
+IAP: `com.droword.pro.monthly`, `com.droword.pro.yearly`. Flag: `AppStorageKeys.isPremium`. The paywall shows StoreKit `displayPrice` for the Apple ID storefront, including the yearly per-month amount and the savings badge. Do not hardcode a dollar price.
 
 Worker IP limits in `guard.ts` are abuse protection only — not the product paywall.
 

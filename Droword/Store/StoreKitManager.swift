@@ -31,7 +31,6 @@ final class StoreKitManager: ObservableObject {
     }
 
     func loadProducts() async {
-        guard products.isEmpty else { return }
         do {
             let fetched = try await Product.products(for: [Self.monthlyID, Self.yearlyID])
             products = fetched.sorted { $0.price < $1.price }

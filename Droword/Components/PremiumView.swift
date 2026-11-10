@@ -28,24 +28,24 @@ struct PremiumView: View {
     }
 
     private var monthlyPrice: String {
-        storeKit.monthlyProduct?.displayPrice ?? "$6.99"
+        storeKit.monthlyProduct?.displayPrice ?? "—"
     }
     private var yearlyPrice: String {
-        storeKit.yearlyProduct?.displayPrice ?? "$62.99"
+        storeKit.yearlyProduct?.displayPrice ?? "—"
     }
-    private static let currencyFormatter: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        return f
-    }()
 
     private var yearlyMonthly: String {
-        if let product = storeKit.yearlyProduct {
-            let monthly = product.price / 12
-            Self.currencyFormatter.locale = product.priceFormatStyle.locale
-            return Self.currencyFormatter.string(from: monthly as NSDecimalNumber) ?? "$3.33"
-        }
-        return "$3.33"
+        guard let product = storeKit.yearlyProduct else { return "—" }
+        return (product.price / 12).formatted(product.priceFormatStyle)
+    }
+
+    private var yearlySavingsText: String? {
+        guard let monthly = storeKit.monthlyProduct, let yearly = storeKit.yearlyProduct else { return nil }
+        let full = monthly.price * 12
+        guard full > yearly.price else { return nil }
+        let percent = Int(NSDecimalNumber(decimal: (full - yearly.price) / full * 100).doubleValue.rounded())
+        guard percent > 0 else { return nil }
+        return String(format: String(localized: "Save %lld%%"), percent)
     }
 
     private struct FeatureRow: Identifiable {
@@ -95,6 +95,9 @@ struct PremiumView: View {
             withAnimation(.easeOut(duration: 0.4)) {
                 appeared = true
             }
+        }
+        .task {
+            await storeKit.loadProducts()
         }
     }
 
@@ -333,7 +336,7 @@ struct PremiumView: View {
                 title: "Yearly",
                 price: yearlyPrice,
                 detail: "\(yearlyMonthly)/mo",
-                badge: "Save 25%"
+                badge: yearlySavingsText
             )
 
             planCard(
@@ -350,7 +353,7 @@ struct PremiumView: View {
         .offset(y: appeared ? 0 : 16)
     }
 
-    private func planCard(plan: Plan, title: LocalizedStringKey, price: String, detail: LocalizedStringKey, badge: LocalizedStringKey?) -> some View {
+    private func planCard(plan: Plan, title: LocalizedStringKey, price: String, detail: LocalizedStringKey, badge: String?) -> some View {
         Button {
             withAnimation(.easeOut(duration: 0.2)) {
                 selectedPlan = plan
